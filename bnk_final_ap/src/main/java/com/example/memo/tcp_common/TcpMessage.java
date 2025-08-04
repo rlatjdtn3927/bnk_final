@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/*이 형식으로 메세지를 받아야함.*/
 
 @Getter
 @Setter

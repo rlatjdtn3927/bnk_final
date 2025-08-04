@@ -6,6 +6,8 @@ import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
 
+/*신경 안써도 되는 클래스*/
+
 @Component
 public class TcpServerRunner {
 

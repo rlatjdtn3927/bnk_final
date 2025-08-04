@@ -11,14 +11,16 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/*메세지 전송 시에 사용해야 할 클래스 함수 구현 자체는 신경쓰지 마세요*/
 @Service
 public class TcpClientService {
 
     private final ObjectMapper mapper = new ObjectMapper();
-
+    
+    /*이 함수 쓰면 됨 --> 요청하면 응답까지 받음*/
     public JsonNode sendMessage(TcpMessage message) {
         try (
-            Socket socket = new Socket("localhost", 9000);
+            Socket socket = new Socket("localhost", 50000);
             PrintWriter out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))
         ) {
@@ -30,7 +32,7 @@ public class TcpClientService {
 
         } catch (Exception e) {
             e.printStackTrace();
-            return "에러 발생";
+            return null;
         }
     }
 }
