@@ -5,5 +5,6 @@ public enum Command {
     USER_GET,
     USER_DELETE,
 	
-	COMPANY_REGISTER;
+	COMPANY_REGISTER, // 기업 정보 등록
+	COMPANY_LOGIN; // 기업 담당자 로그인
 }

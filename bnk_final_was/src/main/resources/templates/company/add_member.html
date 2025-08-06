@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>가입자명부등록</title>
+  <style>
+    * {
+      font-family: 'Pretendard', sans-serif;
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background-color: #f5f5f5;
+    }
+
+    .container {
+      padding: 40px;
+      max-width: 1000px;
+      margin: 0 auto;
+      background-color: #fff;
+      min-height: 100vh;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .breadcrumb {
+      font-size: 14px;
+      margin-bottom: 20px;
+      color: #777;
+    }
+
+    .excel-box {
+      padding: 40px;
+      background-color: #ddd;
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 16px;
+    }
+
+    .button-group {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    button {
+      background-color: #d90000;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      border-radius: 4px;
+    }
+
+    button:hover {
+      background-color: #b50000;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .upload-result {
+      margin-top: 30px;
+      padding: 20px;
+      background: #f2f2f2;
+      border: 1px solid #ccc;
+      display: none;
+    }
+
+    .upload-result ul {
+      padding-left: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="breadcrumb">임직원관리 &gt; 가입자명부등록</div>
+    <h2>가입자명부등록</h2>
+
+    <div class="excel-box">
+      엑셀 파일을 통해 가입자 명부를 등록해주세요.
+    </div>
+
+    <div class="button-group">
+      <button onclick="downloadTemplate()">엑셀 양식 다운로드</button>
+
+      <label for="excelInput">
+        <button>엑셀 업로드</button>
+      </label>
+      <input type="file" id="excelInput" accept=".xlsx, .xls" onchange="handleExcelUpload(event)">
+    </div>
+
+    <div class="upload-result" id="uploadResult">
+      <strong>📄 업로드 결과:</strong>
+      <ul id="resultList"></ul>
+    </div>
+  </div>
+
+  <script>
+    function downloadTemplate() {
+      // 샘플 양식 경로로 연결
+      window.location.href = "/static/template/member_template.xlsx";
+    }
+
+    function handleExcelUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      fetch("/api/dc-member/upload", {
+        method: "POST",
+        body: formData,
+        credentials: "include", // 세션 쿠키 포함
+      })
+      .then(response => response.json())
+      .then(data => {
+        const resultBox = document.getElementById("uploadResult");
+        const resultList = document.getElementById("resultList");
+        resultList.innerHTML = "";
+
+        if (data.success) {
+          data.registered.forEach(member => {
+            const li = document.createElement("li");
+            li.textContent = `${member.name} (${member.rm}) 등록 완료`;
+            resultList.appendChild(li);
+          });
+        } else {
+          const li = document.createElement("li");
+          li.textContent = `❌ 오류 발생: ${data.message}`;
+          resultList.appendChild(li);
+        }
+
+        resultBox.style.display = "block";
+      })
+      .catch(error => {
+        const resultBox = document.getElementById("uploadResult");
+        const resultList = document.getElementById("resultList");
+        resultList.innerHTML = `<li>❌ 업로드 중 오류 발생: ${error.message}</li>`;
+        resultBox.style.display = "block";
+      });
+    }
+  </script>
+</body>
+</html>
