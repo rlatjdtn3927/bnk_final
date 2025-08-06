@@ -1,44 +1,73 @@
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '3.5.4'
-	id 'io.spring.dependency-management' version '1.1.7'
+    id 'java'
+    id 'org.springframework.boot' version '3.5.4'
+    id 'io.spring.dependency-management' version '1.1.7'
 }
 
 group = 'com.example'
 version = '0.0.1-SNAPSHOT'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
+    maven { url 'https://repo.spring.io/milestone' } // Spring AI는 milestone repo 필요
+}
+
+dependencyManagement {
+    imports {
+        // ✅ Spring AI BOM (버전 통합 관리)
+        mavenBom "org.springframework.ai:spring-ai-bom:1.0.0-M6"
+    }
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	compileOnly 'org.projectlombok:lombok'
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-	runtimeOnly 'com.oracle.database.jdbc:ojdbc11'
-	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	implementation 'com.fasterxml.jackson.core:jackson-core:2.17.0'
-	implementation 'com.fasterxml.jackson.core:jackson-annotations:2.17.0'
-	implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.0'
+    // ✅ Spring Boot
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // ✅ Spring AI (OpenAI + VectorStore)
+    implementation 'org.springframework.ai:spring-ai-openai'       // OpenAI 모델
+    implementation 'org.springframework.ai:spring-ai-core' //코어(VectorStore 인터페이스 포함)
+
+    // ✅ PostgreSQL (pgvector는 DB 확장에서 설정)
+    implementation 'org.postgresql:postgresql:42.7.3'
+
+    // ✅ Oracle JDBC
+    runtimeOnly 'com.oracle.database.jdbc:ojdbc11'
+
+    // ✅ PDF 텍스트 추출용
+    implementation 'org.apache.pdfbox:pdfbox:2.0.30'
+
+    // ✅ JSON 처리
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.17.0'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.17.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.0'
+
+    // ✅ Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // ✅ 개발용
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+    // ✅ 테스트
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }
