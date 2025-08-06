@@ -3,8 +3,6 @@ package com.example.memo.test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.example.memo.jpa.entity.UserEntity;
-import com.example.memo.jpa.repository.UserRepository;
 import com.example.memo.tcp_common.TcpServer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;

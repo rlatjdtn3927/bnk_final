@@ -1,4 +1,4 @@
-package com.example.memo.jpa.entity;
+package com.example.memo.test;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

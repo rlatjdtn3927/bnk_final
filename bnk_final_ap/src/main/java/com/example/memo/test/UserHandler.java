@@ -3,7 +3,6 @@ package com.example.memo.test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.example.memo.jpa.repository.UserRepository;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpMessageHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
