@@ -4,8 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.example.memo.company.dto.CompanyRegisterDto;
-import com.example.memo.company.entity.Company;
-import com.example.memo.company.repository.CompanyRepository;
+import com.example.memo.jpa.entity.company.Company;
+import com.example.memo.jpa.repository.company.CompanyRepository;
 
 @Service
 public class CompanyService {

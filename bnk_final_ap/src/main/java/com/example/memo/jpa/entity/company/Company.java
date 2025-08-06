@@ -1,4 +1,4 @@
-package com.example.memo.company.entity;
+package com.example.memo.jpa.entity.company;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
