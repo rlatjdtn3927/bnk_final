@@ -1,0 +1,240 @@
+@charset "UTF-8";
+
+    /* ===== CSS 변수 (테마 색상) ===== */
+    :root {
+      --primary-color: #0052cc; /* 메인 색상 */
+      --primary-hover: #0041a3;
+      --secondary-color: #f4f5f7; /* 보조 색상 */
+      --border-color: #dfe1e6;
+      --text-color: #172b4d;
+      --text-light: #5e6c84;
+      --success-color: #00875a;
+      --error-color: #de350b;
+      --warning-color: #ffab00;
+      --disabled-bg: #f4f5f7;
+      --disabled-text: #a5adba;
+      --font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard Variable", Pretendard, Roboto, "Noto Sans KR", "Segoe UI", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+    }
+
+    /* ===== 기본 및 레이아웃 ===== */
+    body {
+      font-family: var(--font-family);
+      background-color: #fafbfc;
+      color: var(--text-color);
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px -2px rgba(9, 30, 66, 0.25), 0 0 1px rgba(9, 30, 66, 0.31);
+      padding: 32px;
+    }
+
+    h2 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-top: 0;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .section {
+      margin-bottom: 32px;
+    }
+    
+    /* ===== 버튼 스타일 ===== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-family);
+      font-weight: 500;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      padding: 10px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, box-shadow 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background-color: var(--secondary-color);
+      color: var(--text-color);
+      border-color: var(--border-color);
+    }
+    .btn-secondary:hover {
+      background-color: #e6e9ee;
+    }
+    
+    .btn[disabled] {
+      background-color: var(--disabled-bg);
+      color: var(--disabled-text);
+      cursor: not-allowed;
+      box-shadow: none;
+      border-color: var(--border-color);
+    }
+    
+    /* ===== 업로드 영역 ===== */
+    .upload-controls {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+    .file-input-wrapper {
+        position: relative;
+        overflow: hidden;
+        display: inline-block;
+    }
+    #excelFile {
+        position: absolute;
+        font-size: 100px;
+        left: 0;
+        top: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+    .file-input-wrapper .btn {
+      pointer-events: none;
+    }
+    #upload-btn-text {
+        margin-left: 8px;
+        font-weight: 500;
+    }
+    #no-upload-msg {
+        margin-top: 16px;
+        color: var(--text-light);
+        background-color: #fafbfc;
+        padding: 16px;
+        border-radius: 6px;
+        text-align: center;
+    }
+
+    /* ===== 결과 영역 ===== */
+    .status-summary {
+      display: flex;
+      gap: 24px;
+      padding: 16px;
+      background-color: #fafbfc;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      font-weight: 500;
+      flex-wrap: wrap;
+    }
+    .status-summary span {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status-summary .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .dot.total { background-color: var(--primary-color); }
+    .dot.normal { background-color: var(--success-color); }
+    .dot.error { background-color: var(--error-color); }
+    .dot.duplicate { background-color: var(--warning-color); }
+
+    /* ===== 테이블 스타일 ===== */
+    .table-wrapper {
+        overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      vertical-align: middle;
+      border-bottom: 1px solid var(--border-color);
+    }
+    th {
+      background-color: #fafbfc;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text-light);
+    }
+    tbody tr:nth-child(even) {
+      background-color: #fafbfc;
+    }
+    tbody tr:hover {
+      background-color: #f0f6ff;
+    }
+    tr.error {
+      background-color: #fff4e5;
+    }
+    tr.error:hover {
+      background-color: #ffebd1;
+    }
+    tr.error td:first-child {
+        border-left: 3px solid var(--error-color);
+    }
+    .error-tooltip-wrapper {
+      position: relative;
+    }
+    .error-tooltip-wrapper .tooltip-text {
+        visibility: hidden;
+        width: max-content;
+        background-color: #333;
+        color: #fff;
+        text-align: center;
+        border-radius: 6px;
+        padding: 8px;
+        position: absolute;
+        z-index: 1;
+        bottom: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+    .error-tooltip-wrapper:hover .tooltip-text {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    /* ===== 로딩 스피너 ===== */
+    .spinner-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.7);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid var(--secondary-color);
+        border-top-color: var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }

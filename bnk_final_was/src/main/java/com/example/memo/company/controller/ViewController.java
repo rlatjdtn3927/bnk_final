@@ -21,7 +21,7 @@ public class ViewController {
 	
 	@GetMapping("/company/add-member")
 	public String addMemberPage() {
-		return "company/add_member";
+		return "company/add-member";
 	}
 	
 	@GetMapping("/company")
