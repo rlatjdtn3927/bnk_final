@@ -17,19 +17,24 @@ public class EmbeddingHandler implements TcpMessageHandler {
 
     @Override
     public boolean supports(Command command) {
-        return command == Command.EMBEDDING_CREATE;
+        return command.name().startsWith("EMBEDDING_");
     }
 
     @Override
     public Object handle(Command command, JsonNode data) {
         try {
-            if (command == Command.EMBEDDING_CREATE) {
-                return embeddingService.createEmbeddingsFromAllPdfs();
+            switch (command) {
+                case EMBEDDING_CREATE:
+                    return embeddingService.createEmbeddingsFromAllPdfs();
+                // 향후 추가 가능:
+                // case EMBEDDING_DELETE:
+                //     return embeddingService.deleteEmbedding(data.get("id").asText());
+                default:
+                    return "알 수 없는 EMBEDDING 명령: " + command.name();
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return "임베딩 생성 중 오류 발생: " + e.getMessage();
+            return "임베딩 처리 중 오류 발생: " + e.getMessage();
         }
-        return "알 수 없는 임베딩 명령: " + command.name();
     }
 }
