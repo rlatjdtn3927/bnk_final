@@ -11,5 +11,7 @@ public enum Command {
     SUBSCRIBER_VALIDATE, // 엑셀 데이터 검증용
     SUBSCRIBER_REGISTER, // 검증 완료된 데이터 등록용
 	SUBSCRIBER_GET_LIST, // 가입자 등록 조회
-	SUBSCRIBER_GET_LIST_SUCCESS;
+	SUBSCRIBER_GET_LIST_SUCCESS, // 가입자 등로 성공
+	BANK_EMPLOYEE_LOGIN,
+    ACCOUNT_REQUEST_CREATE;
 }
