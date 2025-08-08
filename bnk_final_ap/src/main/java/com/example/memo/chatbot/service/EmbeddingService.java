@@ -7,6 +7,7 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.pgvector.PgVectorStore;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,7 @@ public class EmbeddingService {
     private final PgVectorStore pgVectorStore;
     private final FileService fileService;
     private final ResourcePatternResolver resourcePatternResolver;
+    private final JdbcTemplate pgJdbcTemplate;  // ✅ PgVectorStore용 JDBC
 
     @Transactional
     public String createEmbeddingsFromAllPdfs() throws IOException, JsonProcessingException {
@@ -42,9 +44,15 @@ public class EmbeddingService {
         for (Resource resource : resources) {
             String fileNameWithRelativePath = resource.getURL().getPath().split("static/")[1];
 
-            // 이미 임베딩된 파일은 건너뛰기
-            if (embeddingChunkRepository.existsByFileName(fileNameWithRelativePath)) {
-                System.out.println("✅ 파일(" + fileNameWithRelativePath + ")은 이미 임베딩되었습니다. 건너뜁니다.");
+            boolean existsInOracle = embeddingChunkRepository.existsByFileName(fileNameWithRelativePath);
+            List<String> existingVectorIds = existsInOracle
+                    ? embeddingChunkRepository.findVectorIdsByFileName(fileNameWithRelativePath)
+                    : Collections.emptyList();
+
+            boolean existsInPgvector = !existingVectorIds.isEmpty() && checkVectorIdsExistInPgvector(existingVectorIds);
+
+            if (existsInOracle && existsInPgvector) {
+                System.out.println("✅ 파일(" + fileNameWithRelativePath + ")은 Oracle과 pgvector 모두에 이미 존재합니다. 건너뜁니다.");
                 continue;
             }
 
@@ -59,7 +67,6 @@ public class EmbeddingService {
 
             int chunkSize = 500;
             List<Document> documents = new ArrayList<>();
-            int chunkCount = (int) Math.ceil((double) pdfText.length() / chunkSize);
 
             for (int i = 0; i < pdfText.length(); i += chunkSize) {
                 String chunkText = pdfText.substring(i, Math.min(i + chunkSize, pdfText.length())).trim();
@@ -85,7 +92,7 @@ public class EmbeddingService {
                 continue;
             }
 
-            // 임베딩 저장
+            // 1. 벡터 DB 저장
             System.out.println("💾 pgVectorStore 임베딩 저장 시도...");
             try {
                 pgVectorStore.add(documents);
@@ -93,10 +100,10 @@ public class EmbeddingService {
             } catch (Exception e) {
                 System.out.println("❌ pgVectorStore 저장 실패: " + e.getMessage());
                 e.printStackTrace();
-                continue; // 실패한 파일은 스킵
+                continue;
             }
 
-            // Oracle에 청크 메타데이터 저장
+            // 2. Oracle 저장
             System.out.println("📦 Oracle DB에 메타데이터 저장 중...");
             for (Document document : documents) {
                 EmbeddingChunk chunk = EmbeddingChunk.builder()
@@ -117,5 +124,28 @@ public class EmbeddingService {
         String message = "✨ 전체 임베딩 완료! 총 " + processedFiles.size() + "개의 파일이 처리되었으며, 총 " + totalProcessedChunks + "개의 청크가 저장되었습니다.";
         System.out.println(message);
         return message;
+    }
+
+    /**
+     * ✅ pgvector의 embedding 테이블에 vector_id들이 모두 존재하는지 확인
+     * 
+     * PostgreSQL에서는 UUID 타입 컬럼과 문자열(String)을 직접 비교할 수 없기 때문에
+     * 형변환(id::text) 후 비교해야 오류가 발생하지 않는다.
+     * 
+     * 예: SELECT COUNT(*) FROM embedding WHERE id::text IN (?, ?, ...);
+     */
+    private boolean checkVectorIdsExistInPgvector(List<String> vectorIds) {
+        if (vectorIds.isEmpty()) return false;
+
+        // ? 플래이스홀더 생성
+        String placeholders = String.join(",", Collections.nCopies(vectorIds.size(), "?"));
+
+        // ✅ id(UUID) 컬럼을 문자열로 형변환 후 비교
+        String sql = "SELECT COUNT(*) FROM embedding WHERE id::text IN (" + placeholders + ")";
+
+        Integer count = pgJdbcTemplate.queryForObject(sql, vectorIds.toArray(), Integer.class);
+
+        // 모든 vectorId가 존재하면 true
+        return count != null && count == vectorIds.size();
     }
 }
