@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>가입자 명부 조회</title>
+    <style>
+        /* ===== CSS 변수 (테마 색상) ===== */
+        :root {
+            --primary-color: #0052cc;
+            --border-color: #dfe1e6;
+            --text-color: #172b4d;
+            --text-light: #5e6c84;
+            --background-light: #fafbfc;
+            --background-white: #ffffff;
+            --hover-light: #f0f6ff;
+        }
+
+        /* ===== 기본 및 레이아웃 ===== */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard Variable", Pretendard, Roboto, "Noto Sans KR", "Segoe UI", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+            background-color: var(--background-light);
+            color: var(--text-color);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            background-color: var(--background-white);
+            border-radius: 8px;
+            box-shadow: 0 4px 8px -2px rgba(9, 30, 66, 0.25), 0 0 1px rgba(9, 30, 66, 0.31);
+            padding: 32px;
+        }
+
+        .header-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        /* ▼▼▼▼▼ 콤보박스 스타일 추가 ▼▼▼▼▼ */
+        .filter-select {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 14px;
+            font-family: inherit;
+            font-weight: 500;
+            background-color: var(--background-white);
+            cursor: pointer;
+        }
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.2);
+        }
+
+        /* ===== 테이블 스타일 ===== */
+        .table-wrapper {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            overflow: hidden;
+            font-size: 14px;
+        }
+        
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            vertical-align: middle;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+        
+        thead th {
+            background-color: var(--background-light);
+            font-weight: 600;
+            color: var(--text-light);
+        }
+        
+        tbody tr:nth-child(even) {
+            background-color: var(--background-light);
+        }
+
+        tbody tr:hover {
+            background-color: var(--hover-light);
+        }
+
+        .message-cell {
+            text-align: center;
+            color: var(--text-light);
+            padding: 40px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header-controls">
+            <h2>가입자 명부</h2>
+            <select id="status-filter" class="filter-select">
+                <option value="ALL">전체</option>
+                <option value="ACTIVE">재직</option>
+                <option value="INACTIVE">퇴직</option>
+            </select>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>성명</th>
+                        <th>생년월일</th>
+                        <th>가입자상태</th>
+                        <th>입사일</th>
+                        <th>연간임금총액</th>
+                        <th>기산일</th>
+                        <th>가입일</th>
+                        <th>퇴직일</th>
+                        <th>해지일</th>
+                        <th>최초부담금납입일</th>
+                        <th>DB납입비율</th>
+                        <th>DC납입비율</th>
+                    </tr>
+                </thead>
+                <tbody id="subscriber-table-body">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterSelect = document.getElementById('status-filter');
+
+        // 페이지가 처음 로드될 때 기본 선택값으로 데이터를 가져옵니다.
+        fetchSubscribers(filterSelect.value);
+
+        // ▼▼▼▼▼ select 요소의 값이 변경될 때마다 데이터를 다시 가져오도록 수정 ▼▼▼▼▼
+        filterSelect.addEventListener('change', function() {
+            fetchSubscribers(this.value);
+        });
+    });
+
+    // 서버로부터 가입자 목록을 가져와 테이블에 표시하는 함수
+    function fetchSubscribers(status = 'ALL') {
+        const tableBody = document.getElementById('subscriber-table-body');
+        
+        tableBody.innerHTML = '<tr><td colspan="12" class="message-cell">데이터를 불러오는 중입니다...</td></tr>';
+    
+        // API 호출 시 쿼리 파라미터로 상태(status)를 전달합니다.
+        fetch(`/company/subscriber/list?status=${status}`)
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => { throw new Error(text); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                tableBody.innerHTML = '';
+                const subscriberList = data.data; 
+    
+                if (!subscriberList || subscriberList.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="12" class="message-cell">조회된 가입자가 없습니다.</td></tr>';
+                    return;
+                }
+    
+                subscriberList.forEach(subscriber => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${formatValue(subscriber.name)}</td>
+                        <td>${formatValue(subscriber.birthDate)}</td>
+                        <td>${formatValue(subscriber.status)}</td>
+                        <td>${formatValue(subscriber.startDate)}</td>
+                        <td>${formatCurrency(subscriber.annualSalary)}</td>
+                        <td>${formatValue(subscriber.baseDate)}</td>
+                        <td>${formatValue(subscriber.joinDate)}</td>
+                        <td>${formatValue(subscriber.retireDate)}</td>
+                        <td>${formatValue(subscriber.cancelDate)}</td>
+                        <td>${formatValue(subscriber.firstPayDate)}</td>
+                        <td>${formatRatio(subscriber.dbRatio)}</td>
+                        <td>${formatRatio(subscriber.dcRatio)}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error('데이터 조회 실패:', error);
+                tableBody.innerHTML = `<tr><td colspan="12" class="message-cell">데이터를 불러오는 데 실패했습니다: ${error.message}</td></tr>`;
+            });
+    }
+
+    // --- 데이터 포맷팅을 위한 헬퍼 함수들 ---
+    function formatValue(value) {
+        return value != null ? value : '-';
+    }
+     
+    function formatCurrency(value) {
+        if (value == null) return '-';
+        return value.toLocaleString('ko-KR') + '원';
+    }
+
+    function formatRatio(value) {
+        if (value == null) return '-';
+        return value + '%';
+    }
+</script>
+
+</body>
+</html>

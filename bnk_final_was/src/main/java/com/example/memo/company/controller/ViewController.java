@@ -24,6 +24,11 @@ public class ViewController {
 		return "company/add-member";
 	}
 	
+	@GetMapping("/company/subscriber-list")
+	public String subscriberListPage() {
+		return "company/subscriber-list";
+	}
+	
 	@GetMapping("/company")
 	public String companyMainPage(HttpServletRequest request) {
 	    HttpSession session = request.getSession(false);

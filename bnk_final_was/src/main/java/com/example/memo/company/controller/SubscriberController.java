@@ -2,8 +2,11 @@ package com.example.memo.company.controller;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,6 +22,7 @@ import com.example.memo.tcp_common.TcpClientService;
 import com.example.memo.tcp_common.TcpMessage;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -31,6 +35,8 @@ public class SubscriberController {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    private static final Logger log = LoggerFactory.getLogger(SubscriberController.class);
 
     /**
      * 엑셀 업로드 및 데이터 검증을 한 번에 처리
@@ -90,5 +96,35 @@ public class SubscriberController {
         Object response = tcpService.sendMessage(msg);
 
         return ResponseEntity.ok(response);
+    }
+    
+    
+    @GetMapping("/list")
+    public ResponseEntity<?> getSubscriberList(
+            @RequestParam(name = "status", defaultValue = "ALL") String status, // 1. status 파라미터 추가
+            HttpSession session) {
+        
+        try {
+            // 세션에서 companyId 추출
+            CompanyLoginResponseDto loginManager = (CompanyLoginResponseDto) session.getAttribute("loginManager");
+            if (loginManager == null) {
+                return ResponseEntity.status(401).body("세션이 만료되었습니다.");
+            }
+            Long companyId = loginManager.getCompanyId();
+
+            // 2. AP에 보낼 TCP 메시지에 status도 추가
+            ObjectNode data = objectMapper.createObjectNode();
+            data.put("companyId", companyId);
+            data.put("status", status); // status 값을 데이터에 포함
+            TcpMessage msg = new TcpMessage(Command.SUBSCRIBER_GET_LIST, data);
+
+            // AP에 메시지 전송 및 응답 반환
+            Object response = tcpService.sendMessage(msg);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("가입자 명부 조회 중 오류 발생", e);
+            return ResponseEntity.internalServerError().body("가입자 명부 조회 중 오류가 발생했습니다.");
+        }
     }
 }
