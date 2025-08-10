@@ -1,0 +1,38 @@
+<div class="w-full">
+  <h2 class="text-xl font-semibold mb-3">계좌 입금/내역 조회</h2>
+
+  <div class="border rounded-2xl p-4 mb-4">
+    <div class="text-sm text-neutral-500" th:text="${account.accountName}">계좌명</div>
+    <div class="text-xs text-neutral-400" th:text="${account.accountNo}">계좌번호</div>
+    <div class="mt-2 text-2xl font-bold">
+      <span th:text="${#numbers.formatInteger(account.evalAmount, 3, 'COMMA')}">0</span>원
+      <span class="ml-3 text-sm font-normal text-neutral-500">
+        수익률 <span th:text="${account.yieldRate}">0</span>%
+      </span>
+    </div>
+  </div>
+
+  <div class="flex items-end gap-2 mb-4">
+    <div>
+      <label class="text-xs text-neutral-500">입금 금액(원)</label>
+      <input type="number" class="border rounded px-2 py-1 w-40" placeholder="100000"/>
+    </div>
+    <button class="px-3 py-2 bg-blue-600 text-white rounded-xl">입금</button>
+  </div>
+
+  <h3 class="font-medium mb-2">입출금 내역</h3>
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="text-left text-neutral-500 border-b">
+        <th class="py-2">일시</th><th>유형</th><th class="text-right">금액</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr th:each="d : ${deposits}" class="border-b">
+        <td class="py-2" th:text="${#temporals.format(d.at, 'yyyy-MM-dd HH:mm')}">일시</td>
+        <td th:text="${d.type}">유형</td>
+        <td class="text-right" th:text="${#numbers.formatInteger(d.amount, 3, 'COMMA')}">0</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

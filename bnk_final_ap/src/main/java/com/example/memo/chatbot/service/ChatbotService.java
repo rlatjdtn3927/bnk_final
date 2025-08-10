@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class ChatbotService {
 
     private final VectorStore vectorStore;
@@ -49,9 +48,11 @@ public class ChatbotService {
 
     public String getChatResponse(String question) {
         // ✅ 1. 질문 임베딩 및 유사 질문 탐색 (캐시처럼 사용)
-        float[] floatVector = embeddingModel.embed(question);
-        List<Double> questionVector = new ArrayList<>();
-        for (float f : floatVector) questionVector.add((double) f);
+    	float[] floatVector = embeddingModel.embed(question);
+    	List<Double> questionVector = new ArrayList<>();
+    	for (float f : floatVector) {
+    	    questionVector.add((double) f);
+    	}
 
         List<ChatLog> logs = chatLogRepository.findAll();
         for (ChatLog log : logs) {
@@ -70,8 +71,9 @@ public class ChatbotService {
                 SearchRequest.builder().query(question).topK(5).build()
         );
         String context = similarDocs.stream()
-                                    .map(Document::getText)
-                                    .collect(Collectors.joining("\n\n"));
+                                  .map(Document::getText)
+                                  .collect(Collectors.joining("\n\n"));
+
         if (context.isBlank()) {
             return "죄송합니다. 현재 질문에 대한 문서 기반 정보가 없어 답변을 제공할 수 없습니다.";
         }
@@ -87,6 +89,13 @@ public class ChatbotService {
         String answer = chatModel.call(prompt).getResult().getOutput().getText();
 
         // ✅ 5. 로그 저장
+        saveChatLog(question, questionVector, answer, context);
+
+        return answer;
+    }
+
+    @Transactional
+    public void saveChatLog(String question, List<Double> questionVector, String answer, String context) {
         String questionEmbedJson = convertEmbeddingToJson(questionVector);
         chatLogRepository.save(ChatLog.builder()
                 .questionText(question)
@@ -95,8 +104,6 @@ public class ChatbotService {
                 .context(context)
                 .createdAt(new Date())
                 .build());
-
-        return answer;
     }
 
     private double cosineSimilarity(List<Double> v1, List<Double> v2) {
@@ -142,6 +149,4 @@ public class ChatbotService {
             return "당신은 유용하고 친절한 AI 챗봇입니다. 사용자의 질문에 성실하게 답변하세요.";
         }
     }
-
 }
-

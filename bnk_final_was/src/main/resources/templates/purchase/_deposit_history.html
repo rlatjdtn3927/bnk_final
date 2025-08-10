@@ -1,0 +1,17 @@
+<div class="w-full">
+  <h2 class="text-xl font-semibold mb-3">계좌 입금내역 조회</h2>
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="text-left text-neutral-500 border-b">
+        <th class="py-2">일시</th><th>유형</th><th class="text-right">금액</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr th:each="d : ${deposits}" class="border-b">
+        <td class="py-2" th:text="${#temporals.format(d.at,'yyyy-MM-dd HH:mm')}">일시</td>
+        <td th:text="${d.type}">유형</td>
+        <td class="text-right" th:text="${#numbers.formatInteger(d.amount,3,'COMMA')}">0</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

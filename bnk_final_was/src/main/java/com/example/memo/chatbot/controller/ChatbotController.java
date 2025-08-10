@@ -27,7 +27,7 @@ public class ChatbotController {
 
     @GetMapping("/")
     public String mainPage() {
-        return "index";
+        return "chatbot/index";
     }
 
     @PostMapping("/api/embeddings")

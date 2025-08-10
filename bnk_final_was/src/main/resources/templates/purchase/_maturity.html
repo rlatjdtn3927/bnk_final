@@ -1,0 +1,22 @@
+<div class="w-full">
+  <h2 class="text-xl font-semibold mb-3">만기상품 변경</h2>
+  <div class="grid gap-3">
+    <div th:each="m : ${maturities}" class="border rounded-xl p-3 flex items-center justify-between">
+      <div>
+        <div class="text-sm text-neutral-500" th:text="${m.category}">카테고리</div>
+        <div class="font-medium" th:text="${m.name}">상품명</div>
+        <div class="text-sm">
+          만기일: <span th:text="${m.maturityDate}">2025-01-01</span> · 현재 계획: <span th:text="${m.plan}">현금화</span>
+        </div>
+      </div>
+      <div>
+        <select class="border rounded px-2 py-1">
+          <option>자동재예치</option>
+          <option>현금화</option>
+          <option>다른상품 교체</option>
+        </select>
+        <button class="ml-2 px-3 py-1 bg-blue-600 text-white rounded-xl">변경요청</button>
+      </div>
+    </div>
+  </div>
+</div>
