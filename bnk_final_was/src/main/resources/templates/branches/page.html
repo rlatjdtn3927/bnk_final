@@ -4,45 +4,12 @@
   <meta charset="UTF-8" />
   <title>부산은행 인근 지점 찾기</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root {
-      --bg:#0b57d0; --fg:#111; --muted:#667085; --line:#e7e9ee;
-      --card:#fff; --chip:#eef2ff; --brand:#0b57d0; --brand-weak:#eff4ff;
-    }
-    *{box-sizing:border-box}
-    html,body{margin:0;padding:0;font-family:system-ui,apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--fg);background:#fafbff}
-    header{background:var(--bg);color:#fff;padding:16px 18px}
-    header h1{margin:0;font-size:18px;font-weight:800;letter-spacing:.2px}
-    main{max-width:1100px;margin:22px auto;padding:0 16px;display:grid;grid-template-columns:1fr;gap:16px}
-    @media(min-width:980px){main{grid-template-columns:1.1fr}}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 6px 18px rgba(18,38,63,.04);padding:18px}
-    .row{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-    .btn{border:0;background:var(--brand);color:#fff;border-radius:12px;padding:12px 16px;font-weight:800;cursor:pointer}
-    .btn:disabled{opacity:.6;cursor:not-allowed}
-    .muted{color:var(--muted)}
-    .pill{display:inline-flex;align-items:center;gap:6px;background:var(--brand-weak);color:#154886;border-radius:999px;padding:6px 10px;font-weight:700}
-    .chip{display:inline-block;background:var(--chip);padding:6px 10px;border-radius:999px;color:#3730a3;font-weight:700}
-    input[type=number]{padding:10px 12px;border:1px solid var(--line);border-radius:12px;width:110px}
-    .list{margin-top:14px}
-    .item{display:grid;grid-template-columns:auto 1fr auto;gap:14px;padding:16px 8px;border-top:1px dashed var(--line)}
-    .rank{width:28px;height:28px;border-radius:999px;background:#eef2ff;color:#3730a3;display:flex;align-items:center;justify-content:center;font-weight:900}
-    .name{font-size:16px;font-weight:900}
-    .addr{font-size:13px;color:var(--muted);margin-top:4px}
-    .meta{display:flex;gap:16px;align-items:center;margin-top:8px;font-size:14px}
-    .meta .dist{font-weight:900}
-    .actions{display:flex;gap:8px}
-    .link{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;font-weight:700;color:#0b57d0;text-decoration:none}
-    .link:hover{background:#f6f8ff}
-    .spinner{display:inline-block;width:16px;height:16px;border:3px solid rgba(255,255,255,.8);border-right-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .error{color:#b00020;font-weight:800;margin-top:10px}
-    .empty{color:var(--muted);margin-top:12px}
-    .subtle{font-size:13px}
-  </style>
+  <link rel="stylesheet" href="/css/branches.css" />
 </head>
 <body>
-<header>
+<header class="header">
   <h1>부산은행 인근 지점 찾기</h1>
+  <p class="subtitle">내 주변에서 가장 가까운 BNK 부산은행 지점을 빠르게 찾아보세요.</p>
 </header>
 
 <main>
@@ -54,7 +21,7 @@
       </div>
       <div class="actions">
         <input id="radius" type="number" step="0.1" min="0.5" value="2.0" title="검색 반경(km)" />
-        <span class="chip">※ 부산은행(032) 고정</span>
+        <span class="unit">km</span>
         <button id="btn" class="btn">
           <span id="btxt">5개 지점 조회</span>
           <span id="bsp" class="spinner" style="display:none"></span>
@@ -63,114 +30,18 @@
     </div>
 
     <div id="err" class="error" style="display:none"></div>
-    <div id="empty" class="empty" style="display:none">근처에서 지점을 찾지 못했어요. 반경을 넓혀 다시 시도해보세요.</div>
+    <div id="empty" class="empty" style="display:none">
+      근처에서 지점을 찾지 못했어요. 반경을 넓혀 다시 시도해보세요.
+    </div>
 
     <div id="list" class="list"></div>
   </section>
 </main>
 
-<script>
-  const $ = s => document.querySelector(s);
-  const btn=$("#btn"), btxt=$("#btxt"), bsp=$("#bsp");
-  const mypos=$("#mypos"), list=$("#list"), err=$("#err"), empty=$("#empty");
+<footer class="footer">
+  © BNK 안내 데모 · 지도 링크는 외부 서비스로 이동합니다.
+</footer>
 
-  let userLat=null, userLon=null;
-
-  function busy(on){
-    btn.disabled=on; btxt.textContent=on?"조회 중…":"5개 지점 조회"; bsp.style.display=on?"inline-block":"none";
-  }
-  const fmt=(n, p=6)=>Number(n).toFixed(p);
-  const km = n => Number(n).toFixed(3);
-
-  async function geolocate() {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) return reject(new Error("이 브라우저는 위치 기능을 지원하지 않습니다."));
-      navigator.geolocation.getCurrentPosition(
-        pos => resolve({lat:pos.coords.latitude, lon:pos.coords.longitude}),
-        err => reject(err),
-        { enableHighAccuracy:true, timeout:12000, maximumAge:0 }
-      );
-    });
-  }
-
-  async function reverseGeocode(lat, lon) {
-    try {
-      const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&accept-language=ko`;
-      const res = await fetch(url, { headers: { "Accept":"application/json" }});
-      if (!res.ok) throw new Error("reverse geocode http " + res.status);
-      const data = await res.json();
-      // 표시용 주소 선택
-      return data.display_name || (data.address && (data.address.city || data.address.town || data.address.village)) || null;
-    } catch(e){ return null; }
-  }
-
-  async function init(){
-    try{
-      const p = await geolocate();
-      userLat=p.lat; userLon=p.lon;
-      const addr = await reverseGeocode(userLat, userLon);
-      mypos.textContent = addr ? addr : `${fmt(userLat)}, ${fmt(userLon)}`;
-    }catch(e){
-      mypos.textContent = "위치 권한이 필요합니다.";
-    }
-  }
-
-  function render(items){
-    list.innerHTML="";
-    empty.style.display = items.length ? "none":"block";
-    if (!items.length) return;
-
-    const frag=document.createDocumentFragment();
-    items.forEach((b,i)=>{
-      const gmaps = `https://www.google.com/maps/search/?api=1&query=${b.latitude},${b.longitude}`;
-      const nav = `https://maps.google.com/?daddr=${b.latitude},${b.longitude}`;
-      const wrap=document.createElement("div");
-      wrap.className="item";
-      wrap.innerHTML = `
-        <div class="rank">${i+1}</div>
-        <div>
-          <div class="name"><a href="${gmaps}" target="_blank" rel="noopener">${b.branchName||"-"}</a></div>
-          <div class="addr">기관: 032 · 지점코드: ${b.branchCode||"-"}</div>
-          <div class="meta"><span class="dist">${km(b.distanceKm)} km</span>
-            <span class="muted">${fmt(b.latitude,5)}, ${fmt(b.longitude,5)}</span>
-          </div>
-        </div>
-        <div class="actions">
-          <a class="link" href="${gmaps}" target="_blank" rel="noopener">지도</a>
-          <a class="link" href="${nav}" target="_blank" rel="noopener">길찾기</a>
-        </div>`;
-      frag.appendChild(wrap);
-    });
-    list.appendChild(frag);
-  }
-
-  async function fetchNearby(){
-    err.style.display="none"; err.textContent="";
-    try{
-      busy(true);
-      if (userLat==null || userLon==null) {
-        const p = await geolocate(); userLat=p.lat; userLon=p.lon;
-      }
-      const radiusKm = Number($("#radius").value || "2.0");
-      const res = await fetch("/branches/nearby", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ latitude:userLat, longitude:userLon, radiusKm })
-      });
-      if (!res.ok) throw new Error("서버 오류: " + res.status);
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      render(data.branches || []);
-    }catch(e){
-      err.textContent = e.message || String(e);
-      err.style.display="block";
-    }finally{
-      busy(false);
-    }
-  }
-
-  init();
-  $("#btn").addEventListener("click", fetchNearby);
-</script>
+<script src="/js/branches.js"></script>
 </body>
 </html>

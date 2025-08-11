@@ -1,0 +1,122 @@
+/* ====== 색/기본 ====== */
+:root{
+  --bg:#0b57d0; --fg:#0f172a; --muted:#667085; --line:#e7e9ee;
+  --card:#fff; --brand:#0b57d0; --brand-weak:#eff4ff;
+  --accent:#2563eb; --accent-weak:#eef2ff; --danger:#b00020;
+}
+*{box-sizing:border-box}
+
+/* 필수: 폰트/컬러 고정 */
+body{
+  font-family: 'Pretendard', sans-serif;
+  margin:0;
+  padding:0;
+  color:#222;
+  background:#f7f9ff;
+}
+
+/* (참고) html 기본값은 건드리지 않음 — body 우선 */
+html{margin:0;padding:0}
+
+/* ====== 헤더/컨테이너 ====== */
+.hero{
+  background:linear-gradient(135deg,#0b57d0 0%,#2563eb 60%,#60a5fa 100%);
+  color:#fff; padding:28px 16px;
+}
+.hero__inner{max-width:1080px;margin:0 auto}
+.hero h1{margin:0 0 6px;font-size:22px;font-weight:900;letter-spacing:.2px}
+.hero__sub{margin:0;color:#dbeafe}
+
+.container{max-width:1080px;margin:20px auto;padding:0 16px}
+
+.footer{padding:28px 0;background:#f3f6ff;border-top:1px solid var(--line)}
+.footer__inner{display:flex;align-items:center;gap:12px}
+
+/* ====== 패널 ====== */
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px}
+.card--panel{padding:18px;box-shadow:0 8px 26px rgba(2,14,44,.06)}
+
+.panel__row{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.panel__loc{display:flex;flex-direction:column;gap:6px;min-width:240px}
+
+.muted{color:var(--muted)}
+.subtle{font-size:13px}
+
+.pill{
+  display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:8px 12px;
+  border:1px solid var(--line);background:#fff;color:#0b336d;font-weight:700
+}
+.pill--filled{background:var(--brand-weak);border-color:transparent;color:#0b336d}
+
+/* 필드/컨트롤 */
+.panel__controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.field{display:flex;flex-direction:column;gap:6px}
+.field__label{font-size:12px;color:var(--muted);font-weight:700}
+.field__input{position:relative;display:flex;align-items:center}
+.field .unit{position:absolute;right:10px;color:var(--muted);font-size:13px}
+input[type=number]{
+  padding:10px 32px 10px 12px;border:1px solid var(--line);border-radius:12px;width:120px;
+  background:#fff; font-weight:700
+}
+
+/* 버튼 */
+.btn{
+  border:0;border-radius:12px;padding:12px 16px;font-weight:900;cursor:pointer;
+  transition:transform .06s ease, box-shadow .2s ease
+}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(2,14,44,.08)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.btn--primary{background:var(--bg);color:#fff}
+
+.spinner{display:inline-block;width:16px;height:16px;border:3px solid rgba(255,255,255,.8);
+  border-right-color:transparent;border-radius:50%;animation:spin .8s linear infinite;margin-left:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ====== 알럿/빈 상태 ====== */
+.alert{margin-top:12px;padding:12px 14px;border-radius:12px;font-weight:800}
+.alert--error{background:#fde7eb;color:var(--danger);border:1px solid #ffd7dd}
+.empty{color:var(--muted);margin-top:12px}
+
+/* ====== 리스트 아이템 ====== */
+.list{margin-top:16px;display:grid;gap:14px}
+
+.item{
+  border:1px solid var(--line);border-radius:14px;background:#fff;padding:14px 12px;
+  display:grid;grid-template-columns:auto 1fr auto;gap:14px;
+  transition:box-shadow .18s ease, transform .06s ease
+}
+.item:hover{box-shadow:0 10px 24px rgba(2,14,44,.08)}
+.rank{
+  width:30px;height:30px;border-radius:999px;background:#eef2ff;color:#3730a3;
+  display:flex;align-items:center;justify-content:center;font-weight:900
+}
+
+.name{font-size:16px;font-weight:900;display:flex;gap:8px;align-items:center}
+.name a{
+  color:#0b3ca8;text-decoration:none;display:inline-block;
+  max-width:100%;                 /* 카드 폭 전부 사용 */
+  white-space:normal;             /* ← 줄바꿈 허용 */
+  word-break:keep-all;            /* ← 단어 단위로 줄바꿈 */
+  line-height:1.35;
+}
+.name a:hover{text-decoration:underline}
+
+.addr{font-size:12.5px;color:var(--muted);margin-top:4px}
+.meta{display:flex;gap:16px;align-items:center;margin-top:8px;font-size:14px;flex-wrap:wrap}
+.meta .dist{font-weight:900}
+.meta .muted{white-space:nowrap}
+
+/* 액션 버튼 */
+.actions{display:flex;gap:8px;align-items:center}
+.link{
+  border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 14px;
+  font-weight:800;color:#0b57d0;text-decoration:none;white-space:nowrap
+}
+.link:hover{background:#f6f8ff}
+
+/* 반응형 */
+@media (max-width:700px){
+  .item{grid-template-columns:1fr;gap:10px}
+  .actions{justify-content:flex-start}
+}
