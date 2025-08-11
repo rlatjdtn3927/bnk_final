@@ -11,10 +11,11 @@ public class AccountNumberGenerator {
 	
 	private final JdbcTemplate jdbcTemplate;
 	
-	private static final String SQL_NEXT_ACCT_NO =
-		    "SELECT 'IRP-' || TO_CHAR(SYSDATE,'YYYYMMDD') || '-' || LPAD(IRP_ACCT_NO_SEQ.NEXTVAL, 6, '0') FROM DUAL";
+	// YYYYMMDD(8자리) + LPAD(seq, 5, '0') = 총 13자리
+    private static final String SQL =
+        "SELECT TO_CHAR(SYSDATE,'YYYYMMDD') || LPAD(IRP_ACCT_NO_SEQ.NEXTVAL, 5, '0') FROM DUAL";
 
-		public String next() {
-		    return jdbcTemplate.queryForObject(SQL_NEXT_ACCT_NO, String.class);
-		}
+    public String next() {
+        return jdbcTemplate.queryForObject(SQL, String.class);
+    }
 }

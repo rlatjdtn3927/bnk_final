@@ -41,7 +41,7 @@ public class IrpJoinEntity {
     
 	//운용상품
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "product_id", nullable=false)
+	@JoinColumn(name = "product_id", nullable=true)
     private ProductMaster productId;	// FK (product_master)
 	
 	//연 납입 한도 금액
@@ -64,7 +64,11 @@ public class IrpJoinEntity {
     //IRP계좌번호 FK
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "irp_acct_no", referencedColumnName = "irp_acct_no", unique = true)
-    private IrpAccount irpAcctNo;
+    private IrpAccount irpAccount;
+    
+    //관리영업점
+    @Column(name="branch_office", length=50)
+    private String branchOffice;
 
     @Column(name="reg_date", nullable=false)
     private LocalDate regDate;

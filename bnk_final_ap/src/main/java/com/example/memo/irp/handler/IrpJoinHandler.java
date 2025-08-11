@@ -49,15 +49,29 @@ public class IrpJoinHandler implements TcpMessageHandler {
 	            joinService.saveRetirePurpose(joinId, retireDate, reason, corpName, amt, doc);
 	            return "OK";
 			}
-			case IRP_JOIN_TRANSFER_PURPOSE: {
-				Long joinId = data.get("joinId").asLong();
-				String prevBank = data.get("prevBank").asText();
-				String prevAccount = data.get("prevAccount").asText();
-				Long transferAmt = data.get("transferAmt").asLong();
-				String transferDoc = data.get("transferDoc").asText();
-				joinService.saveTransferPurpose(joinId, prevBank, prevAccount, transferAmt, transferDoc);
-				return "OK";
-			}
+			case IRP_JOIN_CREATE_DRAFT: {	// step1: 초안 생성
+                Long userId = data.get("userId").asLong();
+                String purpose = data.get("joinPurpose").asText();
+                Long joinId = joinService.createDraft(userId, purpose);
+                return mapper.createObjectNode().put("joinId", joinId);
+            }
+			case IRP_JOIN_UPDATE_CONTRACT: {	// step3-2: 계약정보 업데이트
+                Long joinId = data.get("joinId").asLong();
+                Long annual = data.path("annualContribAmt").asLong(0);
+                Long news   = data.path("newContribAmt").asLong(0);
+                //String contractNo = data.get("contractNo").asText();
+                String acctNo     = data.get("acctNo").asText();
+                String acctPwd = data.get("acctPwd").asText();
+                String branch     = data.path("branchOffice").asText();
+                joinService.updateContract(joinId, annual, news, /*contractNo,*/ acctNo, branch, acctPwd);
+                return "OK";
+            }
+			case IRP_JOIN_UPDATE_PRODUCT: {		// step4: 상품 저장
+                Long joinId = data.get("joinId").asLong();
+                String productId = data.get("productId").asText();
+                joinService.updateJoinProduct(joinId, productId);
+                return "OK";
+            }
 			case IRP_JOIN_COMPLETE: { // 가입완료 → IRP계좌 생성
                 Long joinId = data.get("joinId").asLong();
                 String irpPwd = data.get("irpPwd").asText();

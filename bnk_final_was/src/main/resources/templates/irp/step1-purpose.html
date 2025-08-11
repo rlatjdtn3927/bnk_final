@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>IRP가입하기 - 가입목적 선택</title>
+</head>
+<body>
+<input type="hidden" id="userId" th:value="${testUserId}"/>
+<div class="grid">
+  <button class="tile blue" data-purpose="세액공제">
+    <div class="title">연말정산 세액공제</div><div class="sub">개인 적립금 입금</div>
+  </button>
+  <button class="tile green" data-purpose="퇴직금수령">
+    <div class="title">퇴직금 수령</div><div class="sub">퇴직금 입금</div>
+  </button>
+</div>
+
+<script>
+  
+</script>
+</body>
+</html>
