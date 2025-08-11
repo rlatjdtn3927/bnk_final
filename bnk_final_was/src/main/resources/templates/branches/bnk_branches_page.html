@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8" />
   <title>부산은행 인근 지점 찾기</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="/css/branches.css" />
+   <link rel="stylesheet" th:href="@{/css/branches.css}" href="/css/branches.css" />
 </head>
 <body>
 <header class="header">
@@ -42,6 +42,6 @@
   © BNK 안내 데모 · 지도 링크는 외부 서비스로 이동합니다.
 </footer>
 
-<script src="/js/branches.js"></script>
+<script th:src="@{/js/branches.js}" src="/js/branches.js" defer></script>
 </body>
 </html>

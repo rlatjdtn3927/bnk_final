@@ -25,7 +25,7 @@ public class ChatbotController {
     private final TcpClientService tcpService;
     private final ObjectMapper objectMapper;
 
-    @GetMapping("/")
+    @GetMapping("/chatbot")
     public String mainPage() {
         return "chatbot/index";
     }

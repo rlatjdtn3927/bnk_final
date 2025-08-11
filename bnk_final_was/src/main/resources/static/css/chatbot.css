@@ -1,0 +1,31 @@
+/* 기본 폰트/색 (원문 스타일 유지) */
+body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+
+/* 헤더/레이아웃 */
+header { background:#2b4fff; color:#fff; padding:12px 24px; }
+main   { max-width:700px; margin:40px auto; }
+
+/* 버튼 */
+.btn{ padding:8px 16px; border:none; border-radius:6px; cursor:pointer; }
+.btn-primary  { background:#2b4fff; color:#fff; }
+.btn-secondary{ background:#666;    color:#fff; }
+
+/* 채팅 박스 */
+#chatBox{
+  border:1px solid #ccc; border-radius:8px; height:400px;
+  padding:12px; overflow-y:auto; margin-top:12px;
+}
+
+/* 말풍선 */
+.bubble.user   { text-align:right; }
+.bubble.assist { text-align:left;  color:#333; }
+.bubble span{
+  display:inline-block; padding:8px 12px; border-radius:18px;
+  margin:4px 0; max-width:80%;
+}
+.user   span{ background:#2b4fff; color:#fff; }
+.assist span{ background:#e5e5e5; }
+
+/* 입력 폼 */
+#chatForm{ display:flex; gap:8px; margin-top:12px; }
+#question{ flex:1; padding:8px; border:1px solid #bbb; border-radius:6px; }

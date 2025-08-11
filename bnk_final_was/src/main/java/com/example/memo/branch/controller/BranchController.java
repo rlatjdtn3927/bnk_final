@@ -6,6 +6,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.example.memo.branch.dto.BranchNearbyRequest;
@@ -19,13 +20,14 @@ import lombok.RequiredArgsConstructor;
 
 @Controller
 @RequiredArgsConstructor
+@RequestMapping("/branches")
 public class BranchController {
 
     private final TcpClientService tcpService;
     private final ObjectMapper objectMapper;
 
-    // 프런트가 호출하는 엔드포인트 (POST /branches/nearby)
-    @PostMapping("/branches/nearby")
+    // 프런트가 호출하는 엔드포인트 (/branches/nearby)
+    @PostMapping("/nearby")
     @ResponseBody
     public ResponseEntity<?> nearby(@RequestBody BranchNearbyRequest req) {
         JsonNode data = objectMapper.convertValue(req, JsonNode.class);
@@ -34,7 +36,9 @@ public class BranchController {
         return ResponseEntity.status(HttpStatus.OK).body(tcpService.sendMessage(msg));
     }
 
-    // 페이지 라우팅(이미 있으면 생략)
-    @GetMapping("/branches/page")
-    public String page() { return "branches/page"; }
+    //페이지 이동
+    @GetMapping("/page")
+    public String page() { 
+    	return "branches/bnk_branches_page"; 
+    }
 }
