@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,13 +16,24 @@ import org.springframework.stereotype.Service;
 import com.example.memo.company.dto.DcMemberRegisterResultDto;
 import com.example.memo.company.dto.SubscriberDto;
 import com.example.memo.company.dto.SubscriberListDto;
+import com.example.memo.jpa.entity.company.DcAccount;
+import com.example.memo.jpa.entity.company.DcAccountRequest;
 import com.example.memo.jpa.entity.company.DcMember;
 import com.example.memo.jpa.entity.company.DcMemberStatus;
+import com.example.memo.jpa.repository.company.DcAccountRepository;
+import com.example.memo.jpa.repository.company.DcAccountRequestRepository;
 import com.example.memo.jpa.repository.company.DcMemberRepository;
 import com.example.memo.jpa.repository.company.DcMemberStatusRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -36,9 +48,13 @@ public class SubscriberService {
     private final DcMemberStatusRepository dcMemberStatusRepository;
     private final CryptoService cryptoService; // 암호화 서비스
     private final ObjectMapper objectMapper;
-
+    private final DcAccountRepository dcAccountRepository;
+    private final DcAccountRequestRepository dcAccountRequestRepository;
+    private final EntityManager em;
+    
+    
     /**
-     * 엑셀 업로드된 가입자 데이터의 유효성을 검증합니다.
+     * 엑셀 업로드된 가입자 데이터 유효성 검증
      */
     public List<Map<String, Object>> validateSubscribers(JsonNode data) throws Exception {
         List<SubscriberDto> dtoList = objectMapper.readerForListOf(SubscriberDto.class).readValue(data);
@@ -73,7 +89,7 @@ public class SubscriberService {
     }
 
     /**
-     * 검증이 완료된 가입자 정보를 DB에 최종 등록합니다.
+     * 검증이 완료된 가입자 정보를 DB에 최종 등록
      */
     @Transactional
     public DcMemberRegisterResultDto dcMemberRegister(JsonNode data) throws Exception {
@@ -117,33 +133,43 @@ public class SubscriberService {
     }
 
     /**
-     * 특정 회사의 가입자 명부 목록을 조회합니다.
+     * 조건에 맞는 회사의 가입자 명부 목록과 '계좌 상태'를 함께 조회
+     * @param data 필터 조건 (companyId, name, status)
+     * @return 가입자 정보 DTO 목록
      */
     public List<SubscriberListDto> getSubscribers(JsonNode data) {
         Long companyId = data.get("companyId").asLong();
-        String statusFilter = data.get("status").asText("ALL"); // 1. status 값 추출
-        log.info("✅ [AP] companyId: {}, status: {}", companyId, statusFilter);
+        String name = data.get("name").asText(null);
+        String employmentStatus = data.get("status").asText("ALL");
+        String accountStatus = data.get("accountStatus").asText("ALL");
 
-        List<DcMember> members;
+        // 1. 서비스 내의 private 메서드를 호출하여 조건에 맞는 가입자 목록 조회
+        List<DcMember> members = findMembersByCriteria(companyId, name, employmentStatus, accountStatus);
 
-        // 2. status 값에 따라 다른 메소드 호출
-        if ("ACTIVE".equals(statusFilter)) {
-            // DB에 저장된 실제 상태값("재직")으로 조회
-            members = dcMemberRepository.findMembersByStatus(companyId, "재직");
-        } else if ("INACTIVE".equals(statusFilter)) {
-            // DB에 저장된 실제 상태값("퇴직")으로 조회
-            members = dcMemberRepository.findMembersByStatus(companyId, "퇴직");
-        } else { // "ALL" 또는 그 외의 모든 경우
-            members = dcMemberRepository.findMembersWithStatusByCompanyId(companyId);
+        if (members.isEmpty()) {
+            return new ArrayList<>();
         }
-        
-        // 3. 조회된 members를 dtoList로 변환하는 로직은 이전과 동일
-        List<SubscriberListDto> dtoList = new ArrayList<>();
-        log.info("✅ [AP] DB 조회 결과 건수: {} 건", members.size());
-        for (DcMember member : members) {
-            SubscriberListDto dto = new SubscriberListDto();
 
-            // 주민번호 복호화 및 생년월일 변환
+        // 2. N+1 방지를 위한 정보 미리 조회
+        List<Long> memberIds = members.stream().map(DcMember::getId).collect(Collectors.toList());
+        Map<Long, DcAccount> accountMap = dcAccountRepository.findByDcMemberIdIn(memberIds).stream()
+                .collect(Collectors.toMap(acc -> acc.getDcMember().getId(), acc -> acc));
+        Map<Long, DcAccountRequest> pendingRequestMap = dcAccountRequestRepository.findByDcMemberIdInAndStatus(memberIds, "PENDING").stream()
+                .collect(Collectors.toMap(req -> req.getDcMember().getId(), req -> req, (r1, r2) -> r1));
+
+        // 3. DTO 조립
+        return members.stream().map(member -> {
+            SubscriberListDto dto = new SubscriberListDto();
+            dto.setMemberId(member.getId());
+
+            if (accountMap.containsKey(member.getId())) {
+                dto.setAccountStatus("개설 완료");
+            } else if (pendingRequestMap.containsKey(member.getId())) {
+                dto.setAccountStatus("처리중");
+            } else {
+                dto.setAccountStatus("신청 가능");
+            }
+
             try {
                 String decryptedRrn = cryptoService.decrypt(member.getRrn());
                 dto.setBirthDate(formatBirthdateFromServer(decryptedRrn));
@@ -151,14 +177,10 @@ public class SubscriberService {
                 log.error("주민번호 복호화 실패 (Member ID: {}): {}", member.getId(), e.getMessage());
                 dto.setBirthDate("복호화 오류");
             }
-
-            // DcMember 정보 매핑
             dto.setName(member.getName());
             dto.setStartDate(member.getStartDate());
             dto.setAnnualSalary(member.getAnnualSalary());
             dto.setBaseDate(member.getBaseDate());
-
-            // DcMemberStatus 정보 매핑 (null-safe)
             if (member.getDcMemberStatus() != null) {
                 DcMemberStatus status = member.getDcMemberStatus();
                 dto.setStatus(status.getStatus());
@@ -169,11 +191,8 @@ public class SubscriberService {
                 dto.setDbRatio(status.getDbRatio());
                 dto.setDcRatio(status.getDcRatio());
             }
-            
-            dtoList.add(dto);
-        }
-
-        return dtoList;
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     /**
@@ -215,5 +234,57 @@ public class SubscriberService {
         String day = birthPart.substring(4, 6);
 
         return String.format("%s-%s-%s", year, month, day);
+    }
+    
+    private List<DcMember> findMembersByCriteria(Long companyId, String name, String employmentStatus, String accountStatus) {
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<DcMember> cq = cb.createQuery(DcMember.class);
+        Root<DcMember> member = cq.from(DcMember.class);
+        Join<DcMember, DcMemberStatus> statusJoin = member.join("dcMemberStatus");
+        
+        List<Predicate> predicates = new ArrayList<>();
+        predicates.add(cb.equal(member.get("companyId"), companyId));
+
+        if (name != null && !name.isBlank()) {
+            predicates.add(cb.like(member.get("name"), "%" + name + "%"));
+        }
+        if ("ACTIVE".equals(employmentStatus)) {
+            predicates.add(cb.equal(statusJoin.get("status"), "재직"));
+        } else if ("INACTIVE".equals(employmentStatus)) {
+            predicates.add(cb.equal(statusJoin.get("status"), "퇴직"));
+        }
+        if (accountStatus != null && !"ALL".equals(accountStatus)) {
+            if ("COMPLETED".equals(accountStatus)) {
+                predicates.add(cb.exists(subqueryForAccount(cb, cq, member)));
+            } else if ("PENDING".equals(accountStatus)) {
+                predicates.add(cb.exists(subqueryForRequest(cb, cq, member, "PENDING")));
+                predicates.add(cb.not(cb.exists(subqueryForAccount(cb, cq, member))));
+            } else if ("POSSIBLE".equals(accountStatus)) {
+                predicates.add(cb.not(cb.exists(subqueryForAccount(cb, cq, member))));
+                predicates.add(cb.not(cb.exists(subqueryForRequest(cb, cq, member, "PENDING"))));
+            }
+        }
+        
+        cq.where(predicates.toArray(new Predicate[0]));
+        return em.createQuery(cq).getResultList();
+    }
+
+    private Subquery<Integer> subqueryForAccount(CriteriaBuilder cb, CriteriaQuery<?> mainQuery, Root<DcMember> member) {
+        Subquery<Integer> subquery = mainQuery.subquery(Integer.class);
+        Root<DcAccount> account = subquery.from(DcAccount.class);
+        subquery.select(cb.literal(1)).where(cb.equal(account.get("dcMember"), member));
+        return subquery;
+    }
+
+    private Subquery<Integer> subqueryForRequest(CriteriaBuilder cb, CriteriaQuery<?> mainQuery, Root<DcMember> member, String status) {
+        Subquery<Integer> subquery = mainQuery.subquery(Integer.class);
+        Root<DcAccountRequest> request = subquery.from(DcAccountRequest.class);
+        subquery.select(cb.literal(1)).where(
+            cb.and(
+                cb.equal(request.get("dcMember"), member),
+                cb.equal(request.get("status"), status)
+            )
+        );
+        return subquery;
     }
 }

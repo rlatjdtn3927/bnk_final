@@ -21,4 +21,12 @@ public interface DcMemberRepository extends JpaRepository<DcMember, Long> {
     @Query("SELECT m FROM DcMember m JOIN FETCH m.dcMemberStatus s WHERE m.companyId = :companyId AND s.status = :status")
     List<DcMember> findMembersByStatus(@Param("companyId") Long companyId, @Param("status") String status);
     
+    // 이름으로 검색
+    List<DcMember> findByCompanyIdAndNameContaining(Long companyId, String name);
+    
+    // 이름 + 재직상태로 검색
+    @Query("SELECT m FROM DcMember m JOIN m.dcMemberStatus s WHERE m.companyId = :companyId AND m.name LIKE %:name% AND s.status = :status")
+    List<DcMember> findByCompanyIdAndNameAndStatus(@Param("companyId") Long companyId, 
+                                                   @Param("name") String name, 
+                                                   @Param("status") String status);
 }

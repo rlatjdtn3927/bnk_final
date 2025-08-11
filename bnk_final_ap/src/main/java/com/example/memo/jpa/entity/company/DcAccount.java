@@ -13,9 +13,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "dc_account")
+@Setter @Getter
 public class DcAccount {
 
     @Id
@@ -26,7 +29,7 @@ public class DcAccount {
     private String accountNo;
 
     @Column(name = "status")
-    private String status; // 예: "ACTIVE", "CLOSED"
+    private String status; 
 
     @Column(name = "balance")
     private Long balance;

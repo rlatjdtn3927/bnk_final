@@ -7,11 +7,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.memo.company.dto.AccountRequestDto;
+import com.example.memo.company.dto.CompanyLoginResponseDto;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpClientService;
 import com.example.memo.tcp_common.TcpMessage;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import jakarta.servlet.http.HttpSession;
 
 @RestController
 @RequestMapping("/company/dc")
@@ -26,18 +29,23 @@ public class AccountRequestController {
     }
 
     @PostMapping("/account/request")
-    public ResponseEntity<?> requestAccountOpening(@RequestBody AccountRequestDto requestDto) {
-        // 1. 실행할 Command 정의
+    public ResponseEntity<?> requestAccountOpening(@RequestBody AccountRequestDto requestDto, HttpSession session) {
+        
+        // 1. 세션에서 로그인 정보를 가져와 요청자 ID 확인
+        CompanyLoginResponseDto loginManager = (CompanyLoginResponseDto) session.getAttribute("loginManager");
+        if (loginManager == null) {
+            return ResponseEntity.status(401).body("세션이 만료되었습니다. 다시 로그인해주세요.");
+        }
+        Long requestedById = loginManager.getManagerId(); // 세션에서 기업 담당자의 ID 추출
+
+        // 2. AP에 보낼 데이터에 요청자 ID를 추가
+        ObjectNode data = objectMapper.convertValue(requestDto, ObjectNode.class);
+        data.put("requestedById", requestedById);
+
+        // 3. TCP 메시지를 생성하고 전송
         Command cmd = Command.ACCOUNT_REQUEST_CREATE;
-
-        // 2. DTO를 JsonNode 데이터로 변환
-        JsonNode data = objectMapper.convertValue(requestDto, JsonNode.class);
-
-        // 3. TcpMessage 객체 생성
         TcpMessage message = new TcpMessage(cmd, data);
-
-        // 4. TCP 서비스를 통해 AP로 메시지 전송 및 결과 반환
-        Object response = tcpService.sendMessage(message); // sendMessage는 TcpMessage를 직렬화하여 전송
+        Object response = tcpService.sendMessage(message);
         
         return ResponseEntity.ok(response);
     }

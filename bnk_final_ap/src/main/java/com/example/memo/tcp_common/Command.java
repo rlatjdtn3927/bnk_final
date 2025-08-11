@@ -12,6 +12,11 @@ public enum Command {
     SUBSCRIBER_REGISTER, // 검증 완료된 데이터 등록용
 	SUBSCRIBER_GET_LIST, // 가입자 등록 조회
 	SUBSCRIBER_GET_LIST_SUCCESS, // 가입자 등로 성공
-	BANK_EMPLOYEE_LOGIN,
-    ACCOUNT_REQUEST_CREATE;
+	BANK_EMPLOYEE_LOGIN, // 은행 직원(관리자) 로그인
+    ACCOUNT_REQUEST_CREATE, // DC 계좌 개설 요청
+    ACCOUNT_REQUEST_GET_PENDING,  // 승인 대기중인 요청 목록 조회
+    ACCOUNT_REQUEST_APPROVE_BULK,  // 일괄 승인
+    ACCOUNT_REQUEST_REJECT_BULK,   // 일괄 거절
+	ACCOUNT_GET_DETAILS; // 계좌 상세 조회
+	
 }

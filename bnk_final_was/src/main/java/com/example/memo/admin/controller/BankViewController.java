@@ -12,6 +12,11 @@ public class BankViewController {
 	public String loginPage() {
 		return "admin/admin-login"; 
 	}
+	
+	@GetMapping("/request/pending")
+	public String dcRequestPage() {
+		return "admin/request-approval";
+	}
 
     @GetMapping
     public String mainPage() {

@@ -4,7 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Getter @Setter
-public class LoginRequestDto {
-    private String username;
+public class BankEmployeeLoginDto {
+    private Long id;
+	private String username;
     private String password;
 }

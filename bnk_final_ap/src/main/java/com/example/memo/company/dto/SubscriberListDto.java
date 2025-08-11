@@ -8,6 +8,10 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class SubscriberListDto {
+	
+	private Long memberId;
+	private String accountStatus;
+	
     // DcMember 정보
     private String name;
     private String birthDate;

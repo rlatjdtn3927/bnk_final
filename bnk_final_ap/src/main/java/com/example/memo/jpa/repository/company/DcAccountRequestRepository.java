@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import com.example.memo.jpa.entity.company.DcAccountRequest;
+import com.example.memo.jpa.entity.company.DcMember;
 
 @Repository
 public interface DcAccountRequestRepository extends JpaRepository<DcAccountRequest, Long> {
@@ -18,5 +19,13 @@ public interface DcAccountRequestRepository extends JpaRepository<DcAccountReque
      * @return 해당 상태의 요청 목록
      */
     List<DcAccountRequest> findByStatus(String status);
+    boolean existsByDcMemberAndStatus(DcMember dcMember, String status);
+    /**
+     * 여러 가입자 ID와 특정 상태에 해당하는 모든 요청 정보를 조회합니다.
+     * @param memberIds 가입자 ID 목록
+     * @param status 조회할 상태 (예: "PENDING")
+     * @return DcAccountRequest 목록
+     */
+    List<DcAccountRequest> findByDcMemberIdInAndStatus(List<Long> memberIds, String status);
 
 }

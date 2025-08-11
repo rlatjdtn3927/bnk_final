@@ -5,6 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -101,30 +102,35 @@ public class SubscriberController {
     
     @GetMapping("/list")
     public ResponseEntity<?> getSubscriberList(
-            @RequestParam(name = "status", defaultValue = "ALL") String status, // 1. status 파라미터 추가
+            // 1. @RequestParam에 value="파라미터명"을 명시적으로 추가합니다.
+            @RequestParam(value = "name", required = false, defaultValue = "") String name,
+            @RequestParam(value = "status") String employmentStatus,
+            // 2. accountStatus 파라미터를 추가로 받습니다.
+            @RequestParam(value = "accountStatus") String accountStatus,
             HttpSession session) {
         
         try {
-            // 세션에서 companyId 추출
             CompanyLoginResponseDto loginManager = (CompanyLoginResponseDto) session.getAttribute("loginManager");
             if (loginManager == null) {
-                return ResponseEntity.status(401).body("세션이 만료되었습니다.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
             }
             Long companyId = loginManager.getCompanyId();
 
-            // 2. AP에 보낼 TCP 메시지에 status도 추가
             ObjectNode data = objectMapper.createObjectNode();
             data.put("companyId", companyId);
-            data.put("status", status); // status 값을 데이터에 포함
+            data.put("name", name);
+            data.put("status", employmentStatus);
+            // 3. AP 서버로 보낼 데이터에 accountStatus를 추가합니다.
+            data.put("accountStatus", accountStatus);
+            
             TcpMessage msg = new TcpMessage(Command.SUBSCRIBER_GET_LIST, data);
-
-            // AP에 메시지 전송 및 응답 반환
             Object response = tcpService.sendMessage(msg);
+            
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("가입자 명부 조회 중 오류 발생", e);
-            return ResponseEntity.internalServerError().body("가입자 명부 조회 중 오류가 발생했습니다.");
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 오류가 발생했습니다.");
         }
     }
 }
