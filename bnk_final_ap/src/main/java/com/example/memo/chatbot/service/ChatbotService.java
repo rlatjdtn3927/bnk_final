@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 public class ChatbotService {
 
     // 🔄 VectorStore 제거 —> 직접 pgvector 질의
-    private final JdbcTemplate pgJdbcTemplate;              // @Qualifier("pgJdbcTemplate")로 주입된 것
+    private final JdbcTemplate pgJdbcTemplate;   // @Qualifier("pgJdbcTemplate") 로 주입
     private final ChatModel chatModel;
     private final ChatLogRepository chatLogRepository;
     private final EmbeddingModel embeddingModel;
@@ -40,6 +40,15 @@ public class ChatbotService {
     private static final double SIMILARITY_THRESHOLD = 0.99; // 캐시 유사도 기준
     private static final int TOP_K = 5;                      // 유사 문서 개수
 
+    // ✅ “무응답” 메시지 상수 & 헬퍼
+    private static final String NO_INFO_MSG = "문서에 해당 정보가 없어 답변할 수 없습니다.";
+
+    private boolean isNoInfoAnswer(String s) {
+        if (s == null) return false;
+        String t = s.replace("\"", "").trim();
+        return t.equalsIgnoreCase(NO_INFO_MSG);
+    }
+
     /** 외부 호출 진입점 */
     public String getChatResponse(String question) {
         String trimmedQ = (question == null) ? "" : question.trim();
@@ -47,7 +56,7 @@ public class ChatbotService {
             return "질문이 비어 있습니다. 알고 싶은 내용을 입력해 주세요.";
         }
 
-        // 1) 질문 임베딩 → 캐시 유사 질문 검색 (Oracle)
+        // 1) 질문 임베딩 → 캐시 유사 질문 검색 (단, 무응답 레코드는 캐시 제외)
         List<Double> qVec = embedToList(trimmedQ);
         Optional<ChatLog> cached = findSimilarCachedAnswer(qVec);
         if (cached.isPresent()) {
@@ -60,6 +69,11 @@ public class ChatbotService {
         List<Document> similarDocs = querySimilarDocs(trimmedQ, TOP_K);
         String context = similarDocs.stream().map(Document::getText).collect(Collectors.joining("\n\n"));
 
+        // ⚠️ 컨텍스트가 비면 모델 호출/저장 모두 스킵하고 바로 무응답 반환
+        if (context == null || context.isBlank()) {
+            return NO_INFO_MSG;
+        }
+
         // 3) 프롬프트 생성
         Prompt prompt = buildPrompt(context, trimmedQ);
 
@@ -67,8 +81,10 @@ public class ChatbotService {
         ChatResponse response = chatModel.call(prompt);
         String answer = safeExtractText(response);
 
-        // 5) 로그 저장 (Oracle)
-        saveChatLog(trimmedQ, qVec, answer, context);
+        // 5) 로그 저장 (✅ 무응답이면 저장하지 않음)
+        if (!isNoInfoAnswer(answer)) {
+            saveChatLog(trimmedQ, qVec, answer, context);
+        }
 
         return answer;
     }
@@ -125,12 +141,12 @@ public class ChatbotService {
     }
 
     // ==========================
-    // 임베딩/캐시 관련 (기존 로직 유지)
+    // 임베딩/캐시 관련
     // ==========================
     @SuppressWarnings("unchecked")
     private List<Double> embedToList(String text) {
         try {
-            // 1) embed(String) 대응 (버전 호환)
+            // (1) embed(String) 대응
             try {
                 Method m = embeddingModel.getClass().getMethod("embed", String.class);
                 Object raw = m.invoke(embeddingModel, text);
@@ -138,7 +154,7 @@ public class ChatbotService {
                 if (!coerced.isEmpty()) return coerced;
             } catch (NoSuchMethodException ignore) {}
 
-            // 2) embed(List<String>) 대응 (현행 Spring AI)
+            // (2) embed(List<String>) 대응
             try {
                 Method m2 = embeddingModel.getClass().getMethod("embed", List.class);
                 Object raw2 = m2.invoke(embeddingModel, Collections.singletonList(text));
@@ -150,7 +166,7 @@ public class ChatbotService {
                 }
             } catch (NoSuchMethodException ignore) {}
         } catch (Exception e) {
-            // swallow and return empty
+            // ignore
         }
         return Collections.emptyList();
     }
@@ -193,6 +209,9 @@ public class ChatbotService {
         double bestScore = -1.0;
 
         for (ChatLog log : logs) {
+            // ✅ 무응답 레코드는 캐시 후보에서 제외
+            if (isNoInfoAnswer(log.getAnswer())) continue;
+
             List<Double> existingVector = parseJsonToVector(log.getQuestionEmbed());
             if (existingVector.isEmpty() || existingVector.size() != questionVector.size()) continue;
 

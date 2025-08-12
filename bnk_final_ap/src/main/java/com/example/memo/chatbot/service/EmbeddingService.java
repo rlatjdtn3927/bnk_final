@@ -184,19 +184,27 @@ public class EmbeddingService {
         }
     }
     private void embedAndInsertBatchDirect(List<Document> batch) throws JsonProcessingException {
+    	//이번 배치에 포함된 모든 청크 텍스트만 뽑아서 리스트로 만듦(임베딩API에 한번에 보낼거기 때문에)
         List<String> texts = batch.stream().map(Document::getText).toList();
-     // 1) 배치 임베딩 호출  
+        // 1) 배치 임베딩 호출: 텍스트 여러 개를 한 번의 API 요청으로 임베딩합니다.
         var vectors = embeddingModel.embed(texts); // List<float[]> 또는 List<List<Double>>
+        
+        //안전장치: 임베딩 결과 개수와 입력 문서 개수가 다르면 바로 중단.
         if (vectors == null || vectors.size() != batch.size()) {
             throw new IllegalStateException(
                 "Embedding size mismatch: " + (vectors == null ? 0 : vectors.size()) + " vs " + batch.size()
             );
         }
 
-        // 2) PostgreSQL 배치 insert
+        // 2) PostgreSQL 배치 
+        //ON CONFLICT (id) DO NOTHING: 같은 id가 이미 있으면 무시 → 중복 저장 방지.
         final String sql = "INSERT INTO embedding (id, content, metadata, embedding) " +
                 "VALUES (?::uuid, ?, ?::jsonb, ?) ON CONFLICT (id) DO NOTHING";
         //벡터 DB 테이블 embedding(id, content, metadata, embedding)에 일괄 insert.
+        // 멀티-VALUES INSERT INTO ... VALUES (),(),(),(),();->한번에 처리
+        
+        //원래 vectorstore.add는 INSERT INTO VALUES ();,INSERT INTO VALUES ();,INSERT INTO VALUES ();
+        //이런식으로 INSERT됨
         pgJdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement ps, int i) throws SQLException {
