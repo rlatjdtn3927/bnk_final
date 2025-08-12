@@ -1,3 +1,4 @@
+// src/main/java/com/example/memo/chatbot/service/ChatbotService.java
 package com.example.memo.chatbot.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -11,14 +12,16 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
-import org.springframework.ai.vectorstore.SearchRequest;
-import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.memo.jpa.entity.ChatLog;
 import com.example.memo.jpa.repository.ChatLogRepository;
+import org.postgresql.util.PGobject;
 
 import java.lang.reflect.Method;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -26,14 +29,16 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ChatbotService {
 
-    private final VectorStore vectorStore;
+    // 🔄 VectorStore 제거 —> 직접 pgvector 질의
+    private final JdbcTemplate pgJdbcTemplate;              // @Qualifier("pgJdbcTemplate")로 주입된 것
     private final ChatModel chatModel;
     private final ChatLogRepository chatLogRepository;
     private final EmbeddingModel embeddingModel;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private static final double SIMILARITY_THRESHOLD = 0.99;
+    private static final double SIMILARITY_THRESHOLD = 0.99; // 캐시 유사도 기준
+    private static final int TOP_K = 5;                      // 유사 문서 개수
 
     /** 외부 호출 진입점 */
     public String getChatResponse(String question) {
@@ -42,22 +47,17 @@ public class ChatbotService {
             return "질문이 비어 있습니다. 알고 싶은 내용을 입력해 주세요.";
         }
 
-        // 1) 질문 임베딩 → 캐시 유사 질문 검색
+        // 1) 질문 임베딩 → 캐시 유사 질문 검색 (Oracle)
         List<Double> qVec = embedToList(trimmedQ);
         Optional<ChatLog> cached = findSimilarCachedAnswer(qVec);
         if (cached.isPresent()) {
             ChatLog hit = cached.get();
-            System.out.printf("🎯 캐시 히트 (%.2f): %s%n", SIMILARITY_THRESHOLD, hit.getQuestionText());
+            System.out.printf("🎯 캐시 히트 (≥%.2f): %s%n", SIMILARITY_THRESHOLD, hit.getQuestionText());
             return hit.getAnswer();
         }
 
-        // 2) 문서 검색
-        List<Document> similarDocs = vectorStore.similaritySearch(
-                SearchRequest.builder()
-                        .query(trimmedQ)
-                        .topK(5)
-                        .build()
-        );
+        // 2) pgvector에서 코사인 거리로 TOP_K 검색
+        List<Document> similarDocs = querySimilarDocs(trimmedQ, TOP_K);
         String context = similarDocs.stream().map(Document::getText).collect(Collectors.joining("\n\n"));
 
         // 3) 프롬프트 생성
@@ -67,18 +67,70 @@ public class ChatbotService {
         ChatResponse response = chatModel.call(prompt);
         String answer = safeExtractText(response);
 
-        // 5) 로그 저장
+        // 5) 로그 저장 (Oracle)
         saveChatLog(trimmedQ, qVec, answer, context);
 
         return answer;
     }
 
     // ==========================
-    // 임베딩/캐시 관련
+    // pgvector 유사도 검색 (코사인)
+    // ==========================
+    private List<Document> querySimilarDocs(String question, int k) {
+        // 질문 임베딩 (배치 1건)
+        List<?> vecs = embeddingModel.embed(Collections.singletonList(question));
+        if (vecs == null || vecs.isEmpty()) return Collections.emptyList();
+        Object vec = vecs.get(0);
+
+        // 벡터 리터럴 생성: [0.12,0.34,...]
+        String vectorLiteral = toVectorLiteral(vec);
+
+        // 코사인 거리 ORDER BY (작을수록 유사) — pgvector 연산자: <=>
+        final String sql = """
+            SELECT id, content, metadata
+            FROM embedding
+            ORDER BY embedding <=> ?    -- cosine distance
+            LIMIT ?
+            """;
+
+        PGobject vectorObject = new PGobject();
+        try {
+            vectorObject.setType("vector");
+            vectorObject.setValue(vectorLiteral);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to set vector parameter", e);
+        }
+
+        return pgJdbcTemplate.query(sql,
+                ps -> {
+                    ps.setObject(1, vectorObject);
+                    ps.setInt(2, k);
+                },
+                (rs, rowNum) -> mapRowToDocument(rs)
+        );
+    }
+
+    private Document mapRowToDocument(ResultSet rs) throws SQLException {
+        String id = rs.getString("id");
+        String content = rs.getString("content");
+        String metadataJson = rs.getString("metadata");
+
+        Map<String, Object> metadata = new HashMap<>();
+        if (metadataJson != null && !metadataJson.isBlank()) {
+            try {
+                metadata = objectMapper.readValue(metadataJson, new TypeReference<Map<String, Object>>() {});
+            } catch (Exception ignore) {}
+        }
+        return new Document(id, content, metadata);
+    }
+
+    // ==========================
+    // 임베딩/캐시 관련 (기존 로직 유지)
     // ==========================
     @SuppressWarnings("unchecked")
     private List<Double> embedToList(String text) {
         try {
+            // 1) embed(String) 대응 (버전 호환)
             try {
                 Method m = embeddingModel.getClass().getMethod("embed", String.class);
                 Object raw = m.invoke(embeddingModel, text);
@@ -86,6 +138,7 @@ public class ChatbotService {
                 if (!coerced.isEmpty()) return coerced;
             } catch (NoSuchMethodException ignore) {}
 
+            // 2) embed(List<String>) 대응 (현행 Spring AI)
             try {
                 Method m2 = embeddingModel.getClass().getMethod("embed", List.class);
                 Object raw2 = m2.invoke(embeddingModel, Collections.singletonList(text));
@@ -96,7 +149,9 @@ public class ChatbotService {
                     }
                 }
             } catch (NoSuchMethodException ignore) {}
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            // swallow and return empty
+        }
         return Collections.emptyList();
     }
 
@@ -244,5 +299,40 @@ public class ChatbotService {
                 .context(context == null ? "" : context)
                 .createdAt(new Date())
                 .build());
+    }
+
+    // ==========================
+    // 유틸: pgvector 리터럴 변환
+    // ==========================
+    private String toVectorLiteral(Object vec) {
+        StringBuilder sb = new StringBuilder("[]");
+        if (vec == null) return "[]";
+        sb.setLength(1); // '['
+
+        if (vec instanceof double[] da) {
+            for (int i = 0; i < da.length; i++) { if (i>0) sb.append(','); sb.append(trim(da[i])); }
+        } else if (vec instanceof float[] fa) {
+            for (int i = 0; i < fa.length; i++) { if (i>0) sb.append(','); sb.append(trim(fa[i])); }
+        } else if (vec instanceof List<?> list) {
+            for (int i = 0; i < list.size(); i++) {
+                if (i>0) sb.append(',');
+                Object o = list.get(i);
+                double d = (o instanceof Number) ? ((Number) o).doubleValue() : Double.parseDouble(o.toString());
+                sb.append(trim(d));
+            }
+        } else {
+            throw new IllegalArgumentException("Unknown embedding vector type: " + vec);
+        }
+        return sb.append(']').toString();
+    }
+
+    private String trim(double v) {
+        String s = Double.toString(v);
+        if (s.indexOf('E') >= 0 || s.indexOf('e') >= 0) return s;
+        if (s.indexOf('.') < 0) return s;
+        int end = s.length();
+        while (end > 0 && s.charAt(end-1) == '0') end--;
+        if (end > 0 && s.charAt(end-1) == '.') end--;
+        return s.substring(0, end);
     }
 }
