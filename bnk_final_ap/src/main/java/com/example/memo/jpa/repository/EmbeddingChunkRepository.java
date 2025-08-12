@@ -17,5 +17,8 @@ public interface EmbeddingChunkRepository extends JpaRepository<EmbeddingChunk, 
     boolean existsByFileName(String fileName);
     @Query("SELECT e.vectorId FROM EmbeddingChunk e WHERE e.fileName = :fileName")
     List<String> findVectorIdsByFileName(@Param("fileName") String fileName);
+    
+    @Query("select c.chunkSeq from EmbeddingChunk c where c.fileName = :fileName")
+    List<Long> findChunkSeqsByFileName(@Param("fileName") String fileName);
 
 }

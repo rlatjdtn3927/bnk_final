@@ -23,7 +23,8 @@ public class PgDataSourceConfig {
 
     @Value("${pg.datasource.driver-class-name}")
     private String driverClassName;
-
+    
+    //PostgreSQL용 DataSource(PostgreSQL 전용 연결 발급기)
     @Bean(name = "pgDataSource")
     public DataSource pgDataSource() {
         return DataSourceBuilder.create()
@@ -33,9 +34,14 @@ public class PgDataSourceConfig {
                 .driverClassName(driverClassName)
                 .build();
     }
-
+    //위 DataSource JDBCTemplate(DB 안내원)
+    //JDBC->자바에서 DB랑 대화하는 표준 규격
     @Bean(name = "pgJdbcTemplate")
     public JdbcTemplate pgJdbcTemplate(@Qualifier("pgDataSource") DataSource pgDataSource) {
         return new JdbcTemplate(pgDataSource);
     }
+    
+    //DataSource->기차 승차권 판매소
+    //JDBC-> 기차길 규격
+    //JdbcTemplate->기차 안내원
 }
