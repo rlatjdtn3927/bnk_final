@@ -12,22 +12,30 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.memo.company.dto.ContribPlanListResponse;
+import com.example.memo.company.dto.ContribPlanListRowDto;
 import com.example.memo.company.dto.ContribValidationItemDto;
 import com.example.memo.company.dto.ContribValidationResultDto;
 import com.example.memo.company.dto.DcMemberLite;
 import com.example.memo.jpa.entity.company.Company;
+import com.example.memo.jpa.entity.company.CompanyAccount;
 import com.example.memo.jpa.entity.company.CompanyManager;
 import com.example.memo.jpa.entity.company.DcAccount;
 import com.example.memo.jpa.entity.company.DcContributionBatch;
 import com.example.memo.jpa.entity.company.DcContributionItem;
+import com.example.memo.jpa.entity.company.DcDepositHistory;
 import com.example.memo.jpa.entity.company.DcMember;
+import com.example.memo.jpa.repository.company.CompanyAccountRepository;
 import com.example.memo.jpa.repository.company.CompanyManagerRepository;
 import com.example.memo.jpa.repository.company.CompanyRepository;
 import com.example.memo.jpa.repository.company.DcAccountRepository;
 import com.example.memo.jpa.repository.company.DcContributionBatchRepository;
+import com.example.memo.jpa.repository.company.DcDepositHistoryRepository;
 import com.example.memo.jpa.repository.company.DcMemberRepository;
 import com.example.memo.jpa.repository.company.DcMemberStatusRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -42,11 +50,13 @@ import lombok.RequiredArgsConstructor;
 public class DcContributionService {
 
     private final DcContributionBatchRepository batchRepo;
+    private final DcDepositHistoryRepository dcDepositHistoryRepository;
     private final DcMemberRepository dcMemberRepo;
     private final DcMemberStatusRepository statusRepo;
     private final DcAccountRepository accountRepo;
     private final CompanyRepository companyRepo;
     private final CompanyManagerRepository managerRepo;
+    private final CompanyAccountRepository companyAccountRepository;
     private final ObjectMapper objectMapper;
     private final CryptoService cryptoService;
 
@@ -181,24 +191,24 @@ public class DcContributionService {
                     error = "납입금액은 0보다 커야 합니다.";
                 }
 
-                // 연임총액 1/12 이하 (DC-deposit-03)
+             // 연임총액 1/12 이상(법정 최소 납입금액) 검사 
                 if (error == null) {
                     long annual = annualMap.getOrDefault(m.getId(), 0L);
-                    long limit = annual > 0 ? (annual / 12L) : Long.MAX_VALUE;
-                    if (it.getAmount() != null && it.getAmount() > limit) {
+                    if (annual <= 0) {
                         vstat = "FAIL";
-                        error = "납입금액이 한도(연임총액 1/12) 초과입니다.";
+                        error = "연간임금총액(annualSalary)이 설정되지 않았습니다.";
+                    } else {
+                        // 최소금액: 연임총액 / 12 의 천원단위 올림 등 정책에 맞게 반올림 규칙 결정
+                        long min = (annual + 11) / 12;            // = Math.ceil(annual/12.0) 의 정수 버전
+                        long amt = Optional.ofNullable(it.getAmount()).orElse(0L);
+                        if (amt < min) {
+                            vstat = "FAIL";
+                            error = "최소 납입금액(연임총액 1/12) 미만입니다. 최소 " + String.format("%,d", min) + "원";
+                        }
                     }
                 }
 
-                // (선택) 잔고 0 (DC-deposit-04) — 정책에 따라 경고/실패 결정
-                if (error == null) {
-                    long bal = balanceMap.getOrDefault(m.getId(), 0L);
-                    if (bal != 0L) {
-                        vstat = "FAIL";
-                        error = "납입 시점 계좌 잔고가 0원이 아닙니다.";
-                    }
-                }
+
             }
 
             if ("SUCCESS".equals(vstat)) ok++; else err++;
@@ -263,6 +273,98 @@ public class DcContributionService {
         resp.put("totalAmount", Optional.ofNullable(batch.getTotalAmount()).orElse(0L));
         return resp;
     }
+    
+    @Transactional(readOnly = true)
+    public ContribPlanListResponse listBatches(Long companyId, LocalDate from, LocalDate to,
+                                               DcContributionBatch.BatchStatus status,
+                                               String keyword, int page, int size) {
+        Page<DcContributionBatch> p = batchRepo.findList(
+                companyId, from, to, status,
+                (keyword == null || keyword.isBlank()) ? null : keyword.trim(),
+                PageRequest.of(Math.max(page,0), Math.max(size,1))
+        );
+
+        List<ContribPlanListRowDto> rows = p.getContent().stream().map(b ->
+            ContribPlanListRowDto.builder()
+                .batchId(b.getId())
+                .planDate(b.getPlanDate() == null ? null : b.getPlanDate().toString())
+                .status(b.getStatus() == null ? null : b.getStatus().name())
+                .totalRecords(b.getTotalRecords())
+                .okCount(Optional.ofNullable(b.getOkCount()).orElse(0))
+                .errorCount(Optional.ofNullable(b.getErrorCount()).orElse(0))
+                .totalAmount(Optional.ofNullable(b.getTotalAmount()).orElse(0L))
+                .fileName(b.getFileName())
+                .uploadedAt(b.getUploadedAt() == null ? null : b.getUploadedAt().toString().replace('T',' '))
+                .build()
+        ).toList();
+
+        return ContribPlanListResponse.builder()
+                .rows(rows)
+                .page(p.getNumber())
+                .size(p.getSize())
+                .totalElements(p.getTotalElements())
+                .totalPages(p.getTotalPages())
+                .build();
+    }
+    
+    
+    @Transactional
+    public Map<String,Object> executeBatch(Long batchId, Long companyId, Long sourceAccountId) {
+        DcContributionBatch b = batchRepo.findBatchWithItemsById(batchId)
+                .orElseThrow(() -> new EntityNotFoundException("Batch not found: " + batchId));
+
+        if (!Objects.equals(b.getCompany().getId(), companyId))
+            throw new IllegalStateException("회사 불일치");
+
+        if (b.getStatus() != DcContributionBatch.BatchStatus.CONFIRMED)
+            throw new IllegalStateException("확정 상태가 아닙니다.");
+
+        long total = b.getItems().stream()
+                .filter(i -> i.getValidationStatus() == DcContributionItem.ValidationStatus.SUCCESS)
+                .mapToLong(i -> Optional.ofNullable(i.getAmount()).orElse(0L))
+                .sum();
+        if (total <= 0) throw new IllegalStateException("입금할 금액이 없습니다.");
+
+        CompanyAccount src = companyAccountRepository.findByIdAndCompanyId(sourceAccountId, companyId)
+                .orElseThrow(() -> new IllegalStateException("출금계좌를 찾을 수 없습니다."));
+
+        long srcBal = parseLongSafe(src.getBalance());
+        if (srcBal < total) throw new IllegalStateException("출금계좌 잔액 부족");
+
+        // 출금
+        src.setBalance(Long.toString(srcBal - total));
+
+        // 입금 + 이력
+        LocalDateTime now = LocalDateTime.now();
+        for (DcContributionItem it : b.getItems()) {
+            if (it.getValidationStatus() != DcContributionItem.ValidationStatus.SUCCESS) continue;
+
+            DcMember m = it.getDcMember();
+            DcAccount dest = accountRepo.findByDcMember_Id(m.getId())
+                    .orElseThrow(() -> new IllegalStateException("DC계좌 없음: " + m.getId()));
+
+            long dBal = Optional.ofNullable(dest.getBalance()).orElse(0L);
+            dest.setBalance(dBal + it.getAmount());
+
+            DcDepositHistory h = DcDepositHistory.builder()
+                    .item(it)
+                    .sourceAccount(src)
+                    .destinationAccount(dest)
+                    .paidAmount(it.getAmount())
+                    .paidAt(now)
+                    .build();
+            dcDepositHistoryRepository.save(h);
+        }
+
+        b.setStatus(DcContributionBatch.BatchStatus.EXECUTED);
+
+        return Map.of("batchId", b.getId(),
+                      "status", b.getStatus().name(),
+                      "paidAmount", total,
+                      "paidAt", now.toString());
+    }
+    
+    
 
     // ===== util =====
     private static String text(JsonNode n, String f) { return (n.hasNonNull(f) ? n.get(f).asText() : ""); }
@@ -281,4 +383,11 @@ public class DcContributionService {
         return m;
     }
     private static String nullSafe(String s) { return s == null ? "" : s; }
+
+    private long parseLongSafe(String v) {
+        if (v == null) return 0L;
+        String s = v.replaceAll("[^0-9\\-]", "");
+        if (s.isEmpty() || "-".equals(s)) return 0L;
+        try { return Long.parseLong(s); } catch (NumberFormatException e) { return 0L; }
+    }
 }

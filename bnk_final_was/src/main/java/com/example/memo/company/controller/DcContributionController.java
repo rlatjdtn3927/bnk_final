@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,6 +25,7 @@ import com.example.memo.company.utils.ExcelParser;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpClientService;
 import com.example.memo.tcp_common.TcpMessage;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -115,6 +117,62 @@ public class DcContributionController {
         TcpMessage msg = new TcpMessage(Command.CONTRIBUTION_BATCH_CONFIRM, data);
         return ResponseEntity.ok(tcpService.sendMessage(msg));
     }
+    
+    @GetMapping("/plan-list")
+    public ResponseEntity<?> planList(
+    	    @RequestParam(name = "fromDate", required = false) String fromDate,
+    	    @RequestParam(name = "toDate",   required = false) String toDate,
+    	    @RequestParam(name = "status",   required = false) String status,
+    	    @RequestParam(name = "keyword",  required = false) String keyword,
+    	    @RequestParam(name = "page",     defaultValue = "0") int page,
+    	    @RequestParam(name = "size",     defaultValue = "20") int size,
+            HttpSession session) {
+
+        CompanyLoginResponseDto login = (CompanyLoginResponseDto) session.getAttribute("loginManager");
+        if (login == null) return ResponseEntity.status(401).body(Map.of("message","로그인이 필요합니다."));
+
+        ObjectNode data = objectMapper.createObjectNode();
+        data.put("companyId", login.getCompanyId());
+        if (fromDate != null && !fromDate.isBlank()) data.put("fromDate", fromDate);
+        if (toDate   != null && !toDate.isBlank())   data.put("toDate", toDate);
+        if (status   != null && !status.isBlank())   data.put("status", status);
+        if (keyword  != null && !keyword.isBlank())  data.put("keyword", keyword);
+        data.put("page", page);
+        data.put("size", size);
+
+        TcpMessage msg = new TcpMessage(Command.CONTRIBUTION_BATCH_LIST, data);
+        return ResponseEntity.ok(tcpService.sendMessage(msg));
+    }
+    
+    @GetMapping("/source-accounts")
+    public ResponseEntity<?> sourceAccounts(HttpSession session) {
+        CompanyLoginResponseDto login = (CompanyLoginResponseDto) session.getAttribute("loginManager");
+        if (login == null) return ResponseEntity.status(401).body(Map.of("message","로그인이 필요합니다."));
+
+        ObjectNode data = objectMapper.createObjectNode().put("companyId", login.getCompanyId());
+        TcpMessage msg = new TcpMessage(Command.CONTRIBUTION_COMPANY_ACCOUNT_LIST, data);
+        return ResponseEntity.ok(tcpService.sendMessage(msg));
+    }
+    
+    @PostMapping("/execute")
+    public ResponseEntity<?> executeContribution(
+            @RequestParam("batchId") Long batchId,
+            @RequestParam("sourceAccountId") Long sourceAccountId,
+            HttpSession session) {
+
+        var login = (CompanyLoginResponseDto) session.getAttribute("loginManager");
+        if (login == null) return ResponseEntity.status(401).body(Map.of("message","로그인이 필요합니다."));
+
+        ObjectNode data = objectMapper.createObjectNode()
+                .put("batchId", batchId)
+                .put("sourceAccountId", sourceAccountId)
+                .put("companyId", login.getCompanyId());
+
+        return ResponseEntity.ok(
+            tcpService.sendMessage(new TcpMessage(Command.CONTRIBUTION_BATCH_EXECUTE, data))
+        );
+    }
+
 
     private static long parseLong(String s) {
         if (s == null || s.isBlank()) return 0L;
