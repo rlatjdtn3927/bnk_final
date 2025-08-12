@@ -2,8 +2,11 @@ package com.example.memo.jpa.repository.company;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.example.memo.jpa.entity.company.DcAccount;
@@ -29,6 +32,12 @@ public interface DcAccountRepository extends JpaRepository<DcAccount, Long> {
     List<DcAccount> findByDcMemberIdIn(List<Long> memberIds);
     
     Optional<DcAccount> findByDcMember_Id(Long memberId);
+    
+    @Query("SELECT a FROM DcAccount a WHERE a.dcMember.id IN :ids")
+    List<DcAccount> findByMemberIds(@Param("ids") Set<Long> memberIds);
+
+    @Query("SELECT a.dcMember.id, a.balance FROM DcAccount a WHERE a.dcMember.id IN :ids")
+    List<Object[]> findBalancePairs(@Param("ids") Set<Long> memberIds);
 
 
 }

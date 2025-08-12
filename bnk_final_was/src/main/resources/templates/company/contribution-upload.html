@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>DC 부담금 납입 (엑셀 업로드)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root {
+      --primary: #0052cc; --border: #dfe1e6; --text: #172b4d;
+      --muted: #5e6c84; --bg: #fafbfc; --white: #fff; --hover: #f0f6ff;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: Pretendard, system-ui, -apple-system, Segoe UI, Arial, sans-serif; background: var(--bg); margin: 0; padding: 40px 20px; color: var(--text); }
+    .container { max-width: 860px; margin: 0 auto; background: var(--white); border-radius: 12px; box-shadow: 0 4px 10px rgba(9,30,66,.12); padding: 28px; }
+    h2 { margin: 0 0 18px; font-size: 22px; font-weight: 700; }
+    .desc { margin-top: -6px; color: var(--muted); font-size: 14px; }
+    .hr { height: 1px; background: var(--border); margin: 18px 0 24px; }
+
+    .form-group { margin-bottom: 18px; }
+    .label { display: block; font-weight: 600; margin-bottom: 8px; }
+    .input, .btn-secondary {
+      width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 14px; background: var(--white);
+    }
+
+    .download { display: flex; gap: 10px; }
+    .btn-secondary { display: inline-flex; align-items: center; justify-content: center; cursor: pointer; text-decoration: none; }
+    .btn-secondary:hover { background: #f7f8fa; }
+
+    .upload-box {
+      border: 2px dashed var(--border); border-radius: 10px; padding: 36px; text-align: center; background: var(--bg); cursor: pointer; transition: background .2s,border-color .2s;
+    }
+    .upload-box:hover { background: var(--hover); border-color: #b8c6e0; }
+    .upload-box p { margin: 4px 0; color: var(--muted); }
+    .file-name { margin-top: 8px; color: var(--text); font-weight: 600; }
+
+    .actions { margin-top: 22px; display: flex; gap: 10px; }
+    .btn-primary {
+      flex: 1 1 auto; padding: 12px; font-size: 16px; font-weight: 600; color: #fff; background: var(--primary);
+      border: 0; border-radius: 10px; cursor: pointer; transition: filter .15s;
+    }
+    .btn-primary:disabled { filter: grayscale(.35) brightness(.9); cursor: not-allowed; }
+
+    .tip { margin-top: 10px; font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>DC 부담금 납입 (엑셀 업로드)</h2>
+    <p class="desc">납입예정일을 선택하고 양식에 맞춘 엑셀을 업로드한 뒤, 검증을 진행하세요.</p>
+    <div class="hr"></div>
+
+    <form id="upload-form" enctype="multipart/form-data" autocomplete="off">
+      <div class="form-group">
+        <label class="label" for="payment-date">납입예정일</label>
+        <input class="input" type="date" id="payment-date" required />
+      </div>
+
+      <div class="form-group">
+        <label class="label">엑셀 양식</label>
+        <div class="download">
+          <a class="btn-secondary" href="/assets/template/dc_contribution_template.xlsx" download>양식 다운로드</a>
+        </div>
+        <p class="tip">.xlsx / .xls 형식만 지원합니다. 헤더 설명 후 3행부터 데이터가 시작되도록 작성하세요.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="label" for="excel-file">납입 명세 파일</label>
+
+        <div id="upload-box" class="upload-box" role="button" tabindex="0" aria-controls="excel-file">
+          <p><strong>파일을 이곳에 드래그</strong>하거나 <strong>클릭</strong>하여 선택하세요.</p>
+          <p class="file-name" id="file-name" style="display:none;"></p>
+        </div>
+
+        <input type="file" id="excel-file" name="file" accept=".xlsx,.xls" style="display:none;" required />
+      </div>
+
+      <div class="actions">
+        <button type="submit" id="validate-btn" class="btn-primary" disabled>업로드 및 검증하기</button>
+      </div>
+    </form>
+
+    <p class="tip">업로드 후 자동으로 검증이 시작되며, 결과 페이지에서 성공/실패 내역을 확인할 수 있습니다.</p>
+  </div>
+
+  <script>
+    (function () {
+      const paymentInput = document.getElementById('payment-date');
+      const fileInput = document.getElementById('excel-file');
+      const uploadBox = document.getElementById('upload-box');
+      const fileNameEl = document.getElementById('file-name');
+      const validateBtn = document.getElementById('validate-btn');
+      const form = document.getElementById('upload-form');
+
+      // 오늘 날짜 기본값 + 과거일 선택 방지(정책에 맞게 주석 해제 가능)
+      const today = new Date();
+      paymentInput.valueAsDate = today;
+      paymentInput.min = today.toISOString().slice(0, 10);
+
+      function updateButtonState() {
+        validateBtn.disabled = !(fileInput.files.length && paymentInput.value);
+      }
+
+      // Drag & Drop 기본 이벤트 방지
+      ['dragenter','dragover','dragleave','drop'].forEach(evt => {
+        uploadBox.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); });
+      });
+
+      uploadBox.addEventListener('click', () => fileInput.click());
+      uploadBox.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
+      });
+
+      uploadBox.addEventListener('drop', (e) => {
+        if (e.dataTransfer.files && e.dataTransfer.files.length) {
+          fileInput.files = e.dataTransfer.files;
+          showFileName();
+          updateButtonState();
+        }
+      });
+
+      fileInput.addEventListener('change', () => { showFileName(); updateButtonState(); });
+      paymentInput.addEventListener('input', updateButtonState);
+
+      function showFileName() {
+        if (fileInput.files.length) {
+          fileNameEl.style.display = 'block';
+          fileNameEl.textContent = `선택된 파일: ${fileInput.files[0].name}`;
+        } else {
+          fileNameEl.style.display = 'none';
+          fileNameEl.textContent = '';
+        }
+      }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        if (!fileInput.files.length) { alert('파일을 선택하세요.'); return; }
+        if (!paymentInput.value) { alert('납입예정일을 선택하세요.'); return; }
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        formData.append('paymentDate', paymentInput.value); // 서버는 paymentDate로 받음
+
+        validateBtn.disabled = true;
+        validateBtn.textContent = '업로드 및 검증 진행 중...';
+
+        try {
+          const res = await fetch('/company/dc/contribution/upload', {
+            method: 'POST',
+            body: formData
+          });
+          const data = await res.json().catch(() => ({}));
+
+          if (!res.ok) {
+            throw new Error(data.message || '업로드 실패');
+          }
+          if (!data.batchId) {
+            throw new Error('응답에 batchId가 없습니다.');
+          }
+
+          // 결과 페이지로 이동
+          location.href = `/company/dc/contribution/result-page?batchId=${data.batchId}`;
+        } catch (err) {
+          alert(`오류가 발생했습니다: ${err.message}`);
+          validateBtn.disabled = false;
+          validateBtn.textContent = '업로드 및 검증하기';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

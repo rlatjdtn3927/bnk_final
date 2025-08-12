@@ -1,13 +1,14 @@
 package com.example.memo.jpa.repository.company;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.example.memo.company.dto.SubscriberListDto;
 import com.example.memo.jpa.entity.company.DcMember;
 
 @Repository
@@ -29,4 +30,10 @@ public interface DcMemberRepository extends JpaRepository<DcMember, Long> {
     List<DcMember> findByCompanyIdAndNameAndStatus(@Param("companyId") Long companyId, 
                                                    @Param("name") String name, 
                                                    @Param("status") String status);
+
+    Optional<DcMember> findByRrn(String encryptedRrn);
+    
+    @Query("SELECT m.id, m.annualSalary FROM DcMember m WHERE m.id IN :ids")
+    List<Object[]> findAnnualSalaryPairs(@Param("ids") Set<Long> memberIds);
+
 }

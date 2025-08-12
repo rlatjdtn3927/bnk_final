@@ -39,8 +39,19 @@ public class ViewController {
 	        System.out.println("세션 로그인 정보: " + loginManager);
 	    }
 
-	    return "company/companyMain";
+	    return "company/company-main";
 	}
 	
+	@GetMapping("/company/dc/contribution/upload-page")
+	public String contributionUploadPage() {
+	    return "company/contribution-upload";
+	}
+
+
+	@GetMapping("/company/dc/contribution/result-page")
+	public String contributionResultPage() {
+	    return "company/contribution-result";
+	}
+
 	
 }
