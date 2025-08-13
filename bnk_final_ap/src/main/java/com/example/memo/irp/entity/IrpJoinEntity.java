@@ -41,29 +41,29 @@ public class IrpJoinEntity {
     
 	//운용상품
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "product_id", nullable=true)
+	@JoinColumn(name = "product_id")
     private ProductMaster productId;	// FK (product_master)
 	
 	//연 납입 한도 금액
-    @Column(name="annual_contrib_amt", nullable=false)
+    @Column(name="annual_contrib_amt")
     private Long annualContribAmt;
     
     //신규 입금 금액
-    @Column(name="new_contrib_amt", nullable=false)
+    @Column(name="new_contrib_amt")
     private Long newContribAmt;
     
     //계약번호
-    @Column(name="contract_no", nullable=false, unique=true, length=30)
+    @Column(name="contract_no", unique=true, length=30)
     private String contractNo;	//IRP계좌 계약번호와 연결
 
     //출금계좌번호 FK
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "acct_no", nullable=false)
+    @JoinColumn(name = "acct_no")
     private BankAccount acctNo;
     
     //IRP계좌번호 FK
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "irp_acct_no", referencedColumnName = "irp_acct_no", unique = true)
+    @JoinColumn(name = "irp_acct_no", unique = true)
     private IrpAccount irpAccount;
     
     //관리영업점

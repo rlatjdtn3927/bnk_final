@@ -8,4 +8,6 @@ import com.example.memo.irp.entity.BankAccount;
 
 public interface BankAccountRepository extends JpaRepository<BankAccount, String>{
 	Optional<BankAccount> findByUserId(Long userId);
+	
+	Optional<BankAccount> findByAcctNoAndUserId(String acctNo, Long userId);
 }

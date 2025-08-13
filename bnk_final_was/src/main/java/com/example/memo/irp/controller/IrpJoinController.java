@@ -1,5 +1,9 @@
 package com.example.memo.irp.controller;
 
+import java.util.Map;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.memo.irp.dto.ContractUpdateDto;
 import com.example.memo.irp.dto.DraftJoinDto;
-import com.example.memo.irp.dto.IrpJoinDto;
 import com.example.memo.irp.dto.JoinCompleteDto;
 import com.example.memo.irp.dto.ProductMasterDto;
 import com.example.memo.irp.dto.RetirePurposeDto;
@@ -50,19 +53,35 @@ public class IrpJoinController {
         return tcpService.sendMessage(msg); // join_id 반환
     }
 	*/
-	
 	@PostMapping("/join/draft")
-    public Object createDraft(@RequestBody DraftJoinDto dto) {
+    public ResponseEntity<?> createDraft(@RequestBody DraftJoinDto dto) {
+		System.out.println("dto: " + dto);
         ObjectNode node = mapper.createObjectNode();
         node.put("userId", dto.getUserId());
         node.put("joinPurpose", dto.getJoinPurpose());
-        return tcpService.sendMessage(new TcpMessage(Command.IRP_JOIN_CREATE_DRAFT, node));
-    }
-	
+        
+        JsonNode res;
+        
+        try {
+            res = tcpService.sendMessage(new TcpMessage(Command.IRP_JOIN_CREATE_DRAFT, node));
+        } catch (Exception e) {
+            // TCP 레벨에서 예외 발생 시
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                    .body(Map.of("error", "TCP_ERROR", "detail", e.getMessage()));
+        }
+        
+        if (res == null) {
+            // 여기로 온다면 지금의 200 No Content 원인 확정
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                    .body(Map.of("error","AP 응답 없음","detail","sendMessage returned null"));
+        }
+        
+        return ResponseEntity.ok(res);
+	}
 	
 	//step3-1(세액공제)
 	@PostMapping("/join/{joinId}/tax")
-    public Object saveTax(@PathVariable Long joinId, @RequestBody TaxPurposeDto dto) {
+    public Object saveTax(@PathVariable("joinId") Long joinId, @RequestBody TaxPurposeDto dto) {
         ObjectNode node = mapper.createObjectNode();
         node.put("joinId", joinId);
         node.put("irpQualType", dto.getIrpQualType());
@@ -83,7 +102,7 @@ public class IrpJoinController {
         return tcpService.sendMessage(new TcpMessage(Command.IRP_JOIN_RETIRED_PURPOSE, node));
     }
 	
-	//Step3-2: 계약정보 업데이트 (연한도/신규/계약번호/출금계좌/관리영업점)
+	//Step3-2: 계약정보 업데이트 (연한도/신규/출금계좌/관리영업점)
 	@PutMapping("/join/{joinId}/contract")
     public Object updateContract(@PathVariable Long joinId, @RequestBody ContractUpdateDto dto) {
         ObjectNode node = mapper.createObjectNode();
