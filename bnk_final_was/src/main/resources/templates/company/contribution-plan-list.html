@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>부담금 입금 예정 현황</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{--primary:#0052cc;--border:#dfe1e6;--text:#172b4d;--muted:#5e6c84;--bg:#fafbfc;--white:#fff;--danger:#de350b}
+    body{font-family:Pretendard,system-ui,-apple-system,Segoe UI,Arial,sans-serif;background:var(--bg);margin:0;padding:32px;color:var(--text)}
+    .container{max-width:1100px;margin:0 auto;background:var(--white);border-radius:12px;box-shadow:0 4px 10px rgba(9,30,66,.12);padding:20px}
+    h2{margin:0 0 16px;font-size:22px;font-weight:700}
+    .filters{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px}
+    .input,.select,.btn{border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:14px}
+    .btn{background:var(--primary);color:#fff;border:0;cursor:pointer}
+    table{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}
+    th,td{border:1px solid var(--border);padding:8px 10px;text-align:left}
+    th{background:var(--bg)}
+    .status{font-weight:700}
+    .status.DRAFT{color:#555}
+    .status.VALIDATED{color:#1a7f37}
+    .status.CONFIRMED{color:#0052cc}
+    .status.EXECUTED{color:#8b572a}
+    .actions{display:flex;gap:6px}
+    .btn-sm{padding:6px 8px;border-radius:6px;font-size:12px;background:#44566c;color:#fff;border:0;cursor:pointer}
+    .pager{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+    .link{cursor:pointer;color:var(--primary);text-decoration:underline;background:none;border:none}
+    .footer-actions{display:flex;justify-content:flex-end;margin-top:12px}
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2>부담금 입금 예정 현황</h2>
+
+  <div class="filters">
+    <input type="date" id="fromDate" class="input" />
+    <input type="date" id="toDate" class="input" />
+    <select id="status" class="select">
+      <option value="">상태(전체)</option>
+      <option>DRAFT</option>
+      <option>VALIDATED</option>
+      <option>CONFIRMED</option>
+      <option>EXECUTED</option>
+    </select>
+    <input type="text" id="keyword" class="input" placeholder="파일명 검색" />
+    <button id="searchBtn" class="btn">조회</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>선택</th>
+        <th>배치ID</th>
+        <th>예정일</th>
+        <th>상태</th>
+        <th>건수</th>
+        <th>성공/오류</th>
+        <th>총액</th>
+        <th>파일명</th>
+        <th>업로드일시</th>
+        <th>액션</th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+      <tr><td colspan="10" style="text-align:center; color:#5e6c84;">데이터를 불러오는 중...</td></tr>
+    </tbody>
+  </table>
+
+  <div class="pager">
+    <button id="prev" class="link">이전</button>
+    <span id="pageInfo"></span>
+    <button id="next" class="link">다음</button>
+  </div>
+
+  <div class="footer-actions">
+    <button id="goDeposit" class="btn" style="min-width:120px;">다음</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const fromDateEl = document.getElementById('fromDate');
+  const toDateEl   = document.getElementById('toDate');
+  const statusEl   = document.getElementById('status');
+  const keywordEl  = document.getElementById('keyword');
+  const searchBtn  = document.getElementById('searchBtn');
+  const tbody      = document.getElementById('tbody');
+  const prevBtn    = document.getElementById('prev');
+  const nextBtn    = document.getElementById('next');
+  const pageInfo   = document.getElementById('pageInfo');
+  const goDeposit  = document.getElementById('goDeposit');
+
+  let page = Number(qs.get('page') || 0);
+  const size = 20;
+
+  async function load(){
+    const params = new URLSearchParams();
+    if (fromDateEl.value) params.append('fromDate', fromDateEl.value);
+    if (toDateEl.value)   params.append('toDate', toDateEl.value);
+    if (statusEl.value)   params.append('status', statusEl.value);
+    if (keywordEl.value)  params.append('keyword', keywordEl.value.trim());
+    params.append('page', page);
+    params.append('size', size);
+
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#5e6c84;">조회 중...</td></tr>';
+
+    try{
+      const res = await fetch('/company/dc/contribution/plan-list?' + params.toString(), {
+        headers: { 'Accept': 'application/json' }
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.message || '조회 실패');
+
+      renderTable(data.rows || []);
+      const totalPages = data.totalPages || 1;
+      const totalElements = data.totalElements || 0;
+      pageInfo.textContent = `${page+1} / ${totalPages} (총 ${totalElements}건)`;
+      prevBtn.disabled = page <= 0;
+      nextBtn.disabled = page+1 >= totalPages;
+
+    }catch(e){
+      alert(e.message);
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#de350b;">조회 오류</td></tr>';
+    }
+  }
+
+  function renderTable(rows){
+    if(!rows.length){
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#5e6c84;">조회 결과가 없습니다.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = '';
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      const amt = Number(r.totalAmount || 0).toLocaleString();
+      tr.innerHTML = `
+        <td><input type="radio" name="pick" value="${r.batchId}" aria-label="배치 ${r.batchId} 선택"></td>
+        <td>${r.batchId}</td>
+        <td>${r.planDate || '-'}</td>
+        <td class="status ${r.status || ''}">${r.status || '-'}</td>
+        <td>${r.totalRecords ?? 0}</td>
+        <td>${(r.okCount ?? 0)} / ${(r.errorCount ?? 0)}</td>
+        <td>${amt}원</td>
+        <td title="${r.fileName || ''}">${(r.fileName || '').slice(0,30)}</td>
+        <td>${r.uploadedAt || '-'}</td>
+        <td class="actions">
+          <button class="btn-sm" onclick="location.href='/company/dc/contribution/result-page?batchId=${r.batchId}'">검증 결과 보기</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  searchBtn.addEventListener('click', () => { page = 0; load(); });
+  prevBtn.addEventListener('click', () => { if(page>0){ page--; load(); }});
+  nextBtn.addEventListener('click', () => { page++; load(); });
+
+  // 다음(입금 페이지로)
+  goDeposit.addEventListener('click', () => {
+    const picked = document.querySelector('input[name="pick"]:checked');
+    if (!picked) { alert('배치를 선택해 주세요.'); return; }
+    // 상태 가드(선택): VALIDATED/CONFIRMED 권장
+    const row = picked.closest('tr');
+    const status = row.querySelector('.status')?.textContent?.trim();
+    if (status !== 'VALIDATED' && status !== 'CONFIRMED') {
+      if (!confirm(`현재 상태가 ${status} 입니다. 진행할까요?`)) return;
+    }
+    location.href = '/company/dc/contribution/deposit-page?batchId=' + picked.value;
+  });
+
+  // 초기값(오늘~+30일)
+  const today = new Date();
+  const to = today.toISOString().slice(0,10);
+  const from = new Date(today.getTime() - 30*24*60*60*1000).toISOString().slice(0,10);
+  if(!fromDateEl.value) fromDateEl.value = from;
+  if(!toDateEl.value)   toDateEl.value = to;
+
+  load();
+})();
+</script>
+</body>
+</html>

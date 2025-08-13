@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>가입자 명부</title>
+    <style>
+        :root {
+            --primary-color: #0052cc; --border-color: #dfe1e6; --text-color: #172b4d;
+            --text-light: #5e6c84; --background-light: #fafbfc; --background-white: #ffffff;
+            --hover-light: #f0f6ff; --green: #00875A; --yellow: #FFAB00; --blue: #0052cc;
+        }
+        *, *::before, *::after { box-sizing: border-box; }
+        body { font-family: Pretendard, sans-serif; background-color: var(--background-light); margin: 0; padding: 40px 20px; }
+        .container { max-width: 900px; margin: auto; background-color: var(--background-white); border-radius: 8px; box-shadow: 0 4px 8px -2px rgba(9, 30, 66, 0.25); padding: 32px; }
+        .header-main { display: flex; justify-content: space-between; align-items: center; }
+        h2 { font-size: 24px; font-weight: 600; margin: 0; }
+        .filter-controls { display: flex; gap: 10px; padding: 16px; margin: 20px -16px; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
+        .filter-controls input, .filter-controls select { border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 12px; font-size: 14px; }
+        .filter-controls input { flex-grow: 1; }
+        .subscriber-list { list-style: none; padding: 0; margin: 0; }
+        .subscriber-card { display: flex; align-items: center; gap: 16px; padding: 16px; border-bottom: 1px solid var(--border-color); transition: background-color 0.2s; }
+        .subscriber-card:hover { background-color: var(--hover-light); }
+        .subscriber-card input[type="checkbox"] { width: 20px; height: 20px; }
+        .subscriber-card .info { flex-grow: 1; }
+        .subscriber-card .info .line1 { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .subscriber-card .info .name { font-weight: 600; font-size: 16px; }
+        .subscriber-card .info .birthdate { color: var(--text-light); }
+        .subscriber-card .info .line2 { font-size: 13px; color: var(--text-light); }
+        .subscriber-card .actions button { padding: 6px 12px; font-size: 13px; border-radius: 6px; cursor: pointer; border: 1px solid; }
+        .subscriber-card .actions .btn-request { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
+        .subscriber-card .actions .btn-disabled { background-color: var(--background-light); color: var(--text-light); border-color: var(--border-color); cursor: not-allowed; }
+        .subscriber-card .actions .btn-view-account { background-color: white; color: var(--text-color); border-color: var(--border-color); } /* 계좌 보기 버튼 스타일 */
+        .status-tag { padding: 3px 8px; border-radius: 10px; font-size: 12px; font-weight: 500; }
+        .status-possible { background-color: #E3FCEF; color: var(--green); }
+        .status-pending { background-color: #FFF0B3; color: var(--yellow); }
+        .status-completed { background-color: #DEEBFF; color: var(--blue); }
+        .bulk-action-bar { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; padding: 16px 24px; background-color: var(--text-color); color: white; border-radius: 8px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); transition: bottom 0.3s ease-in-out; }
+        .bulk-action-bar.visible { bottom: 30px; }
+        .bulk-action-bar button { background-color: var(--primary-color); color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; }
+
+        .modal-overlay {
+            display: none; position: fixed; z-index: 1000;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            justify-content: center; align-items: center;
+        }
+        .modal-overlay.visible { display: flex; }
+        .modal-content {
+            background-color: white; border-radius: 8px;
+            width: 90%; max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--border-color); }
+        .modal-header h3 { margin: 0; font-size: 18px; }
+        .modal-body { padding: 24px; line-height: 1.8; }
+        .modal-body hr { border: none; border-top: 1px solid var(--border-color); margin: 16px 0; }
+        .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-main">
+            <h2>가입자 명부</h2>
+            <div><input type="checkbox" id="select-all-checkbox"> 전체 선택</div>
+        </div>
+        <div class="filter-controls">
+            <input type="search" id="name-search" placeholder="이름으로 검색">
+            <select id="employment-status-filter">
+                <option value="ALL">전체 (재직/퇴직)</option>
+                <option value="ACTIVE" selected>재직</option>
+                <option value="INACTIVE">퇴직</option>
+            </select>
+            <select id="account-status-filter">
+                <option value="ALL">전체 (계좌 상태)</option>
+                <option value="POSSIBLE">신청 가능</option>
+                <option value="PENDING">처리중</option>
+                <option value="COMPLETED">개설 완료</option>
+            </select>
+        </div>
+        <ul id="subscriber-list" class="subscriber-list">
+            </ul>
+    </div>
+
+    <div id="bulk-action-bar" class="bulk-action-bar">
+        <span id="selected-count">0명 선택됨</span>
+        <button id="bulk-request-btn">선택 가입자 일괄 신청</button>
+    </div>
+    
+        <div id="account-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>계좌 상세 정보</h3>
+                <button id="modal-close-btn" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p><strong>가입자명:</strong> <span id="modal-member-name"></span></p>
+                <p><strong>생년월일:</strong> <span id="modal-birth-date"></span></p>
+                <hr>
+                <p><strong>계좌번호:</strong> <span id="modal-account-no"></span></p>
+                <p><strong>계좌상태:</strong> <span id="modal-account-status"></span></p>
+                <p><strong>잔액:</strong> <span id="modal-balance"></span> 원</p>
+                <p><strong>개설일:</strong> <span id="modal-created-at"></span></p>
+            </div>
+        </div>
+    </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 필터 요소들
+        const nameSearch = document.getElementById('name-search');
+        const employmentFilter = document.getElementById('employment-status-filter');
+        const accountFilter = document.getElementById('account-status-filter');
+
+        // 필터 변경 시 데이터 다시 불러오기 (300ms 지연 적용으로 성능 최적화)
+        let searchTimeout;
+        nameSearch.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(fetchAndRenderSubscribers, 300);
+        });
+        employmentFilter.addEventListener('change', fetchAndRenderSubscribers);
+        accountFilter.addEventListener('change', fetchAndRenderSubscribers);
+
+        // 일괄 신청 버튼
+        document.getElementById('bulk-request-btn').addEventListener('click', handleBulkRequest);
+        
+        // 전체 선택
+        document.getElementById('select-all-checkbox').addEventListener('change', handleSelectAll);
+       
+        const modal = document.getElementById('account-modal');
+        document.getElementById('modal-close-btn').addEventListener('click', closeAccountModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) { // 모달 배경 클릭 시 닫기
+                closeAccountModal();
+            }
+        });
+        
+        // 최초 데이터 로드
+        fetchAndRenderSubscribers();
+    });
+
+    // 서버에 데이터를 요청하고 화면을 다시 그리는 메인 함수
+    function fetchAndRenderSubscribers() {
+        const listElement = document.getElementById('subscriber-list');
+        listElement.innerHTML = `<p style="text-align:center; padding:40px;">불러오는 중...</p>`;
+
+        // 필터 값 가져오기
+        const name = document.getElementById('name-search').value;
+        const employmentStatus = document.getElementById('employment-status-filter').value;
+        const accountStatus = document.getElementById('account-status-filter').value;
+        
+        const params = new URLSearchParams({ name: name, status: employmentStatus, accountStatus: accountStatus });
+        const apiUrl = `/company/subscriber/list?${params.toString()}`;
+        
+        fetch(apiUrl)
+            .then(res => {
+                if (!res.ok) throw new Error('데이터 조회에 실패했습니다.');
+                return res.json();
+            })
+            .then(responseBody => {
+                // AP 서버가 TcpMessage로 감싸서 보내므로, 실제 데이터는 .data
+                renderCards(responseBody.data);
+            })
+            .catch(error => {
+                console.error(error);
+                listElement.innerHTML = `<p style="text-align:center; padding:40px;">${error.message}</p>`;
+            });
+    }
+
+    // 데이터를 받아 카드 UI를 생성하는 함수
+    function renderCards(subscriberList) {
+        const listElement = document.getElementById('subscriber-list');
+        listElement.innerHTML = '';
+        if (!subscriberList || subscriberList.length === 0) {
+            listElement.innerHTML = `<p style="text-align:center; padding:40px;">해당 조건의 가입자가 없습니다.</p>`;
+            return;
+        }
+
+        subscriberList.forEach(sub => {
+            const card = document.createElement('li');
+            card.className = 'subscriber-card';
+            card.dataset.memberId = sub.memberId;
+
+            let statusTag, actionButton, checkbox;
+            const isRequestable = sub.accountStatus === '신청 가능';
+
+            switch (sub.accountStatus) {
+                case '개설 완료':
+                    statusTag = `<span class="status-tag status-completed">개설 완료</span>`;
+                    actionButton = `<button class="actions btn-view-account" data-member-id="${sub.memberId}">계좌 보기</button>`;
+                    break;
+                case '처리중':
+                    statusTag = `<span class="status-tag status-pending">처리중</span>`;
+                    actionButton = `<button class="actions btn-disabled" disabled>신청 처리중</button>`;
+                    break;
+                default: // 신청 가능
+                    statusTag = `<span class="status-tag status-possible">신청 가능</span>`;
+                    actionButton = `<button class="actions btn-request" data-id="${sub.memberId}">계좌 개설 신청</button>`;
+                    break;
+            }
+            
+            checkbox = `<input type="checkbox" class="subscriber-checkbox" value="${sub.memberId}" ${isRequestable ? '' : 'disabled'}>`;
+
+            card.innerHTML = `
+                ${checkbox}
+                <div class="info">
+                    <div class="line1">
+                        ${statusTag}
+                        <span class="name">${sub.name}</span>
+                        <span class="birthdate">${sub.birthDate}</span>
+                    </div>
+                    <div class="line2">
+                        ${sub.status} | 입사일: ${sub.startDate} | 연봉: ${sub.annualSalary.toLocaleString()}원
+                    </div>
+                </div>
+                <div class="actions">${actionButton}</div>
+            `;
+            // 개별 신청 버튼 이벤트
+            card.querySelector('.btn-request')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                handleIndividualRequest(sub.memberId);
+            });
+            // 체크박스 변경 시 액션 바 업데이트
+            card.querySelector('.subscriber-checkbox').addEventListener('change', updateActionBar);
+            
+            card.querySelector('.btn-view-account')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openAccountModal(e.target.dataset.memberId);
+            });
+            
+            listElement.appendChild(card);
+        });
+        updateActionBar();
+    }
+    
+    function updateActionBar() {
+        const selected = document.querySelectorAll('.subscriber-checkbox:checked');
+        const actionBar = document.getElementById('bulk-action-bar');
+        if (selected.length > 0) {
+            document.getElementById('selected-count').textContent = `${selected.length}명 선택됨`;
+            actionBar.classList.add('visible');
+        } else {
+            actionBar.classList.remove('visible');
+        }
+    }
+
+    function handleSelectAll(event) {
+        document.querySelectorAll('.subscriber-checkbox:not(:disabled)')
+            .forEach(cb => cb.checked = event.target.checked);
+        updateActionBar();
+    }
+
+    function handleIndividualRequest(memberId) {
+        if (confirm(`선택한 가입자의 계좌 개설을 신청하시겠습니까?`)) {
+            requestAccountOpening([memberId]);
+        }
+    }
+
+    function handleBulkRequest() {
+        const selectedIds = Array.from(document.querySelectorAll('.subscriber-checkbox:checked')).map(cb => cb.value);
+        if (selectedIds.length === 0) {
+            alert('계좌를 개설할 가입자를 선택해주세요.');
+            return;
+        }
+        if (confirm(`${selectedIds.length}명의 가입자에 대한 계좌 개설을 신청하시겠습니까?`)) {
+            requestAccountOpening(selectedIds);
+        }
+    }
+
+    // 서버로 실제 계좌 개설을 요청하는 함수
+    function requestAccountOpening(memberIds) {
+        fetch('/company/dc/account/request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ memberIds: memberIds })
+        })
+        .then(response => response.json().then(data => ({ ok: response.ok, data })))
+        .then(({ ok, data }) => {
+            if (!ok) throw new Error(data.message || '알 수 없는 오류');
+            
+            // AP 서버가 보내주는 실제 성공 건수를 표시합니다.
+            alert(`${data.successCount}건의 계좌 개설 신청이 정상적으로 접수되었습니다.`);
+            fetchAndRenderSubscribers(); // 성공 후 목록 새로고침
+        })
+        .catch(error => {
+            console.error('계좌 개설 신청 실패:', error);
+            alert(`계좌 개설 신청 중 오류가 발생했습니다: ${error.message}`);
+        });
+    }
+    
+    function openAccountModal(memberId) {
+        const modal = document.getElementById('account-modal');
+        modal.classList.add('visible');
+        
+        // 필드 초기화
+        document.getElementById('modal-member-name').textContent = '불러오는 중...';
+        document.getElementById('modal-birth-date').textContent = '-';
+        document.getElementById('modal-account-no').textContent = '-';
+        document.getElementById('modal-account-status').textContent = '-';
+        document.getElementById('modal-balance').textContent = '-';
+        document.getElementById('modal-created-at').textContent = '-';
+
+        fetch(`/company/account/details/${memberId}`)
+            .then(res => res.json())
+            .then(details => {
+                document.getElementById('modal-member-name').textContent = details.memberName;
+                document.getElementById('modal-birth-date').textContent = details.birthDate;
+                document.getElementById('modal-account-no').textContent = details.accountNo;
+                document.getElementById('modal-account-status').textContent = details.status;
+                document.getElementById('modal-balance').textContent = details.balance.toLocaleString();
+                document.getElementById('modal-created-at').textContent = new Date(details.createdAt).toLocaleString();
+            })
+            .catch(err => {
+                console.error(err);
+                alert('계좌 정보를 불러오는 데 실패했습니다.');
+                closeAccountModal();
+            });
+    }
+
+    function closeAccountModal() {
+        document.getElementById('account-modal').classList.remove('visible');
+    }
+</script>
+</body>
+</html>

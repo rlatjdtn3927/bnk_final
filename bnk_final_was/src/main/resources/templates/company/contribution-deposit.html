@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"><title>부담금 입금</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body{font-family:Pretendard,system-ui,-apple-system,Segoe UI,Arial,sans-serif;background:#fafbfc;margin:0;padding:32px;color:#172b4d}
+    .box{max-width:720px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 4px 10px rgba(9,30,66,.12);padding:20px}
+    .row{display:flex;gap:10px;margin-bottom:12px;align-items:center}
+    .label{min-width:120px}
+    .input,.select,.btn{border:1px solid #dfe1e6;border-radius:8px;padding:10px 12px;font-size:14px}
+    .select{flex:1}
+    .btn{background:#0052cc;color:#fff;border:0;cursor:pointer}
+    .btn:disabled{filter:grayscale(.35) brightness(.9);cursor:not-allowed}
+    .muted{color:#5e6c84}
+    .warn{color:#de350b;font-weight:600;min-height:20px}
+    .stat{display:flex;gap:16px;margin:10px 0 6px;flex-wrap:wrap}
+    .pill{background:#f4f5f7;border:1px solid #e1e4ea;border-radius:999px;padding:6px 10px}
+  </style>
+</head>
+<body>
+<div class="box">
+  <h2>부담금 입금</h2>
+  <div class="stat">
+    <div class="pill">배치ID: <span id="batchIdEl">-</span></div>
+    <div class="pill">성공건수: <span id="okCount">0</span></div>
+    <div class="pill">총 입금금액: <span id="okTotal">0</span> 원</div>
+  </div>
+  <p class="muted">선택한 배치의 <b>성공</b> 건만 일괄 입금합니다. 실행 전 자동으로 “확정”을 시도합니다.</p>
+
+  <div class="row">
+    <div class="label">출금계좌</div>
+    <select id="account" class="select"></select>
+    <button id="refresh" class="btn" type="button">잔액조회</button>
+  </div>
+  <div class="row">
+    <div class="label">계좌잔액</div>
+    <div id="balance" class="muted">-</div>
+  </div>
+
+  <div class="row">
+    <button id="execute" class="btn" style="width:100%">입금 실행</button>
+  </div>
+  <p id="warn" class="warn"></p>
+</div>
+
+<script>
+(async function(){
+  // --- util: fetch → text → json 안전 파싱
+  async function fetchJson(url, options) {
+    const res = await fetch(url, { headers: { 'Accept':'application/json', ...(options?.headers||{}) }, ...options });
+    const txt = await res.text();
+    let data; try { data = txt ? JSON.parse(txt) : {}; } catch { data = { message: txt || '서버 응답 파싱 실패' }; }
+    if (!res.ok) {
+      const msg = data?.message || res.statusText || '요청 실패';
+      throw new Error(msg);
+    }
+    return data;
+  }
+
+  // --- batchId: ?batchId= 또는 /deposit-page/{id} 둘 다 허용
+  const qs = new URLSearchParams(location.search);
+  let batchId = Number(qs.get('batchId'));
+  if (!batchId) {
+    const m = location.pathname.match(/deposit-page\/(\d+)/);
+    if (m) batchId = Number(m[1]);
+  }
+  if(!batchId){ alert('batchId가 없습니다. 예정 목록에서 배치를 선택해 주세요.'); location.href='/company/dc/contribution/plan-list-page'; return; }
+
+  const accountSel = document.getElementById('account');
+  const okCountEl  = document.getElementById('okCount');
+  const okTotalEl  = document.getElementById('okTotal');
+  const balEl      = document.getElementById('balance');
+  const execBtn    = document.getElementById('execute');
+  const refreshBtn = document.getElementById('refresh');
+  document.getElementById('batchIdEl').textContent = batchId;
+
+  let okTotalCache = 0;
+
+  // 1) 검증 결과에서 “성공 합계/건수” 표시
+  async function loadValidate() {
+    const data = await fetchJson('/company/dc/contribution/validate', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ batchId })
+    });
+
+    const items = Array.isArray(data.items) ? data.items : [];
+    const okItems = items.filter(x => x.validationStatus === 'SUCCESS');
+    const okTotal = okItems.reduce((s,x)=> s + Number(x.amount||0), 0);
+
+    okTotalCache = okTotal;
+    okCountEl.textContent = okItems.length;
+    okTotalEl.textContent = okTotal.toLocaleString();
+
+    if (okItems.length === 0) {
+      setWarn('성공 건이 없어 입금할 수 없습니다.');
+      execBtn.disabled = true;
+    }
+  }
+
+  // 2) 출금계좌 목록
+  async function loadAccounts() {
+    const data = await fetchJson('/company/dc/contribution/source-accounts');
+    const rows = Array.isArray(data.rows) ? data.rows : [];
+
+    if (rows.length === 0) {
+      accountSel.innerHTML = '<option value="">(등록된 출금계좌 없음)</option>';
+      balEl.textContent = '0 원';
+      execBtn.disabled = true;
+      return;
+    }
+
+    accountSel.innerHTML = rows.map((a, idx) => {
+      const raw = a.balance;
+      const bal = typeof raw === 'number' ? raw : Number(String(raw).replace(/[^0-9\-]/g, '')) || 0;
+      return `<option value="${a.accountId}" data-balance="${bal}" ${idx===0?'selected':''}>
+                ${a.accountNo} (잔액: ${bal.toLocaleString()}원)
+              </option>`;
+    }).join('');
+
+    if (accountSel.options.length > 0) accountSel.selectedIndex = 0;
+    updateBalanceLabel();
+  }
+
+  function updateBalanceLabel() {
+    const opt = accountSel.options[accountSel.selectedIndex];
+    const bal = opt ? Number(String(opt.dataset.balance || '0')) || 0 : 0;
+    balEl.textContent = bal.toLocaleString() + ' 원';
+    return bal;
+  }
+
+  function setWarn(msg){ document.getElementById('warn').textContent = msg || ''; }
+
+  refreshBtn.addEventListener('click', ()=> { setWarn(''); updateBalanceLabel(); });
+  accountSel.addEventListener('change', ()=> { setWarn(''); updateBalanceLabel(); });
+
+  // 3) 실행: (A) 확정 → (B) 실행
+  let running = false;
+  execBtn.addEventListener('click', async () => {
+    if (running) return;
+    setWarn('');
+
+    const sourceAccountId = Number(accountSel.value);
+    if(!sourceAccountId){ alert('출금계좌를 선택하세요.'); return; }
+
+    const bal = updateBalanceLabel();
+    if (bal < okTotalCache) { setWarn('출금계좌 잔액이 부족합니다.'); return; }
+    if (okTotalCache <= 0){ setWarn('입금할 금액이 없습니다.'); return; }
+
+    if(!confirm('입금을 실행하시겠습니까?\n(확정 → 실행 순서로 처리됩니다)')) return;
+
+    const orig = execBtn.textContent;
+    execBtn.disabled = true; execBtn.textContent = '처리 중...'; running = true;
+
+    try {
+      // (A) 확정 시도 (이미 확정이면 통과)
+      await fetchJson(`/company/dc/contribution/confirm?batchId=${encodeURIComponent(batchId)}`, { method:'POST' });
+
+      // (B) 실행
+      const data = await fetchJson(`/company/dc/contribution/execute?batchId=${encodeURIComponent(batchId)}&sourceAccountId=${encodeURIComponent(sourceAccountId)}`, { method:'POST' });
+
+      alert(`입금 완료\n금액: ${Number(data.paidAmount||0).toLocaleString()}원`);
+      location.href = '/company/dc/contribution/plan-list-page';
+    } catch (err) {
+      setWarn(err.message || String(err));
+      execBtn.disabled = false; execBtn.textContent = orig; running = false;
+    }
+  });
+
+  try {
+    await loadValidate();
+    await loadAccounts();
+  } catch (e) {
+    alert(e.message || '초기 로딩 실패');
+    // 목록으로 되돌리기
+    location.href = '/company/dc/contribution/plan-list-page';
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>DC 계좌 개설 승인</title>
+    <style>
+        :root {
+            --primary-color: #0052cc; --danger-color: #de350b; --border-color: #dfe1e6;
+            --text-color: #172b4d; --text-light: #5e6c84; --background-light: #fafbfc;
+            --background-white: #ffffff; --hover-light: #f0f6ff;
+        }
+        body {
+            font-family: Pretendard, sans-serif; background-color: var(--background-light);
+            color: var(--text-color); margin: 0; padding: 40px 20px;
+        }
+        .container {
+            width: 100%; max-width: 1200px; margin: auto;
+            background-color: var(--background-white); border-radius: 8px;
+            box-shadow: 0 4px 8px -2px rgba(9, 30, 66, 0.25); padding: 32px; position: relative;
+        }
+        h2 {
+            font-size: 24px; font-weight: 600; margin: 0;
+            padding-bottom: 16px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px;
+        }
+        .bulk-action-bar {
+            display: none; align-items: center; gap: 16px;
+            padding: 12px 24px; background-color: var(--primary-color);
+            color: white; border-radius: 6px; margin-bottom: 20px;
+        }
+        .bulk-action-bar.visible { display: flex; }
+        .bulk-action-bar span { font-weight: 600; }
+        .bulk-action-bar button { background-color: transparent; border: 1px solid white; color: white; }
+        .accordion-item { border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 10px; }
+        .accordion-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px; background-color: var(--background-light); cursor: pointer; font-weight: 600;
+        }
+        .accordion-header:hover { background-color: var(--hover-light); }
+        .accordion-panel { padding: 0; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+        .accordion-item.active .accordion-panel { max-height: 1000px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        tr:last-child td { border-bottom: none; }
+        .action-btn { padding: 6px 12px; font-size: 13px; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>DC 계좌 개설 승인 대기 목록</h2>
+
+        <div id="bulk-action-bar" class="bulk-action-bar">
+            <span id="selected-count">0개 항목 선택됨</span>
+            <button id="bulk-approve-btn" class="action-btn">선택 항목 일괄 승인</button>
+            <button id="bulk-reject-btn" class="action-btn">선택 항목 일괄 거절</button>
+        </div>
+
+        <div id="request-accordion"></div>
+    </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const accordionContainer = document.getElementById('request-accordion');
+        
+        accordionContainer.addEventListener('click', function(event) {
+            const target = event.target;
+            const requestId = target.dataset.id;
+            
+            const header = target.closest('.accordion-header');
+            if (header) header.parentElement.classList.toggle('active');
+
+            if (target.classList.contains('approve-btn')) approveRequest(requestId);
+            if (target.classList.contains('reject-btn')) rejectRequest(requestId);
+
+            if (target.classList.contains('select-all-checkbox')) {
+                const panel = target.closest('.accordion-panel');
+                const checkboxes = panel.querySelectorAll('.request-checkbox');
+                checkboxes.forEach(cb => cb.checked = target.checked);
+                updateActionBar();
+            }
+
+            if (target.classList.contains('request-checkbox')) {
+                updateActionBar();
+            }
+        });
+
+        document.getElementById('bulk-approve-btn').addEventListener('click', () => bulkApprove());
+        document.getElementById('bulk-reject-btn').addEventListener('click', () => bulkReject());
+
+        fetchPendingRequests();
+    });
+
+    function fetchPendingRequests() {
+        const accordionContainer = document.getElementById('request-accordion');
+        accordionContainer.innerHTML = `<p>승인 대기 목록을 불러오는 중...</p>`;
+
+        fetch('/admin/requests/pending').then(res => res.json()).then(groupedData => {
+            accordionContainer.innerHTML = '';
+            const companies = Object.keys(groupedData);
+            if (companies.length === 0) {
+                accordionContainer.innerHTML = `<p>승인 대기 중인 요청이 없습니다.</p>`; return;
+            }
+            companies.forEach(companyName => {
+                const requests = groupedData[companyName];
+                const tableRows = requests.map(req => `
+                    <tr>
+                        <td><input type="checkbox" class="request-checkbox" value="${req.requestId}"></td>
+                        <td>${req.memberName}</td><td>${new Date(req.requestedAt).toLocaleString()}</td>
+                        <td>
+                            <button class="action-btn approve-btn" data-id="${req.requestId}">승인</button>
+                            <button class="action-btn reject-btn" data-id="${req.requestId}">거절</button>
+                        </td>
+                    </tr>`).join('');
+                
+                const accordionItem = document.createElement('div');
+                accordionItem.className = 'accordion-item';
+                accordionItem.innerHTML = `
+                    <div class="accordion-header"><span>${companyName} (${requests.length}건)</span><span>▼</span></div>
+                    <div class="accordion-panel">
+                        <table>
+                            <thead><tr><th><input type="checkbox" class="select-all-checkbox"></th><th>가입자명</th><th>신청일시</th><th>개별 처리</th></tr></thead>
+                            <tbody>${tableRows}</tbody>
+                        </table>
+                    </div>`;
+                accordionContainer.appendChild(accordionItem);
+            });
+            updateActionBar();
+        }).catch(error => {
+            console.error('Error:', error);
+            accordionContainer.innerHTML = `<p>목록을 불러오는 데 실패했습니다.</p>`;
+        });
+    }
+    
+    function updateActionBar() {
+        const actionBar = document.getElementById('bulk-action-bar');
+        const countSpan = document.getElementById('selected-count');
+        const allCheckboxes = document.querySelectorAll('.request-checkbox:checked');
+        
+        if (allCheckboxes.length > 0) {
+            countSpan.textContent = `${allCheckboxes.length}개 항목 선택됨`;
+            actionBar.classList.add('visible');
+        } else {
+            actionBar.classList.remove('visible');
+        }
+    }
+
+    // --- 개별 처리 함수 (내부적으로 일괄 처리 함수 호출) ---
+    function approveRequest(requestId) {
+        if (confirm(`신청 번호 ${requestId}번을 승인하시겠습니까?`)) {
+            bulkApprove([requestId]);
+        }
+    }
+    function rejectRequest(requestId) {
+        const reason = prompt(`신청 번호 ${requestId}번의 거절 사유를 입력해주세요.`);
+        if (reason) {
+            bulkReject([requestId], reason);
+        }
+    }
+
+    // --- 일괄 처리 함수 (실제 API 호출) ---
+    function getSelectedIds() {
+        return Array.from(document.querySelectorAll('.request-checkbox:checked')).map(cb => cb.value);
+    }
+
+    function bulkApprove(ids) {
+        const requestIds = ids || getSelectedIds();
+        if (requestIds.length === 0) { alert('항목을 선택해주세요.'); return; }
+        
+        fetch('/admin/requests/approve-bulk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ requestIds: requestIds })
+        })
+        .then(handleResponse)
+        .catch(handleError);
+    }
+
+    function bulkReject(ids, reason) {
+        const requestIds = ids || getSelectedIds();
+        if (requestIds.length === 0) { alert('항목을 선택해주세요.'); return; }
+
+        const rejectionReason = reason || prompt(`선택된 ${requestIds.length}개 항목의 공통 거절 사유를 입력해주세요.`);
+        if (rejectionReason) {
+            fetch('/admin/requests/reject-bulk', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ requestIds: requestIds, reason: rejectionReason })
+            })
+            .then(handleResponse)
+            .catch(handleError);
+        }
+    }
+    
+    // --- 공통 응답/에러 처리 함수 ---
+    function handleResponse(response) {
+        return response.json().then(data => {
+            if (!response.ok) {
+                throw new Error(data.message || '알 수 없는 오류');
+            }
+            alert(data.message);
+            fetchPendingRequests();
+        });
+    }
+
+    function handleError(error) {
+        console.error('처리 실패:', error);
+        alert(`처리 중 오류가 발생했습니다: ${error.message}`);
+    }
+</script>
+</body>
+</html>
