@@ -5,16 +5,21 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import com.example.memo.company.dto.ContribPlanListResponse;
 import com.example.memo.company.dto.ContribValidationResultDto;
+import com.example.memo.company.dto.PayableItemDto;
 import com.example.memo.company.service.DcContributionService;
 import com.example.memo.jpa.entity.company.CompanyAccount;
 import com.example.memo.jpa.entity.company.DcContributionBatch;
 import com.example.memo.jpa.repository.company.CompanyAccountRepository;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpMessageHandler;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -99,7 +104,45 @@ public class DcContributionHandler implements TcpMessageHandler {
                     Map<String, Object> result = service.executeBatch(batchId, companyId, sourceAccountId);
                     return objectMapper.convertValue(result, JsonNode.class);
                 }
+                case CONTRIBUTION_PAYABLE_ITEM_LIST: {
+                    Long companyId = data.get("companyId").asLong();
+                    LocalDate from = data.hasNonNull("fromDate") ? LocalDate.parse(data.get("fromDate").asText()) : LocalDate.now().minusMonths(1);
+                    LocalDate to   = data.hasNonNull("toDate")   ? LocalDate.parse(data.get("toDate").asText())   : LocalDate.now();
+                    
+                    List<DcContributionBatch.BatchStatus> statuses = null;
+                    if (data.hasNonNull("statuses")) {
+                        // JSON 배열을 Java List로 변환
+                        statuses = objectMapper.convertValue(data.get("statuses"), new TypeReference<List<DcContributionBatch.BatchStatus>>() {});
+                    }
+
+                    int page = data.hasNonNull("page") ? data.get("page").asInt() : 0;
+                    int size = data.hasNonNull("size") ? data.get("size").asInt() : 20;
+                    Pageable pageable = PageRequest.of(page, size);
+
+                    Page<PayableItemDto> resultPage = service.listPayableItems(companyId, statuses, from, to, pageable);
+                    
+                    // Page 객체를 클라이언트에게 보내기 쉬운 Map 형태로 변환
+                    Map<String, Object> response = new LinkedHashMap<>();
+                    response.put("items", resultPage.getContent());
+                    response.put("page", resultPage.getNumber());
+                    response.put("size", resultPage.getSize());
+                    response.put("totalElements", resultPage.getTotalElements());
+                    response.put("totalPages", resultPage.getTotalPages());
+
+                    return objectMapper.convertValue(response, JsonNode.class);
+                }
                 
+                case CONTRIBUTION_EXECUTE_ITEMS: {
+                    Long companyId = data.get("companyId").asLong();
+                    Long sourceAccountId = data.get("sourceAccountId").asLong();
+                    List<Long> itemIds = objectMapper.convertValue(
+                        data.get("itemIds"), 
+                        new TypeReference<List<Long>>() {}
+                    );
+
+                    Map<String, Object> result = service.executePaymentByItems(companyId, itemIds, sourceAccountId);
+                    return objectMapper.convertValue(result, JsonNode.class);
+                }
                 default:
                     return Map.of("error", "Unsupported command");
             }

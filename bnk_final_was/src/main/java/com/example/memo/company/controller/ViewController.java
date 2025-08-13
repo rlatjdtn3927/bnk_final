@@ -62,4 +62,10 @@ public class ViewController {
 	public String contributionDepositPage() {
 		return "company/contribution-deposit";
 	}
+	
+	
+	@GetMapping("company/dc/contribution/payable-list-page")
+	public String contribPayListPage() {
+		return "company/contribution-payable-list";
+	}
 }

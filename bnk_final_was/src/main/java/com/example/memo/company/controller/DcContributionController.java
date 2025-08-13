@@ -21,11 +21,11 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.memo.company.dto.CompanyLoginResponseDto;
 import com.example.memo.company.dto.ContributionBatchValidateRequest;
 import com.example.memo.company.dto.ContributionItemDto;
+import com.example.memo.company.dto.ExecuteItemsRequest;
 import com.example.memo.company.utils.ExcelParser;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpClientService;
 import com.example.memo.tcp_common.TcpMessage;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -171,6 +171,62 @@ public class DcContributionController {
         return ResponseEntity.ok(
             tcpService.sendMessage(new TcpMessage(Command.CONTRIBUTION_BATCH_EXECUTE, data))
         );
+    }
+    
+    
+    /**
+     *  개별 납입 예정 현황 목록 조회 API
+     */
+    @GetMapping("/payable-list")
+    public ResponseEntity<?> payableList(
+            @RequestParam(name = "fromDate", required = false) String fromDate,
+            @RequestParam(name = "toDate",   required = false) String toDate,
+            @RequestParam(name = "statuses", required = false) List<String> statusList, // "CONFIRMED", "EXECUTED" 와 같이 문자열 리스트로 받음
+            @RequestParam(name = "page",     defaultValue = "0") int page,
+            @RequestParam(name = "size",     defaultValue = "20") int size,
+            HttpSession session) {
+
+        CompanyLoginResponseDto login = (CompanyLoginResponseDto) session.getAttribute("loginManager");
+        if (login == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message","로그인이 필요합니다."));
+        }
+
+        // 1. AP 서버에 보낼 데이터(JsonNode) 생성
+        ObjectNode data = objectMapper.createObjectNode();
+        data.put("companyId", login.getCompanyId());
+        
+        if (fromDate != null && !fromDate.isBlank()) data.put("fromDate", fromDate);
+        if (toDate   != null && !toDate.isBlank())   data.put("toDate", toDate);
+        if (statusList != null && !statusList.isEmpty()) {
+            // 문자열 리스트를 JsonNode의 배열로 변환
+            data.putPOJO("statuses", statusList);
+        }
+        data.put("page", page);
+        data.put("size", size);
+
+        // 2. TCP 메시지 생성 및 전송
+        TcpMessage msg = new TcpMessage(Command.CONTRIBUTION_PAYABLE_ITEM_LIST, data);
+        Object responseFromAp = tcpService.sendMessage(msg);
+
+        // 3. AP 서버로부터 받은 응답을 클라이언트에 전달
+        return ResponseEntity.ok(responseFromAp);
+    }
+    
+    /**
+     * [신규] 선택된 항목들 실제 입금 실행 요청
+     */
+    @PostMapping("/execute-items")
+    public ResponseEntity<?> executeItems(@RequestBody ExecuteItemsRequest payload, HttpSession session) {
+        CompanyLoginResponseDto login = (CompanyLoginResponseDto) session.getAttribute("loginManager");
+        if (login == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
+        ObjectNode data = objectMapper.createObjectNode();
+        data.put("companyId", login.getCompanyId());
+        data.put("sourceAccountId", payload.getSourceAccountId());
+        data.putPOJO("itemIds", payload.getItemIds());
+
+        TcpMessage msg = new TcpMessage(Command.CONTRIBUTION_EXECUTE_ITEMS, data);
+        return ResponseEntity.ok(tcpService.sendMessage(msg));
     }
 
 
