@@ -1,0 +1,14 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+  <title hx-swap-oob="true" th:text="${pageTitle}">관리자</title>
+</head>
+<body>
+  <!-- 사이드바 OOB 요소를 '그대로' 응답에 포함 -->
+	<th:block th:replace="~{admin/fragments/sidebar :: sidebar(${activeCategory}, ${subcats}, ${activeCode})}"></th:block>
+
+	
+  <!-- 초기 콘텐츠는 #content로 스왑 -->
+	<div th:replace="~{${initialView} :: content}"></div>
+</body>
+</html>

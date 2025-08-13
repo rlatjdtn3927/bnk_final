@@ -1,24 +1,26 @@
-<th:block xmlns:th="http://www.thymeleaf.org"
-          th:fragment="sidebar(menuItems, activeCategory, activePage)">
-  <aside class="sidenav">
-    <div class="profile">
-      <div class="avatar"></div>
-      <div class="name">관리자 이름</div>
-    </div>
+<!-- templates/admin/fragments/sidebar.html -->
+<aside id="sidebar" hx-swap-oob="true"
+       th:fragment="sidebar(activeCategory, subcats, activeCode)">
+  <div style="padding:16px 14px 8px 14px;font-weight:700;">
+	<span th:switch="${activeCategory}">
+	  <span th:case="'dashboard'">대시보드</span>
+	  <span th:case="'stat'">통계</span>
+	  <span th:case="'sales'">판매 관리</span>
+	  <span th:case="'account'">계좌 개설 관리</span>
+	  <span th:case="*">대시보드</span>
+	</span>
+  </div>
 
-    <div class="side-section">
-      <!-- 널이면 '카테고리' 표시 -->
-      <div class="side-section-title" th:text="${activeCategory} ?: '카테고리'">카테고리</div>
-
-      <ul class="submenu">
-        <li th:each="item : ${menuItems}">
-          <a class="submenu-link"
-             th:href="@{|/admin/${activeCategory}/${item.path}|}"
-             th:text="${item.label}"
-             th:classappend="${activePage} == ${item.path} ? ' active' : ''">
-          </a>
-        </li>
-      </ul>
-    </div>
-  </aside>
-</th:block>
+  <ul class="submenu" style="list-style:none;margin:0;padding:8px 0;">
+    <li th:each="s : ${subcats}">
+	<a th:text="${s.label}"
+	   th:href="@{|/admin/page/${s.code}|}"
+	   hx-target="#content"
+	   th:attr="hx-get=@{|/admin/ui/page/${s.code}|},
+	            hx-push-url=@{|/admin/page/${s.code}|}"
+	   th:classappend="${s.code}==${activeCode} ? ' is-active' : ''"
+	   th:attrappend="aria-current=${s.code}==${activeCode} ? 'page' : null">
+	</a>
+    </li>
+  </ul>
+</aside>

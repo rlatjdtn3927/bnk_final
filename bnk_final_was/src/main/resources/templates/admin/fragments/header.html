@@ -1,14 +1,32 @@
-<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="header(activeCategory)">
-  <nav class="topnav">
-    <a th:href="@{/admin/dashboard}"
-       th:classappend="${activeCategory}=='dashboard' ? 'active' : ''">대시보드</a>
-    <a th:href="@{/admin/stats}"
-       th:classappend="${activeCategory}=='stats' ? 'active' : ''">통계</a>
-    <a th:href="@{/admin/customer}"
-       th:classappend="${activeCategory}=='customer' ? 'active' : ''">고객 관리</a>
-    <a th:href="@{/admin/review}"
-       th:classappend="${activeCategory}=='review' ? 'active' : ''">후기 관리</a>
-    <a th:href="@{/admin/account}"
-       th:classappend="${activeCategory}=='account' ? 'active' : ''">계좌 개설 관리</a>
+<!-- templates/admin/fragments/header.html -->
+<th:block th:fragment="header(activeCategory)">
+  <nav style="height:56px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:24px;padding:0 16px;">
+	<!-- 대시보드 -->
+	<a th:href="@{/admin/page/dashboard}"   
+	   hx-target="#content"
+	   th:attr="hx-get=@{/admin/ui/category/dashboard},
+	            hx-push-url=@{/admin/page/dashboard}">
+	  대시보드
+	</a>
+	
+	<!-- 통계 -->
+	<a th:href="@{/admin/page/stat-subscribers}"
+	   hx-target="#content"
+	   th:attr="hx-get=@{/admin/ui/category/stat},
+            hx-push-url=@{/admin/page/stat-subscribers}">통계</a>
+	
+	<!-- 판매 관리 -->
+	<a th:href="@{/admin/page/sales-dashboard}"
+	   hx-target="#content"
+	   th:attr="hx-get=@{/admin/ui/category/sales},
+            hx-push-url=@{/admin/page/sales-dashboard}">판매 관리</a>
+	
+	<!-- 계좌 개설 관리 -->
+	<a th:href="@{/admin/page/account-open}"
+	   hx-target="#content"
+	   th:attr="hx-get=@{/admin/ui/category/account},
+            hx-push-url=@{/admin/page/account-open}">계좌 개설 관리</a>
+
+    <div style="margin-left:auto;">로그아웃</div>
   </nav>
 </th:block>

@@ -1,23 +1,47 @@
 <!doctype html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
-  <meta charset="utf-8">
-  <title>관리자</title>
-  <link rel="stylesheet" href="/css/admin.css">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8"/>
+  <title th:text="${pageTitle} ?: '관리자'">관리자</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <style>
+    .wrap{display:flex;min-height:calc(100vh - 56px);}
+    aside#sidebar{width:260px;background:#0e2a4d;color:#fff;}
+    .submenu a{display:block;padding:10px 14px;color:#dbe6ff;text-decoration:none;}
+    .submenu a.is-active{background:#1b3b6b;font-weight:700;}
+    main#content{flex:1;padding:16px;background:#f2f6fb;border:6px solid #c82020;}
+  </style>
 </head>
-<body class="admin">
-  <!-- 상단바: 활성 카테고리 전달 -->
-  <header th:replace="~{admin/fragments/header :: header(${activeCategory})}"></header>
+<body>
 
-  <div class="admin-container">
-    <!-- 좌측바: 메뉴 목록/활성 카테고리/활성 페이지 전달 -->
-    <aside th:replace="~{admin/fragments/sidebar :: sidebar(${menuItems}, ${activeCategory}, ${activePage})}"></aside>
+<header th:replace="~{admin/fragments/header :: header(${activeCategory})}"></header>
 
-    <main class="admin-content">
-      <!-- 경로만 모델에 넣고, 여기서 :: content 붙여 치환 -->
-      <th:block th:replace="~{__${content}__ :: content}"></th:block>
-    </main>
-  </div>
+<div class="wrap">
+	<aside id="sidebar"
+       th:replace="~{admin/fragments/sidebar :: sidebar(${activeCategory}, ${subcats}, ${activeCode})}"></aside>
+
+  <main id="content">
+    <div style="text-align:center;margin-top:120px;letter-spacing:2px;">CONTENTS</div>
+  </main>
+</div>
+<script>
+  function setActiveByUrl(){
+    const path = location.pathname;
+    document.querySelectorAll('#sidebar .submenu a').forEach(a=>{
+      const on = a.getAttribute('href') === path;
+      a.classList.toggle('is-active', on);
+      if (on) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current');
+    });
+  }
+  // 최초 로드
+  document.addEventListener('DOMContentLoaded', setActiveByUrl);
+  // 콘텐츠 스왑 후 (HTMX로 화면 바뀐 뒤)
+  document.body.addEventListener('htmx:afterSwap', e=>{
+    if (e.detail.target && e.detail.target.id === 'content') setActiveByUrl();
+  });
+  // 뒤/앞으로 가기
+  window.addEventListener('popstate', setActiveByUrl);
+</script>
 </body>
 </html>
