@@ -91,35 +91,22 @@ public class DcContributionHandler implements TcpMessageHandler {
                     return objectMapper.convertValue(Map.of("rows", rows), JsonNode.class);
                 }
                 
-                case CONTRIBUTION_BATCH_EXECUTE: {
-                    // WAS에서 넘어오는 값: batchId, companyId(세션에서 넣어줌), sourceAccountId
-                    if (!data.hasNonNull("batchId") || !data.hasNonNull("companyId") || !data.hasNonNull("sourceAccountId")) {
-                        return Map.of("error", "필수 파라미터가 누락되었습니다. (batchId, companyId, sourceAccountId)");
-                    }
-
-                    Long batchId = data.get("batchId").asLong();
-                    Long companyId = data.get("companyId").asLong();
-                    Long sourceAccountId = data.get("sourceAccountId").asLong();
-
-                    Map<String, Object> result = service.executeBatch(batchId, companyId, sourceAccountId);
-                    return objectMapper.convertValue(result, JsonNode.class);
-                }
                 case CONTRIBUTION_PAYABLE_ITEM_LIST: {
-                    Long companyId = data.get("companyId").asLong();
+                    System.out.println(">>>> 핸들러 케이스 도착! 타입: CONTRIBUTION_PAYABLE_ITEM_LIST"); // 이 로그를 추가
+
+                	Long companyId = data.get("companyId").asLong();
                     LocalDate from = data.hasNonNull("fromDate") ? LocalDate.parse(data.get("fromDate").asText()) : LocalDate.now().minusMonths(1);
                     LocalDate to   = data.hasNonNull("toDate")   ? LocalDate.parse(data.get("toDate").asText())   : LocalDate.now();
-                    
-                    List<DcContributionBatch.BatchStatus> statuses = null;
-                    if (data.hasNonNull("statuses")) {
-                        // JSON 배열을 Java List로 변환
-                        statuses = objectMapper.convertValue(data.get("statuses"), new TypeReference<List<DcContributionBatch.BatchStatus>>() {});
-                    }
+
+                    // 프론트엔드에서 보낸 paymentStatus 값을 읽어옴
+                    String paymentStatus = data.hasNonNull("paymentStatus") ? data.get("paymentStatus").asText() : "ALL";
 
                     int page = data.hasNonNull("page") ? data.get("page").asInt() : 0;
                     int size = data.hasNonNull("size") ? data.get("size").asInt() : 20;
                     Pageable pageable = PageRequest.of(page, size);
 
-                    Page<PayableItemDto> resultPage = service.listPayableItems(companyId, statuses, from, to, pageable);
+                    // 서비스 호출 시 paymentStatus 파라미터를 추가로 전달
+                    Page<PayableItemDto> resultPage = service.listPayableItems(companyId, from, to, paymentStatus, pageable);
                     
                     // Page 객체를 클라이언트에게 보내기 쉬운 Map 형태로 변환
                     Map<String, Object> response = new LinkedHashMap<>();

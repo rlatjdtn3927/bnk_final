@@ -33,11 +33,38 @@ public class DcContributionItem {
 
     private Long amount;
 
+    // --- 데이터 검증 단계의 결과 ---
     @Enumerated(EnumType.STRING)
     private ValidationStatus validationStatus; // SUCCESS / FAIL
-
     private String errorMessage;
-    private String errorCode; // 선택(프론트 요약/필터용)
+    private String errorCode;
 
-    public enum ValidationStatus { SUCCESS, FAIL }
+    // --- [추가] 실제 입금 처리 단계의 결과 ---
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus paymentStatus;
+
+    /**
+     * 데이터의 유효성 검증 결과
+     */
+    public enum ValidationStatus {
+        SUCCESS, FAIL
+    }
+
+    /**
+     * [신규] 개별 항목의 실제 입금 처리 상태
+     * PENDING: 입금 대기, PAID: 입금 완료, SKIPPED: 입금 제외, FAILED: 입금 실패
+     */
+    public enum PaymentStatus {
+        PENDING("입금대기"),
+        PAID("입금완료"),
+        SKIPPED("입금제외"),
+        FAILED("입금실패");
+
+        @Getter
+        private final String displayName;
+
+        PaymentStatus(String displayName) {
+            this.displayName = displayName;
+        }
+    }
 }

@@ -153,35 +153,15 @@ public class DcContributionController {
         TcpMessage msg = new TcpMessage(Command.CONTRIBUTION_COMPANY_ACCOUNT_LIST, data);
         return ResponseEntity.ok(tcpService.sendMessage(msg));
     }
-    
-    @PostMapping("/execute")
-    public ResponseEntity<?> executeContribution(
-            @RequestParam("batchId") Long batchId,
-            @RequestParam("sourceAccountId") Long sourceAccountId,
-            HttpSession session) {
-
-        var login = (CompanyLoginResponseDto) session.getAttribute("loginManager");
-        if (login == null) return ResponseEntity.status(401).body(Map.of("message","로그인이 필요합니다."));
-
-        ObjectNode data = objectMapper.createObjectNode()
-                .put("batchId", batchId)
-                .put("sourceAccountId", sourceAccountId)
-                .put("companyId", login.getCompanyId());
-
-        return ResponseEntity.ok(
-            tcpService.sendMessage(new TcpMessage(Command.CONTRIBUTION_BATCH_EXECUTE, data))
-        );
-    }
-    
-    
+      
     /**
-     *  개별 납입 예정 현황 목록 조회 API
+     * 개별 납입 예정 현황 목록 조회 API
      */
     @GetMapping("/payable-list")
     public ResponseEntity<?> payableList(
             @RequestParam(name = "fromDate", required = false) String fromDate,
             @RequestParam(name = "toDate",   required = false) String toDate,
-            @RequestParam(name = "statuses", required = false) List<String> statusList, // "CONFIRMED", "EXECUTED" 와 같이 문자열 리스트로 받음
+            @RequestParam(name = "paymentStatus", required = false, defaultValue = "ALL") String paymentStatus, 
             @RequestParam(name = "page",     defaultValue = "0") int page,
             @RequestParam(name = "size",     defaultValue = "20") int size,
             HttpSession session) {
@@ -197,10 +177,10 @@ public class DcContributionController {
         
         if (fromDate != null && !fromDate.isBlank()) data.put("fromDate", fromDate);
         if (toDate   != null && !toDate.isBlank())   data.put("toDate", toDate);
-        if (statusList != null && !statusList.isEmpty()) {
-            // 문자열 리스트를 JsonNode의 배열로 변환
-            data.putPOJO("statuses", statusList);
-        }
+        
+        // [수정] 변경된 paymentStatus 값을 AP로 전달합니다.
+        data.put("paymentStatus", paymentStatus);
+
         data.put("page", page);
         data.put("size", size);
 
