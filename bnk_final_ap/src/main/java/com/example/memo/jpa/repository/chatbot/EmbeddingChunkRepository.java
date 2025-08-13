@@ -1,4 +1,4 @@
-package com.example.memo.jpa.repository;
+package com.example.memo.jpa.repository.chatbot;
 
 import java.util.List;
 
@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.memo.jpa.entity.EmbeddingChunk;
+import com.example.memo.jpa.entity.chatbot.EmbeddingChunk;
 
 @Repository
 @Transactional("txManagerOracle")

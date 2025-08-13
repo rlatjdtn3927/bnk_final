@@ -1,4 +1,4 @@
-package com.example.memo.jpa.entity;
+package com.example.memo.jpa.entity.chatbot;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

@@ -15,8 +15,10 @@ import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.example.memo.jpa.entity.ChatLog;
-import com.example.memo.jpa.repository.ChatLogRepository;
+
+import com.example.memo.jpa.entity.chatbot.ChatLog;
+import com.example.memo.jpa.repository.chatbot.ChatLogRepository;
+
 import org.postgresql.util.PGobject;
 
 import java.lang.reflect.Method;
