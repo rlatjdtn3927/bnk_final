@@ -1,8 +1,8 @@
 // src/main/java/com/example/memo/chatbot/service/EmbeddingService.java
 package com.example.memo.chatbot.service;
 
-import com.example.memo.jpa.entity.EmbeddingChunk;
-import com.example.memo.jpa.repository.EmbeddingChunkRepository;
+import com.example.memo.jpa.entity.chatbot.EmbeddingChunk;
+import com.example.memo.jpa.repository.chatbot.EmbeddingChunkRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
