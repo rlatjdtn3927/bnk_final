@@ -1,0 +1,24 @@
+<th:block xmlns:th="http://www.thymeleaf.org"
+          th:fragment="sidebar(menuItems, activeCategory, activePage)">
+  <aside class="sidenav">
+    <div class="profile">
+      <div class="avatar"></div>
+      <div class="name">관리자 이름</div>
+    </div>
+
+    <div class="side-section">
+      <!-- 널이면 '카테고리' 표시 -->
+      <div class="side-section-title" th:text="${activeCategory} ?: '카테고리'">카테고리</div>
+
+      <ul class="submenu">
+        <li th:each="item : ${menuItems}">
+          <a class="submenu-link"
+             th:href="@{|/admin/${activeCategory}/${item.path}|}"
+             th:text="${item.label}"
+             th:classappend="${activePage} == ${item.path} ? ' active' : ''">
+          </a>
+        </li>
+      </ul>
+    </div>
+  </aside>
+</th:block>

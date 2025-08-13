@@ -1,0 +1,14 @@
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="header(activeCategory)">
+  <nav class="topnav">
+    <a th:href="@{/admin/dashboard}"
+       th:classappend="${activeCategory}=='dashboard' ? 'active' : ''">대시보드</a>
+    <a th:href="@{/admin/stats}"
+       th:classappend="${activeCategory}=='stats' ? 'active' : ''">통계</a>
+    <a th:href="@{/admin/customer}"
+       th:classappend="${activeCategory}=='customer' ? 'active' : ''">고객 관리</a>
+    <a th:href="@{/admin/review}"
+       th:classappend="${activeCategory}=='review' ? 'active' : ''">후기 관리</a>
+    <a th:href="@{/admin/account}"
+       th:classappend="${activeCategory}=='account' ? 'active' : ''">계좌 개설 관리</a>
+  </nav>
+</th:block>

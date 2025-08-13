@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <title>관리자</title>
+  <link rel="stylesheet" href="/css/admin.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body class="admin">
+  <!-- 상단바: 활성 카테고리 전달 -->
+  <header th:replace="~{admin/fragments/header :: header(${activeCategory})}"></header>
+
+  <div class="admin-container">
+    <!-- 좌측바: 메뉴 목록/활성 카테고리/활성 페이지 전달 -->
+    <aside th:replace="~{admin/fragments/sidebar :: sidebar(${menuItems}, ${activeCategory}, ${activePage})}"></aside>
+
+    <main class="admin-content">
+      <!-- 경로만 모델에 넣고, 여기서 :: content 붙여 치환 -->
+      <th:block th:replace="~{__${content}__ :: content}"></th:block>
+    </main>
+  </div>
+</body>
+</html>
