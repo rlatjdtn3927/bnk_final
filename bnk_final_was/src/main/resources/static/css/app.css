@@ -1,0 +1,116 @@
+/* src/main/resources/static/css/app.css */
+
+/* Pretendard CDN */
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
+
+:root{
+  --bg:#f7f7f8;
+  --text:#222;
+  --muted:#667085;
+  --border:#e5e7eb;
+  --brand:#d81e06; /* BNK 레드 느낌 */
+  --card:#ffffff;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+
+body{
+  font-family:'Pretendard', sans-serif;
+  margin:0;
+  padding:0;
+  color:#222;           /* 요청 반영 */
+  background:var(--bg);
+}
+
+.container{
+  max-width:960px;
+  margin:0 auto;
+  padding:16px;
+}
+
+.header{
+  background:#fff;
+  border-bottom:1px solid var(--border);
+  position:sticky; top:0; z-index:10;
+}
+
+.brand{
+  display:flex; align-items:center; gap:8px;
+  padding:12px 16px;
+  font-weight:700;
+}
+.brand .dot{width:10px;height:10px;border-radius:50%;background:var(--brand);display:inline-block}
+
+.tabs{
+  display:flex; gap:8px;
+  padding:0 16px 12px 16px;
+  border-top:1px solid var(--border);
+}
+.tab{
+  display:inline-block;
+  padding:8px 12px;
+  border:1px solid var(--border);
+  border-radius:999px;
+  background:#fff;
+  text-decoration:none;
+  color:var(--text);
+  font-size:14px;
+}
+.tab.active{ border-color:var(--brand); color:#fff; background:var(--brand); }
+
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:16px;
+  box-shadow:0 2px 10px rgba(0,0,0,0.03);
+}
+
+.grid{ display:grid; gap:12px; }
+.grid-2{ grid-template-columns:1fr 1fr; }
+.grid-3{ grid-template-columns:repeat(3,1fr); }
+
+.section-title{ font-weight:700; margin:4px 0 8px 0; font-size:16px; }
+
+.input, select, button{ font-family:inherit; font-size:14px; }
+
+.input, select{
+  width:100%;
+  padding:10px 12px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#fff;
+}
+
+.btn{
+  padding:10px 14px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:#fff;
+  cursor:pointer;
+}
+.btn.primary{ background:var(--brand); color:#fff; border-color:var(--brand); }
+.btn.ghost{ background:#fff; color:var(--text); }
+.btn:disabled{ opacity:.6; cursor:not-allowed; }
+
+.kv{ display:flex; justify-content:space-between; padding:6px 0; color:var(--muted) }
+.kv strong{ color:var(--text) }
+
+.mt-8{ margin-top:16px }
+.mt-16{ margin-top:24px }
+.mt-24{ margin-top:32px }
+.row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+
+.table{ width:100%; border-collapse:collapse; }
+.table th,.table td{ padding:10px 8px; border-bottom:1px solid var(--border); text-align:left; font-size:14px; }
+.table th{ color:#555 }
+
+.badge{ display:inline-block; padding:4px 8px; border-radius:999px; background:#f1f5f9; font-size:12px; }
+
+/* <= 768px 반응형 */
+@media (max-width: 768px){
+  .grid-2{ grid-template-columns:1fr; }
+  .grid-3{ grid-template-columns:1fr; }
+  .tabs{ flex-wrap:wrap; }
+}

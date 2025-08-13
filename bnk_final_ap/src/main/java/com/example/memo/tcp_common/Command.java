@@ -41,5 +41,26 @@ public enum Command {
     IRP_JOIN_GET,
     IRP_JOIN_TAX_PURPOSE, 
     IRP_JOIN_RETIRED_PURPOSE, 
-    IRP_JOIN_COMPLETE			// 계좌개설/완료
+    IRP_JOIN_COMPLETE,		// 계좌개설/완료
+    
+    //보유현황 탭
+    SUMMARY_GET,                 // 총 평가액/수익률/입금합 등 요약
+    TXN_LIST,                    // TRANSACTION_HISTORY 조회
+    DEPOSIT_LIST,                // DEPOSIT_HISTORY 조회
+    DEPOSIT_CREATE,              // 계좌 입금
+
+    //상품관리 탭
+    PORTFOLIO_LIST,              // 보유상품 목록
+    PORTFOLIO_CHANGE_PREVIEW,    // 보유상품 변경 시뮬(미리보기)
+    PORTFOLIO_CHANGE_APPLY,      // 보유상품 변경 적용
+
+    MATURITY_RESERVATION_LIST,   // 만기상품 변경예약 목록
+    MATURITY_RESERVATION_APPLY,  // 만기상품 변경예약 등록
+
+    PENDING_BUY_LIST,            // 매수예정상품 목록
+    PENDING_BUY_UPSERT,          // 매수예정상품 등록/변경
+    PENDING_BUY_HISTORY,         // 매수예정상품 변경내역
+
+    DO_UPSERT,                   // 디폴트옵션 등록/변경
+    DO_HISTORY                   // 디폴트옵션 변경내역
 }

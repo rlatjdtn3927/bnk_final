@@ -1,0 +1,86 @@
+<!-- src/main/resources/templates/products.html -->
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>BNK 퇴직연금 — 상품관리</title>
+  <link th:href="@{/css/app.css}" rel="stylesheet"/>
+</head>
+<body>
+<header class="header">
+  <div class="brand">
+    <span class="dot"></span> BNK 퇴직연금
+  </div>
+  <nav class="tabs">
+    <a th:href="@{/app/holdings}" class="tab">보유현황</a>
+    <a th:href="@{/app/products}" class="tab active">상품관리</a>
+  </nav>
+</header>
+
+<main class="container">
+
+  <!-- 계좌 선택 -->
+  <section class="card">
+    <div class="section-title">개인 IRP/DC 선택</div>
+    <div class="grid grid-3">
+      <div>
+        <label>계좌 유형</label>
+        <select id="accountType" class="input">
+          <option value="IRP" th:selected="${param.accountType} == 'IRP'">IRP</option>
+          <option value="DC" th:selected="${param.accountType} == 'DC'">DC</option>
+        </select>
+      </div>
+      <div>
+        <label>계좌 식별자 (acountId)</label>
+        <input id="acountId" class="input" type="text" th:value="${param.acountId}"/>
+      </div>
+      <div class="row" style="margin-top:22px">
+        <button class="btn" id="loadPortfolio">보유상품 보기</button>
+        <span class="badge" id="statusBadge">대기</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 타일: 보유상품 변경 -->
+  <section class="grid grid-2 mt-16">
+    <div class="card">
+      <div class="section-title">보유상품 변경 (즉시 반영)</div>
+      <p class="badge">미리보기 → 적용 2단계</p>
+      <div class="mt-8 grid">
+        <textarea id="changeLines" class="input" rows="6"
+                  placeholder='[{"productType":"FUND","productId":"F001","action":"BUY","quantity":"1.00"}]'></textarea>
+        <div class="row">
+          <button class="btn" id="previewBtn">미리보기</button>
+          <button class="btn primary" id="applyBtn">적용</button>
+        </div>
+      </div>
+      <pre id="changeResult" class="mt-8" style="white-space:pre-wrap;"></pre>
+    </div>
+
+    <div class="card">
+      <div class="section-title">보유상품 목록</div>
+      <div class="mt-8">
+        <table class="table">
+          <thead><tr><th>상품ID</th><th>유형</th><th>수량</th><th>평가금액</th></tr></thead>
+          <tbody id="portfolioBody"><tr><td colspan="4">데이터 없음</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">만기상품 변경예약</div>
+      <p class="badge">추후 구현</p>
+    </div>
+
+    <div class="card">
+      <div class="section-title">매수예정/디폴트옵션</div>
+      <p class="badge">추후 구현</p>
+    </div>
+  </section>
+
+</main>
+
+<script th:src="@{/js/products.js}"></script>
+</body>
+</html>
