@@ -8,7 +8,7 @@ public enum Command {
 
     EMBEDDING_CREATE, // 문서 청크 생성 및 임베딩 요청
     CHAT_ASK_QUESTION, // 질문에 대한 응답 요청
-    BRANCH_NEARBY; // 현재 위치 기준, 부산은행 지점 Top5
+    BRANCH_NEARBY, // 현재 위치 기준, 부산은행 지점 Top5
 
 	
 	COMPANY_REGISTER, // 기업 정보 등록
@@ -30,7 +30,7 @@ public enum Command {
     CONTRIBUTION_COMPANY_ACCOUNT_LIST, // 출금계좌 조회
     CONTRIBUTION_BATCH_EXECUTE,          // 선택 배치 입금 실행
     CONTRIBUTION_PAYABLE_ITEM_LIST,
-    CONTRIBUTION_EXECUTE_ITEMS; // 선택 항목 입금 실행;
+    CONTRIBUTION_EXECUTE_ITEMS, // 선택 항목 입금 실행;
 
     
     /*IRP가입관련*/
@@ -41,6 +41,6 @@ public enum Command {
     IRP_JOIN_GET,
     IRP_JOIN_TAX_PURPOSE, 
     IRP_JOIN_RETIRED_PURPOSE, 
-    IRP_JOIN_COMPLETE,			// 계좌개설/완료
+    IRP_JOIN_COMPLETE			// 계좌개설/완료
 
 }

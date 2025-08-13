@@ -28,8 +28,8 @@ public enum Command {
     CONTRIBUTION_COMPANY_ACCOUNT_LIST, // 출금계좌 조회
     CONTRIBUTION_BATCH_EXECUTE,          // 선택 배치 입금 실행
     CONTRIBUTION_PAYABLE_ITEM_LIST,
-    CONTRIBUTION_EXECUTE_ITEMS // 선택 항목 입금 실행;
-    BRANCH_NEARBY; // 현재 위치 기준, 부산은행 지점 Top5
+    CONTRIBUTION_EXECUTE_ITEMS, // 선택 항목 입금 실행;
+    
     
     /*IRP가입관련*/
     IRP_JOIN_CREATE_DRAFT,      // step1: 초안 생성
