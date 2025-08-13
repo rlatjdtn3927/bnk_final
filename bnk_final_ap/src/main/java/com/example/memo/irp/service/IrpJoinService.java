@@ -7,22 +7,22 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.memo.irp.dto.AccountContractResult;
-import com.example.memo.irp.entity.BankAccount;
-import com.example.memo.irp.entity.IrpAccount;
-import com.example.memo.irp.entity.IrpJoinEntity;
-import com.example.memo.irp.entity.IrpRetirePurpose;
-import com.example.memo.irp.entity.IrpTaxPurpose;
-import com.example.memo.irp.entity.ProductMaster;
-import com.example.memo.irp.entity.TestUserEntity;
-import com.example.memo.irp.repository.BankAccountRepository;
-import com.example.memo.irp.repository.IrpAccountRepository;
-import com.example.memo.irp.repository.IrpJoinRepository;
-import com.example.memo.irp.repository.IrpRetireRepository;
-import com.example.memo.irp.repository.IrpTaxRepository;
-import com.example.memo.irp.repository.ProductMasterRepository;
-import com.example.memo.irp.repository.TestUserRepository;
 import com.example.memo.irp.util.AccountNumberGenerator;
 import com.example.memo.irp.util.ContractNumberGenerator;
+import com.example.memo.jpa.entity.irp.BankAccount;
+import com.example.memo.jpa.entity.irp.IrpAccount;
+import com.example.memo.jpa.entity.irp.IrpJoinEntity;
+import com.example.memo.jpa.entity.irp.IrpRetirePurpose;
+import com.example.memo.jpa.entity.irp.IrpTaxPurpose;
+import com.example.memo.jpa.entity.irp.ProductMaster;
+import com.example.memo.jpa.entity.irp.TestUserEntity;
+import com.example.memo.jpa.repository.irp.BankAccountRepository;
+import com.example.memo.jpa.repository.irp.IrpAccountRepository;
+import com.example.memo.jpa.repository.irp.IrpJoinRepository;
+import com.example.memo.jpa.repository.irp.IrpRetireRepository;
+import com.example.memo.jpa.repository.irp.IrpTaxRepository;
+import com.example.memo.jpa.repository.irp.ProductMasterRepository;
+import com.example.memo.jpa.repository.irp.TestUserRepository;
 
 import lombok.RequiredArgsConstructor;
 

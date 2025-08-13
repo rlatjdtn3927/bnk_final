@@ -6,8 +6,8 @@ import java.util.Objects;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.memo.irp.entity.BankAccount;
-import com.example.memo.irp.repository.BankAccountRepository;
+import com.example.memo.jpa.entity.irp.BankAccount;
+import com.example.memo.jpa.repository.irp.BankAccountRepository;
 
 import lombok.RequiredArgsConstructor;
 

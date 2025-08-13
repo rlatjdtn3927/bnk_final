@@ -1,4 +1,4 @@
-package com.example.memo.irp.repository;
+package com.example.memo.jpa.repository.irp;
 
 import java.util.Optional;
 
@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.example.memo.irp.entity.IrpJoinEntity;
+import com.example.memo.jpa.entity.irp.IrpJoinEntity;
 
 public interface IrpJoinRepository extends JpaRepository<IrpJoinEntity, Long>{
 	

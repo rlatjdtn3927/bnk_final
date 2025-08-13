@@ -5,8 +5,8 @@ import java.time.LocalDate;
 import org.springframework.stereotype.Component;
 
 import com.example.memo.irp.dto.AccountContractResult;
-import com.example.memo.irp.entity.IrpJoinEntity;
 import com.example.memo.irp.service.IrpJoinService;
+import com.example.memo.jpa.entity.irp.IrpJoinEntity;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpMessageHandler;
 import com.fasterxml.jackson.databind.JsonNode;

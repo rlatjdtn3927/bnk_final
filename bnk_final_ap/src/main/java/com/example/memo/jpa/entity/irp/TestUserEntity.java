@@ -1,4 +1,4 @@
-package com.example.memo.irp.entity;
+package com.example.memo.jpa.entity.irp;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
