@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>IRP가입하기 - 세액공제용</title>
+</head>
+<body>
+
+
+<script>
+  function getJoinIdOrBack() {
+    const params = new URLSearchParams(location.search);
+    const id = params.get('joinId');
+    if (!id) {
+      alert('joinId가 없습니다. 처음으로 이동합니다.');
+      location.href = '/irp/join/step1-purpose';
+      return null;
+    }
+    return Number(id);
+  }
+
+  const joinId = getJoinIdOrBack();
+</script>
+</body>
+</html>
