@@ -1,23 +1,40 @@
 <th:block th:fragment="css">
-  <!-- 외부 CSS 파일 -->
-  <link rel="stylesheet" th:href="@{/css/pages/open-account.css}">
-  
-  <!-- 또는 인라인 CSS -->
-  <style>
-    .open-account-container {
-      padding: 20px;
-      background-color: #fff;
-      border-radius: 8px;
-      border: 1px solid #e5e7eb;
-    }
-    .open-account-container h2 {
-      color: #0e2a4d;
-      margin-bottom: 10px;
-    }
-  </style>
+  .open-account-container {
+    padding:20px; background:#fff; border:1px solid #e5e7eb; border-radius:8px;
+    max-width: 800px; margin: 20px auto; box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+  .open-account-container h2 { color:#0e2a4d; margin-bottom:10px; font-size:1.6rem; }
+  .open-account-container p { margin-bottom:20px; color:#555; }
+  .open-account-form label { font-weight:600; display:block; margin-bottom:5px; }
+  .open-account-form input, .open-account-form select {
+    width:100%; padding:8px 10px; border:1px solid #ccc; border-radius:4px; margin-bottom:15px;
+  }
+  .open-account-form button { background:#0e2a4d; color:#fff; border:0; padding:10px 16px; border-radius:4px; cursor:pointer; }
+  .open-account-form button:hover { background:#143b6e; }
 </th:block>
 
+
+
 <th:block th:fragment="content">
-  <h2>DC 계좌 개설</h2>
-  <p>계좌 개설 관리</p>
+  <div class="open-account-container">
+    <h2>DC 계좌 개설</h2>
+    <p>계좌 개설 관리 화면입니다. 아래 폼을 작성하여 새로운 계좌를 개설하세요.</p>
+    
+    <form class="open-account-form">
+      <label for="name">이름</label>
+      <input type="text" id="name" name="name" placeholder="이름을 입력하세요">
+
+      <label for="accountType">계좌 유형</label>
+      <select id="accountType" name="accountType">
+        <option value="">유형 선택</option>
+        <option value="DC">DC</option>
+        <option value="IRP">IRP</option>
+      </select>
+
+      <label for="amount">예치 금액</label>
+      <input type="number" id="amount" name="amount" placeholder="금액 입력">
+
+      <button type="submit">계좌 개설하기</button>
+    </form>
+  </div>
 </th:block>

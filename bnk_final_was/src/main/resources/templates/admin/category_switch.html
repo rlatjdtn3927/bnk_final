@@ -3,8 +3,8 @@
 <head>
   <title hx-swap-oob="true" th:text="${pageTitle}">관리자</title>
   <!-- 페이지별 CSS를 OOB로 교체 -->
-  <style id="page-css" hx-swap-oob="true"
-         th:replace="~{${initialView} :: css}"></style>
+	<link id="page-css" hx-swap-oob="true" rel="stylesheet"
+      th:href="@{/admin/ui/css/{code}(code=${activeCode})}"/>
 </head>
 <body>
   <!-- 사이드바 OOB 교체 -->
