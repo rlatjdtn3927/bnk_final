@@ -27,5 +27,5 @@ public interface DcAccountRequestRepository extends JpaRepository<DcAccountReque
      * @return DcAccountRequest 목록
      */
     List<DcAccountRequest> findByDcMemberIdInAndStatus(List<Long> memberIds, String status);
-
+    List<DcAccountRequest> findByStatusOrderByRequestedAtDesc(String status);
 }

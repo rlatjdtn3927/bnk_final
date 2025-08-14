@@ -1,41 +1,388 @@
 <th:block xmlns:th="http://www.thymeleaf.org" th:fragment="css">
-  <style id="page-css" hx-swap-oob="true">
-    /* 페이지 전용 스타일 */
-    .open-account-container {
-      padding:20px; background:#fff; border:1px solid #e5e7eb; border-radius:8px;
-      max-width: 800px; margin: 20px auto; box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    }
-    .open-account-container h2 { color:#0e2a4d; margin-bottom:10px; font-size:1.6rem; }
-    .open-account-container p { margin-bottom:20px; color:#555; }
-    .open-account-form label { font-weight:600; display:block; margin-bottom:5px; }
-    .open-account-form input, .open-account-form select {
-      width:100%; padding:8px 10px; border:1px solid #ccc; border-radius:4px; margin-bottom:15px; box-sizing: border-box;
-    }
-    .open-account-form button { background:#0e2a4d; color:#fff; border:0; padding:10px 16px; border-radius:4px; cursor:pointer; }
-    .open-account-form button:hover { background:#143b6e; }
+<style id="page-css" hx-swap-oob="true">
+    /* 색상/토큰 */
+    .dc-approval{--pri:#0052cc;--red:#de350b;--bd:#e6e8ef;--ink:#172b4d;--mut:#6b7280;--bg:#f5f7fb;--card:#fff}
+    .dc-approval{font-family:Pretendard,sans-serif;color:var(--ink)}
+
+    /* 툴바/필터 */
+    .dc-approval .toolbar{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .dc-approval .filters{display:flex;gap:8px;flex-wrap:wrap}
+    .dc-approval .filters .field{display:flex;gap:6px;align-items:center;background:#fff;border:1px solid var(--bd);border-radius:8px;padding:6px 10px}
+    .dc-approval .filters input[type="text"], .dc-approval .filters select{border:none;outline:none;font-size:14px}
+
+    /* 카드/테이블 */
+    .dc-approval .card{background:var(--card);border:1px solid var(--bd);border-radius:12px;box-shadow:0 2px 10px rgba(16,24,40,.06)}
+    .dc-approval .card .card-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--bd)}
+    .dc-approval .card .title{font-weight:700;font-size:20px}
+    .dc-approval table{width:100%;border-collapse:collapse}
+    .dc-approval thead th{position:sticky;top:48px;background:#fafcff;border-bottom:1px solid var(--bd);padding:10px 12px;text-align:left;font-size:13px;color:#4b5563;z-index:4}
+    .dc-approval tbody td{border-bottom:1px solid var(--bd);padding:12px}
+
+    /* 그룹 헤더(회사) + 접기 */
+    .dc-approval .grp{background:#f9fbff;font-weight:700;color:#334155;cursor:pointer}
+    .dc-approval tr.hidden-row{display:none}
+
+    /* 칩/버튼 */
+    .dc-approval .chip{display:inline-block;padding:3px 8px;border-radius:999px;font-size:12px;border:1px solid var(--bd);color:#374151;background:#fff}
+    .dc-approval .chip.warn{border-color:#f59e0b;background:#fff7ed;color:#92400e}
+    .dc-approval .chip.wait{border-color:#93c5fd;background:#eff6ff;color:#1e40af}
+    .dc-approval .chip.approved{border-color:#c7ead6;background:#f0fdf4;color:#166534}
+    .dc-approval .chip.rejected{border-color:#fecaca;background:#fff1f2;color:#991b1b}
+    .dc-approval .row-actions{display:flex;gap:6px}
+    .dc-approval .btn{border:1px solid var(--bd);background:#fff;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer}
+    .dc-approval .btn.pri{background:var(--pri);border-color:var(--pri);color:#fff}
+    .dc-approval .btn.ghost{background:transparent}
+    .dc-approval input.rowchk:disabled{cursor:not-allowed;opacity:.5}
+
+    /* 벌크바 */
+    .dc-approval .bulkbar{position:sticky;top:0;z-index:5;background:#f0f6ff;border-bottom:1px solid var(--bd);display:none;align-items:center;gap:12px;padding:10px 18px}
+    .dc-approval .bulkbar.visible{display:flex}
+    .dc-approval .bulkbar .meta{font-weight:600}
+
+    /* 상태별 톤다운 */
+    .dc-approval tr.is-approved td{opacity:.9}
+    .dc-approval tr.is-rejected td{opacity:.9;background:#fffafa}
+
+    /* 보조 */
+    .dc-approval .note{color:var(--mut);font-size:12px}
+    .dc-approval .empty, .dc-approval .error, .dc-approval .loading{padding:28px;text-align:center;color:#6b7280}
+    .dc-approval .expand{display:none;background:#fcfcff}
+    .dc-approval tr.expanded + tr.expand{display:table-row}
   </style>
 </th:block>
 
+
 <th:block xmlns:th="http://www.thymeleaf.org" th:fragment="content">
-  <div class="open-account-container">
-    <h2>DC 계좌 개설</h2>
-    <p>계좌 개설 관리 화면입니다. 아래 폼을 작성하여 새로운 계좌를 개설하세요.</p>
-    
-    <form class="open-account-form">
-      <label for="name">이름</label>
-      <input type="text" id="name" name="name" placeholder="이름을 입력하세요">
+  <section class="dc-approval">
+    <div class="toolbar">
+      <div class="filters">
+        <div class="field"><span>회사</span>
+          <select id="f-company">
+            <option value="">전체</option>
+          </select>
+        </div>
+        <div class="field"><span>상태</span>
+          <select id="f-status">
+            <option value="" selected>전체</option>
+            <option value="PENDING">대기</option>
+            <option value="APPROVED">승인</option>
+            <option value="REJECTED">거절</option>
+          </select>
+        </div>
+        <div class="field"><span>기간</span>
+          <input type="date" id="f-from"/><span class="note">~</span><input type="date" id="f-to"/>
+        </div>
+        <div class="field" style="min-width:220px">
+          <input id="f-q" type="text" placeholder="가입자명/사유/메모 검색"/>
+        </div>
+        <button id="btn-search" class="btn">조회</button>
+      </div>
+      <div class="note" id="summary"></div>
+    </div>
 
-      <label for="accountType">계좌 유형</label>
-      <select id="accountType" name="accountType">
-        <option value="">유형 선택</option>
-        <option value="DC">DC</option>
-        <option value="IRP">IRP</option>
-      </select>
+    <div class="card">
+      <div class="card-hd">
+        <div class="title">DC 계좌 개설 요청 조회</div>
+        <div class="note" id="count-meta"></div>
+      </div>
 
-      <label for="amount">예치 금액</label>
-      <input type="number" id="amount" name="amount" placeholder="금액 입력">
+      <div class="bulkbar" id="bulkbar">
+        <div class="meta" id="sel-meta">0건 선택</div>
+        <button class="btn pri" id="bulk-approve">선택 승인</button>
+        <button class="btn" id="bulk-reject">선택 거절</button>
+        <button class="btn ghost" id="bulk-clear">선택 해제</button>
+      </div>
 
-      <button type="submit">계좌 개설하기</button>
-    </form>
-  </div>
+      <div id="list-area">
+        <div class="loading">목록을 불러오는 중…</div>
+        <table id="req-table" style="display:none">
+          <thead>
+            <tr>
+              <th style="width:36px"><input type="checkbox" id="chk-all"/></th>
+              <th>가입자명</th>
+              <th>회사</th>
+              <th>신청일시</th>
+              <th>요청채널</th>
+              <th>상태</th>
+              <th style="width:180px">처리</th>
+            </tr>
+          </thead>
+          <tbody id="req-tbody"></tbody>
+        </table>
+        <div class="empty" id="empty" style="display:none">조건에 맞는 요청이 없습니다.</div>
+        <div class="error" id="error" style="display:none">목록을 불러오지 못했습니다.</div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+  (()=>{
+
+    const $ = (s,root=document)=>root.querySelector(s);
+    const $$=(s,root=document)=>Array.from(root.querySelectorAll(s));
+
+    const st = {
+      data:[], filtered:[], selected:new Set(),
+      filters:{company:"",status:"",from:"",to:"",q:""}
+    };
+
+    function init(){
+        // ----- 이벤트 바인딩
+        $('#f-company')?.addEventListener('change', e=>{st.filters.company=e.target.value;});
+        $('#f-status')?.addEventListener('change',  e=>{st.filters.status=e.target.value;});
+        $('#f-from')?.addEventListener('change',    e=>{st.filters.from=e.target.value;});
+        $('#f-to')?.addEventListener('change',      e=>{st.filters.to=e.target.value;});
+        $('#f-q')?.addEventListener('keydown',      e=>{if(e.key==='Enter') fetchData();});
+        $('#btn-search')?.addEventListener('click', fetchData);
+
+        $('#chk-all')?.addEventListener('change', e=>{
+          const on=e.target.checked;
+          $$('#req-tbody input.rowchk:not(:disabled)').forEach(c=>{
+            c.checked=on; on?st.selected.add(c.value):st.selected.delete(c.value);
+          });
+          updateBulkbar();
+        });
+
+        $('#bulk-approve')?.addEventListener('click', ()=>bulkApprove());
+        $('#bulk-reject')?.addEventListener('click',  ()=>bulkReject());
+        $('#bulk-clear')?.addEventListener('click',   ()=>{
+          st.selected.clear();
+          $$('#req-tbody .rowchk').forEach(c=>c.checked=false);
+          updateBulkbar();
+        });
+
+        // ----- 최초 데이터 로딩
+        fetchData();
+      }
+
+      // ★ DOMContentLoaded가 이미 끝났으면 즉시 실행
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+
+    // ---------- 데이터 로딩 (상태별 호출 / 전체면 병렬 병합)
+    function fetchData(){
+      $('#req-table').style.display='none'; $('#empty').style.display='none'; $('#error').style.display='none';
+      $('#list-area .loading').style.display='block';
+
+      const status = st.filters.status;
+
+      const endpointFor = (s) => ({
+        'PENDING':  '/admin/requests/pending',
+        'APPROVED': '/admin/requests/approved',
+        'REJECTED': '/admin/requests/rejected'
+      }[s]);
+
+      const loadOne = (url) =>
+        fetch(url).then(r=>r.json()).then(grouped =>
+          // grouped: { 회사명: [ {requestId, memberName, requestedAt, requestStatus?, status?, channel?, ...} ] }
+          Object.entries(grouped).flatMap(([company,rows]) =>
+            rows.map(r => ({...r, company})) // 렌더러에서 r.company 사용
+          )
+        );
+
+      let p;
+      if (!status) {
+        // 전체: 3개 병렬 후 합치기
+        p = Promise.all([
+          loadOne('/admin/requests/pending'),
+          loadOne('/admin/requests/approved'),
+          loadOne('/admin/requests/rejected')
+        ]).then(([a,b,c]) => [...a,...b,...c]
+          .sort((x,y)=> new Date(y.requestedAt) - new Date(x.requestedAt)));
+      } else {
+        p = loadOne(endpointFor(status));
+      }
+
+      p.then(list => {
+          st.data = list;
+          hydrateCompanyFilterFromList(list);
+          applyClientFilters();   // 회사/기간/검색어 필터
+          $('#list-area .loading').style.display='none';
+          if (st.filtered.length === 0) $('#empty').style.display='block';
+        })
+       .catch(() => {
+          $('#list-area .loading').style.display='none';
+          $('#error').style.display='block';
+        });
+    }
+
+    // 회사 드롭다운 구성
+    function hydrateCompanyFilterFromList(list){
+      const sel = $('#f-company');
+      const current = sel.value;
+      const companies = Array.from(new Set(list.map(r => r.company).filter(Boolean))).sort();
+      sel.innerHTML = '<option value="">전체</option>' + companies.map(c=>`<option${c===current?' selected':''}>${c}</option>`).join('');
+    }
+
+    // ---------- 클라이언트 필터 & 요약
+    function applyClientFilters(){
+      const f = st.filters;
+      const inRange=(d)=> {
+        if(!f.from && !f.to) return true;
+        const t = new Date(d);
+        if(f.from && t < new Date(f.from)) return false;
+        if(f.to && t > new Date(f.to+'T23:59:59')) return false;
+        return true;
+      };
+      const q = (f.q||'').trim().toLowerCase();
+
+      st.filtered = st.data.filter(r=>
+        (!f.company || r.company===f.company) &&
+        inRange(r.requestedAt) &&
+        (!q || [r.memberName,r.reason].some(v=> (v||'').toLowerCase().includes(q)))
+      );
+      st.filtered.sort((a,b)=> new Date(b.requestedAt)-new Date(a.requestedAt));
+
+      renderTable();
+      st.selected.clear();
+      updateBulkbar();
+      updateSummaryCounts();
+    }
+
+    function updateSummaryCounts(){
+      const counts = st.filtered.reduce((acc,r)=>{
+        const k = (r.requestStatus || r.status || 'PENDING');
+        acc[k] = (acc[k]||0)+1; return acc;
+      }, {});
+      $('#summary').textContent = `대기 ${counts.PENDING||0} · 승인 ${counts.APPROVED||0} · 거절 ${counts.REJECTED||0}`;
+    }
+
+    // ---------- 렌더링 (회사별 1회 헤더, 대기건만 액션/선택)
+    function renderTable(){
+      $('#list-area .loading').style.display='none';
+      const tbody = $('#req-tbody'); tbody.innerHTML='';
+      if(st.filtered.length===0){
+        $('#req-table').style.display='none'; $('#empty').style.display='block'; $('#count-meta').textContent='0건';
+        return;
+      }
+      $('#empty').style.display='none'; $('#req-table').style.display='table';
+      $('#count-meta').textContent = `${st.filtered.length}건`;
+
+      const chipByStatus = {
+        PENDING:  '<span class="chip wait">대기</span>',
+        APPROVED: '<span class="chip approved">승인</span>',
+        REJECTED: '<span class="chip rejected">거절</span>'
+      };
+
+      // 회사별 그룹핑
+      const groups = new Map();
+      for(const r of st.filtered){
+        const key = r.company || r.companyName || '(미지정)';
+        if(!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(r);
+      }
+      const companies = Array.from(groups.keys()).sort((a,b)=>a.localeCompare(b));
+
+      companies.forEach(company=>{
+        const header = document.createElement('tr');
+        header.className = 'grp';
+        header.dataset.company = company;
+        header.innerHTML = `<td colspan="7">${company} <span class="note">(${groups.get(company).length}건)</span></td>`;
+        tbody.appendChild(header);
+
+        const rows = groups.get(company).sort((a,b)=> new Date(b.requestedAt) - new Date(a.requestedAt));
+
+        rows.forEach(r=>{
+          const statusKey = r.requestStatus || r.status || 'PENDING';
+          const stChip = chipByStatus[statusKey] || '';
+          const isPending = statusKey === 'PENDING';
+          const checked = st.selected.has(String(r.requestId)) ? 'checked' : '';
+
+          const tr=document.createElement('tr');
+          tr.className = (statusKey==='APPROVED'?'is-approved':(statusKey==='REJECTED'?'is-rejected':'')) + ' item-row';
+          tr.dataset.company = company;
+
+          tr.innerHTML = `
+            <td><input class="rowchk" type="checkbox" value="${r.requestId}" ${checked} ${isPending?'':'disabled'}></td>
+            <td><a href="javascript:void(0)" class="row-toggle" data-id="${r.requestId}">${r.memberName}</a></td>
+            <td>${company}</td>
+            <td>${new Date(r.requestedAt).toLocaleString()}</td>
+            <td>${r.channel||'기업'}</td>
+            <td>${r.risk?'<span class="chip warn">주의</span> ':''}${stChip}</td>
+            <td class="row-actions">
+              ${isPending ? `
+                <button class="btn pri" data-act="approve" data-id="${r.requestId}">승인</button>
+                <button class="btn" data-act="reject" data-id="${r.requestId}">거절</button>
+              ` : ''}
+            </td>`;
+          tbody.appendChild(tr);
+
+          const trExp=document.createElement('tr'); trExp.className='expand item-row'; trExp.dataset.company = company;
+          trExp.innerHTML=`<td></td><td colspan="6">
+              <div class="note">사유: ${r.reason||'-'} | 첨부: ${Array.isArray(r.attachments)? r.attachments.length : (r.attachments||0)}건</div>
+            </td>`;
+          tbody.appendChild(trExp);
+        });
+      });
+
+      // 이벤트 바인딩
+      $$('#req-tbody .rowchk').forEach(cb=>cb.addEventListener('change', e=>{
+        const id=e.target.value; e.target.checked?st.selected.add(id):st.selected.delete(id); updateBulkbar();
+      }));
+      $$('#req-tbody [data-act]').forEach(b=>b.addEventListener('click', handleRowAction));
+      $$('#req-tbody .row-toggle').forEach(a=>a.addEventListener('click', toggleExpand));
+
+      // 회사 헤더 접기/펼치기
+      $('#req-tbody').addEventListener('click', (e)=>{
+        const grp = e.target.closest('tr.grp'); if(!grp) return;
+        const comp = grp.dataset.company;
+        $$('#req-tbody .item-row').forEach(tr=>{
+          if(tr.dataset.company===comp) tr.classList.toggle('hidden-row');
+        });
+      }, { once:true }); // 최초 바인딩 1회
+    }
+
+    function toggleExpand(e){
+      const tr = e.target.closest('tr');
+      tr.classList.toggle('expanded');
+    }
+
+    function handleRowAction(e){
+      const id = e.target.dataset.id;
+      const act= e.target.dataset.act;
+      if(act==='approve') bulkApprove([id]); else bulkReject([id]);
+    }
+
+    function updateBulkbar(){
+      const bar = $('#bulkbar');
+      const n = $$('#req-tbody .rowchk:checked:not(:disabled)').length; // 대기건만
+      $('#sel-meta').textContent = `${n}건 선택`;
+      bar.classList.toggle('visible', n>0);
+
+      const all = $$('#req-tbody .rowchk:not(:disabled)');
+      $('#chk-all').checked = n>0 && all.every(c=>c.checked);
+    }
+
+    // ---------- API
+    function bulkApprove(ids){
+      const requestIds = ids || Array.from(st.selected);
+      if(requestIds.length===0) return;
+      if(!confirm(`${requestIds.length}건 승인하시겠습니까?`)) return;
+      fetch('/admin/requests/approve-bulk',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({requestIds})
+      }).then(handleResponse).catch(handleError);
+    }
+    function bulkReject(ids){
+      const requestIds = ids || Array.from(st.selected);
+      if(requestIds.length===0) return;
+      const reason = prompt('공통 거절 사유를 입력하세요.'); if(!reason) return;
+      fetch('/admin/requests/reject-bulk',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({requestIds,reason})
+      }).then(handleResponse).catch(handleError);
+    }
+    function handleResponse(r){
+      return r.json().then(d=>{
+        if(!r.ok) throw new Error(d.message||'오류');
+        alert(d.message||'완료'); fetchData();
+      });
+    }
+    function handleError(e){ alert('처리 중 오류: '+e.message); }
+
+  })();
+  </script>
 </th:block>

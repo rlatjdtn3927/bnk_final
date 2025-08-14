@@ -3,6 +3,7 @@ package com.example.memo.company.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -199,6 +200,26 @@ public class AccountRequestService {
         requestIds.forEach(requestId -> rejectRequest(requestId, approverId, reason));
     }
     
+    /**
+     * 상태별 요청 목록을 회사명으로 그룹핑해서 반환 (정렬: 신청일시 DESC)
+     * 스키마: Map<회사명, List<AccountRequestListDto>>
+     */
+    @Transactional(readOnly = true)
+    public Map<String, List<AccountRequestListDto>> getRequestsGroupedByCompany(String status) {
+        // 성능/일관성을 위해 정렬 포함 메서드 권장
+        var rows = dcAccountRequestRepository.findByStatusOrderByRequestedAtDesc(status);
+
+        var list = rows.stream()
+                .map(AccountRequestListDto::fromEntity)
+                .collect(Collectors.toList());
+
+        // 같은 회사끼리 묶되, 표시 순서를 요청일자 기준으로 자연스럽게 유지하고 싶으면 LinkedHashMap 사용
+        return list.stream().collect(Collectors.groupingBy(
+                AccountRequestListDto::getCompanyName
+                // 기본 groupingBy는 HashMap이지만, 표시 순서 중요하면 아래 주석 해제
+                 , LinkedHashMap::new, Collectors.toList()
+        ));
+    }
     
     
     
