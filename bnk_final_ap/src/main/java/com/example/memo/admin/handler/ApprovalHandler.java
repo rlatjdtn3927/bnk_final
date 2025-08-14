@@ -26,18 +26,17 @@ public class ApprovalHandler implements TcpMessageHandler{
 		
 		switch(command) {
 			case ADMIN_CRAWL_CHECK_FUNDMASTERPENDING: {
-				return approvalService.checkFundPending();
+				return null;
 			}
 			case ADMIN_CRAWL_CHECK_FUNDOCPENDING: {
-				return approvalService.checkFundDocPending();
+				return null;
 			}
 			case ADMIN_CRAWL_CHECK_PRINCIPALDOCPENDING: {
-				return approvalService.checkPrincipalDocPending();
+				return null;
 			}
 			case ADMIN_CRAWL_CHECK_PRINCIPALPENDING: {
-				return approvalService.checkPrincipalPending();
+				return null;
 			}
-			
 			case ADMIN_CRAWL_GRANT_FILE_DOWNLOAD_PRINCIPAL: {
 				return null;
 			}

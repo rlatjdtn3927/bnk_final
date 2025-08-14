@@ -33,46 +33,18 @@ import lombok.RequiredArgsConstructor;
 public class ApprovalService {
 
     private final CryptoService cryptoService;
-    private final FundStatusPendingRepository fundStatusPendingRepository;
-    private final CumulativePerformancePendingRepository cumulativePerformancePendingRepository;
-    private final FundReturnPendingRepository fundReturnPendingRepository;
-    private final FundNavPendingRepository fundNavPendingRepository;
-    private final AssetAllocationPendingRepository assetAllocationPendingRepository;
-    private final RiskMetricPendingRepository riskMetricPendingRepository;
-    private final Top5SectorPendingRepository top5SectorPendingRepository;
+
     
     private final FundStatusRepository fundStatusRepository;
     private final CumulativePerformanceRepository cumulativePerformanceRepository;
-    private final FundReturnPendingRepository fundReturnRepository;
-    private final FundNavPendingRepository fundNavRepository;
-    private final AssetAllocationPendingRepository assetAllocationRepository;
-    private final RiskMetricPendingRepository riskMetricRepository;
-    private final Top5SectorPendingRepository top5SectorRepository;
+
     
-    private final FundMasterPendingRepository fundMasterPendingRepository;
-    private final FundDocumentPendingRepository fundDocumentPendingRepository;
-    private final PrincipalGuaranteePendingRepository principalGuaranteePendingRepository;
-    private final PrincipalDocumentPendingRepository principalDocumentPendingRepository;
-    
+
     private final FundMasterRepository fundMasterRepository;
     private final PrincipalGuaranteeRepository principalGuaranteeRepository;
     private final PrincipalDocumentRepository principalDocumentRepository;
     private final FundDocumentRepository fundDocumentRepository;
     
-    public List<FundMasterPending> checkFundPending() {
-    	return fundMasterPendingRepository.findAll();
-    }
-    
-    public List<FundDocumentPending> checkFundDocPending() {
-    	return fundDocumentPendingRepository.findAll();
-    }
-    
-    public List<PrincipalGuaranteePending> checkPrincipalPending() {
-    	return principalGuaranteePendingRepository.findAll();
-    }
-    
-    public List<PrincipalDocumentPending> checkPrincipalDocPending() {
-    	return principalDocumentPendingRepository.findAll();
-    }
+
 
 }
