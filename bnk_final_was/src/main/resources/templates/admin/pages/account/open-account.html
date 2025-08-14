@@ -1,3 +1,22 @@
+<th:block th:fragment="css">
+  <!-- 외부 CSS 파일 -->
+  <link rel="stylesheet" th:href="@{/css/pages/open-account.css}">
+  
+  <!-- 또는 인라인 CSS -->
+  <style>
+    .open-account-container {
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+    }
+    .open-account-container h2 {
+      color: #0e2a4d;
+      margin-bottom: 10px;
+    }
+  </style>
+</th:block>
+
 <th:block th:fragment="content">
   <h2>DC 계좌 개설</h2>
   <p>계좌 개설 관리</p>

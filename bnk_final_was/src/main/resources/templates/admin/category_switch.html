@@ -2,13 +2,16 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
   <title hx-swap-oob="true" th:text="${pageTitle}">관리자</title>
+  <!-- 페이지별 CSS를 OOB로 교체 -->
+  <style id="page-css" hx-swap-oob="true"
+         th:replace="~{${initialView} :: css}"></style>
 </head>
 <body>
-  <!-- 사이드바 OOB 요소를 '그대로' 응답에 포함 -->
-	<th:block th:replace="~{admin/fragments/sidebar :: sidebar(${activeCategory}, ${subcats}, ${activeCode})}"></th:block>
+  <!-- 사이드바 OOB 교체 -->
+  <aside id="sidebar" hx-swap-oob="true"
+         th:replace="~{admin/fragments/sidebar :: sidebar(${activeCategory}, ${subcats}, ${activeCode})}"></aside>
 
-	
-  <!-- 초기 콘텐츠는 #content로 스왑 -->
-	<div th:replace="~{${initialView} :: content}"></div>
+  <!-- 콘텐츠 교체(이 부분이 #content로 스왑됨) -->
+  <div th:replace="~{${initialView} :: content}"></div>
 </body>
 </html>
