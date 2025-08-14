@@ -3,20 +3,50 @@
 <head>
 <meta charset="UTF-8">
 <title>IRP가입하기 - 가입목적 선택</title>
+<link rel="stylesheet" th:href="@{/css/step1-purpose.css}" />
 </head>
 <body>
-<input type="hidden" id="userId" th:value="${testUserId}"/>
-<div class="grid">
-  <button class="tile blue" data-purpose="세액공제">
-    <div class="title">연말정산 세액공제</div><div class="sub">개인 적립금 입금</div>
-  </button>
-  <button class="tile green" data-purpose="퇴직금수령">
-    <div class="title">퇴직금 수령</div><div class="sub">퇴직금 입금</div>
-  </button>
-</div>
+  <div class="section">
+    <h1 class="title">IRP 신규가입</h1>
 
-<script>
-  
-</script>
+    <div class="guide-card">
+      <p class="guide-title">IRP 가입용도 확인</p>
+      <p class="guide-desc">개인형IRP 가입용도를 선택하십시오.</p>
+
+      <div class="purpose-grid">
+        <!-- 세액공제 -->
+        <form th:action="@{/join/draft}" method="post" style="margin:0">
+          <input type="hidden" name="userId" th:value="${userId}" />
+          <input type="hidden" name="joinPurpose" value="세액공제" />
+          <button type="submit" class="purpose-card purpose--tax">
+            <div class="purpose-icon">
+              <img th:src="@{/images/irp/icon-tax.svg}" alt="세액공제" width="38" height="38">
+            </div>
+            <div class="purpose-text">
+              <p class="title">연말정산 세액공제</p>
+              <p class="caption">개인 적립금 입금</p>
+            </div>
+          </button>
+        </form>
+
+        <!-- 퇴직금 수령 -->
+        <form th:action="@{/join/draft}" method="post" style="margin:0">
+          <input type="hidden" name="userId" th:value="${userId}" />
+          <input type="hidden" name="joinPurpose" value="퇴직금 수령" />
+          <button type="submit" class="purpose-card purpose--retire">
+            <div class="purpose-icon">
+              <img th:src="@{/images/irp/icon-retire.svg}" alt="퇴직금 수령" width="38" height="38">
+            </div>
+            <div class="purpose-text">
+              <p class="title">퇴직금 수령</p>
+              <p class="caption">퇴직금 입금</p>
+            </div>
+          </button>
+        </form>
+      </div>
+	  
+	  <div class="helpbar">· 상담센터 : 평일 09시 ~ 18시(공휴일 제외) / 상담하기 : 1588-6200</div>
+    </div>
+  </div>
 </body>
 </html>

@@ -54,7 +54,7 @@ public class OracleJpaConfig {
         LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
         emf.setDataSource(oracleDs);
         //어떤 Entity 인식할지 지정
-        emf.setPackagesToScan("com.example.memo"); 
+        emf.setPackagesToScan("com.example.memo.jpa"); 
 
         //Hibernate 사용할 수 있도록
         JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
