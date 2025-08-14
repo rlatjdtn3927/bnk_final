@@ -11,10 +11,12 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.RequiredArgsConstructor;
+
 /*메세지 전송 시에 사용해야 할 클래스 함수 구현 자체는 신경쓰지 마세요*/
 @Service
 public class TcpClientService {
-
+	
     private final ObjectMapper mapper = new ObjectMapper();
     
     /*이 함수 쓰면 됨 --> 요청하면 응답까지 받음*/
@@ -25,7 +27,8 @@ public class TcpClientService {
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))
         ) {
             String json = mapper.writeValueAsString(message);
-            out.println(json);
+            String encodedString = AES256Util.encrypt(json);
+            out.println(encodedString);
 
             String response = in.readLine();
             return mapper.readTree(response);

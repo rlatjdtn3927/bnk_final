@@ -1,0 +1,92 @@
+<!-- src/main/resources/templates/holdings.html -->
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>BNK 퇴직연금 — 보유현황</title>
+  <link th:href="@{/css/app.css}" rel="stylesheet"/>
+</head>
+<body>
+<header class="header">
+  <div class="brand">
+    <span class="dot"></span> BNK 퇴직연금
+  </div>
+  <nav class="tabs">
+    <a th:href="@{/app/holdings}" class="tab active">보유현황</a>
+    <a th:href="@{/app/products}" class="tab">상품관리</a>
+  </nav>
+</header>
+
+<main class="container">
+
+  <!-- 계좌 선택 -->
+  <section class="card">
+    <div class="section-title">개인 IRP/DC 선택</div>
+    <div class="grid grid-3">
+      <div>
+        <label>계좌 유형</label>
+        <select id="accountType" class="input">
+          <option value="IRP" th:selected="${param.accountType} == 'IRP'">IRP</option>
+          <option value="DC" th:selected="${param.accountType} == 'DC'">DC</option>
+        </select>
+      </div>
+      <div>
+        <label>계좌 식별자 (acountId)</label>
+        <input id="acountId" class="input" type="text" th:value="${param.acountId}"/>
+      </div>
+      <div class="row" style="margin-top:22px">
+        <button class="btn" id="loadSummary">요약 불러오기</button>
+        <span class="badge" id="statusBadge">대기</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 요약 카드 -->
+  <section class="card mt-16">
+    <div class="section-title">요약</div>
+    <div id="summaryBox"></div>
+  </section>
+
+  <!-- 동작 버튼 -->
+  <section class="grid grid-2 mt-16">
+    <div class="card">
+      <div class="section-title">계좌 입금 (즉시 반영)</div>
+      <div class="grid grid-3">
+        <div>
+          <label>입금 금액</label>
+          <input id="depositAmt" class="input" type="number" min="0" step="1" placeholder="원 단위"/>
+        </div>
+        <div>
+          <label>메모</label>
+          <input id="depositDesc" class="input" type="text" placeholder="선택"/>
+        </div>
+        <div class="row" style="margin-top:22px">
+          <button id="depositBtn" class="btn primary">입금 실행</button>
+        </div>
+      </div>
+      <div id="depositResult" class="mt-8"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">내역 조회</div>
+      <div class="row">
+        <button class="btn" id="loadTxns">거래내역(상품)</button>
+        <button class="btn" id="loadDeposits">계좌입금내역</button>
+      </div>
+      <div class="mt-8">
+        <table class="table" id="listTable">
+          <thead>
+          <tr id="listHead"><th>종류</th><th>금액/수량</th><th>일시</th></tr>
+          </thead>
+          <tbody id="listBody"><tr><td colspan="3">데이터 없음</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script th:src="@{/js/holdings.js}"></script>
+</body>
+</html>
