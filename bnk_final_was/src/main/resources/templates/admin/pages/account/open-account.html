@@ -1,67 +1,106 @@
 <th:block xmlns:th="http://www.thymeleaf.org" th:fragment="css">
 <style id="page-css" hx-swap-oob="true">
-    /* 색상/토큰 */
-    .dc-approval{--pri:#0052cc;--red:#de350b;--bd:#e6e8ef;--ink:#172b4d;--mut:#6b7280;--bg:#f5f7fb;--card:#fff}
-    .dc-approval{font-family:Pretendard,sans-serif;color:var(--ink)}
+    /* ------------------------------ */
+    /* 1. 기본 & 색상 토큰             */
+    /* ------------------------------ */
+    .dc-approval {
+        --pri: #0052cc; --pri-h: #0045ab; --red: #de350b;
+        --bd: #dfe1e6; --ink: #172b4d; --mut: #6b778c; --bg: #f4f5f7; --card: #ffffff;
+        --chip-warn-bg: #fffbe6; --chip-warn-bd: #ffab00; --chip-warn-ink: #974F0C;
+        --chip-wait-bg: #e6f0ff; --chip-wait-bd: #85b8ff; --chip-wait-ink: #0045ab;
+        --chip-appr-bg: #e3fcef; --chip-appr-bd: #79f2c0; --chip-appr-ink: #006644;
+        --chip-rej-bg: #ffebe6; --chip-rej-bd: #ff8f73; --chip-rej-ink: #bf2600;
+        font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard Variable", Pretendard, Roboto, "Noto Sans KR", "Segoe UI", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+        color: var(--ink);
+    }
+    .dc-approval ::-webkit-input-placeholder { color: #a1aab8; }
+    .dc-approval :-ms-input-placeholder { color: #a1aab8; }
+    .dc-approval ::-moz-placeholder { color: #a1aab8; }
 
-    /* 툴바/필터 */
-    .dc-approval .toolbar{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:14px}
-    .dc-approval .filters{display:flex;gap:8px;flex-wrap:wrap}
-    .dc-approval .filters .field{display:flex;gap:6px;align-items:center;background:#fff;border:1px solid var(--bd);border-radius:8px;padding:6px 10px}
-    .dc-approval .filters input[type="text"], .dc-approval .filters select{border:none;outline:none;font-size:14px}
+    /* ------------------------------ */
+    /* 2. 레이아웃 & 툴바             */
+    /* ------------------------------ */
+    .dc-approval .toolbar { display: flex; gap: 1rem; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+    .dc-approval .filters { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .dc-approval .filters .field { display: flex; gap: 0.5rem; align-items: center; background: var(--card); border: 1px solid var(--bd); border-radius: 8px; padding: 0.5rem 0.75rem; font-size: 0.875rem; }
+    .dc-approval .filters .field:focus-within { border-color: var(--pri); box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.2); }
+    .dc-approval .filters input, .dc-approval .filters select { border: none; outline: none; background: transparent; font-size: inherit; }
+    .dc-approval .note { color: var(--mut); font-size: 0.8rem; }
+    .dc-approval .card { background: var(--card); border: 1px solid var(--bd); border-radius: 16px; box-shadow: 0 4px 12px -2px rgba(23, 43, 77, 0.08); overflow: hidden; }
+    .dc-approval .card-hd { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--bd); }
+    .dc-approval .card .title { font-weight: 700; font-size: 1.25rem; }
 
-    /* 카드/테이블 */
-    .dc-approval .card{background:var(--card);border:1px solid var(--bd);border-radius:12px;box-shadow:0 2px 10px rgba(16,24,40,.06)}
-    .dc-approval .card .card-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--bd)}
-    .dc-approval .card .title{font-weight:700;font-size:20px}
-    .dc-approval table{width:100%;border-collapse:collapse}
-    .dc-approval thead th{position:sticky;top:48px;background:#fafcff;border-bottom:1px solid var(--bd);padding:10px 12px;text-align:left;font-size:13px;color:#4b5563;z-index:4}
-    .dc-approval tbody td{border-bottom:1px solid var(--bd);padding:12px}
+    /* ------------------------------ */
+    /* 3. 테이블 & 컨텐츠              */
+    /* ------------------------------ */
+    .dc-approval table { width: 100%; border-collapse: collapse; border-spacing: 0; }
+    .dc-approval thead th { position: sticky; top: 0; background: #fafbfc; border-bottom: 1px solid var(--bd); padding: 0.75rem 1rem; text-align: left; font-size: 0.8rem; color: #42526e; font-weight: 600; z-index: 10; }
+    .dc-approval tbody td { padding: 1rem; vertical-align: middle; transition: background-color 0.2s; border: 0; }
+    .dc-approval tbody tr { border-bottom: 1px solid var(--bd); }
+    .dc-approval tbody tr:last-child { border-bottom: none; }
+    .dc-approval .row-toggle { color: var(--pri); text-decoration: none; font-weight: 600; }
+    .dc-approval .row-toggle:hover { text-decoration: underline; }
 
-    /* 그룹 헤더(회사) + 접기 */
-    .dc-approval .grp{background:#f9fbff;font-weight:700;color:#334155;cursor:pointer}
-    .dc-approval tr.hidden-row{display:none}
+    /* 그룹 헤더 (회사) + 접기/펼치기 */
+    .dc-approval .grp { background: #f7f8fa; font-weight: 700; color: #344563; cursor: pointer; position: relative; border-top: 2px solid var(--bd); border-bottom: 0; }
+    .dc-approval .grp:hover { background: #f0f2f5; }
+    .dc-approval .grp td { border: 0; }
+    .dc-approval .grp td::after {
+        content: ''; position: absolute; right: 1.5rem; top: 50%; transform: translateY(-50%) rotate(0deg);
+        width: 1rem; height: 1rem; background-color: var(--mut);
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        transition: transform 0.2s ease-in-out;
+    }
+    .dc-approval tr.group-collapsed + .item-row { display: none; }
+    .dc-approval tr.group-collapsed .grp td::after { transform: translateY(-50%) rotate(-90deg); }
 
-    /* 칩/버튼 */
-    .dc-approval .chip{display:inline-block;padding:3px 8px;border-radius:999px;font-size:12px;border:1px solid var(--bd);color:#374151;background:#fff}
-    .dc-approval .chip.warn{border-color:#f59e0b;background:#fff7ed;color:#92400e}
-    .dc-approval .chip.wait{border-color:#93c5fd;background:#eff6ff;color:#1e40af}
-    .dc-approval .chip.approved{border-color:#c7ead6;background:#f0fdf4;color:#166534}
-    .dc-approval .chip.rejected{border-color:#fecaca;background:#fff1f2;color:#991b1b}
-    .dc-approval .row-actions{display:flex;gap:6px}
-    .dc-approval .btn{border:1px solid var(--bd);background:#fff;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer}
-    .dc-approval .btn.pri{background:var(--pri);border-color:var(--pri);color:#fff}
-    .dc-approval .btn.ghost{background:transparent}
-    .dc-approval input.rowchk:disabled{cursor:not-allowed;opacity:.5}
+    /* 확장 영역 */
+    .dc-approval .expand { display: none; background: #fafbfc; }
+    .dc-approval tr.expanded + .expand { display: table-row; }
+    .dc-approval tr.expanded + .expand td { padding-left: 3rem; border-top: 0; border-bottom: 1px solid var(--bd); }
+    .dc-approval tr.expanded { background-color: #f7f8fa; border-bottom: 0; }
+
+    /* ------------------------------ */
+    /* 4. 컴포넌트 (칩, 버튼, 벌크바)  */
+    /* ------------------------------ */
+    .dc-approval .chip { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; border: 1px solid; }
+    .dc-approval .chip.warn { border-color: var(--chip-warn-bd); background: var(--chip-warn-bg); color: var(--chip-warn-ink); }
+    .dc-approval .chip.wait { border-color: var(--chip-wait-bd); background: var(--chip-wait-bg); color: var(--chip-wait-ink); }
+    .dc-approval .chip.approved { border-color: var(--chip-appr-bd); background: var(--chip-appr-bg); color: var(--chip-appr-ink); }
+    .dc-approval .chip.rejected { border-color: var(--chip-rej-bd); background: var(--chip-rej-bg); color: var(--chip-rej-ink); }
+    .dc-approval .row-actions { display: flex; gap: 0.5rem; }
+    .dc-approval .btn { border: 1px solid var(--bd); background: var(--card); border-radius: 8px; padding: 0.5rem 0.875rem; font-size: 0.875rem; cursor: pointer; transition: all 0.2s ease; }
+    .dc-approval .btn:hover { border-color: #c1c7d0; background: #f7f8fa; }
+    .dc-approval .btn.pri { background: var(--pri); border-color: var(--pri); color: #fff; }
+    .dc-approval .btn.pri:hover { background: var(--pri-h); border-color: var(--pri-h); }
+    .dc-approval input.rowchk:disabled { cursor: not-allowed; opacity: .5; }
 
     /* 벌크바 */
-    .dc-approval .bulkbar{position:sticky;top:0;z-index:5;background:#f0f6ff;border-bottom:1px solid var(--bd);display:none;align-items:center;gap:12px;padding:10px 18px}
-    .dc-approval .bulkbar.visible{display:flex}
-    .dc-approval .bulkbar .meta{font-weight:600}
+    .dc-approval .bulkbar { position: sticky; top: 48px; /* thead height */ z-index: 5; background: #e9f2ff; border-bottom: 1px solid #cce0ff; display: none; align-items: center; gap: 1rem; padding: 0.75rem 1.5rem; }
+    .dc-approval .bulkbar.visible { display: flex; }
+    .dc-approval .bulkbar .meta { font-weight: 600; }
 
-    /* 상태별 톤다운 */
-    .dc-approval tr.is-approved td{opacity:.9}
-    .dc-approval tr.is-rejected td{opacity:.9;background:#fffafa}
-
-    /* 보조 */
-    .dc-approval .note{color:var(--mut);font-size:12px}
-    .dc-approval .empty, .dc-approval .error, .dc-approval .loading{padding:28px;text-align:center;color:#6b7280}
-    .dc-approval .expand{display:none;background:#fcfcff}
-    .dc-approval tr.expanded + tr.expand{display:table-row}
-  </style>
+    /* ------------------------------ */
+    /* 5. 상태 & 보조 스타일           */
+    /* ------------------------------ */
+    .dc-approval tr.is-approved td, .dc-approval tr.is-rejected td { opacity: .7; }
+    .dc-approval tr.is-rejected { background: #fff8f7; }
+    .dc-approval .empty, .dc-approval .error, .dc-approval .loading { padding: 3rem; text-align: center; color: var(--mut); }
+</style>
 </th:block>
+
 
 
 <th:block xmlns:th="http://www.thymeleaf.org" th:fragment="content">
   <section class="dc-approval">
     <div class="toolbar">
       <div class="filters">
-        <div class="field"><span>회사</span>
-          <select id="f-company">
-            <option value="">전체</option>
-          </select>
+        <div class="field">
+          <label for="f-company">회사</label>
+          <select id="f-company"><option value="">전체</option></select>
         </div>
-        <div class="field"><span>상태</span>
+        <div class="field">
+          <label for="f-status">상태</label>
           <select id="f-status">
             <option value="" selected>전체</option>
             <option value="PENDING">대기</option>
@@ -69,13 +108,14 @@
             <option value="REJECTED">거절</option>
           </select>
         </div>
-        <div class="field"><span>기간</span>
+        <div class="field">
+          <label for="f-from">기간</label>
           <input type="date" id="f-from"/><span class="note">~</span><input type="date" id="f-to"/>
         </div>
         <div class="field" style="min-width:220px">
-          <input id="f-q" type="text" placeholder="가입자명/사유/메모 검색"/>
+          <input id="f-q" type="text" placeholder="가입자명/사유 등 검색"/>
         </div>
-        <button id="btn-search" class="btn">조회</button>
+        <button id="btn-search" class="btn pri">조회</button>
       </div>
       <div class="note" id="summary"></div>
     </div>
@@ -88,17 +128,16 @@
 
       <div class="bulkbar" id="bulkbar">
         <div class="meta" id="sel-meta">0건 선택</div>
-        <button class="btn pri" id="bulk-approve">선택 승인</button>
-        <button class="btn" id="bulk-reject">선택 거절</button>
-        <button class="btn ghost" id="bulk-clear">선택 해제</button>
+        <button class="btn pri" data-bulk-act="approve">선택 승인</button>
+        <button class="btn" data-bulk-act="reject">선택 거절</button>
+        <button class="btn" data-bulk-act="clear">선택 해제</button>
       </div>
-
-      <div id="list-area">
-        <div class="loading">목록을 불러오는 중…</div>
-        <table id="req-table" style="display:none">
+      
+      <div id="list-container">
+        <table>
           <thead>
             <tr>
-              <th style="width:36px"><input type="checkbox" id="chk-all"/></th>
+              <th style="width:40px"><input type="checkbox" id="chk-all"/></th>
               <th>가입자명</th>
               <th>회사</th>
               <th>신청일시</th>
@@ -109,280 +148,424 @@
           </thead>
           <tbody id="req-tbody"></tbody>
         </table>
-        <div class="empty" id="empty" style="display:none">조건에 맞는 요청이 없습니다.</div>
-        <div class="error" id="error" style="display:none">목록을 불러오지 못했습니다.</div>
+        <div class="loading">
+          <p>목록을 불러오는 중…</p>
+        </div>
+        <div class="empty" style="display:none">
+          <p>조건에 맞는 요청이 없습니다.</p>
+        </div>
+        <div class="error" style="display:none">
+          <p>목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.</p>
+        </div>
       </div>
     </div>
   </section>
+  
+  <template id="row-template">
+    <tr class="item-row" data-company="">
+      <td><input class="rowchk" type="checkbox" value=""></td>
+      <td><a href="#" class="row-toggle" data-act="toggle-expand"></a></td>
+      <td data-field="company"></td>
+      <td data-field="requestedAt"></td>
+      <td data-field="channel"></td>
+      <td data-field="status"></td>
+      <td class="row-actions"></td>
+    </tr>
+    <tr class="expand item-row" data-company="">
+      <td></td>
+      <td colspan="6">
+        <div class="note" data-field="details"></div>
+      </td>
+    </tr>
+  </template>
 
-  <script>
+<script>
   (()=>{
-
-    const $ = (s,root=document)=>root.querySelector(s);
-    const $$=(s,root=document)=>Array.from(root.querySelectorAll(s));
+    // ------------------------------
+    // 1. 상태 및 상수
+    // ------------------------------
+    const $ = (s, root = document) => root.querySelector(s);
+    const $$ = (s, root = document) => Array.from(root.querySelectorAll(s));
 
     const st = {
-      data:[], filtered:[], selected:new Set(),
-      filters:{company:"",status:"",from:"",to:"",q:""}
+      data: [],
+      filtered: [],
+      selected: new Set(),
+      filters: { company: "", status: "", from: "", to: "", q: "" }
     };
 
-    function init(){
-        // ----- 이벤트 바인딩
-        $('#f-company')?.addEventListener('change', e=>{st.filters.company=e.target.value;});
-        $('#f-status')?.addEventListener('change',  e=>{st.filters.status=e.target.value;});
-        $('#f-from')?.addEventListener('change',    e=>{st.filters.from=e.target.value;});
-        $('#f-to')?.addEventListener('change',      e=>{st.filters.to=e.target.value;});
-        $('#f-q')?.addEventListener('keydown',      e=>{if(e.key==='Enter') fetchData();});
-        $('#btn-search')?.addEventListener('click', fetchData);
+    // UI 요소 캐싱
+    const ui = {
+      tableBody: $('#req-tbody'),
+      listContainer: $('#list-container'),
+      chkAll: $('#chk-all'),
+      bulkbar: $('#bulkbar'),
+      selMeta: $('#sel-meta'),
+      rowTemplate: $('#row-template'),
+      companyFilter: $('#f-company'),
+      statusFilter: $('#f-status'),
+      fromFilter: $('#f-from'),
+      toFilter: $('#f-to'),
+      queryInput: $('#f-q'),
+    };
 
-        $('#chk-all')?.addEventListener('change', e=>{
-          const on=e.target.checked;
-          $$('#req-tbody input.rowchk:not(:disabled)').forEach(c=>{
-            c.checked=on; on?st.selected.add(c.value):st.selected.delete(c.value);
-          });
-          updateBulkbar();
-        });
+    const chipByStatus = {
+      PENDING:  '<span class="chip wait">대기</span>',
+      APPROVED: '<span class="chip approved">승인</span>',
+      REJECTED: '<span class="chip rejected">거절</span>'
+    };
 
-        $('#bulk-approve')?.addEventListener('click', ()=>bulkApprove());
-        $('#bulk-reject')?.addEventListener('click',  ()=>bulkReject());
-        $('#bulk-clear')?.addEventListener('click',   ()=>{
-          st.selected.clear();
-          $$('#req-tbody .rowchk').forEach(c=>c.checked=false);
-          updateBulkbar();
-        });
+    // ------------------------------
+    // 2. 데이터 로딩 및 관리
+    // ------------------------------
 
-        // ----- 최초 데이터 로딩
-        fetchData();
-      }
+    /** API에서 데이터를 가져옵니다. status 필터에 따라 동적으로 Endpoint를 결정합니다. */
+    async function fetchData() {
+      showLoadingState('loading');
+      const statusFilter = st.filters.status;
+      const statusesToFetch = !statusFilter ? ['PENDING', 'APPROVED', 'REJECTED'] : [statusFilter];
 
-      // ★ DOMContentLoaded가 이미 끝났으면 즉시 실행
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-      } else {
-        init();
-      }
-
-    // ---------- 데이터 로딩 (상태별 호출 / 전체면 병렬 병합)
-    function fetchData(){
-      $('#req-table').style.display='none'; $('#empty').style.display='none'; $('#error').style.display='none';
-      $('#list-area .loading').style.display='block';
-
-      const status = st.filters.status;
-
-      const endpointFor = (s) => ({
+      const endpoints = {
         'PENDING':  '/admin/requests/pending',
         'APPROVED': '/admin/requests/approved',
         'REJECTED': '/admin/requests/rejected'
-      }[s]);
+      };
 
-      const loadOne = (url) =>
-        fetch(url).then(r=>r.json()).then(grouped =>
-          // grouped: { 회사명: [ {requestId, memberName, requestedAt, requestStatus?, status?, channel?, ...} ] }
-          Object.entries(grouped).flatMap(([company,rows]) =>
-            rows.map(r => ({...r, company})) // 렌더러에서 r.company 사용
-          )
-        );
+      const loadOne = (url) => fetch(url)
+        .then(res => { if (!res.ok) throw new Error(`Failed to fetch ${url}`); return res.json(); })
+        .then(groupedData => Object.entries(groupedData).flatMap(([company, rows]) =>
+            rows.map(row => ({ ...row, company }))
+        ));
 
-      let p;
-      if (!status) {
-        // 전체: 3개 병렬 후 합치기
-        p = Promise.all([
-          loadOne('/admin/requests/pending'),
-          loadOne('/admin/requests/approved'),
-          loadOne('/admin/requests/rejected')
-        ]).then(([a,b,c]) => [...a,...b,...c]
-          .sort((x,y)=> new Date(y.requestedAt) - new Date(x.requestedAt)));
-      } else {
-        p = loadOne(endpointFor(status));
+      try {
+        const promises = statusesToFetch.map(s => loadOne(endpoints[s]));
+        const results = await Promise.all(promises);
+        st.data = results.flat().sort((a, b) => new Date(b.requestedAt) - new Date(a.requestedAt));
+
+        hydrateCompanyFilter(st.data);
+        applyClientFilters();
+      } catch (error) {
+        console.error("Fetch Error:", error);
+        showLoadingState('error');
       }
-
-      p.then(list => {
-          st.data = list;
-          hydrateCompanyFilterFromList(list);
-          applyClientFilters();   // 회사/기간/검색어 필터
-          $('#list-area .loading').style.display='none';
-          if (st.filtered.length === 0) $('#empty').style.display='block';
-        })
-       .catch(() => {
-          $('#list-area .loading').style.display='none';
-          $('#error').style.display='block';
-        });
     }
 
-    // 회사 드롭다운 구성
-    function hydrateCompanyFilterFromList(list){
-      const sel = $('#f-company');
-      const current = sel.value;
-      const companies = Array.from(new Set(list.map(r => r.company).filter(Boolean))).sort();
-      sel.innerHTML = '<option value="">전체</option>' + companies.map(c=>`<option${c===current?' selected':''}>${c}</option>`).join('');
-    }
+    /** 서버에서 받은 데이터를 기반으로 클라이언트 측 필터링을 적용합니다. */
+    function applyClientFilters() {
+      const { company, from, to, q } = st.filters;
+      const query = (q || '').trim().toLowerCase();
 
-    // ---------- 클라이언트 필터 & 요약
-    function applyClientFilters(){
-      const f = st.filters;
-      const inRange=(d)=> {
-        if(!f.from && !f.to) return true;
-        const t = new Date(d);
-        if(f.from && t < new Date(f.from)) return false;
-        if(f.to && t > new Date(f.to+'T23:59:59')) return false;
+      const inRange = (d) => {
+        if (!from && !to) return true;
+        const targetDate = new Date(d);
+        if (from && targetDate < new Date(from)) return false;
+        if (to && targetDate > new Date(to + 'T23:59:59')) return false;
         return true;
       };
-      const q = (f.q||'').trim().toLowerCase();
 
-      st.filtered = st.data.filter(r=>
-        (!f.company || r.company===f.company) &&
+      st.filtered = st.data.filter(r =>
+        (!company || r.company === company) &&
         inRange(r.requestedAt) &&
-        (!q || [r.memberName,r.reason].some(v=> (v||'').toLowerCase().includes(q)))
+        (!query || [r.memberName, r.reason, r.memo].some(v => (v || '').toLowerCase().includes(query)))
       );
-      st.filtered.sort((a,b)=> new Date(b.requestedAt)-new Date(a.requestedAt));
 
-      renderTable();
+      render();
       st.selected.clear();
       updateBulkbar();
       updateSummaryCounts();
     }
 
-    function updateSummaryCounts(){
-      const counts = st.filtered.reduce((acc,r)=>{
-        const k = (r.requestStatus || r.status || 'PENDING');
-        acc[k] = (acc[k]||0)+1; return acc;
-      }, {});
-      $('#summary').textContent = `대기 ${counts.PENDING||0} · 승인 ${counts.APPROVED||0} · 거절 ${counts.REJECTED||0}`;
-    }
+    // ------------------------------
+    // 3. 렌더링 및 UI 업데이트
+    // ------------------------------
 
-    // ---------- 렌더링 (회사별 1회 헤더, 대기건만 액션/선택)
-    function renderTable(){
-      $('#list-area .loading').style.display='none';
-      const tbody = $('#req-tbody'); tbody.innerHTML='';
-      if(st.filtered.length===0){
-        $('#req-table').style.display='none'; $('#empty').style.display='block'; $('#count-meta').textContent='0건';
+    /** 필터링된 데이터를 기반으로 화면 전체를 다시 그립니다. */
+    function render() {
+      ui.tableBody.innerHTML = '';
+
+      if (st.filtered.length === 0) {
+        showLoadingState('empty');
+        $('#count-meta').textContent = '0건';
         return;
       }
-      $('#empty').style.display='none'; $('#req-table').style.display='table';
+      showLoadingState('loaded');
       $('#count-meta').textContent = `${st.filtered.length}건`;
 
-      const chipByStatus = {
-        PENDING:  '<span class="chip wait">대기</span>',
-        APPROVED: '<span class="chip approved">승인</span>',
-        REJECTED: '<span class="chip rejected">거절</span>'
-      };
+      const groups = groupByCompany(st.filtered);
 
-      // 회사별 그룹핑
-      const groups = new Map();
-      for(const r of st.filtered){
-        const key = r.company || r.companyName || '(미지정)';
-        if(!groups.has(key)) groups.set(key, []);
-        groups.get(key).push(r);
+      for (const [company, rows] of groups.entries()) {
+        ui.tableBody.appendChild(createGroupHeader(company, rows.length));
+        rows.forEach(row => {
+          const { rowEl, expandEl } = createRowElements(row);
+          ui.tableBody.appendChild(rowEl);
+          ui.tableBody.appendChild(expandEl);
+        });
       }
-      const companies = Array.from(groups.keys()).sort((a,b)=>a.localeCompare(b));
+    }
 
-      companies.forEach(company=>{
-        const header = document.createElement('tr');
-        header.className = 'grp';
-        header.dataset.company = company;
-        header.innerHTML = `<td colspan="7">${company} <span class="note">(${groups.get(company).length}건)</span></td>`;
-        tbody.appendChild(header);
+    /** 데이터를 회사별로 그룹핑합니다. */
+    function groupByCompany(data) {
+        const groups = new Map();
+        for (const r of data) {
+            const key = r.company || '(미지정)';
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key).push(r);
+        }
+        return new Map([...groups.entries()].sort((a, b) => a[0].localeCompare(b[0])));
+    }
 
-        const rows = groups.get(company).sort((a,b)=> new Date(b.requestedAt) - new Date(a.requestedAt));
+    /** 회사 그룹 헤더 엘리먼트를 생성합니다. */
+    function createGroupHeader(company, count) {
+      const header = document.createElement('tr');
+      header.className = 'grp';
+      header.dataset.act = 'toggle-group';
+      header.dataset.company = company;
+      header.innerHTML = `<td colspan="7">${company} <span class="note">(${count}건)</span></td>`;
+      return header;
+    }
 
-        rows.forEach(r=>{
-          const statusKey = r.requestStatus || r.status || 'PENDING';
-          const stChip = chipByStatus[statusKey] || '';
-          const isPending = statusKey === 'PENDING';
-          const checked = st.selected.has(String(r.requestId)) ? 'checked' : '';
+    /** 개별 데이터 행 엘리먼트를 <template>을 기반으로 생성합니다. */
+    function createRowElements(r) {
+        const tpl = ui.rowTemplate.content.cloneNode(true);
+        const [rowEl, expandEl] = tpl.children;
+        const statusKey = r.requestStatus || r.status || 'PENDING';
+        const isPending = statusKey === 'PENDING';
 
-          const tr=document.createElement('tr');
-          tr.className = (statusKey==='APPROVED'?'is-approved':(statusKey==='REJECTED'?'is-rejected':'')) + ' item-row';
-          tr.dataset.company = company;
+        // CSS 클래스 설정
+        rowEl.classList.toggle('is-approved', statusKey === 'APPROVED');
+        rowEl.classList.toggle('is-rejected', statusKey === 'REJECTED');
+        rowEl.dataset.company = r.company || '(미지정)';
+        rowEl.dataset.requestId = r.requestId;
+        expandEl.dataset.company = r.company || '(미지정)';
 
-          tr.innerHTML = `
-            <td><input class="rowchk" type="checkbox" value="${r.requestId}" ${checked} ${isPending?'':'disabled'}></td>
-            <td><a href="javascript:void(0)" class="row-toggle" data-id="${r.requestId}">${r.memberName}</a></td>
-            <td>${company}</td>
-            <td>${new Date(r.requestedAt).toLocaleString()}</td>
-            <td>${r.channel||'기업'}</td>
-            <td>${r.risk?'<span class="chip warn">주의</span> ':''}${stChip}</td>
-            <td class="row-actions">
-              ${isPending ? `
-                <button class="btn pri" data-act="approve" data-id="${r.requestId}">승인</button>
-                <button class="btn" data-act="reject" data-id="${r.requestId}">거절</button>
-              ` : ''}
-            </td>`;
-          tbody.appendChild(tr);
+        // 데이터 채우기
+        const chk = $('.rowchk', rowEl);
+        chk.value = r.requestId;
+        chk.disabled = !isPending;
+        chk.checked = st.selected.has(String(r.requestId));
 
-          const trExp=document.createElement('tr'); trExp.className='expand item-row'; trExp.dataset.company = company;
-          trExp.innerHTML=`<td></td><td colspan="6">
-              <div class="note">사유: ${r.reason||'-'} | 첨부: ${Array.isArray(r.attachments)? r.attachments.length : (r.attachments||0)}건</div>
-            </td>`;
-          tbody.appendChild(trExp);
-        });
+        $('.row-toggle', rowEl).textContent = r.memberName;
+        $('[data-field="company"]', rowEl).textContent = r.company;
+        $('[data-field="requestedAt"]', rowEl).textContent = new Date(r.requestedAt).toLocaleString('ko-KR');
+        $('[data-field="channel"]', rowEl).textContent = r.channel || '기업';
+
+        const statusHtml = (r.risk ? '<span class="chip warn">주의</span> ' : '') + (chipByStatus[statusKey] || '');
+        $('[data-field="status"]', rowEl).innerHTML = statusHtml;
+
+        if(isPending){
+            $('.row-actions', rowEl).innerHTML = `
+                <button class="btn pri" data-act="approve-one" data-id="${r.requestId}">승인</button>
+                <button class="btn" data-act="reject-one" data-id="${r.requestId}">거절</button>`;
+        }
+
+        const detailsText = `사유: ${r.reason || '-'} | 메모: ${r.memo || '-'} | 첨부: ${r.attachments?.length || 0}건`;
+        $('[data-field="details"]', expandEl).textContent = detailsText;
+
+        return { rowEl, expandEl };
+    }
+
+    function showLoadingState(state) {
+        const s = {
+          loading: () => {
+              $$('.loading, .empty, .error', ui.listContainer).forEach(el => el.style.display = 'none');
+              $('.loading', ui.listContainer).style.display = 'block';
+              $('table').style.display = 'none';
+          },
+          empty: () => {
+              $$('.loading, .empty, .error', ui.listContainer).forEach(el => el.style.display = 'none');
+              $('.empty', ui.listContainer).style.display = 'block';
+              $('table').style.display = 'none';
+          },
+          error: () => {
+              $$('.loading, .empty, .error', ui.listContainer).forEach(el => el.style.display = 'none');
+              $('.error', ui.listContainer).style.display = 'block';
+              $('table').style.display = 'none';
+          },
+          loaded: () => {
+            $$('.loading, .empty, .error', ui.listContainer).forEach(el => el.style.display = 'none');
+            $('table').style.display = 'table';
+          }
+        };
+        (s[state] || s.error)();
+    }
+
+
+    function hydrateCompanyFilter(list) {
+      const current = ui.companyFilter.value;
+      const companies = [...new Set(list.map(r => r.company).filter(Boolean))].sort();
+      ui.companyFilter.innerHTML = '<option value="">전체</option>' + companies.map(c => `<option value="${c}"${c === current ? ' selected' : ''}>${c}</option>`).join('');
+    }
+
+    function updateSummaryCounts() {
+      const counts = st.filtered.reduce((acc, r) => {
+        const key = r.requestStatus || r.status || 'PENDING';
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      }, { PENDING: 0, APPROVED: 0, REJECTED: 0 });
+      $('#summary').textContent = `대기 ${counts.PENDING} · 승인 ${counts.APPROVED} · 거절 ${counts.REJECTED}`;
+    }
+
+    function updateBulkbar() {
+      const count = st.selected.size;
+      ui.selMeta.textContent = `${count}건 선택`;
+      ui.bulkbar.classList.toggle('visible', count > 0);
+
+      const allCheckable = $$('#req-tbody .rowchk:not(:disabled)');
+      ui.chkAll.checked = count > 0 && allCheckable.length > 0 && count === allCheckable.length;
+      ui.chkAll.indeterminate = count > 0 && count < allCheckable.length;
+    }
+
+    // ------------------------------
+    // 4. 이벤트 핸들러
+    // ------------------------------
+
+    /** 필터 변경 및 조회 버튼 이벤트 처리 */
+    function handleFilterChange() {
+        st.filters.company = ui.companyFilter.value;
+        st.filters.status = ui.statusFilter.value;
+        st.filters.from = ui.fromFilter.value;
+        st.filters.to = ui.toFilter.value;
+        st.filters.q = ui.queryInput.value;
+
+        // 상태 필터는 서버에 다시 요청하는 것이 좋으므로 fetchData() 호출
+        // 그 외 클라이언트 필터는 applyClientFilters()로 처리할 수 있으나,
+        // 현재 로직은 항상 fetchData() 후 applyClientFilters()를 하므로 통일성을 위해 조회 버튼은 항상 fetchData() 호출
+        fetchData();
+    }
+
+    /** 테이블 내의 모든 클릭 이벤트를 위임하여 처리합니다. */
+    function handleTableActions(e) {
+      const target = e.target;
+      const action = target.closest('[data-act]')?.dataset.act;
+      if (!action) return;
+
+      e.preventDefault();
+
+      switch (action) {
+        case 'toggle-expand':
+          target.closest('tr.item-row').classList.toggle('expanded');
+          break;
+        case 'toggle-group':
+          const groupRow = target.closest('tr.grp');
+          const company = groupRow.dataset.company;
+          const isCollapsed = groupRow.classList.toggle('group-collapsed');
+          $$(`.item-row[data-company="${company}"]`).forEach(r => {
+              // 확장된 행이 있다면 함께 숨기거나 보여주기
+              if(!r.classList.contains('expand')) {
+                  r.style.display = isCollapsed ? 'none' : 'table-row';
+                  if(isCollapsed) r.classList.remove('expanded'); // 그룹 접을 때 확장상태 초기화
+              } else {
+                  r.style.display = 'none'; // 그룹 접으면 무조건 숨김
+              }
+          });
+          break;
+        case 'approve-one':
+          bulkApprove([target.closest('[data-id]').dataset.id]);
+          break;
+        case 'reject-one':
+          bulkReject([target.closest('[data-id]').dataset.id]);
+          break;
+      }
+    }
+
+    /** 일괄 처리 바의 클릭 이벤트를 처리합니다. */
+    function handleBulkBarActions(e) {
+        const action = e.target.closest('[data-bulk-act]')?.dataset.bulkAct;
+        if (!action) return;
+
+        switch (action) {
+            case 'approve': bulkApprove(); break;
+            case 'reject':  bulkReject();  break;
+            case 'clear':
+                st.selected.clear();
+                $$('#req-tbody .rowchk').forEach(c => c.checked = false);
+                updateBulkbar();
+                break;
+        }
+    }
+
+    // ------------------------------
+    // 5. API 호출 (처리)
+    // ------------------------------
+    async function apiCall(url, body) {
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || '오류가 발생했습니다.');
+            alert(data.message || '처리가 완료되었습니다.');
+            fetchData(); // 성공 시 데이터 새로고침
+        } catch (error) {
+            alert(`처리 중 오류: ${error.message}`);
+        }
+    }
+
+    function bulkApprove(ids) {
+      const requestIds = ids || [...st.selected];
+      if (requestIds.length === 0) return;
+      if (confirm(`${requestIds.length}건을 승인하시겠습니까?`)) {
+        apiCall('/admin/requests/approve-bulk', { requestIds });
+      }
+    }
+    function bulkReject(ids) {
+      const requestIds = ids || [...st.selected];
+      if (requestIds.length === 0) return;
+      const reason = prompt('공통 거절 사유를 입력하세요. (필수)');
+      if (reason && reason.trim()) {
+        apiCall('/admin/requests/reject-bulk', { requestIds, reason });
+      } else if (reason !== null) {
+        alert('거절 사유를 입력해야 합니다.');
+      }
+    }
+
+    // ------------------------------
+    // 6. 초기화
+    // ------------------------------
+    function init() {
+      // 필터 이벤트
+      $('#btn-search').addEventListener('click', handleFilterChange);
+      ui.queryInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleFilterChange(); });
+      [ui.companyFilter, ui.statusFilter, ui.fromFilter, ui.toFilter].forEach(el => el.addEventListener('change', handleFilterChange));
+
+
+      // 테이블 전체 선택/해제
+      ui.chkAll.addEventListener('change', e => {
+          const isChecked = e.target.checked;
+          $$('#req-tbody .rowchk:not(:disabled)').forEach(chk => {
+              chk.checked = isChecked;
+              const id = chk.value;
+              isChecked ? st.selected.add(id) : st.selected.delete(id);
+          });
+          updateBulkbar();
       });
 
-      // 이벤트 바인딩
-      $$('#req-tbody .rowchk').forEach(cb=>cb.addEventListener('change', e=>{
-        const id=e.target.value; e.target.checked?st.selected.add(id):st.selected.delete(id); updateBulkbar();
-      }));
-      $$('#req-tbody [data-act]').forEach(b=>b.addEventListener('click', handleRowAction));
-      $$('#req-tbody .row-toggle').forEach(a=>a.addEventListener('click', toggleExpand));
-
-      // 회사 헤더 접기/펼치기
-      $('#req-tbody').addEventListener('click', (e)=>{
-        const grp = e.target.closest('tr.grp'); if(!grp) return;
-        const comp = grp.dataset.company;
-        $$('#req-tbody .item-row').forEach(tr=>{
-          if(tr.dataset.company===comp) tr.classList.toggle('hidden-row');
-        });
-      }, { once:true }); // 최초 바인딩 1회
-    }
-
-    function toggleExpand(e){
-      const tr = e.target.closest('tr');
-      tr.classList.toggle('expanded');
-    }
-
-    function handleRowAction(e){
-      const id = e.target.dataset.id;
-      const act= e.target.dataset.act;
-      if(act==='approve') bulkApprove([id]); else bulkReject([id]);
-    }
-
-    function updateBulkbar(){
-      const bar = $('#bulkbar');
-      const n = $$('#req-tbody .rowchk:checked:not(:disabled)').length; // 대기건만
-      $('#sel-meta').textContent = `${n}건 선택`;
-      bar.classList.toggle('visible', n>0);
-
-      const all = $$('#req-tbody .rowchk:not(:disabled)');
-      $('#chk-all').checked = n>0 && all.every(c=>c.checked);
-    }
-
-    // ---------- API
-    function bulkApprove(ids){
-      const requestIds = ids || Array.from(st.selected);
-      if(requestIds.length===0) return;
-      if(!confirm(`${requestIds.length}건 승인하시겠습니까?`)) return;
-      fetch('/admin/requests/approve-bulk',{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({requestIds})
-      }).then(handleResponse).catch(handleError);
-    }
-    function bulkReject(ids){
-      const requestIds = ids || Array.from(st.selected);
-      if(requestIds.length===0) return;
-      const reason = prompt('공통 거절 사유를 입력하세요.'); if(!reason) return;
-      fetch('/admin/requests/reject-bulk',{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({requestIds,reason})
-      }).then(handleResponse).catch(handleError);
-    }
-    function handleResponse(r){
-      return r.json().then(d=>{
-        if(!r.ok) throw new Error(d.message||'오류');
-        alert(d.message||'완료'); fetchData();
+      // 개별 체크박스 선택 (이벤트 위임)
+      ui.tableBody.addEventListener('change', e => {
+          if (e.target.matches('.rowchk')) {
+              const id = e.target.value;
+              e.target.checked ? st.selected.add(id) : st.selected.delete(id);
+              updateBulkbar();
+          }
       });
-    }
-    function handleError(e){ alert('처리 중 오류: '+e.message); }
 
+      // 테이블 내 동작 (상세보기, 승인/거절 등)
+      ui.tableBody.addEventListener('click', handleTableActions);
+
+      // 벌크 액션 바
+      ui.bulkbar.addEventListener('click', handleBulkBarActions);
+
+      fetchData(); // 최초 데이터 로드
+    }
+
+    // DOMContentLoaded가 이미 완료되었을 수 있으므로 확인 후 실행
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
   })();
-  </script>
+</script>
 </th:block>

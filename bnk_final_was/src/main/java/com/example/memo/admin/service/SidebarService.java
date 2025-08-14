@@ -53,6 +53,8 @@ public class SidebarService {
         register("review", "review-management", "후기 관리", "admin/pages/review/review-management", true);
 
         register("account", "account-open", "계좌 개설", "admin/pages/account/open-account", true);
+        register("account", "account-close", "계좌 해지", "admin/pages/account/open-close", false);
+
     }
     
     /**
