@@ -10,7 +10,9 @@ public class SidebarService {
     private final Map<String, String> name = Map.of(
     	"dashboard", "대시보드",
         "stat", "통계",
-        "sales", "판매 관리",
+        "commodity", "상품 관리",
+        "customers", "고객 관리",
+        "review", "리뷰 관리",
         "account", "계좌 개설 관리"
     );
     private final Map<String, String> def = new HashMap<>();
@@ -19,7 +21,7 @@ public class SidebarService {
     	
     	byCat.put("dashboard", new ArrayList<>(Arrays.asList(
     		    Subcat.builder().code("dashboard").label("대시보드")
-    		          .view("admin/pages/dashboard").category("dashboard").build()
+    		          .view("admin/pages/dashboard/dashboard").category("dashboard").build()
     		)));
     	def.put("dashboard", "dashboard");
     		
@@ -29,12 +31,24 @@ public class SidebarService {
                   .view("admin/pages/stat/subscribers-report").category("stat").build()
         )));
         def.put("stat", "stat-subscribers");
-
-        byCat.put("sales", new ArrayList<>(Arrays.asList(
-            Subcat.builder().code("sales-dashboard").label("판매 대시보드")
-                  .view("admin/pages/sales/sales-dashboard").category("sales").build()
+        
+        byCat.put("commodity", new ArrayList<>(Arrays.asList(
+                Subcat.builder().code("commodity-management").label("상품 관리")
+                      .view("admin/pages/commodity/commodity-management").category("commodity").build()
         )));
-        def.put("sales", "sales-dashboard");
+        def.put("commodity", "commodity-management");
+
+        byCat.put("customers", new ArrayList<>(Arrays.asList(
+            Subcat.builder().code("customers-management").label("고객 관리")
+                  .view("admin/pages/customers/customers-management").category("customers").build()
+        )));
+        def.put("customers", "customers-management");
+        
+        byCat.put("review", new ArrayList<>(Arrays.asList(
+                Subcat.builder().code("review-management").label("후기 관리")
+                      .view("admin/pages/review/review-management").category("review").build()
+            )));
+        def.put("review", "review-management");
 
         byCat.put("account", new ArrayList<>(Arrays.asList(
             Subcat.builder().code("account-open").label("계좌 개설")
@@ -42,9 +56,18 @@ public class SidebarService {
         )));
         def.put("account", "account-open");
 
-        // === 여기처럼 원하는 만큼 쉽게 추가 ===
-         add("stat", "stat-test", "통계 테스트", "admin/pages/stat/stat-test");
+        // === 서브 카테고리 추가 추가 ===
+//        예시 : public void add(String category, String code, String label, String view)
+          // category: 상위 카테고리
+          // code: 페이지 구별하는 식별자. URL이나 hx-get 호출 시 사용
+          // label: 사이드바에 보이는 글자
+          // view: 템플릿 경로
+         add("stat", "sales-report", "판매 리포트", "admin/pages/stat/sales-report");
+         add("stat", "total-assets", "총 자산 규모 조회(IRP/DC)", "admin/pages/stat/total-assets-report");
+         add("stat", "product-allocation", "상품별 운용비중", "admin/pages/stat/product-allocation-ratio");
         // setDefault("stat", "stat-test"); // 기본 첫 화면으로 바꾸고 싶으면
+         
+         add("commodity", "crawling-management", "크롤링 관리", "admin/pages/commodity/crawling-management");
     }
 
     /* -------- 공개 API -------- */

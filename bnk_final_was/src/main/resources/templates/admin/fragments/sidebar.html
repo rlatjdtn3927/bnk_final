@@ -5,7 +5,9 @@
 	<span th:switch="${activeCategory}">
 	  <span th:case="'dashboard'">대시보드</span>
 	  <span th:case="'stat'">통계</span>
-	  <span th:case="'sales'">판매 관리</span>
+	  <span th:case="'commodity'">상품 관리</span>
+	  <span th:case="'customers'">고객 관리</span>
+	  <span th:case="'review'">후기 관리</span>
 	  <span th:case="'account'">계좌 개설 관리</span>
 	  <span th:case="*">대시보드</span>
 	</span>

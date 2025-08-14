@@ -15,11 +15,25 @@
 	   th:attr="hx-get=@{/admin/ui/category/stat},
             hx-push-url=@{/admin/page/stat-subscribers}">통계</a>
 	
-	<!-- 판매 관리 -->
-	<a th:href="@{/admin/page/sales-dashboard}"
+		<!-- 고객 관리 -->
+	<a th:href="@{/admin/page/commodity-management}"
 	   hx-target="#content"
-	   th:attr="hx-get=@{/admin/ui/category/sales},
-            hx-push-url=@{/admin/page/sales-dashboard}">판매 관리</a>
+	   th:attr="hx-get=@{/admin/ui/category/commodity},
+            hx-push-url=@{/admin/page/commodity-management}">상품 관리</a>
+	
+	
+	<!-- 고객 관리 -->
+	<a th:href="@{/admin/page/customers-management}"
+	   hx-target="#content"
+	   th:attr="hx-get=@{/admin/ui/category/customers},
+            hx-push-url=@{/admin/page/customers-management}">고객 관리</a>
+	
+	<!-- 후기 관리 -->
+	<a th:href="@{/admin/page/review-management}"
+	   hx-target="#content"
+	   th:attr="hx-get=@{/admin/ui/category/review},
+            hx-push-url=@{/admin/page/review-management}">후기 관리</a>
+	
 	
 	<!-- 계좌 개설 관리 -->
 	<a th:href="@{/admin/page/account-open}"
