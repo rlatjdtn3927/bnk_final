@@ -1,8 +1,96 @@
-<th:block th:fragment="css">
-
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="css">
+  <style id="page-css" hx-swap-oob="true">
+  .asset-summary-container {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+  .asset-summary-container h2 {
+    color: #0e2a4d;
+    font-size: 1.6rem;
+    margin-bottom: 10px;
+  }
+  .asset-summary-container p {
+    color: #555;
+    margin-bottom: 20px;
+  }
+  .asset-stats {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  .asset-card {
+    flex: 1;
+    background: #f2f6fb;
+    padding: 16px;
+    border-radius: 6px;
+    text-align: center;
+  }
+  .asset-card h3 {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+  }
+  .asset-card span {
+    font-weight: bold;
+    font-size: 1.4rem;
+    color: #c82020;
+  }
+  .asset-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .asset-table th, .asset-table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: center;
+  }
+  .asset-table th {
+    background: #f6f8fa;
+    font-weight: 600;
+  }
+  </style>
 </th:block>
 
-<th:block th:fragment="content">
-  <h2>총 자산 규모 조회(IRP/DC)</h2>
-  <p>총 자산총자산총잔산</p>
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="content">
+  <div class="asset-summary-container">
+    <h2>총 자산 규모 조회(IRP/DC)</h2>
+    <p>전체 IRP 및 DC 계좌의 자산 규모를 한눈에 확인합니다.</p>
+
+    <div class="asset-stats">
+      <div class="asset-card">
+        <h3>IRP 총 자산</h3>
+        <span>₩1,200,000,000</span>
+      </div>
+      <div class="asset-card">
+        <h3>DC 총 자산</h3>
+        <span>₩800,000,000</span>
+      </div>
+    </div>
+
+    <table class="asset-table">
+      <thead>
+        <tr>
+          <th>계좌 종류</th>
+          <th>계좌 수</th>
+          <th>총 자산</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>IRP</td>
+          <td>450</td>
+          <td>₩1,200,000,000</td>
+        </tr>
+        <tr>
+          <td>DC</td>
+          <td>300</td>
+          <td>₩800,000,000</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </th:block>

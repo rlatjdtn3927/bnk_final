@@ -1,17 +1,10 @@
-<!doctype html>
-<html xmlns:th="http://www.thymeleaf.org" lang="ko">
-<head>
-  <title hx-swap-oob="true" th:text="${pageTitle}">관리자</title>
-  <!-- 페이지별 CSS를 OOB로 교체 -->
-	<link id="page-css" hx-swap-oob="true" rel="stylesheet"
-      th:href="@{/admin/ui/css/{code}(code=${activeCode})}"/>
-</head>
-<body>
-  <!-- 사이드바 OOB 교체 -->
-  <aside id="sidebar" hx-swap-oob="true"
-         th:replace="~{admin/fragments/sidebar :: sidebar(${activeCategory}, ${subcats}, ${activeCode})}"></aside>
+<th:block xmlns:th="http://www.thymeleaf.org">
+  <!-- 사이드바 OOB 교체: 프래그먼트 자체 루트(aside)에 hx-swap-oob 있음 -->
+  <th:block th:replace="~{admin/fragments/sidebar :: sidebar(${activeCategory}, ${subcats}, ${activeCode})}"></th:block>
 
-  <!-- 콘텐츠 교체(이 부분이 #content로 스왑됨) -->
-  <div th:replace="~{${initialView} :: content}"></div>
-</body>
-</html>
+  <!-- 페이지별 CSS (각 페이지의 <style id="page-css" hx-swap-oob="true">가 OOB로 적용됨) -->
+  <th:block th:replace="~{${pageView} :: css}"></th:block>
+
+  <!-- 본문은 #content 타깃으로 스왑 -->
+  <th:block th:replace="~{${pageView} :: content}"></th:block>
+</th:block>

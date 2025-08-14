@@ -1,6 +1,6 @@
-<th:block th:fragment="css">
-  /* 판매 리포트 페이지 전용 스타일 */
-  .sales-report-container {
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="css">
+  <style id="page-css" hx-swap-oob="true">
+      .sales-report-container {
     max-width: 900px;
     margin: 20px auto;
     padding: 20px;
@@ -52,6 +52,7 @@
     background: #f6f8fa;
     font-weight: 600;
   }
+  </style>
 </th:block>
 
 <th:block th:fragment="content">

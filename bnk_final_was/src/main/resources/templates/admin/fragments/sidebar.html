@@ -1,27 +1,24 @@
-<aside id="sidebar" hx-swap-oob="true"
+<aside xmlns:th="http://www.thymeleaf.org"
+       id="sidebar"
+       hx-swap-oob="true"
        th:fragment="sidebar(activeCategory, subcats, activeCode)">
+
   <div style="padding:16px 14px 8px 14px;font-weight:700;">
-    <span th:switch="${activeCategory}">
-      <span th:case="'dashboard'">대시보드</span>
-      <span th:case="'stat'">통계</span>
-      <span th:case="'commodity'">상품 관리</span>
-      <span th:case="'customers'">고객 관리</span>
-      <span th:case="'review'">후기 관리</span>
-      <span th:case="'account'">계좌 개설 관리</span>
-      <span th:case="*">대시보드</span>
-    </span>
+    <span th:text="${@sidebarService.nameOf(activeCategory)}"></span>
   </div>
 
-  <ul class="submenu" style="list-style:none;margin:0;padding:8px 0;">
+  <!-- 메뉴가 2개 이상일 때만 목록 표시 -->
+  <ul class="submenu" style="list-style:none;margin:0;padding:8px 0;"
+      th:if="${#lists.size(subcats) > 1}">
     <li th:each="s : ${subcats}">
-      <a th:text="${s.label}"
-         th:href="@{|/admin/page/${s.code}|}"
-         hx-target="#content"
-         th:attr="hx-get=@{|/admin/ui/page/${s.code}|},
-                  hx-push-url=@{|/admin/page/${s.code}|}"
-         th:classappend="${s.code}==${activeCode} ? ' is-active' : ''"
-         th:attrappend="aria-current=${s.code}==${activeCode} ? 'page' : null">
-      </a>
+	<a th:text="${s.label}"
+	   th:href="@{/admin/page/{code}(code=${s.code})}"
+	   th:attr="hx-get=@{/admin/ui/page/{code}(code=${s.code})},
+	            hx-target='#content',
+	            hx-push-url=@{/admin/page/{code}(code=${s.code})}"
+	   th:classappend="${s.code == activeCode} ? 'is-active'">
+	</a>
+
     </li>
   </ul>
 </aside>

@@ -1,87 +1,17 @@
-<!-- templates/admin/fragments/header.html -->
-<th:block th:fragment="header(activeCategory)">
+<th:block xmlns:th="http://www.thymeleaf.org"
+          th:fragment="header(activeCategory, headerCategories)">
   <nav style="height:56px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:24px;padding:0 16px;">
-  
-	<!-- 
-	  [헤더 메뉴 작성 규칙]
-	  1. hx-get 경로(/admin/ui/category/...) 뒤의 {카테고리} 값은
-	     SidebarService.byCat의 key와 반드시 동일해야 함.
-	     예) "dashboard", "stat", "commodity", "customers", "review", "account" 등
-	
-	  2. {기본코드} 값은 SidebarService의 def.put(...)에 등록된 code 값.
-	     - 해당 카테고리의 첫 진입 페이지 code
-	     - URL /admin/page/{기본코드} 와 hx-push-url 에 사용
-	     
-	  3. {메뉴명}은 화면에 보일 한글/텍스트.
-	
-	  예시)
-	  <a th:href="@{/admin/page/{기본코드}}"
-	     hx-target="#content"
-	     th:attr="hx-get=@{/admin/ui/category/{카테고리}},
-	              hx-push-url=@{/admin/page/{기본코드}}">
-	    {메뉴명}
-	  </a>
-	-->
 
-    <!-- 대시보드 (cat=dashboard, default=dashboard) -->
-    <a th:href="@{/admin/page/dashboard}"
-       hx-target="#content"
-       th:attr="hx-get=@{/admin/ui/category/dashboard},
-                hx-push-url=@{/admin/page/dashboard}"
-       th:classappend="${activeCategory}=='dashboard' ? ' is-active' : ''"
-       th:attrappend="aria-current=${activeCategory}=='dashboard' ? 'page' : null">
-      대시보드
-    </a>
+    <!-- 모델 값이 비었으면 @sidebarService.getHeaderCategories() 사용 -->
+	<a th:each="cat : ${#lists.isEmpty(headerCategories) ? @sidebarService.getHeaderCategories() : headerCategories}"
+	   th:text="${cat.categoryName()}"
+	   th:href="@{/admin/page/{code}(code=${cat.defaultPageCode()})}"
+	   th:attr="hx-get=@{/admin/ui/category/{category}(category=${cat.categoryCode()})},
+	            hx-target='#content',
+	            hx-push-url=@{/admin/page/{code}(code=${cat.defaultPageCode()})}"
+	   th:classappend="${activeCategory == cat.categoryCode()} ? 'is-active'">
+	</a>
 
-    <!-- 통계 (cat=stat, default=stat-subscribers) -->
-    <a th:href="@{/admin/page/stat-subscribers}"
-       hx-target="#content"
-       th:attr="hx-get=@{/admin/ui/category/stat},
-                hx-push-url=@{/admin/page/stat-subscribers}"
-       th:classappend="${activeCategory}=='stat' ? ' is-active' : ''"
-       th:attrappend="aria-current=${activeCategory}=='stat' ? 'page' : null">
-      통계
-    </a>
-
-    <!-- 상품 관리 (cat=commodity, default=commodity-management) -->
-    <a th:href="@{/admin/page/commodity-management}"
-       hx-target="#content"
-       th:attr="hx-get=@{/admin/ui/category/commodity},
-                hx-push-url=@{/admin/page/commodity-management}"
-       th:classappend="${activeCategory}=='commodity' ? ' is-active' : ''"
-       th:attrappend="aria-current=${activeCategory}=='commodity' ? 'page' : null">
-      상품 관리
-    </a>
-
-    <!-- 고객 관리 (cat=customers, default=customers-management) -->
-    <a th:href="@{/admin/page/customers-management}"
-       hx-target="#content"
-       th:attr="hx-get=@{/admin/ui/category/customers},
-                hx-push-url=@{/admin/page/customers-management}"
-       th:classappend="${activeCategory}=='customers' ? ' is-active' : ''"
-       th:attrappend="aria-current=${activeCategory}=='customers' ? 'page' : null">
-      고객 관리
-    </a>
-
-    <!-- 후기 관리 (cat=review, default=review-management) -->
-    <a th:href="@{/admin/page/review-management}"
-       hx-target="#content"
-       th:attr="hx-get=@{/admin/ui/category/review},
-                hx-push-url=@{/admin/page/review-management}"
-       th:classappend="${activeCategory}=='review' ? ' is-active' : ''"
-       th:attrappend="aria-current=${activeCategory}=='review' ? 'page' : null">
-      후기 관리
-    </a>
-
-    <!-- 계좌 개설 관리 (cat=account, default=account-open) -->
-    <a th:href="@{/admin/page/account-open}"
-       hx-target="#content"
-       th:attr="hx-get=@{/admin/ui/category/account},
-                hx-push-url=@{/admin/page/account-open}"
-       th:classappend="${activeCategory}=='account' ? ' is-active' : ''"
-       th:attrappend="aria-current=${activeCategory}=='account' ? 'page' : null">
-      계좌 개설 관리
-    </a>
 
     <div style="margin-left:auto;">로그아웃</div>
   </nav>

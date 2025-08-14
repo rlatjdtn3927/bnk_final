@@ -7,50 +7,30 @@
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
 
   <style>
-    .wrap{display:flex;min-height:calc(100vh - 56px);}
-    aside#sidebar{width:260px;background:#0e2a4d;color:#fff;}
-    .submenu a{display:block;padding:10px 14px;color:#dbe6ff;text-decoration:none;}
-    .submenu a.is-active{background:#1b3b6b;font-weight:700;}
-    main#content{flex:1;padding:16px;background:#f2f6fb;border:6px solid #c82020;}
+    body { margin:0; font-family:sans-serif; }
+    .wrap { display:flex; min-height:calc(100vh - 56px); }
+    aside#sidebar { width:260px; background:#0e2a4d; color:#fff; }
+    .submenu a { display:block; padding:10px 14px; color:#dbe6ff; text-decoration:none; }
+    .submenu a.is-active { background:#1b3b6b; font-weight:700; }
+    main#content { flex:1; padding:16px; background:#f2f6fb; }
   </style>
 
-	<!-- 페이지별 CSS OOB 타깃 + 초기 주입 -->
-	<style id="page-css"
-	       th:insert="~{${initialView} :: css}"></style>
+  <!-- 페이지별 CSS 프래그먼트 통째로 삽입 (중첩 <style> 금지) -->
+  <th:block th:if="${pageView != null}" th:replace="~{${pageView} :: css}"></th:block>
 
 </head>
 <body>
 
-<header th:replace="~{admin/fragments/header :: header(${activeCategory})}"></header>
+<header th:replace="~{admin/fragments/header :: header(${activeCategory}, ${headerCategories})}"></header>
 
 <div class="wrap">
-  <aside id="sidebar"
-         th:replace="~{admin/fragments/sidebar :: sidebar(${activeCategory}, ${subcats}, ${activeCode})}"></aside>
+  <th:block th:replace="~{admin/fragments/sidebar :: sidebar(${activeCategory}, ${subcats}, ${activeCode})}"></th:block>
 
   <main id="content">
-    <!-- 첫 진입/새로고침에서도 바로 콘텐츠 보이게 -->
-    <th:block th:if="${initialView != null}"
-              th:replace="~{${initialView} :: content}"></th:block>
+    <th:block th:if="${pageView != null}"
+              th:replace="~{${pageView} :: content}"></th:block>
   </main>
 </div>
 
-<script>
-  function setActiveByUrl(){
-    const path = location.pathname;
-    document.querySelectorAll('#sidebar .submenu a').forEach(a=>{
-      const on = a.getAttribute('href') === path;
-      a.classList.toggle('is-active', on);
-      if (on) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current');
-    });
-  }
-  // 최초 로드
-  document.addEventListener('DOMContentLoaded', setActiveByUrl);
-  // 콘텐츠 스왑 후 (HTMX로 화면 바뀐 뒤)
-  document.body.addEventListener('htmx:afterSwap', e=>{
-    if (e.detail.target && e.detail.target.id === 'content') setActiveByUrl();
-  });
-  // 뒤/앞으로 가기
-  window.addEventListener('popstate', setActiveByUrl);
-</script>
 </body>
 </html>
