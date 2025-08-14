@@ -70,6 +70,9 @@ public enum Command {
     ADMIN_CRAWL_GRANT_UPDATE_PRINCIPAL, //원리금 보장 상품 테이블 업데이트 승인
     ADMIN_CRAWL_GRANT_FILE_DOWNLOAD_FUND, //펀드관련 파일 다운로드 진행
     ADMIN_CRAWL_GRANT_FILE_DOWNLOAD_PRINCIPAL, //원리금 보장 상품 관련 파일 다운로드 진행 
-    ADMIN_CRAWL_CHECK_UPDATE; //클롤링 업데이트 내역 확인 --> 펀드 기본정보, 원리금 보장상품 기본정보, 다운로드 파일들
+    ADMIN_CRAWL_CHECK_PRINCIPALPENDING,
+    ADMIN_CRAWL_CHECK_PRINCIPALDOCPENDING,
+    ADMIN_CRAWL_CHECK_FUNDOCPENDING,
+    ADMIN_CRAWL_CHECK_FUNDMASTERPENDING; //클롤링 업데이트 내역 확인 --> 펀드 기본정보, 원리금 보장상품 기본정보, 다운로드 파일들
     
 }

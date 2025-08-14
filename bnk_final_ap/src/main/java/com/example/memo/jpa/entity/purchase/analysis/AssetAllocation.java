@@ -43,4 +43,7 @@ public class AssetAllocation extends BaseEntity {
 
     @Column(name = "reference_date")
     private LocalDate referenceDate;
+    
+    @Column(name = "status", length = 20)
+    private String status;  //"INSERTED", "UPDATED"
 }

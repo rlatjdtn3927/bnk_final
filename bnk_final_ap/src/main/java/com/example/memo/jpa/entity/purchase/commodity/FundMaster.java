@@ -53,6 +53,9 @@ public class FundMaster extends BaseEntity{
 
     @Column(name = "channel")
     private Integer channel;
+    
+    @Column(name = "status", length = 20)
+    private String status;  //"INSERTED", "UPDATED"
 }
 
 //fundMasterRepository.deleteById("abc");
