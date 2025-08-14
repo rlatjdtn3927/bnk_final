@@ -36,8 +36,9 @@ public class TcpServer {
         	BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         	PrintWriter out = new PrintWriter(socket.getOutputStream(), true)
         ) {
-            String json = in.readLine();
-            TcpMessage message = mapper.readValue(json, TcpMessage.class);
+        	String encodedString = in.readLine();
+        	String decodedString = AES256Util.decrypt(encodedString);
+            TcpMessage message = mapper.readValue(decodedString, TcpMessage.class);
             String response = router.route(message);
             
             out.println(response);
