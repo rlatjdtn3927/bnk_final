@@ -1,7 +1,9 @@
 package com.example.memo.company.controller;
 
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -64,8 +66,22 @@ public class ViewController {
 	}
 	
 	
-	@GetMapping("company/dc/contribution/payable-list-page")
+	@GetMapping("/company/dc/contribution/payable-list-page")
 	public String contribPayListPage() {
 		return "company/contribution-payable-list";
 	}
+	
+	 @GetMapping("/company/dc/contribution/result-final")
+	    public String resultFinal(
+	            @RequestParam(name="batchId", required = false) Long batchId,
+	            @RequestParam(name="okCount", required = false) Integer okCount,
+	            @RequestParam(name="totalAmount", required = false) String totalAmount,
+	            Model model) {
+	        // 필요하면 모델에 담아서 Thymeleaf에서 바로 쓰기
+	        model.addAttribute("batchId", batchId);
+	        model.addAttribute("okCount", okCount);
+	        model.addAttribute("totalAmount", totalAmount);
+	        // templates/company/contribution-result-test.html
+	        return "company/contribution-result-test";
+	 }
 }

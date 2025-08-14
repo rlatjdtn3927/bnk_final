@@ -133,7 +133,7 @@ public class DcContributionService {
                 .map(DcMember::getId)
                 .collect(Collectors.toSet());
 
-        // [수정] 필요한 데이터만 미리 조회 (잔고 조회 제거)
+        // 필요한 데이터만 미리 조회 (잔고 조회 제거)
         Map<Long, Boolean> accountActiveMap = new HashMap<>();
         accountRepo.findByMemberIds(memberIds).forEach(a -> {
             if (a.getDcMember() != null) {
@@ -145,6 +145,7 @@ public class DcContributionService {
         Map<Long, Long> annualSalaryMap = toMapLong(dcMemberRepo.findAnnualSalaryPairs(memberIds));
 
         int ok = 0, err = 0;
+        long okSum = 0L;
         List<ContribValidationItemDto> itemDtos = new ArrayList<>();
 
         for (DcContributionItem it : batch.getItems()) {
@@ -201,6 +202,7 @@ public class DcContributionService {
             boolean isSuccess = (errorMessage == null);
             if (isSuccess) {
                 ok++;
+                okSum += Optional.ofNullable(it.getAmount()).orElse(0L);
                 it.setValidationStatus(DcContributionItem.ValidationStatus.SUCCESS);
                 it.setPaymentStatus(DcContributionItem.PaymentStatus.PENDING); 
             } else {
@@ -213,7 +215,7 @@ public class DcContributionService {
                     // ... (이하 동일)
                     .itemId(it.getId())
                     .amount(it.getAmount() == null ? 0L : it.getAmount())
-                    .validationStatus(isSuccess ? "SUCCESS" : "FAIL")
+                    .validationStatus(isSuccess ? "OK" : "FAIL")
                     .errorMessage(errorMessage)
                     .dcMember(lite)
                     .build());
@@ -231,6 +233,7 @@ public class DcContributionService {
                 .totalRecords(batch.getTotalRecords())
                 .okCount(ok)
                 .errorCount(err)
+                .totalOkAmount(okSum)
                 .items(itemDtos)
                 .build();
     }

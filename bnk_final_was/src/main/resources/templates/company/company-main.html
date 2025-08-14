@@ -1,21 +1,109 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
-<meta charset="UTF-8">
-<title>Insert title here</title>
+  <meta charset="UTF-8" />
+  <title>기업뱅킹 | BNK 퇴직연금</title>
+  <link th:href="@{/css/company-main.css}" rel="stylesheet"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
 </head>
-<body>
-	<h1>Company Banking Main Page</h1>
-	
-	<a href="company/subscriber-list">가입자 조회 페이지</a><hr>
-	<a href="company/add-member">가입자 명부 등록 페이지</a><hr>
-	
-	<a href="company/dc/contribution/upload-page">DC 부담금 납입 페이지</a><hr>
-	<a href="company/dc/contribution/plan-list-page">DC 부담금 예정 현황 페이지</a><hr>
-	<a href="company/dc/contribution/deposit-page">DC 부담금 예정 현황 페이지2</a><hr>
-	
-	
-	<h3>부담금입금현황조회</h3>
-	<a href="company/dc/contribution/payable-list-page">부담금입금현황</a>
+
+<body class="cb-main">
+  <!-- 상단바 -->
+  <header class="cb-header">
+    <div class="cb-header__left">
+	<a class="cb-logo" th:href="@{/company}">
+	  <img th:src="@{/images/logo.png}" alt="BNK 퇴직연금" class="cb-logo__img"/>
+	</a>
+    </div>
+    <nav class="cb-topnav">
+      <a href="#corp" class="cb-topnav__link">기업정보관리</a>
+      <a href="#emp" class="cb-topnav__link">임직원관리</a>
+      <a href="#contrib" class="cb-topnav__link">부담금관리</a>
+      <a href="#product" class="cb-topnav__link">퇴직연금상품</a>
+    </nav>
+    <div class="cb-header__right">
+      <a class="cb-pill" th:href="@{/company}">기업뱅킹</a>
+    </div>
+  </header>
+
+  <!-- 메인 컨테이너 -->
+  <main class="cb-container">
+    <!-- 좌측 카테고리 메뉴 -->
+    <aside class="cb-sidemenu">
+      <div class="cb-sidemenu__group" id="corp">
+        <div class="cb-sidemenu__title">기업정보관리</div>
+        <ul class="cb-sidemenu__list">
+          <li><a th:href="@{/company}">기업 기본정보</a></li>
+        </ul>
+      </div>
+
+      <div class="cb-sidemenu__group" id="emp">
+        <div class="cb-sidemenu__title">임직원관리</div>
+        <ul class="cb-sidemenu__list">
+          <li><a th:href="@{/company/add-member}">가입자명부등록</a></li>
+          <li><a th:href="@{/company/subscriber-list}">가입자명부조회</a></li>
+          <li><a href="#">계좌개설</a></li>
+        </ul>
+      </div>
+
+      <div class="cb-sidemenu__group" id="contrib">
+        <div class="cb-sidemenu__title">부담금관리</div>
+        <ul class="cb-sidemenu__list">
+          <li><a th:href="@{/company/dc/contribution/upload-page}">부담금입금등록</a></li>
+          <li><a th:href="@{/company/dc/contribution/plan-list-page}">입금예정현황</a></li>
+          <li><a th:href="@{/company/dc/contribution/deposit-page}">입금실행</a></li>
+          <li><a th:href="@{/company/dc/contribution/payable-list-page}">입금결과조회</a></li>
+        </ul>
+      </div>
+
+      <div class="cb-sidemenu__group" id="product">
+        <div class="cb-sidemenu__title">퇴직연금상품</div>
+        <ul class="cb-sidemenu__list">
+          <li><a href="#">상품 보기</a></li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- 콘텐츠 카드 -->
+    <section class="cb-grid">
+      <article class="cb-card">
+        <h2 class="cb-card__title">기업정보관리</h2>
+        <ul class="cb-card__links">
+          <li><a th:href="@{/company}">기업 기본정보</a></li>
+        </ul>
+      </article>
+
+      <article class="cb-card">
+        <h2 class="cb-card__title">임직원관리</h2>
+        <ul class="cb-card__links">
+          <li><a th:href="@{/company/add-member}">가입자명부등록</a></li>
+          <li><a th:href="@{/company/subscriber-list}">가입자명부조회</a></li>
+          <li><a href="#">계좌개설</a></li>
+        </ul>
+      </article>
+
+      <article class="cb-card">
+        <h2 class="cb-card__title">부담금관리</h2>
+        <ul class="cb-card__links">
+          <li><a th:href="@{/company/dc/contribution/upload-page}">부담금입금등록</a></li>
+          <li><a th:href="@{/company/dc/contribution/plan-list-page}">입금예정현황</a></li>
+          <li><a th:href="@{/company/dc/contribution/deposit-page}">입금실행</a></li>
+          <li><a th:href="@{/company/dc/contribution/payable-list-page}">입금결과조회</a></li>
+        </ul>
+      </article>
+
+      <article class="cb-card">
+        <h2 class="cb-card__title">퇴직연금상품</h2>
+        <ul class="cb-card__links">
+          <li><a href="#">상품 보기</a></li>
+        </ul>
+      </article>
+    </section>
+  </main>
+
+  <footer class="cb-footer">
+    <small>© BNK Retirement Pension</small>
+  </footer>
 </body>
 </html>
