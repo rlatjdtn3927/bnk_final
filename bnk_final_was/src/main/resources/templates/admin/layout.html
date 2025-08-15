@@ -1,0 +1,36 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <title th:text="${pageTitle} ?: '관리자'">관리자</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+
+  <style>
+    body { margin:0; font-family:sans-serif; }
+    .wrap { display:flex; min-height:calc(100vh - 56px); }
+    aside#sidebar { width:200px; background:#0e2a4d; color:#fff; }
+    .submenu a { display:block; padding:10px 23px; color:#dbe6ff; text-decoration:none; }
+    .submenu a.is-active { background:#1b3b6b; font-weight:700; }
+    main#content { flex:1; padding:25px; background:#f2f6fb; }
+  </style>
+
+  <!-- 페이지별 CSS 프래그먼트 통째로 삽입 (중첩 <style> 금지) -->
+  <th:block th:if="${pageView != null}" th:replace="~{${pageView} :: css}"></th:block>
+
+</head>
+<body>
+
+<header th:replace="~{admin/fragments/header :: header(${activeCategory}, ${headerCategories})}"></header>
+
+<div class="wrap">
+  <th:block th:replace="~{admin/fragments/sidebar :: sidebar(${activeCategory}, ${subcats}, ${activeCode})}"></th:block>
+
+  <main id="content">
+    <th:block th:if="${pageView != null}"
+              th:replace="~{${pageView} :: content}"></th:block>
+  </main>
+</div>
+
+</body>
+</html>

@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
-@RequestMapping("/admin")
+@RequestMapping("/adminnn")
 public class BankViewController {
 	
 	@GetMapping("/login")
@@ -17,9 +17,24 @@ public class BankViewController {
 	public String dcRequestPage() {
 		return "admin/request-approval";
 	}
-
+	
+	/*
+	@GetMapping("/layout")
+	public String adminMain() {
+		return "admin/admin-layout";
+	}
+	 */
+	
+	/*
     @GetMapping
     public String mainPage() {
         return "admin/admin-main"; 
     }
+    */
+    
+    // --------------
+    // 여기부터
+
+    
+    
 }

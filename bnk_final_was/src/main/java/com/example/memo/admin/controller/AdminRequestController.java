@@ -99,6 +99,34 @@ public class AdminRequestController {
         }
     }
     
+    // ★ 추가: 승인 목록
+    @GetMapping("/approved")
+    public ResponseEntity<?> getApprovedRequests() {
+        try {
+            JsonNode empty = objectMapper.createObjectNode();
+            TcpMessage msg = new TcpMessage(Command.ACCOUNT_REQUEST_GET_APPROVED, empty);
+            Object res = tcpService.sendMessage(msg);
+            return ResponseEntity.ok(res);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("승인 목록 조회 중 오류가 발생했습니다.");
+        }
+    }
+
+    // ★ 추가: 거절 목록
+    @GetMapping("/rejected")
+    public ResponseEntity<?> getRejectedRequests() {
+        try {
+            JsonNode empty = objectMapper.createObjectNode();
+            TcpMessage msg = new TcpMessage(Command.ACCOUNT_REQUEST_GET_REJECTED, empty);
+            Object res = tcpService.sendMessage(msg);
+            return ResponseEntity.ok(res);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("거절 목록 조회 중 오류가 발생했습니다.");
+        }
+    }
+    
     private Long getApproverIdFromSession(HttpSession session) {
         BankEmployeeLoginDto loginEmployee = (BankEmployeeLoginDto) session.getAttribute("loginEmployee");
         return (loginEmployee != null) ? loginEmployee.getId() : null;
