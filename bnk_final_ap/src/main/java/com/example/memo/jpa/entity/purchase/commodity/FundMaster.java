@@ -45,7 +45,7 @@ public class FundMaster extends BaseEntity{
     @Column(name = "management_company", length = 100)
     private String managementCompany;
 
-    @Column(name = "total_expense_ratio", precision = 8, scale = 3)
+    @Column(name = "total_expense_ratio", precision = 8, scale = 4)
     private BigDecimal totalExpenseRatio;
 
     @Column(name = "category", length = 10)

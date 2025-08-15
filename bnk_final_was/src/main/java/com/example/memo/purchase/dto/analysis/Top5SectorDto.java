@@ -1,4 +1,4 @@
-package com.example.memo.purchase.dto;
+package com.example.memo.purchase.dto.analysis;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
@@ -8,10 +8,12 @@ import java.time.LocalDate;
 @Getter @Setter @Builder
 @NoArgsConstructor @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class FundNavDto {
-    private Long fundNavId;
+public class Top5SectorDto {
+    private Long sectorId;
     private String productId;     // FundMaster.productId
-    private BigDecimal nav;
+    private String sectorCategory;
+    private BigDecimal inStock;
+    private BigDecimal categoryAvg;
     private LocalDate referenceDate;
     private String status;
 }

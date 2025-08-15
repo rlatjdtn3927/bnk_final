@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.example.memo.jpa.entity.purchase.analysis.FileTaskList;
 
 public interface FileTaskListRepository extends JpaRepository<FileTaskList, Long>{
-	List<FileTaskList> findByProductIdIn(List<String> prodIdList);
+	List<FileTaskList> findByProdIdIn(List<String> prodIdList);
 }

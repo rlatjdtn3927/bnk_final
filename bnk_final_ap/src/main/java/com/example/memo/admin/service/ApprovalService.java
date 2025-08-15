@@ -28,6 +28,8 @@ import com.example.memo.jpa.repository.purchase.commodity.FundMasterRepository;
 import com.example.memo.jpa.repository.purchase.commodity.PrincipalGuaranteeRepository;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,7 +56,7 @@ public class ApprovalService {
     
     private ObjectMapper mapper = new ObjectMapper();
 
-
+    @Transactional
     public UpdatedSetDto findUpdate() {
     	UpdatedSetDto dto = new UpdatedSetDto();
     	dto.setFundMasterList(fundMasterRepository.findByStatusIn(Arrays.asList("INSERT", "UPDATE")));
@@ -71,8 +73,8 @@ public class ApprovalService {
     	return dto;
     }
     
-    public List<FileTaskList> findAllFileTask() {
-    	return fileTaskListRepository.findAll();
+    public Map<String, List<FileTaskList>> findAllFileTask() {
+    	return Map.of("responseList",fileTaskListRepository.findAll());
     }
     
     public Map<String, Boolean> downloadFiles(JsonNode data) {
@@ -81,7 +83,7 @@ public class ApprovalService {
                 data.get("prodIdList"), new TypeReference<List<String>>() {}
             );
     	
-    	List<FileTaskList> taskList = fileTaskListRepository.findByProductIdIn(prodIdList);
+    	List<FileTaskList> taskList = fileTaskListRepository.findByProdIdIn(prodIdList);
     	Map<String, Boolean> resultMap = new HashMap<>();
     	
     	if(taskList == null) return null;
