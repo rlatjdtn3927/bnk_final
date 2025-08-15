@@ -1,4 +1,4 @@
-package com.example.memo.purchase.dto;
+package com.example.memo.purchase.dto.analysis;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
