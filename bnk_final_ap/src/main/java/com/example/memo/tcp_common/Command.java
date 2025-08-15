@@ -66,14 +66,9 @@ public enum Command {
     DO_HISTORY,                   // 디폴트옵션 변경내역
     
     
-    /*관리자 크롤링 데이터 승인 관련 명령어*/
-    ADMIN_CRAWL_GRANT_UPDATE_FUNDMASTER, //펀드마스터 테이블 업데이트 승인 --> 내부적으로 분석 데이블도 일괄 업데이트 진행
-    ADMIN_CRAWL_GRANT_UPDATE_PRINCIPAL, //원리금 보장 상품 테이블 업데이트 승인
-    ADMIN_CRAWL_GRANT_FILE_DOWNLOAD_FUND, //펀드관련 파일 다운로드 진행
-    ADMIN_CRAWL_GRANT_FILE_DOWNLOAD_PRINCIPAL, //원리금 보장 상품 관련 파일 다운로드 진행 
-    ADMIN_CRAWL_CHECK_PRINCIPALPENDING,
-    ADMIN_CRAWL_CHECK_PRINCIPALDOCPENDING,
-    ADMIN_CRAWL_CHECK_FUNDOCPENDING,
-    ADMIN_CRAWL_CHECK_FUNDMASTERPENDING; //클롤링 업데이트 내역 확인 --> 펀드 기본정보, 원리금 보장상품 기본정보, 다운로드 파일들
+    /*관리자 크롤링 데이터 관련 명령어*/
+    ADMIN_CRAWL_GRANT_FILE_DOWNLOAD,
+    ADMIN_CRAWL_CHECK_FILE_TASK,
+    ADMIN_CRAWL_CHECK_UPDATE;
     
 }

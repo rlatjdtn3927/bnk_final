@@ -61,6 +61,12 @@ public enum Command {
     PENDING_BUY_HISTORY,         // 매수예정상품 변경내역
 
     DO_UPSERT,                   // 디폴트옵션 등록/변경
-    DO_HISTORY                   // 디폴트옵션 변경내역
+    DO_HISTORY,                   // 디폴트옵션 변경내역
+    
+    
+    /*관리자 크롤링 데이터 관련 명령어*/
+    ADMIN_CRAWL_GRANT_FILE_DOWNLOAD,
+    ADMIN_CRAWL_CHECK_FILE_TASK,
+    ADMIN_CRAWL_CHECK_UPDATE;
 
 }

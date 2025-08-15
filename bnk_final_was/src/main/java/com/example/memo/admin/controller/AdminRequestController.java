@@ -131,4 +131,15 @@ public class AdminRequestController {
         BankEmployeeLoginDto loginEmployee = (BankEmployeeLoginDto) session.getAttribute("loginEmployee");
         return (loginEmployee != null) ? loginEmployee.getId() : null;
     }
+    
+    /*아래로 상품 크롤링 데이터 관련 매핑 함수들*/
+    @GetMapping("/crawl") 
+    public ResponseEntity<?> getUpdateList() {
+    	JsonNode emptyData = objectMapper.createObjectNode();
+        TcpMessage requestMsg = new TcpMessage(Command.ADMIN_CRAWL_CHECK_UPDATE, emptyData);
+        Object response = tcpService.sendMessage(requestMsg);
+        
+    	return ResponseEntity.status(HttpStatus.OK).body("");
+    }
+    
 }

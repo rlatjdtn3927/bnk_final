@@ -27,11 +27,12 @@ public class TcpClientService {
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))
         ) {
             String json = mapper.writeValueAsString(message);
-            String encodedString = AES256Util.encrypt(json);
-            out.println(encodedString);
-
-            String response = in.readLine();
-            return mapper.readTree(response);
+            String encodedRequest = AES256Util.encrypt(json);
+            out.println(encodedRequest);
+            
+            String endcodedResponse = in.readLine();
+            String decodedResponse = AES256Util.decrypt(endcodedResponse);
+            return mapper.readTree(decodedResponse);
 
         } catch (Exception e) {
             e.printStackTrace();
