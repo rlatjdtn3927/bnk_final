@@ -1,162 +1,72 @@
-/* -------------------------------------------------------------
- * purchase.css
- * - 전체 화면 공통 스타일
- * - 폰트: Pretendard
- * - 반응형: 화면 너비 <= 768px에 최적화
- * ----------------------------------------------------------- */
+/* src/main/resources/static/css/purchase.css */
+:root { --bg:#f7f8fa; --card:#fff; --border:#e5e7eb; --text:#222; --muted:#6b7280; --primary:#2563eb; }
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Pretendard',system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Helvetica, Arial, sans-serif; color:var(--text); background:var(--bg);}
 
-/* Pretendard 웹폰트(네트워크 없이 프로젝트 폰트로 제공한다면 경로 교체) */
-@font-face {
-  font-family: 'Pretendard';
-  src: local('Pretendard'), local('Pretendard-Regular');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
+/* 헤더/탭 */
+.header{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--border);padding:12px 16px;z-index:5;display:flex;justify-content:space-between;align-items:center}
+.brand{font-weight:700}
+.tabs{display:flex;gap:8px}
+.tab{display:inline-block;padding:8px 12px;border-radius:8px;color:#111;text-decoration:none}
+.tab.active{background:#eef2ff;color:#1d4ed8}
 
-/* 기본 바디 설정 */
-body{
-  font-family: 'Pretendard', sans-serif;
-  margin:0;
-  padding: 0;
-  color: #222;
-  background: #f7f8fa;
-  line-height: 1.5;
-}
+/* 레이아웃/카드 */
+.container{max-width:1100px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
+.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mt-16{margin-top:16px}
+.ml-8{margin-left:8px}
+.row{display:flex;gap:8px;align-items:center}
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:1fr 1fr 1fr}
 
-/* 헤더 */
-.header{
-  position: sticky;
-  top:0;
-  z-index: 10;
-  background:#ffffff;
-  border-bottom:1px solid #e5e7eb;
-  padding: 12px 16px;
-  display:flex;
-  align-items:center;
-  gap:16px;
-}
-.brand{
-  font-weight: 700;
-  font-size: 18px;
-}
-.tabs{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-}
-.tab{
-  display:inline-block;
-  padding:8px 12px;
-  border-radius:8px;
-  text-decoration:none;
-  color:#334155;
-  background: #f1f5f9;
-}
-.tab.active{
-  background:#0ea5e9;
-  color:#fff;
-}
+/* 폼/버튼 */
+label{font-size:12px;color:var(--muted)}
+.input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#fff}
+.btn{padding:8px 12px;border:1px solid var(--border);border-radius:10px;background:#fff;cursor:pointer}
+.btn:hover{filter:brightness(0.98)}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn.ghost{background:#fff}
 
-/* 그리드/컨테이너/카드 */
-.container{
-  max-width: 1080px;
-  margin: 16px auto;
-  padding: 0 16px;
-}
-.card{
-  background:#fff;
-  border:1px solid #e5e7eb;
-  border-radius:12px;
-  padding:16px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-}
-.section-title{
-  font-weight: 700;
-  margin-bottom: 8px;
-}
+/* 배지/테이블 */
+.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#f3f4f6;color:#374151;font-size:12px;border:1px solid var(--border)}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{border-top:1px solid var(--border);padding:10px 8px}
+.table th{background:#fafafa;text-align:left}
+.table .num{text-align:right}
+.section-title{font-weight:700;margin-bottom:4px}
+.muted{color:var(--muted);font-size:12px}
 
-/* 입력/버튼 */
-.input{
-  width:100%;
-  border:1px solid #d1d5db;
-  border-radius:8px;
-  padding:10px 12px;
-  outline:none;
-  box-sizing: border-box;
-}
-.input:focus{
-  border-color:#0ea5e9;
-  box-shadow:0 0 0 3px rgba(14,165,233,0.15);
-}
-.btn{
-  border:1px solid #d1d5db;
-  background:#fff;
-  color:#111827;
-  padding:10px 14px;
-  border-radius:10px;
-  cursor:pointer;
-}
-.btn:hover{ background:#f3f4f6; }
-.btn.primary{
-  border-color:#0ea5e9;
-  background:#0ea5e9;
-  color:#fff;
-}
-.btn.ghost{
-  background:transparent;
-  border-color:#cbd5e1;
-}
+/* 스위치 토글(모두 동의) */
+.switch{position:relative;display:inline-block;width:44px;height:24px}
+.switch input{display:none}
+.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#e5e7eb;border-radius:999px;transition:.2s}
+.slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;top:3px;background:white;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.switch input:checked + .slider{background:#93c5fd}
+.switch input:checked + .slider:before{transform:translateX(20px)}
 
-/* 배지/상태 */
-.badge{
-  display:inline-block;
-  padding:4px 8px;
-  border-radius:999px;
-  background:#e5e7eb;
-  color:#374151;
-  font-size:12px;
-}
+/* 문서 리스트 */
+.doc-group{border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px}
+.doc-group-title{font-weight:600;margin-bottom:8px}
+.doc-items{list-style:none;margin:0;padding:0}
+.doc-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px dashed var(--border)}
+.doc-item:first-child{border-top:none}
+.doc-left{display:flex;gap:8px;align-items:center}
+.doc-type{font-size:14px}
 
-/* 테이블 */
-.table{
-  width:100%;
-  border-collapse: collapse;
-  border-spacing: 0;
-}
-.table th, .table td{
-  border-bottom:1px solid #e5e7eb;
-  padding:10px 8px;
-  text-align:left;
-  vertical-align:middle;
-  background:#fff;
-}
-.table thead th{
-  background:#f8fafc;
-  font-weight:600;
-}
-.table .num, .right{ text-align:right; }
+/* 모달 */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+.modal.hidden{display:none}
+.modal-content{width:min(1000px,96vw);height:min(90vh,760px);background:#fff;border-radius:14px;display:flex;flex-direction:column;overflow:hidden}
+.modal-header{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border)}
+.modal-close{background:transparent;border:none;font-size:24px;cursor:pointer;line-height:1}
+#docFrame{flex:1;border:0}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;padding:10px 12px;border-top:1px solid var(--border)}
 
-/* 유틸리티 */
-.row{ display:flex; align-items:center; gap:8px; }
-.grid{ display:grid; gap:12px; }
-.grid-2{ grid-template-columns: 1fr 1fr; }
-.grid-3{ grid-template-columns: 1fr 1fr 1fr; }
-.mt-8{ margin-top:8px; }
-.mt-16{ margin-top:16px; }
-.dot{
-  display:inline-block; width:10px; height:10px; border-radius:50%;
-  background:#0ea5e9; margin-right:4px;
-}
-
-/* -------------------------------------------------------------
- * 반응형: 최대 768px
- * - 탭/그리드/버튼/입력 폭 조정
- * ----------------------------------------------------------- */
-@media (max-width: 768px){
-  .grid-2, .grid-3{ grid-template-columns: 1fr; }
-  .header{ flex-direction: column; align-items: flex-start; }
-  .tabs{ width: 100%; overflow-x:auto; }
-  .row{ flex-wrap:wrap; }
-  .container{ padding: 0 12px; }
+/* 반응형(<=768px) */
+@media (max-width:768px){
+  .grid-2{grid-template-columns:1fr}
+  .grid-3{grid-template-columns:1fr}
+  .header{flex-direction:column;align-items:flex-start;gap:8px}
 }

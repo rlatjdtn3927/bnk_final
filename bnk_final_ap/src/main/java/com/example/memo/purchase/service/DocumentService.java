@@ -12,11 +12,12 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 상품별 동의 서류 목록
+ * 상품별 동의 서류 목록 반환
  * - FUND/ETF/TDF → FundDocument
  * - PRINCIPAL    → PrincipalDocument
  * - CASH         → 동의 없음
- * 프런트는 체크박스로 전부 동의되었는지 검증 후 다음 단계로 이동한다.
+ *
+ * 응답: [{docId, docType, fileUrl, productId, productName, productType}]
  */
 @Service
 @RequiredArgsConstructor
@@ -29,24 +30,37 @@ public class DocumentService {
     public JsonNode listDocuments(JsonNode req){
         ArrayNode out = om.createArrayNode();
         for(JsonNode it : req.withArray("items")){
-            String type = it.path("productType").asText();
-            String pid  = it.path("productId").asText();
-            switch (type){
+            String type = it.path("productType").asText("");
+            String pid  = it.path("productId").asText("");
+
+            switch (type.toUpperCase()){
                 case "FUND": case "ETF": case "TDF":
-                    fundDocRepo.findByFund_ProductId(pid).forEach(d ->
-                            out.add(om.createObjectNode()
-                                    .put("docId", d.getDocId())
-                                    .put("docType", d.getDocType())
-                                    .put("fileUrl", d.getFileUrl())));
+                    fundDocRepo.findByFund_ProductId(pid).forEach(d -> {
+                        String pName = (d.getFund()!=null? d.getFund().getProductName() : null);
+                        out.add(om.createObjectNode()
+                                .put("docId", d.getDocId())
+                                .put("docType", d.getDocType())
+                                .put("fileUrl", d.getFileUrl())
+                                .put("productId", pid)
+                                .put("productName", pName==null? pid : pName)
+                                .put("productType", type.toUpperCase()));
+                    });
                     break;
+
                 case "PRINCIPAL":
-                    principalDocRepo.findByPrincipal_ProductId(pid).forEach(d ->
-                            out.add(om.createObjectNode()
-                                    .put("docId", d.getDocId())
-                                    .put("docType", d.getDocType())
-                                    .put("fileUrl", d.getFileUrl())));
+                    principalDocRepo.findByPrincipal_ProductId(pid).forEach(d -> {
+                        String pName = (d.getPrincipal()!=null? d.getPrincipal().getProductName() : null);
+                        out.add(om.createObjectNode()
+                                .put("docId", d.getDocId())
+                                .put("docType", d.getDocType())
+                                .put("fileUrl", d.getFileUrl())
+                                .put("productId", pid)
+                                .put("productName", pName==null? pid : pName)
+                                .put("productType", "PRINCIPAL"));
+                    });
                     break;
-                default: // CASH
+
+                default: // CASH → 문서 없음
                     break;
             }
         }

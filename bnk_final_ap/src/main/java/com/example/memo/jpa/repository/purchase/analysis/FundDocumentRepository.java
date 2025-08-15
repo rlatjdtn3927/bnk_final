@@ -8,8 +8,12 @@ import com.example.memo.jpa.entity.purchase.analysis.FundDocument;
 import com.example.memo.jpa.entity.purchase.commodity.FundMaster;
 
 public interface FundDocumentRepository extends JpaRepository<FundDocument, Long> {
-	List<FundDocument> findByStatusIn(List<String> statuses);
-	
-	/** 펀드ID로 문서 목록 조회 */
+	// (기존) 상태 조회 — 다른 곳에서 사용 중이면 유지
+    List<FundDocument> findByStatusIn(List<String> statuses);
+
+    // (기존) 단건 조회
     List<FundDocument> findByFund_ProductId(String productId);
+
+    // ✅ 배치 조회 (FUND/ETF/TDF 한 번에)
+    List<FundDocument> findByFund_ProductIdIn(List<String> productIds);
 }

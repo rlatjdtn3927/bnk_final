@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>매수/변경 위저드</title>
+  <title>상품 매수/변경</title>
   <link th:href="@{/css/purchase.css}" rel="stylesheet"/>
 </head>
 <body>
@@ -13,7 +13,7 @@
   <nav class="tabs">
     <a th:href="@{/purchase/holdings}" class="tab">보유현황</a>
     <a th:href="@{/purchase/products}" class="tab">상품관리</a>
-    <a th:href="@{/purchase/trade}" class="tab active">매수/변경 위저드</a>
+    <a th:href="@{/purchase/trade}" class="tab active">상품 매수/변경</a>
   </nav>
 </header>
 
@@ -44,15 +44,19 @@
   <!-- STEP 1: 상품 검색/선택 + 비율 -->
   <section class="card mt-16">
     <div class="row">
-      <select id="cat" class="input" style="max-width:160px">
-        <option value="FUND">펀드/ETF/TDF</option>
+      <!-- ✅ 5개 카테고리 분리 -->
+      <select id="cat" class="input" style="max-width:220px">
         <option value="PRINCIPAL">예금(원리금보장)</option>
+        <option value="FUND">펀드</option>
+        <option value="ETF">ETF</option>
+        <option value="TDF">TDF</option>
         <option value="CASH">현금성 자산</option>
       </select>
       <input id="q" class="input" placeholder="상품명/코드"/>
       <button id="searchBtn" class="btn">검색</button>
       <button id="addCashBtn" class="btn">현금성 추가</button>
     </div>
+
     <table class="table mt-8">
       <thead><tr><th>상품ID</th><th>이름/정보</th><th></th></tr></thead>
       <tbody id="searchBody"><tr><td colspan="3">검색 결과 없음</td></tr></tbody>
