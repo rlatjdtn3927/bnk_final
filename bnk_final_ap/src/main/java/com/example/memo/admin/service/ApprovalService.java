@@ -14,9 +14,9 @@ import java.util.Map;
 
 import com.example.memo.admin.dto.UpdatedSetDto;
 import com.example.memo.jpa.entity.purchase.analysis.FileTaskList;
+import com.example.memo.jpa.repository.admin.FileTaskListRepository;
 import com.example.memo.jpa.repository.purchase.analysis.AssetAllocationRepository;
 import com.example.memo.jpa.repository.purchase.analysis.CumulativePerformanceRepository;
-import com.example.memo.jpa.repository.purchase.analysis.FileTaskListRepository;
 import com.example.memo.jpa.repository.purchase.analysis.FundDocumentRepository;
 import com.example.memo.jpa.repository.purchase.analysis.FundNavRepository;
 import com.example.memo.jpa.repository.purchase.analysis.FundReturnRepository;

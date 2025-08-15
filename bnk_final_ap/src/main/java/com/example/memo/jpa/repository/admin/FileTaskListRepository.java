@@ -1,5 +1,5 @@
 // src/main/java/com/example/memo/jpa/repository/purchase/analysis/FileTaskListRepository.java
-package com.example.memo.jpa.repository.purchase.analysis;
+package com.example.memo.jpa.repository.admin;
 
 import java.util.List;
 
