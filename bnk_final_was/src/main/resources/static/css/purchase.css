@@ -1,0 +1,162 @@
+/* -------------------------------------------------------------
+ * purchase.css
+ * - 전체 화면 공통 스타일
+ * - 폰트: Pretendard
+ * - 반응형: 화면 너비 <= 768px에 최적화
+ * ----------------------------------------------------------- */
+
+/* Pretendard 웹폰트(네트워크 없이 프로젝트 폰트로 제공한다면 경로 교체) */
+@font-face {
+  font-family: 'Pretendard';
+  src: local('Pretendard'), local('Pretendard-Regular');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 기본 바디 설정 */
+body{
+  font-family: 'Pretendard', sans-serif;
+  margin:0;
+  padding: 0;
+  color: #222;
+  background: #f7f8fa;
+  line-height: 1.5;
+}
+
+/* 헤더 */
+.header{
+  position: sticky;
+  top:0;
+  z-index: 10;
+  background:#ffffff;
+  border-bottom:1px solid #e5e7eb;
+  padding: 12px 16px;
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
+.brand{
+  font-weight: 700;
+  font-size: 18px;
+}
+.tabs{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.tab{
+  display:inline-block;
+  padding:8px 12px;
+  border-radius:8px;
+  text-decoration:none;
+  color:#334155;
+  background: #f1f5f9;
+}
+.tab.active{
+  background:#0ea5e9;
+  color:#fff;
+}
+
+/* 그리드/컨테이너/카드 */
+.container{
+  max-width: 1080px;
+  margin: 16px auto;
+  padding: 0 16px;
+}
+.card{
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  padding:16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.section-title{
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+/* 입력/버튼 */
+.input{
+  width:100%;
+  border:1px solid #d1d5db;
+  border-radius:8px;
+  padding:10px 12px;
+  outline:none;
+  box-sizing: border-box;
+}
+.input:focus{
+  border-color:#0ea5e9;
+  box-shadow:0 0 0 3px rgba(14,165,233,0.15);
+}
+.btn{
+  border:1px solid #d1d5db;
+  background:#fff;
+  color:#111827;
+  padding:10px 14px;
+  border-radius:10px;
+  cursor:pointer;
+}
+.btn:hover{ background:#f3f4f6; }
+.btn.primary{
+  border-color:#0ea5e9;
+  background:#0ea5e9;
+  color:#fff;
+}
+.btn.ghost{
+  background:transparent;
+  border-color:#cbd5e1;
+}
+
+/* 배지/상태 */
+.badge{
+  display:inline-block;
+  padding:4px 8px;
+  border-radius:999px;
+  background:#e5e7eb;
+  color:#374151;
+  font-size:12px;
+}
+
+/* 테이블 */
+.table{
+  width:100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+.table th, .table td{
+  border-bottom:1px solid #e5e7eb;
+  padding:10px 8px;
+  text-align:left;
+  vertical-align:middle;
+  background:#fff;
+}
+.table thead th{
+  background:#f8fafc;
+  font-weight:600;
+}
+.table .num, .right{ text-align:right; }
+
+/* 유틸리티 */
+.row{ display:flex; align-items:center; gap:8px; }
+.grid{ display:grid; gap:12px; }
+.grid-2{ grid-template-columns: 1fr 1fr; }
+.grid-3{ grid-template-columns: 1fr 1fr 1fr; }
+.mt-8{ margin-top:8px; }
+.mt-16{ margin-top:16px; }
+.dot{
+  display:inline-block; width:10px; height:10px; border-radius:50%;
+  background:#0ea5e9; margin-right:4px;
+}
+
+/* -------------------------------------------------------------
+ * 반응형: 최대 768px
+ * - 탭/그리드/버튼/입력 폭 조정
+ * ----------------------------------------------------------- */
+@media (max-width: 768px){
+  .grid-2, .grid-3{ grid-template-columns: 1fr; }
+  .header{ flex-direction: column; align-items: flex-start; }
+  .tabs{ width: 100%; overflow-x:auto; }
+  .row{ flex-wrap:wrap; }
+  .container{ padding: 0 12px; }
+}

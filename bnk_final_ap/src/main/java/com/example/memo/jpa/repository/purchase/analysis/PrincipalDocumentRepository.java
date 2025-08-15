@@ -9,4 +9,7 @@ import com.example.memo.jpa.entity.purchase.commodity.FundMaster;
 
 public interface PrincipalDocumentRepository extends JpaRepository<PrincipalDocument, Long> {
 	List<PrincipalDocument> findByStatusIn(List<String> statuses);
+	
+	 /** 상품ID로 문서 목록 조회 */
+    List<PrincipalDocument> findByPrincipal_ProductId(String productId);
 }
