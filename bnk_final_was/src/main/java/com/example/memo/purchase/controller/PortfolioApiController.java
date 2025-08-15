@@ -20,8 +20,8 @@ public class PortfolioApiController {
 
     @GetMapping
     public ResponseEntity<?> list(
-            @RequestParam String accountType,
-            @RequestParam String acountId) {
+    		@RequestParam("accountType") String accountType,
+            @RequestParam("acountId") String acountId) {
         JsonNode req = om.createObjectNode()
                 .put("accountType", accountType)
                 .put("acountId", acountId);

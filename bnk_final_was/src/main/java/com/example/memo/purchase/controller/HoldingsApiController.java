@@ -19,8 +19,8 @@ public class HoldingsApiController {
 
     @GetMapping("/summary")
     public ResponseEntity<?> summary(
-            @RequestParam String accountType,
-            @RequestParam String acountId) {
+            @RequestParam("accountType") String accountType,
+            @RequestParam("accountId") String acountId) {
         JsonNode req = om.createObjectNode()
                 .put("accountType", accountType)
                 .put("acountId", acountId);
@@ -30,8 +30,8 @@ public class HoldingsApiController {
 
     @GetMapping("/transactions")
     public ResponseEntity<?> transactions(
-            @RequestParam String accountType,
-            @RequestParam String acountId,
+            @RequestParam("accountType") String accountType,
+            @RequestParam("acountId") String acountId,
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to) {
         JsonNode req = om.createObjectNode()
@@ -45,8 +45,8 @@ public class HoldingsApiController {
 
     @GetMapping("/deposits")
     public ResponseEntity<?> deposits(
-            @RequestParam String accountType,
-            @RequestParam String acountId,
+    		@RequestParam("accountType") String accountType,
+            @RequestParam("acountId") String acountId,
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to) {
         JsonNode req = om.createObjectNode()

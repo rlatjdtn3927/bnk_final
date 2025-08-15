@@ -20,9 +20,9 @@ public class TradeApiController {
 
     @GetMapping("/check")
     public ResponseEntity<?> prereq(
-            @RequestParam String userId,
-            @RequestParam String accountType,
-            @RequestParam String acountId) {
+            @RequestParam("userId") String userId,
+            @RequestParam("accountType") String accountType,
+            @RequestParam("acountId") String acountId) {
         JsonNode req = om.createObjectNode()
                 .put("userId", userId)
                 .put("accountType", accountType)
@@ -33,8 +33,9 @@ public class TradeApiController {
 
     @GetMapping("/products")
     public ResponseEntity<?> products(
-            @RequestParam String category,
-            @RequestParam(required = false, defaultValue = "") String q) {
+            @RequestParam("category") String category,
+            @RequestParam(name= "q", required = false, defaultValue = "") String q) {
+    	//q는 상품검색어-> 프론트에서 입력하는 “상품명/코드” 텍스트
         JsonNode req = om.createObjectNode()
                 .put("category", category)
                 .put("q", q);
@@ -62,8 +63,8 @@ public class TradeApiController {
 
     @GetMapping("/pending/history")
     public ResponseEntity<?> pendingHistory(
-            @RequestParam String accountType,
-            @RequestParam String acountId,
+    		@RequestParam("accountType") String accountType,
+            @RequestParam("acountId") String acountId,
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to) {
         JsonNode req = om.createObjectNode()
