@@ -7,14 +7,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 @RequestMapping("/purchase")
 public class PageController {
-	//보유 현황 페이지
+
     @GetMapping("/holdings")
-    public String holdings() {
-        return "purchase/holdings";
-    }
-    //상품 관리 페이지
+    public String holdings() { return "purchase/holdings"; }
+
     @GetMapping("/products")
-    public String products() {
-        return "purchase/products";
-    }
+    public String products() { return "purchase/products"; }
+
+    // 공통 위저드 (등록/변경/만기): /purchase/trade?flow=PENDING|CHANGE|MATURITY
+    @GetMapping("/trade")
+    public String tradeWizard() { return "purchase/trade_wizard"; }
+
+    // 매수예정상품 변경내역
+    @GetMapping("/trade/history")
+    public String tradeHistory() { return "purchase/trade_history"; }
 }

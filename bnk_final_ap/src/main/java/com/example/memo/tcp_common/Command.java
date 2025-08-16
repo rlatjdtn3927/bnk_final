@@ -44,33 +44,45 @@ public enum Command {
     IRP_JOIN_RETIRED_PURPOSE, 
     IRP_JOIN_COMPLETE,		// 계좌개설/완료
     
-    //보유현황 탭
-    SUMMARY_GET,                 // 총 평가액/수익률/입금합 등 요약
-    TXN_LIST,                    // TRANSACTION_HISTORY 조회
-    DEPOSIT_LIST,                // DEPOSIT_HISTORY 조회
-    DEPOSIT_CREATE,              // 계좌 입금
+    // ===== 보유현황 탭 =====
+    SUMMARY_GET,              // SummaryHandler: 총 평가액/수익률/입금합/당일입금/운용수익 요약 조회
 
-    //상품관리 탭
-    PORTFOLIO_LIST,              // 보유상품 목록
-    PORTFOLIO_CHANGE_PREVIEW,    // 보유상품 변경 시뮬(미리보기)
-    PORTFOLIO_CHANGE_APPLY,      // 보유상품 변경 적용
+    TXN_LIST,                 // TransactionHandler: TRANSACTION_HISTORY 목록 조회
 
-    MATURITY_RESERVATION_LIST,   // 만기상품 변경예약 목록
-    MATURITY_RESERVATION_APPLY,  // 만기상품 변경예약 등록
+    DEPOSIT_LIST,             // DepositHandler: DEPOSIT_HISTORY 목록 조회
+    DEPOSIT_CREATE,           // DepositHandler: 계좌 입금(즉시 반영)
 
-    PENDING_BUY_LIST,            // 매수예정상품 목록
-    PENDING_BUY_UPSERT,          // 매수예정상품 등록/변경
-    PENDING_BUY_HISTORY,         // 매수예정상품 변경내역
+    // ===== 상품관리 탭 (보유/변경) =====
+    PORTFOLIO_LIST,           // PortfolioHandler: 보유상품 목록
+    PORTFOLIO_CHANGE_PREVIEW, // PortfolioHandler: 보유상품 변경 미리보기(시뮬)
+    PORTFOLIO_CHANGE_APPLY,   // PortfolioHandler: 보유상품 변경 적용(즉시 반영)
 
-    DO_UPSERT,                   // 디폴트옵션 등록/변경
-    DO_HISTORY,                   // 디폴트옵션 변경내역
+    // ===== 위저드 공통(등록/변경/만기) =====
+    TRADE_PREREQ_CHECK,       // TradePrereqHandler: 로그인/IRP 계좌 존재/잔액 사전 체크
+
+    PRODUCT_SEARCH,           // ProductHandler: 상품 검색(FUND/ETF/TDF/PRINCIPAL, q=검색어)
+    DOCUMENT_LIST,            // DocumentHandler: 선택 상품의 서류 목록(FundDocument/PrincipalDocument)
+
+    ALLOCATION_PREVIEW,       // AllocationHandler: 운용비율 합계 검증 및 금액/수량 미리보기
+    ALLOCATION_APPLY,         // AllocationHandler: 배분 확정(거래/보유/잔액 즉시 반영)
+
+    // ===== 매수예정 =====
+    PENDING_BUY_LIST,         // PendingBuyHandler: 매수예정상품 목록
+    PENDING_BUY_UPSERT,       // PendingBuyHandler: 매수예정 등록/변경
+    PENDING_BUY_HISTORY,      // PendingBuyHandler: 매수예정 변경내역(날짜별)
+
+    // ===== 만기예정 변경예약 =====
+    MATURITY_RESERVATION_LIST,  // MaturityReservationHandler: 만기 예정 목록
+    MATURITY_RESERVATION_APPLY, // MaturityReservationHandler: 만기 변경예약 등록/적용
+
+    // ===== 디폴트옵션 =====
+    DO_UPSERT,                // DefaultOptionHandler: 디폴트옵션 등록/변경
+    DO_HISTORY,               // DefaultOptionHandler: 디폴트옵션 변경 이력
     
     
-    /*관리자 크롤링 데이터 승인 관련 명령어*/
-    ADMIN_CRAWL_GRANT_UPDATE_FUNDMASTER, //펀드마스터 테이블 업데이트 승인 --> 내부적으로 분석 데이블도 일괄 업데이트 진행
-    ADMIN_CRAWL_GRANT_UPDATE_PRINCIPAL, //원리금 보장 상품 테이블 업데이트 승인
-    ADMIN_CRAWL_GRANT_FILE_DOWNLOAD_FUND, //펀드관련 파일 다운로드 진행
-    ADMIN_CRAWL_GRANT_FILE_DOWNLOAD_PRINCIPAL, //원리금 보장 상품 관련 파일 다운로드 진행 
-    ADMIN_CRAWL_CHECK_UPDATE; //클롤링 업데이트 내역 확인 --> 펀드 기본정보, 원리금 보장상품 기본정보, 다운로드 파일들
+    /*관리자 크롤링 데이터 관련 명령어*/
+    ADMIN_CRAWL_GRANT_FILE_DOWNLOAD,
+    ADMIN_CRAWL_CHECK_FILE_TASK,
+    ADMIN_CRAWL_CHECK_UPDATE;
     
 }

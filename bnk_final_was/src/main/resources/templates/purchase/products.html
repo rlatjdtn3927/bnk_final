@@ -1,34 +1,33 @@
-<!-- src/main/resources/templates/products.html -->
+<!-- 상품관리 -->
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>BNK 퇴직연금 — 상품관리</title>
-  <link th:href="@{/css/app.css}" rel="stylesheet"/>
+  <title>상품관리</title>
+  <link th:href="@{/css/purchase.css}" rel="stylesheet"/>
 </head>
 <body>
 <header class="header">
-  <div class="brand">
-    <span class="dot"></span> BNK 퇴직연금
-  </div>
+  <div class="brand"><span class="dot"></span> 상품관리</div>
   <nav class="tabs">
-    <a th:href="@{/app/holdings}" class="tab">보유현황</a>
-    <a th:href="@{/app/products}" class="tab active">상품관리</a>
+    <a th:href="@{/purchase/holdings}" class="tab">보유현황</a>
+    <a th:href="@{/purchase/products}" class="tab active">상품관리</a>
+    <a th:href="@{/purchase/trade(flow=${param.flow})}" class="tab">매수/변경</a>
+    <a th:href="@{/purchase/trade/history}" class="tab">변경내역</a>
   </nav>
 </header>
 
 <main class="container">
 
-  <!-- 계좌 선택 -->
   <section class="card">
-    <div class="section-title">개인 IRP/DC 선택</div>
+    <div class="section-title">계정/계좌 선택</div>
     <div class="grid grid-3">
       <div>
         <label>계좌 유형</label>
         <select id="accountType" class="input">
-          <option value="IRP" th:selected="${param.accountType} == 'IRP'">IRP</option>
-          <option value="DC" th:selected="${param.accountType} == 'DC'">DC</option>
+          <option value="IRP">IRP</option>
+          <option value="DC">DC</option>
         </select>
       </div>
       <div>
@@ -42,45 +41,30 @@
     </div>
   </section>
 
-  <!-- 타일: 보유상품 변경 -->
   <section class="grid grid-2 mt-16">
     <div class="card">
       <div class="section-title">보유상품 변경 (즉시 반영)</div>
-      <p class="badge">미리보기 → 적용 2단계</p>
-      <div class="mt-8 grid">
-        <textarea id="changeLines" class="input" rows="6"
-                  placeholder='[{"productType":"FUND","productId":"F001","action":"BUY","quantity":"1.00"}]'></textarea>
-        <div class="row">
-          <button class="btn" id="previewBtn">미리보기</button>
-          <button class="btn primary" id="applyBtn">적용</button>
-        </div>
+      <p class="badge">미리보기 → 적용</p>
+      <textarea id="changeLines" class="input" rows="6"
+                placeholder='[{"productType":"FUND","productId":"F001","action":"BUY","quantity":"1.00"}]'></textarea>
+      <div class="row mt-8">
+        <button class="btn" id="previewBtn">미리보기</button>
+        <button class="btn primary" id="applyBtn">적용</button>
       </div>
       <pre id="changeResult" class="mt-8" style="white-space:pre-wrap;"></pre>
     </div>
 
     <div class="card">
       <div class="section-title">보유상품 목록</div>
-      <div class="mt-8">
-        <table class="table">
-          <thead><tr><th>상품ID</th><th>유형</th><th>수량</th><th>평가금액</th></tr></thead>
-          <tbody id="portfolioBody"><tr><td colspan="4">데이터 없음</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="section-title">만기상품 변경예약</div>
-      <p class="badge">추후 구현</p>
-    </div>
-
-    <div class="card">
-      <div class="section-title">매수예정/디폴트옵션</div>
-      <p class="badge">추후 구현</p>
+      <table class="table">
+        <thead><tr><th>상품ID</th><th>유형</th><th>수량</th><th>평가금액</th></tr></thead>
+        <tbody id="portfolioBody"><tr><td colspan="4">데이터 없음</td></tr></tbody>
+      </table>
     </div>
   </section>
 
 </main>
 
-<script th:src="@{/js/products.js}"></script>
+<script th:src="@{/js/purchase/products.js}"></script>
 </body>
 </html>

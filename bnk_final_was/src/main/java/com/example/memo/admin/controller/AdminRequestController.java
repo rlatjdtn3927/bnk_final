@@ -1,5 +1,6 @@
 package com.example.memo.admin.controller;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import com.example.memo.admin.dto.BulkRejectionRequestDto;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpClientService;
 import com.example.memo.tcp_common.TcpMessage;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -131,4 +133,38 @@ public class AdminRequestController {
         BankEmployeeLoginDto loginEmployee = (BankEmployeeLoginDto) session.getAttribute("loginEmployee");
         return (loginEmployee != null) ? loginEmployee.getId() : null;
     }
+    
+    /*아래로 상품 크롤링 데이터 관련 매핑 함수들*/
+    @GetMapping("/check") 
+    public ResponseEntity<?> getUpdateList() {
+    	JsonNode emptyData = objectMapper.createObjectNode();
+        TcpMessage requestMsg = new TcpMessage(Command.ADMIN_CRAWL_CHECK_UPDATE, emptyData);
+        JsonNode response = tcpService.sendMessage(requestMsg);
+        if(response != null) return ResponseEntity.status(HttpStatus.OK).body(response);
+    	return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("업데이트 목록 조회 실패");
+    }
+    
+    @GetMapping("/filetask")
+    public ResponseEntity<?> getFileTask() {
+    	JsonNode emptyData = objectMapper.createObjectNode();
+        TcpMessage msg = new TcpMessage(Command.ADMIN_CRAWL_CHECK_UPDATE, emptyData);
+        JsonNode response = tcpService.sendMessage(msg); // 성공 실패 map 받기.
+        if(response != null) return ResponseEntity.status(HttpStatus.OK).body(response);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("파일 태스크 조회 실패");
+    }
+    
+    
+    @PostMapping("/download")
+    public ResponseEntity<?> doDownload(@RequestBody Map<String, List<String>> prodIdList) {
+    	try {
+			JsonNode json = objectMapper.valueToTree(prodIdList);
+			TcpMessage msg = new TcpMessage(Command.ADMIN_CRAWL_GRANT_FILE_DOWNLOAD, json);
+			JsonNode response = tcpService.sendMessage(msg); // 성공 실패 map 받기.
+			return ResponseEntity.status(HttpStatus.OK).body(response);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("다운로드 요청 실패");
+		}
+    }
+    
 }

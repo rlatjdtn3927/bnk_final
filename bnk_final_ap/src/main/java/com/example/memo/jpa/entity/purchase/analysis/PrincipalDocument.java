@@ -34,4 +34,7 @@ public class PrincipalDocument extends BaseEntity {
 
     @Column(name = "file_url", length = 500)
     private String fileUrl;
+    
+    @Column(name = "status", length = 20)
+    private String status;  //"INSERTED", "UPDATED"
 }

@@ -36,12 +36,13 @@ public class TcpServer {
         	BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         	PrintWriter out = new PrintWriter(socket.getOutputStream(), true)
         ) {
-        	String encodedString = in.readLine();
-        	String decodedString = AES256Util.decrypt(encodedString);
-            TcpMessage message = mapper.readValue(decodedString, TcpMessage.class);
-            String response = router.route(message);
+        	String encodedRequest = in.readLine();
+        	String decodedRequest = AES256Util.decrypt(encodedRequest);
+            TcpMessage message = mapper.readValue(decodedRequest, TcpMessage.class);
             
-            out.println(response);
+            String response = router.route(message);
+            String encodedResponse = AES256Util.encrypt(response);
+            out.println(encodedResponse);
         } catch (Exception e) {
             e.printStackTrace();
         }
