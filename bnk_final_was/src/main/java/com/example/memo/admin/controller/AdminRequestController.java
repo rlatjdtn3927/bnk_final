@@ -137,6 +137,7 @@ public class AdminRequestController {
     /*아래로 상품 크롤링 데이터 관련 매핑 함수들*/
     @GetMapping("/check") 
     public ResponseEntity<?> getUpdateList() {
+    	System.out.println("CHECK................");
     	JsonNode emptyData = objectMapper.createObjectNode();
         TcpMessage requestMsg = new TcpMessage(Command.ADMIN_CRAWL_CHECK_UPDATE, emptyData);
         JsonNode response = tcpService.sendMessage(requestMsg);
@@ -146,8 +147,9 @@ public class AdminRequestController {
     
     @GetMapping("/filetask")
     public ResponseEntity<?> getFileTask() {
+    	System.out.println("getFileTask................");
     	JsonNode emptyData = objectMapper.createObjectNode();
-        TcpMessage msg = new TcpMessage(Command.ADMIN_CRAWL_CHECK_UPDATE, emptyData);
+        TcpMessage msg = new TcpMessage(Command.ADMIN_CRAWL_CHECK_FILE_TASK, emptyData);
         JsonNode response = tcpService.sendMessage(msg); // 성공 실패 map 받기.
         if(response != null) return ResponseEntity.status(HttpStatus.OK).body(response);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("파일 태스크 조회 실패");
@@ -156,6 +158,7 @@ public class AdminRequestController {
     
     @PostMapping("/download")
     public ResponseEntity<?> doDownload(@RequestBody Map<String, List<String>> prodIdList) {
+    	System.out.println("doDownload................");
     	try {
 			JsonNode json = objectMapper.valueToTree(prodIdList);
 			TcpMessage msg = new TcpMessage(Command.ADMIN_CRAWL_GRANT_FILE_DOWNLOAD, json);

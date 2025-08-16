@@ -24,6 +24,9 @@ public class FileTaskList extends BaseEntity {
     
     @Column(name="prod_name")
     private String prodName;
+    
+    @Column(name="file_name")
+    private String fileName;
 
     @Column(name="prod_category", length = 30)
     private String prodCategory; //fund, etf, tdf, 원리금보장상품
@@ -34,7 +37,7 @@ public class FileTaskList extends BaseEntity {
     @Column(name="download_url", length = 300)
     private String downloadUrl;
 
-    @Column
+    @Column(name="file_size")
     private Long fileSize;
 }
 
