@@ -1,14 +1,519 @@
 <!-- 페이지 전용 CSS 프래그먼트 -->
 <th:block xmlns:th="http://www.thymeleaf.org" th:fragment="css">
   <style id="page-css" hx-swap-oob="true">
-    /* 이 페이지 전용 스타일을 여기에 작성하세요 */
+    :root {
+      --bg: #0b0f14;
+      --panel: #111827;
+      --muted: #6b7280;
+      --text: #e5e7eb;
+      --accent: #60a5fa;
+      --ok: #34d399;
+      --warn: #f59e0b;
+      --border: #1f2937;
+    }
+
+    [data-theme="light"] {
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --muted: #6b7280;
+      --text: #0f172a;
+      --accent: #2563eb;
+      --ok: #059669;
+      --warn: #b45309;
+      --border: #e5e7eb;
+    }
+
+    body { background: var(--bg); color: var(--text); }
+    .page-wrap { display: grid; gap: 1rem; }
+    .toolbar {
+      display: flex; flex-wrap: wrap; gap: .5rem; align-items: center;
+      padding: .75rem; background: var(--panel); border: 1px solid var(--border); border-radius: .75rem;
+    }
+    .toolbar .spacer { flex: 1 1 auto; }
+    .toolbar input, .toolbar select, .toolbar button {
+      height: 36px; padding: 0 .75rem; border-radius: .5rem; border: 1px solid var(--border);
+      background: transparent; color: var(--text);
+    }
+    .toolbar button { cursor: pointer; border-color: var(--accent); }
+    .badge {
+      display: inline-flex; align-items: center; gap: .35rem;
+      padding: .15rem .5rem; border-radius: 999px; font-size: .8rem; border: 1px solid var(--border);
+      background: rgba(96,165,250,.08);
+    }
+    .badge.ok { color: var(--ok); border-color: rgba(16,185,129,.25); background: rgba(16,185,129,.08); }
+    .badge.warn { color: var(--warn); border-color: rgba(245,158,11,.25); background: rgba(245,158,11,.08); }
+
+    .summary-grid {
+      display: grid; gap: .75rem;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+    .card {
+      background: var(--panel); border: 1px solid var(--border); border-radius: .75rem;
+      padding: .9rem; display: grid; gap: .5rem;
+    }
+    .card h4 { margin: 0; font-size: 1rem; color: var(--muted); }
+    .card .count { font-size: 1.8rem; font-weight: 700; }
+
+    details.dataset {
+      border: 1px solid var(--border); border-radius: .75rem; background: var(--panel); overflow: hidden;
+    }
+    details.dataset > summary {
+      list-style: none; cursor: pointer; padding: .9rem 1rem; display: flex; align-items: center; gap: .75rem;
+      font-weight: 600; border-bottom: 1px dashed var(--border);
+    }
+    details.dataset > summary::-webkit-details-marker { display:none; }
+    details.dataset[open] > summary { border-bottom-style: solid; }
+    .section-inner { padding: 1rem; }
+
+    .table-wrap { overflow: auto; border: 1px solid var(--border); border-radius: .6rem; }
+    table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+    thead th {
+      position: sticky; top: 0; background: rgba(2,6,23,.6); backdrop-filter: blur(6px);
+      text-align: left; padding: .6rem .7rem; border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    tbody td { padding: .5rem .7rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tbody tr:hover { background: rgba(96,165,250,.06); }
+    .nowrap { white-space: nowrap; }
+    .muted { color: var(--muted); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+
+    .status {
+      padding: .15rem .5rem; border-radius: .45rem; font-size: .78rem; border: 1px solid var(--border);
+      background: rgba(107,114,128,.1);
+    }
+    .status.INSERTED { color: var(--ok); border-color: rgba(16,185,129,.25); background: rgba(16,185,129,.08); }
+    .status.UPDATED { color: var(--warn); border-color: rgba(245,158,11,.25); background: rgba(245,158,11,.08); }
+
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
   </style>
 </th:block>
 
 <!-- 페이지 본문 프래그먼트 -->
 <th:block xmlns:th="http://www.thymeleaf.org" th:fragment="content">
-  <section>
-    <h2>상품 관리</h2>
-    <p>여기에 본문 내용을 작성하세요.</p>
+  <section class="page-wrap" data-theme="dark">
+    <h2 style="margin:.2rem 0 0">수정 사항</h2>
+    <p class="muted" style="margin:0 0 .5rem">상품 DB 수정 목록을 확인하십시오.</p>
+
+    <!-- 컨트롤 바 -->
+    <div class="toolbar">
+      <button id="refreshBtn" title="다시 불러오기">새로고침</button>
+
+      <div class="spacer"></div>
+
+      <label>
+        <span class="sr-only">상품 ID/명 검색</span>
+        <input id="q" type="search" placeholder="상품ID/상품명 검색…" />
+      </label>
+
+      <label>
+        <select id="statusFilter">
+          <option value="ALL">상태: 전체</option>
+          <option value="INSERT">INSERTED</option>
+          <option value="UPDATE">UPDATED</option>
+        </select>
+      </label>
+
+      <button id="clearBtn" title="필터 초기화">초기화</button>
+      <button id="downloadBtn" title="원본 JSON 저장">JSON 저장</button>
+      <button id="themeBtn" title="라이트/다크 전환">테마</button>
+    </div>
+
+    <!-- 요약 카드 -->
+    <div id="summary" class="summary-grid" aria-live="polite"></div>
+
+    <!-- 섹션들 -->
+    <div id="sections" class="page-sections" aria-live="polite"></div>
+
+    <template id="section-template">
+      <details class="dataset">
+        <summary>
+          <span class="title"></span>
+          <span class="badge"><span class="muted">총</span> <strong class="total mono">0</strong></span>
+          <span class="badge ok"><span class="muted">INS</span> <strong class="inserted mono">0</strong></span>
+          <span class="badge warn"><span class="muted">UPD</span> <strong class="updated mono">0</strong></span>
+          <span class="muted" style="margin-left:auto; font-weight:400;">(클릭하여 펼치기)</span>
+        </summary>
+        <div class="section-inner">
+          <div class="table-wrap"></div>
+        </div>
+      </details>
+    </template>
+
+    <template id="summary-card-template">
+      <div class="card">
+        <h4 class="label">라벨</h4>
+        <div><span class="count mono">0</span></div>
+        <div style="display:flex; gap:.4rem; flex-wrap:wrap">
+          <span class="badge ok"><span class="muted">INS</span> <strong class="ins mono">0</strong></span>
+          <span class="badge warn"><span class="muted">UPD</span> <strong class="upd mono">0</strong></span>
+        </div>
+      </div>
+    </template>
+
+    <script>
+      (function () {
+        const ENDPOINT = '/admin/requests/check';
+
+        // JSON 키 → 표시명/열정의 매핑
+        const CONFIG = [
+          {
+            key: 'fundMasterList', title: '① 펀드 기본정보 (FundMaster)',
+            columns: [
+              { label: '상품ID',   get: e => pid(e) },
+              { label: '상품명',   get: e => e.productName },
+              { label: '유형',     get: e => e.fundType },
+              { label: '위험등급', get: e => e.riskGradeNum },
+              { label: 'TER',      get: e => fmtNum(e.totalExpenseRatio) },
+              { label: '회사',     get: e => e.managementCompany },
+              { label: '설정일',   get: e => e.inceptionDate, cls:'nowrap' },
+              { label: '카테고리', get: e => e.category },
+              { label: '상태',     get: e => statusBadge(e.status), raw: true }
+            ]
+          },
+          {
+            key: 'fundDocList', title: '② 펀드 문서 (FundDocument)',
+            columns: [
+              { label: '상품ID',   get: e => pid(e) },
+              { label: '문서유형', get: e => e.docType },
+              { label: '파일',     get: e => linkFile(e.fileUrl), raw:true },
+              { label: '상태',     get: e => statusBadge(e.status), raw: true }
+            ]
+          },
+          {
+            key: 'principalList', title: '③ 원리금 보장 상품 (PrincipalGuarantee)',
+            columns: [
+              { label: '상품ID',   get: e => e.productId },
+              { label: '은행',     get: e => e.bankName },
+              { label: '상품명',   get: e => e.productName },
+              { label: '만기',     get: e => e.maturityYears },
+              { label: 'DB%',      get: e => fmtNum(e.dbRate) },
+              { label: 'DC%',      get: e => fmtNum(e.dcRate) },
+              { label: 'IRP%',     get: e => fmtNum(e.irpRate) },
+              { label: '상태',     get: e => statusBadge(e.status), raw: true }
+            ]
+          },
+          {
+            key: 'principalDocList', title: '④ 원보 문서 (PrincipalDocument)',
+            columns: [
+              { label: '상품ID',   get: e => pid(e) },
+              { label: '문서유형', get: e => e.docType },
+              { label: '파일',     get: e => linkFile(e.fileUrl), raw:true },
+              { label: '상태',     get: e => statusBadge(e.status), raw: true }
+            ]
+          },
+          {
+            key: 'fundStatusList', title: '⑤ 펀드 상태 (FundStatus)',
+            columns: [
+              { label: '상품ID',   get: e => pid(e) },
+              { label: '평가방식', get: e => e.valuationType },
+              { label: '운용사',   get: e => e.managementCompany },
+              { label: '투자지역', get: e => e.investArea },
+              { label: '매출보수', get: e => fmtNum(e.salesFee) },
+              { label: '신탁보수', get: e => fmtNum(e.trustFee) },
+              { label: '환매수수료', get: e => fmtNum(e.redemptionFee) },
+              { label: '기준일',   get: e => e.referenceDate, cls:'nowrap' },
+              { label: '상태',     get: e => statusBadge(e.status), raw: true }
+            ]
+          },
+          {
+            key: 'fundReturnList', title: '⑥ 수익률 (FundReturn)',
+            columns: [
+              { label: '상품ID',   get: e => pid(e) },
+              { label: '유형',     get: e => e.returnType },
+              { label: '수익률',   get: e => fmtNum(e.returnValue) },
+              { label: '기준일',   get: e => e.referenceDate, cls:'nowrap' },
+              { label: '상태',     get: e => statusBadge(e.status), raw: true }
+            ]
+          },
+          {
+            key: 'fundNavList', title: '⑦ 기준가 (FundNav)',
+            columns: [
+              { label: '상품ID',   get: e => pid(e) },
+              { label: 'NAV',      get: e => fmtNum(e.nav) },
+              { label: '기준일',   get: e => e.referenceDate, cls:'nowrap' },
+              { label: '상태',     get: e => statusBadge(e.status), raw: true }
+            ]
+          },
+          {
+            key: 'assetAllocationList', title: '⑧ 자산배분 (AssetAllocation)',
+            columns: [
+              { label: '상품ID',   get: e => pid(e) },
+              { label: '구분',     get: e => e.allocCategory },
+              { label: '펀드내(%)', get: e => fmtNum(e.inFund) },
+              { label: '유형평균(%)', get: e => fmtNum(e.categoryAvg) },
+              { label: '기준일',   get: e => e.referenceDate, cls:'nowrap' },
+              { label: '상태',     get: e => statusBadge(e.status), raw: true }
+            ]
+          },
+          {
+            key: 'cumulativePerformanceList', title: '⑨ 누적성과 (CumulativePerformance)',
+            columns: [
+              { label: '상품ID',   get: e => pid(e) },
+              { label: '기간코드', get: e => e.periodCode },
+              { label: '펀드',     get: e => fmtNum(e.fundReturn) },
+              { label: 'BM',       get: e => fmtNum(e.bmReturn) },
+              { label: '유형평균', get: e => fmtNum(e.categoryAvgRet) },
+              { label: '기준일',   get: e => e.referenceDate, cls:'nowrap' },
+              { label: '상태',     get: e => statusBadge(e.status), raw: true }
+            ]
+          },
+          {
+            key: 'top5SectorList', title: '⑩ 상위 섹터 (Top5Sector)',
+            columns: [
+              { label: '상품ID',   get: e => pid(e) },
+              { label: '섹터',     get: e => e.sectorCategory },
+              { label: '편입비중', get: e => fmtNum(e.inStock) },
+              { label: '유형평균', get: e => fmtNum(e.categoryAvg) },
+              { label: '기준일',   get: e => e.referenceDate, cls:'nowrap' },
+              { label: '상태',     get: e => statusBadge(e.status), raw: true }
+            ]
+          },
+          {
+            key: 'riskMetricList', title: '⑪ 리스크 지표 (RiskMetric)',
+            columns: [
+              { label: '상품ID',   get: e => pid(e) },
+              { label: '지표',     get: e => e.metricName },
+              { label: '기간코드', get: e => e.periodCode },
+              { label: '값',       get: e => fmtNum(e.metricValue) },
+              { label: '백분위',   get: e => fmtNum(e.percentileRank) },
+              { label: '유형평균', get: e => fmtNum(e.categoryAvg) },
+              { label: '기준일',   get: e => e.referenceDate, cls:'nowrap' },
+              { label: '상태',     get: e => statusBadge(e.status), raw: true }
+            ]
+          },
+        ];
+
+        const state = {
+          raw: null,
+          filtered: null,
+          q: '',
+          status: 'ALL',
+          theme: 'dark'
+        };
+
+        // --- helpers ---
+        function pid(e) {
+          // 다양한 엔티티에서 productId를 추출
+          return e?.productId
+              || e?.fund?.productId
+              || e?.principal?.productId
+              || '';
+        }
+        function fmtNum(v) {
+          if (v === null || v === undefined) return '';
+          const n = typeof v === 'string' ? Number(v) : v;
+          if (Number.isNaN(n)) return String(v);
+          // 자릿수는 값의 규모에 따라 가볍게 처리
+          return (Math.abs(n) >= 1 ? n.toFixed(3) : n.toFixed(4)).replace(/\.?0+$/, '');
+        }
+        function esc(s) {
+          return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+        }
+        function statusBadge(s) {
+          const k = (s || '').toUpperCase();
+          return `<span class="status ${k}">${esc(k || '-')}</span>`;
+        }
+        function linkFile(url) {
+          if (!url) return '';
+          const name = url.split('/').pop();
+          return `<a class="mono" href="${esc(url)}" target="_blank" rel="noopener">${esc(name)}</a>`;
+        }
+        function countByStatus(list) {
+          let ins = 0, upd = 0;
+          for (const e of list || []) {
+            const s = (e.status || '').toUpperCase();
+            if (s === 'INSERT') ins++;
+            else if (s === 'UPDATE') upd++;
+          }
+          return { total: (list || []).length, ins, upd };
+        }
+
+        // --- fetch & render ---
+        async function load() {
+          const res = await fetch(ENDPOINT, { method: 'GET' });
+          if (!res.ok) throw new Error('데이터 요청 실패: ' + res.status);
+          const json = await res.json();
+
+          // 서버가 키 대소문자를 혼용하므로 안전하게 매핑
+          const data = {
+            fundMasterList: json.fundMasterList ?? [],
+            fundDocList: json.fundDocList ?? [],
+            principalList: json.principalList ?? [],
+            principalDocList: json.principalDocList ?? [],
+            fundStatusList: json.fundStatusList ?? [],
+            fundReturnList: json.fundReturnList ?? [],
+            fundNavList: json.fundNavList ?? [],
+            assetAllocationList: json.assetAllocationList ?? [],
+            cumulativePerformanceList: json.cumulativePerformanceList ?? [],
+            top5SectorList: json.top5SectorList ?? [],
+            riskMetricList: json.riskMetricList ?? []
+          };
+
+          state.raw = data;
+          applyFilters(); // sets state.filtered and triggers render
+        }
+
+        function applyFilters() {
+          const q = state.q.trim().toLowerCase();
+          const want = state.status;
+
+          const filtered = {};
+          for (const { key } of CONFIG) {
+            const arr = state.raw?.[key] ?? [];
+            filtered[key] = arr.filter(e => {
+              // status
+              if (want !== 'ALL') {
+                const s = (e.status || '').toUpperCase();
+                if (s !== want) return false;
+              }
+              // query
+              if (q) {
+                const hay = [
+                  pid(e),
+                  e.productName,
+                  e.bankName,
+                  e.sectorCategory,
+                  e.allocCategory,
+                  e.metricName
+                ].map(v => (v ?? '').toString().toLowerCase()).join('|');
+                if (!hay.includes(q)) return false;
+              }
+              return true;
+            });
+          }
+          state.filtered = filtered;
+          render();
+        }
+
+        function render() {
+          renderSummary();
+          renderSections();
+        }
+
+        function renderSummary() {
+          const wrap = document.getElementById('summary');
+          wrap.innerHTML = '';
+          for (const cfg of CONFIG) {
+            const list = state.filtered?.[cfg.key] ?? [];
+            // 요약은 전체(raw) 기준으로도 의미 있으니 raw count 같이 사용
+            const rawList = state.raw?.[cfg.key] ?? [];
+            const { ins, upd } = countByStatus(rawList);
+
+            const tpl = document.getElementById('summary-card-template').content.cloneNode(true);
+            tpl.querySelector('.label').textContent = cfg.title;
+            tpl.querySelector('.count').textContent = rawList.length;
+            tpl.querySelector('.ins').textContent = ins;
+            tpl.querySelector('.upd').textContent = upd;
+            wrap.appendChild(tpl);
+          }
+        }
+
+        function renderSections() {
+          const container = document.getElementById('sections');
+          container.innerHTML = '';
+
+          for (const cfg of CONFIG) {
+            const list = state.filtered?.[cfg.key] ?? [];
+            const { total, ins, upd } = countByStatus(list);
+
+            const root = document.getElementById('section-template').content.cloneNode(true);
+            root.querySelector('.title').textContent = cfg.title;
+            root.querySelector('.total').textContent = total;
+            root.querySelector('.inserted').textContent = ins;
+            root.querySelector('.updated').textContent = upd;
+
+            const tableWrap = root.querySelector('.table-wrap');
+            tableWrap.appendChild(buildTable(cfg.columns, list));
+
+            // 비어있는 섹션은 접은 채로 추가
+            const detailsEl = root.querySelector('details.dataset');
+            if (total === 0) {
+              detailsEl.open = false;
+            } else {
+              // 데이터가 있으면 기본 펼침
+              detailsEl.open = true;
+            }
+
+            container.appendChild(root);
+          }
+        }
+
+        function buildTable(columns, rows) {
+          const div = document.createElement('div');
+          const table = document.createElement('table');
+
+          // thead
+          const thead = document.createElement('thead');
+          const trh = document.createElement('tr');
+          for (const col of columns) {
+            const th = document.createElement('th');
+            th.textContent = col.label;
+            trh.appendChild(th);
+          }
+          thead.appendChild(trh);
+          table.appendChild(thead);
+
+          // tbody
+          const tbody = document.createElement('tbody');
+          for (const row of rows) {
+            const tr = document.createElement('tr');
+            for (const col of columns) {
+              const td = document.createElement('td');
+              if (col.raw) {
+                td.innerHTML = col.get(row) ?? '';
+              } else {
+                td.textContent = (col.get(row) ?? '').toString();
+              }
+              if (col.cls) td.className = col.cls;
+              tr.appendChild(td);
+            }
+            tbody.appendChild(tr);
+          }
+          table.appendChild(tbody);
+
+          div.appendChild(table);
+          return div;
+        }
+
+        // --- events ---
+        document.getElementById('refreshBtn').addEventListener('click', () => load().catch(err => alert(err.message)));
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+          if (!state.raw) return;
+          const blob = new Blob([JSON.stringify(state.raw, null, 2)], { type: 'application/json' });
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'updated-set.json';
+          a.click();
+          URL.revokeObjectURL(a.href);
+        });
+        document.getElementById('clearBtn').addEventListener('click', () => {
+          state.q = '';
+          state.status = 'ALL';
+          document.getElementById('q').value = '';
+          document.getElementById('statusFilter').value = 'ALL';
+          applyFilters();
+        });
+        document.getElementById('q').addEventListener('input', (e) => {
+          state.q = e.target.value || '';
+          applyFilters();
+        });
+        document.getElementById('statusFilter').addEventListener('change', (e) => {
+          state.status = e.target.value || 'ALL';
+          applyFilters();
+        });
+        document.getElementById('themeBtn').addEventListener('click', () => {
+          const root = document.querySelector('section.page-wrap');
+          state.theme = (state.theme === 'dark') ? 'light' : 'dark';
+          root.setAttribute('data-theme', state.theme);
+        });
+
+        // 첫 로드
+        load().catch(err => {
+          console.error(err);
+          const s = document.getElementById('sections');
+          s.innerHTML = `<div class="card" role="alert">데이터를 불러오지 못했습니다. <span class="muted">(${esc(err.message)})</span></div>`;
+        });
+      })();
+    </script>
   </section>
 </th:block>

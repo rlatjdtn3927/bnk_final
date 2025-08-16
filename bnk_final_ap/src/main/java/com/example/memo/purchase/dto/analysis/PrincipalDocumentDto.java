@@ -11,4 +11,5 @@ public class PrincipalDocumentDto {
     private String productId;     // PrincipalGuarantee.productId
     private String docType;       // 약관, 상품 설명서
     private String fileUrl;
+    private String status;
 }

@@ -1,14 +1,338 @@
-<!-- 페이지 전용 CSS 프래그먼트 -->
 <th:block xmlns:th="http://www.thymeleaf.org" th:fragment="css">
-  <style id="page-css" hx-swap-oob="true">
-    /* 이 페이지 전용 스타일을 여기에 작성하세요 */
-  </style>
+<style id="page-css" hx-swap-oob="true">
+  /* ===== 파일 태스크 전용 스타일 ===== */
+  :root { --border:#e5e7eb; --text:#111827; --muted:#6b7280; --bg:#ffffff; --bg-subtle:#f9fafb; --brand:#2563eb; --ok:#16a34a; --bad:#dc2626; --warn:#d97706; }
+  section.file-task { color:var(--text) }
+  .toolbar{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin:.75rem 0 1rem}
+  .toolbar .grow{flex:1 1 auto}
+  .btn{display:inline-flex;align-items:center;gap:.4rem;border:1px solid var(--border);border-radius:.5rem;padding:.55rem .8rem;background:var(--bg);cursor:pointer;font-weight:600}
+  .btn.primary{background:var(--brand);color:white;border-color:var(--brand)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn svg{width:1rem;height:1rem}
+  .tag{display:inline-block;border:1px solid var(--border);padding:.15rem .5rem;border-radius:999px;font-size:.75rem;color:var(--muted)}
+  .status-dot{width:.5rem;height:.5rem;border-radius:999px;display:inline-block;vertical-align:middle;margin-right:.35rem}
+  .ok{color:var(--ok)} .bad{color:var(--bad)} .warn{color:var(--warn)}
+  .table-wrap{border:1px solid var(--border);border-radius:.75rem;overflow:hidden;background:var(--bg)}
+  table{width:100%;border-collapse:collapse}
+  thead{background:var(--bg-subtle)}
+  th,td{padding:.7rem .75rem;border-bottom:1px solid var(--border);text-align:left;vertical-align:middle}
+  th.small,td.small{width:48px;text-align:center}
+  td.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+  .empty{padding:2rem;text-align:center;color:var(--muted)}
+  .pill{display:inline-flex;align-items:center;gap:.35rem;border-radius:999px;padding:.2rem .55rem;font-size:.75rem;border:1px solid var(--border);background:var(--bg-subtle)}
+  .result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.6rem}
+  .card{border:1px solid var(--border);border-radius:.75rem;padding:.9rem;background:var(--bg)}
+  .muted{color:var(--muted)} .right{text-align:right}
+  .search{border:1px solid var(--border);border-radius:.5rem;padding:.5rem .65rem;width:260px}
+  .spinner{width:1rem;height:1rem;border:.18rem solid var(--border);border-top-color:var(--brand);border-radius:50%;animation:spin 1s linear infinite;display:inline-block}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
 </th:block>
 
-<!-- 페이지 본문 프래그먼트 -->
 <th:block xmlns:th="http://www.thymeleaf.org" th:fragment="content">
-  <section>
-    <h2>크롤링 관리</h2>
-    <p>여기에 본문 내용을 작성하세요.</p>
-  </section>
+<section class="file-task">
+  <h2>파일 관리</h2>
+  <p class="muted">파일 태스크를 확인하고, 선택한 <code>prodId</code>의 파일을 다운로드하세요. 모든 통신은 <code>fetch</code>로 처리됩니다.</p>
+
+  <div class="toolbar">
+    <div class="grow">
+      <button class="btn" id="btn-refresh" title="목록 새로고침">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M20 7v6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        새로고침
+      </button>
+      <span class="tag" id="task-count">로딩 중…</span>
+    </div>
+    <input class="search" id="search-input" placeholder="prodId / 상품명 / 파일명 검색…" aria-label="검색"/>
+    <button class="btn" id="btn-select-all">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M4 12h16M4 6h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      전체 선택/해제
+    </button>
+    <button class="btn" id="btn-download-selected" disabled>
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      선택 다운로드
+    </button>
+    <button class="btn primary" id="btn-download-all" disabled>
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 4v10m0 0l-4-4m4 4l4-4M4 20h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      일괄 다운로드
+    </button>
+  </div>
+
+  <div class="table-wrap" role="region" aria-label="파일 태스크 목록">
+    <table id="task-table">
+      <thead>
+        <tr>
+          <th class="small">선택</th>
+          <th>prodId</th>
+          <th>상품명</th>
+          <th>파일명</th>
+          <th>카테고리</th>
+          <th>문서유형</th>
+          <th class="right">파일크기</th>
+          <th>상태</th>
+        </tr>
+      </thead>
+      <tbody id="task-tbody">
+        <tr><td colspan="8" class="empty"><span class="spinner" aria-hidden="true"></span> 목록을 불러오는 중…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="result-section" style="margin-top:1rem; display:none">
+    <h3>다운로드 결과</h3>
+    <div class="result-grid" id="result-grid"></div>
+  </div>
+
+  <script>
+    (() => {
+      const API = {
+        list: '/admin/requests/filetask',
+        download: '/admin/requests/download',
+      };
+
+      const els = {
+        tbody: document.getElementById('task-tbody'),
+        count: document.getElementById('task-count'),
+        btnRefresh: document.getElementById('btn-refresh'),
+        btnSelectAll: document.getElementById('btn-select-all'),
+        btnDownloadSelected: document.getElementById('btn-download-selected'),
+        btnDownloadAll: document.getElementById('btn-download-all'),
+        searchInput: document.getElementById('search-input'),
+        resultSection: document.getElementById('result-section'),
+        resultGrid: document.getElementById('result-grid'),
+      };
+
+      /** 상태 */
+      let tasks = [];               // 원본 목록
+      let filteredTasks = [];       // 필터링된 목록
+      let selectedRows = new Set(); // 표시 인덱스 기반 선택 상태
+      let loading = false;
+
+      /** CSRF */
+      function buildHeaders() {
+        const headers = { 'Content-Type': 'application/json' };
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+        const csrfToken  = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+        if (csrfHeader && csrfToken) headers[csrfHeader] = csrfToken;
+        return headers;
+      }
+
+      function setLoading(b) {
+        loading = b;
+        els.btnRefresh.disabled = b;
+        els.btnSelectAll.disabled = b || filteredTasks.length === 0;
+        els.btnDownloadAll.disabled = b || tasks.length === 0;
+        els.btnDownloadSelected.disabled = b || selectedProdIds().length === 0;
+        els.count.textContent = b ? '로딩 중…' : `총 ${tasks.length}건`;
+      }
+
+      function fmtSize(bytes) {
+        if (bytes == null) return '-';
+        const i = bytes === 0 ? 0 : Math.floor(Math.log(bytes) / Math.log(1024));
+        const units = ['B','KB','MB','GB','TB'];
+        const v = (bytes / Math.pow(1024, i)).toFixed(i ? 1 : 0);
+        return `${v} ${units[i]}`;
+      }
+
+      function uniqProdIds(list) {
+        return Array.from(new Set(list.map(t => t.prodId).filter(Boolean)));
+      }
+
+      function selectedProdIds() {
+        const ids = [];
+        for (const idx of selectedRows) {
+          const t = filteredTasks[idx];
+          if (t?.prodId) ids.push(t.prodId);
+        }
+        return Array.from(new Set(ids));
+      }
+
+      function escapeHtml(str) {
+        return String(str ?? '').replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+      }
+
+      function renderTable() {
+        if (!filteredTasks.length) {
+          els.tbody.innerHTML = `<tr><td colspan="8" class="empty">표시할 태스크가 없습니다.</td></tr>`;
+          updateButtons();
+          return;
+        }
+        const rows = filteredTasks.map((t, i) => {
+          const checked = selectedRows.has(i) ? 'checked' : '';
+          const size = fmtSize(t.fileSize);
+          return `
+            <tr data-index="${i}">
+              <td class="small">
+                <input type="checkbox" aria-label="선택" ${checked} />
+              </td>
+              <td class="mono">${t.prodId ?? '-'}</td>
+              <td>${escapeHtml(t.prodName)}</td>
+              <td class="mono">${escapeHtml(t.fileName)}</td>
+              <td>${t.prodCategory ?? '-'}</td>
+              <td>${t.docType ?? '-'}</td>
+              <td class="right">${size}</td>
+              <td class="status-cell">
+                <span class="pill"><span class="status-dot warn" style="background:var(--warn)"></span><span class="muted">대기</span></span>
+              </td>
+            </tr>
+          `;
+        }).join('');
+        els.tbody.innerHTML = rows;
+
+        // 행 체크박스 이벤트
+        els.tbody.querySelectorAll('input[type="checkbox"]').forEach((cb, idx) => {
+          cb.addEventListener('change', () => {
+            if (cb.checked) selectedRows.add(idx);
+            else selectedRows.delete(idx);
+            updateButtons();
+          });
+        });
+        updateButtons();
+      }
+
+      function updateButtons() {
+        els.btnDownloadSelected.disabled = loading || selectedProdIds().length === 0;
+        els.btnDownloadAll.disabled = loading || tasks.length === 0;
+        els.btnSelectAll.disabled = loading || filteredTasks.length === 0;
+      }
+
+      function applyFilter() {
+        const q = els.searchInput.value.trim().toLowerCase();
+        if (!q) {
+          filteredTasks = tasks.slice();
+        } else {
+          filteredTasks = tasks.filter(t => {
+            return (t.prodId ?? '').toLowerCase().includes(q)
+                || (t.prodName ?? '').toLowerCase().includes(q)
+                || (t.fileName ?? '').toLowerCase().includes(q);
+          });
+        }
+        selectedRows.clear(); // 화면 인덱스 기반이라 필터 시 초기화
+        renderTable();
+      }
+
+      async function fetchTasks() {
+        setLoading(true);
+        els.resultSection.style.display = 'none';
+        els.resultGrid.innerHTML = '';
+        try {
+          const res = await fetch(API.list, { method:'GET', headers: buildHeaders() });
+          if (!res.ok) throw new Error('파일 태스크 조회 실패');
+          const data = await res.json();
+          const list = Array.isArray(data) ? data : (data?.responseList ?? []);
+          tasks = list ?? [];
+          applyFilter();
+        } catch (err) {
+          console.error(err);
+          tasks = [];
+          applyFilter();
+          alert('파일 태스크 조회에 실패했습니다.');
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      function markRowStatusByProdMap(resultMap) {
+        const rows = els.tbody.querySelectorAll('tr');
+        rows.forEach((tr, i) => {
+          const t = filteredTasks[i];
+          if (!t) return;
+          const prod = t.prodId;
+          const val = resultMap[prod];
+          const cell = tr.querySelector('.status-cell');
+          if (val === true) {
+            cell.innerHTML = `<span class="pill ok"><span class="status-dot ok" style="background:var(--ok)"></span>완료</span>`;
+          } else if (val === false) {
+            cell.innerHTML = `<span class="pill bad"><span class="status-dot bad" style="background:var(--bad)"></span>실패</span>`;
+          } else {
+            cell.innerHTML = `<span class="pill"><span class="status-dot warn" style="background:var(--warn)"></span><span class="muted">대기</span></span>`;
+          }
+        });
+      }
+
+      function renderResultCards(resultMap) {
+        els.resultGrid.innerHTML = '';
+        const keys = Object.keys(resultMap || {});
+        if (!keys.length) {
+          els.resultGrid.innerHTML = `<div class="card muted">결과가 비어 있습니다.</div>`;
+          return;
+        }
+        const cards = keys.map(prod => {
+          const ok = resultMap[prod] === true;
+          const icon = ok
+            ? `<span class="status-dot ok" style="background:var(--ok)"></span> 성공`
+            : `<span class="status-dot bad" style="background:var(--bad)"></span> 실패`;
+          const matched = tasks.find(t => t.prodId === prod);
+          const name = matched?.prodName ?? '';
+          return `
+            <div class="card">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div class="mono" style="font-weight:700">${prod}</div>
+                <div class="${ok ? 'ok' : 'bad'}" style="font-weight:700">${icon}</div>
+              </div>
+              <div class="muted" style="margin-top:.35rem">${escapeHtml(name)}</div>
+            </div>
+          `;
+        }).join('');
+        els.resultGrid.innerHTML = cards;
+        els.resultSection.style.display = 'block';
+      }
+
+      async function doDownload(prodIdList) {
+        if (!prodIdList.length) {
+          alert('선택된 항목이 없습니다.');
+          return;
+        }
+        setLoading(true);
+        markRowStatusByProdMap({}); // 모두 "대기"로 초기화
+        try {
+          const res = await fetch(API.download, {
+            method:'POST',
+            headers: buildHeaders(),
+            body: JSON.stringify({ prodIdList })
+          });
+          if (!res.ok) throw new Error('다운로드 요청 실패');
+          const result = await res.json(); // { "P1": true, "P2": false, ... }
+
+          markRowStatusByProdMap(result);
+          renderResultCards(result);
+
+          // 성공 건 삭제 후 목록 갱신(서버에서 삭제되었다는 전제)
+          await fetchTasks();
+        } catch (err) {
+          console.error(err);
+          alert('다운로드 중 오류가 발생했습니다.');
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      // 이벤트 바인딩
+      els.btnRefresh.addEventListener('click', fetchTasks);
+      els.searchInput.addEventListener('input', applyFilter);
+      els.btnSelectAll.addEventListener('click', () => {
+        if (!filteredTasks.length) return;
+        const allSelected = filteredTasks.every((_, idx) => selectedRows.has(idx));
+        selectedRows.clear();
+        if (!allSelected) {
+          filteredTasks.forEach((_, idx) => selectedRows.add(idx));
+        }
+        renderTable();
+      });
+      els.btnDownloadSelected.addEventListener('click', () => {
+        doDownload(selectedProdIds());
+      });
+      els.btnDownloadAll.addEventListener('click', () => {
+        const allProdIds = uniqProdIds(tasks);
+        if (!allProdIds.length) {
+          alert('다운로드할 태스크가 없습니다.');
+          return;
+        }
+        doDownload(allProdIds);
+      });
+
+      // 초기 로드
+      fetchTasks();
+    })();
+  </script>
+</section>
 </th:block>

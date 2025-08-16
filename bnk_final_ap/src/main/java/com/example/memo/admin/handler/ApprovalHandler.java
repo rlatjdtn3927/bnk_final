@@ -3,6 +3,7 @@ package com.example.memo.admin.handler;
 import org.springframework.stereotype.Component;
 
 import com.example.memo.admin.service.ApprovalService;
+import com.example.memo.admin.service.FileDownloadService;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpMessageHandler;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 public class ApprovalHandler implements TcpMessageHandler{
 	
 	private final ApprovalService approvalService;
+	private final FileDownloadService fileDownloadService;
 
 	@Override
 	public boolean supports(Command command) {
@@ -31,7 +33,7 @@ public class ApprovalHandler implements TcpMessageHandler{
 				return approvalService.findAllFileTask();
 			}
 			case ADMIN_CRAWL_GRANT_FILE_DOWNLOAD: {
-				return approvalService.downloadFiles(data);
+				return fileDownloadService.downloadFiles(data);
 			}
 			default: {
 				return null;

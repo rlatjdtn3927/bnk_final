@@ -13,6 +13,17 @@ import com.example.memo.jpa.entity.purchase.analysis.RiskMetric;
 import com.example.memo.jpa.entity.purchase.analysis.Top5Sector;
 import com.example.memo.jpa.entity.purchase.commodity.FundMaster;
 import com.example.memo.jpa.entity.purchase.commodity.PrincipalGuarantee;
+import com.example.memo.purchase.dto.analysis.AssetAllocationDto;
+import com.example.memo.purchase.dto.analysis.CumulativePerformanceDto;
+import com.example.memo.purchase.dto.analysis.FundDocumentDto;
+import com.example.memo.purchase.dto.analysis.FundNavDto;
+import com.example.memo.purchase.dto.analysis.FundReturnDto;
+import com.example.memo.purchase.dto.analysis.FundStatusDto;
+import com.example.memo.purchase.dto.analysis.PrincipalDocumentDto;
+import com.example.memo.purchase.dto.analysis.RiskMetricDto;
+import com.example.memo.purchase.dto.analysis.Top5SectorDto;
+import com.example.memo.purchase.dto.commodity.FundMasterDto;
+import com.example.memo.purchase.dto.commodity.PrincipalGuaranteeDto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,15 +33,16 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UpdatedSetDto {
-	private List<FundMaster> fundMasterList;
-	private List<FundDocument> fundDocList;
-	private List<PrincipalGuarantee> principalList;
-	private List<PrincipalDocument> PrincipalDocList;
-	private List<FundStatus> fundStatusList;
-	private List<FundReturn> fundReturnList;
-	private List<FundNav> FundNavList;
-	private List<AssetAllocation> AssetAllocationList;
-	private List<CumulativePerformance> cumulativePerformanceList;
-	private List<Top5Sector> top5SectorList;
-	private List<RiskMetric> RiskMetricList;
+	private List<FundMasterDto> fundMasterList;
+	private List<FundDocumentDto> fundDocList;
+	private List<PrincipalGuaranteeDto> principalList;
+	private List<PrincipalDocumentDto> principalDocList;
+	
+	private List<FundStatusDto> fundStatusList;
+	private List<FundReturnDto> fundReturnList;
+	private List<FundNavDto> fundNavList;
+	private List<AssetAllocationDto> assetAllocationList;
+	private List<CumulativePerformanceDto> cumulativePerformanceList;
+	private List<Top5SectorDto> top5SectorList;
+	private List<RiskMetricDto> riskMetricList;
 }
