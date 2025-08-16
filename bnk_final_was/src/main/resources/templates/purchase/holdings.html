@@ -13,12 +13,13 @@
   <nav class="tabs">
     <a th:href="@{/purchase/holdings}" class="tab active">보유현황</a>
     <a th:href="@{/purchase/products}" class="tab">상품관리</a>
-    <a th:href="@{/purchase/trade}" class="tab">상품/매수 변경</a>
+    <!-- 기본 진입은 PENDING/step1 -->
+    <a th:href="@{/purchase/trade/PENDING/step1}" class="tab">매수/변경</a>
   </nav>
 </header>
 
 <main class="container">
-  <!-- 계정/계좌 선택 -->
+  <!-- (기존 내용 유지) 요약/입금/내역 -->
   <section class="card">
     <div class="grid grid-3">
       <div>
@@ -40,7 +41,6 @@
     <pre id="summaryBox" class="mt-8" style="white-space:pre-wrap;">(요약 표시)</pre>
   </section>
 
-  <!-- 입금 -->
   <section class="card mt-16">
     <div class="row">
       <input id="depositAmount" class="input" type="number" placeholder="입금 금액"/>
@@ -50,7 +50,6 @@
     <span class="badge mt-8" id="depositStatus">대기</span>
   </section>
 
-  <!-- 거래/입금 내역 -->
   <section class="card mt-16">
     <div class="grid grid-2">
       <div>
@@ -71,7 +70,8 @@
   </section>
 
   <section class="mt-16">
-    <a class="btn" th:href="@{/purchase/trade}">상품/매수 변경으로 이동</a>
+    <!-- 명확히 step1로 이동 -->
+    <a class="btn" th:href="@{/purchase/trade/PENDING/step1}">상품/매수 변경으로 이동</a>
     <a class="btn ghost" th:href="@{/purchase/trade/history}">매수예정 변경내역 보기</a>
   </section>
 </main>
