@@ -12,14 +12,14 @@ import com.example.memo.jpa.entity.purchase.portfolio.Portfolio;
 
 public interface PortfolioRepository extends JpaRepository<Portfolio, Long> {
 
-    // FLOW: 보유현황/미리보기용
+    // [보유현황/미리보기 등] 계좌 전체 보유 조회
     List<Portfolio> findByAccountTypeAndAcountId(AccountType accountType, String acountId);
 
-    // FLOW: 만기 목록 조회(PRINCIPAL만)
-    List<Portfolio> findByAccountTypeAndAcountIdAndProductType(
-            AccountType accountType, String acountId, ProductType productType);
-
-    // FLOW: 적용 시 upsert/조회
+    // [전환/매수] 특정 상품 보유 조회(upsert용)
     Optional<Portfolio> findByAccountTypeAndAcountIdAndProductTypeAndProductId(
             AccountType accountType, String acountId, ProductType productType, String productId);
+
+    // (신규) [만기예정 목록] 원리금보장 보유만 조회
+    List<Portfolio> findByAccountTypeAndAcountIdAndProductType(
+            AccountType accountType, String acountId, ProductType productType);
 }
