@@ -41,7 +41,6 @@ public class FileDownloadService {
 
     private final FileTaskListRepository fileTaskListRepository;
     private final ExecutorService downloadExecutor;
-    private final HttpClient httpClient;
 
     public Map<String, Boolean> downloadFiles(JsonNode data) {
         List<String> prodIdList = new ObjectMapper().convertValue(
@@ -91,19 +90,6 @@ public class FileDownloadService {
     }
     
     
-    
-    //파일 다운로드 유틸리티 함수
-    private void downloadFile(String fileURL, String category, String fileName) throws IOException {
-        Path base = Paths.get("C:\\bnk_project");
-        Path targetPath = base.resolve(category).resolve(fileName);
-        Files.createDirectories(targetPath.getParent());
-
-        String encodedUrl = fileURL.replace(" ", "%20"); //띄어쓰기 인코딩
-        URL url = new URL(encodedUrl);
-        try (InputStream in = url.openStream()) {
-            Files.copy(in, targetPath, StandardCopyOption.REPLACE_EXISTING);
-        }
-    }
     private CompletableFuture<Void> downloadFileAsync(String fileURL, Path targetPath) {
         return CompletableFuture.runAsync(() -> {
             // 1) 디렉터리 준비

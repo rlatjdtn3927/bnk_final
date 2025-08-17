@@ -12,6 +12,7 @@ public class DownloadInfraConfig {
     @Bean(destroyMethod = "shutdown") // 컨텍스트 종료 시 풀 정리
     public ExecutorService downloadExecutor() {
         int cores = Math.max(2, Runtime.getRuntime().availableProcessors());
+        System.out.println("CORES: " + cores);
         return new ThreadPoolExecutor(
             cores, cores * 3,
             60, TimeUnit.SECONDS,
@@ -21,11 +22,4 @@ public class DownloadInfraConfig {
         );
     }
 
-    @Bean
-    public HttpClient httpClient() {
-        return HttpClient.newBuilder()
-            .followRedirects(HttpClient.Redirect.NORMAL)
-            .connectTimeout(Duration.ofSeconds(10))
-            .build();
-    }
 }
