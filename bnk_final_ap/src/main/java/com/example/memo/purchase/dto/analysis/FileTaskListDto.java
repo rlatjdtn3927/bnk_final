@@ -10,6 +10,7 @@ public class FileTaskListDto {
     private Long taskId;
     private String prodId;
     private String prodName;
+    private String fileName;
     private String prodCategory;  // fund, etf, tdf, 원리금보장상품
     private String docType;       // 투자설명서, 상품약관, 간이 투자 설명서
     private String downloadUrl;

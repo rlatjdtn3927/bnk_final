@@ -10,7 +10,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import lombok.RequiredArgsConstructor;
 
-/** MATURITY_RESERVATION_* : 만기예정 변경예약 */
+/**
+ * FLOW:
+ * - MATURITY_RESERVATION_LIST  : [만기예정 목록 조회] 예금(PRINCIPAL) 보유분을 월/상품 단위로 내려줌
+ * - MATURITY_RESERVATION_APPLY : [만기예정 변경예약 적용] 전환일까지 일할이자 계산 → 전환일에 예금 SELL → 목표배분 BUY
+ */
 @Component
 @RequiredArgsConstructor
 public class MaturityReservationHandler implements TcpMessageHandler {
@@ -26,9 +30,13 @@ public class MaturityReservationHandler implements TcpMessageHandler {
     public Object handle(Command command, JsonNode data) {
         switch (command) {
             case MATURITY_RESERVATION_LIST:
-                return service.list(data);
+                // [만기예정 목록 조회]
+                return service.listMonthlyPrincipalContributions(data);
+
             case MATURITY_RESERVATION_APPLY:
-                return service.apply(data);
+                // [만기예정 변경예약 적용]
+                return service.applyReservation(data);
+
             default:
                 return "알 수 없는 MATURITY_RESERVATION 명령: " + command.name();
         }

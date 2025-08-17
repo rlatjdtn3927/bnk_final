@@ -1,4 +1,4 @@
-// src/main/java/com/example/memo/purchase/web/TradeApiController.java
+// src/main/java/com/example/memo/purchase/controller/TradeApiController.java
 package com.example.memo.purchase.controller;
 
 import com.example.memo.tcp_common.Command;
@@ -18,6 +18,7 @@ public class TradeApiController {
     private final TcpClientService tcp;
     private final ObjectMapper om;
 
+    // ===== (기존) 사전 체크/상품/서류/미리보기/적용/변경내역 =====
     @GetMapping("/check")
     public ResponseEntity<?> prereq(
             @RequestParam("userId") String userId,
@@ -34,11 +35,8 @@ public class TradeApiController {
     @GetMapping("/products")
     public ResponseEntity<?> products(
             @RequestParam("category") String category,
-            @RequestParam(name= "q", required = false, defaultValue = "") String q) {
-    	//q는 상품검색어-> 프론트에서 입력하는 “상품명/코드” 텍스트
-        JsonNode req = om.createObjectNode()
-                .put("category", category)
-                .put("q", q);
+            @RequestParam(name="q", required=false, defaultValue="") String q) {
+        JsonNode req = om.createObjectNode().put("category", category).put("q", q);
         JsonNode res = tcp.sendMessage(new TcpMessage(Command.PRODUCT_SEARCH, req));
         return ResponseEntity.ok(res);
     }
@@ -63,16 +61,37 @@ public class TradeApiController {
 
     @GetMapping("/pending/history")
     public ResponseEntity<?> pendingHistory(
-    		@RequestParam("accountType") String accountType,
+            @RequestParam("accountType") String accountType,
             @RequestParam("acountId") String acountId,
-            @RequestParam(required = false) String from,
-            @RequestParam(required = false) String to) {
+            @RequestParam(name="from", required=false) String from,
+            @RequestParam(name="to",   required=false) String to) {
         JsonNode req = om.createObjectNode()
                 .put("accountType", accountType)
                 .put("acountId", acountId)
-                .put("from", from == null ? "" : from)
-                .put("to", to == null ? "" : to);
+                .put("from", from==null? "" : from)
+                .put("to",   to==null? "" : to);
         JsonNode res = tcp.sendMessage(new TcpMessage(Command.PENDING_BUY_HISTORY, req));
+        return ResponseEntity.ok(res);
+    }
+
+    // ===== (신규) 만기예정 목록 조회 =====
+    // UI: “만기예정상품 변경예약” 화면에서 월별/상품별 예금 보유분 보여주기
+    @GetMapping("/maturity/list")
+    public ResponseEntity<?> maturityList(
+            @RequestParam("accountType") String accountType,
+            @RequestParam("acountId") String acountId) {
+        JsonNode req = om.createObjectNode()
+                .put("accountType", accountType)
+                .put("acountId", acountId);
+        JsonNode res = tcp.sendMessage(new TcpMessage(Command.MATURITY_RESERVATION_LIST, req));
+        return ResponseEntity.ok(res);
+    }
+
+    // ===== (신규) 만기예정 변경 예약(즉시 적용형) =====
+    // UI: 특정 예금 보유분 선택 → 전환일/목표배분 입력 → 적용
+    @PostMapping("/maturity/apply")
+    public ResponseEntity<?> maturityApply(@RequestBody JsonNode body) {
+        JsonNode res = tcp.sendMessage(new TcpMessage(Command.MATURITY_RESERVATION_APPLY, body));
         return ResponseEntity.ok(res);
     }
 }

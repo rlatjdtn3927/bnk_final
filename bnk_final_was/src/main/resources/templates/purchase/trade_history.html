@@ -1,4 +1,4 @@
-<!-- 매수예정상품 변경내역 -->
+<!-- src/main/resources/templates/purchase/trade_history.html -->
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -9,11 +9,11 @@
 </head>
 <body>
 <header class="header">
-  <div class="brand"><span class="dot"></span> 변경내역</div>
+  <div class="brand">BNK 퇴직연금</div>
   <nav class="tabs">
     <a th:href="@{/purchase/holdings}" class="tab">보유현황</a>
     <a th:href="@{/purchase/products}" class="tab">상품관리</a>
-    <a th:href="@{/purchase/trade}" class="tab">매수/변경</a>
+    <a th:href="@{/purchase/trade/PENDING/step1}" class="tab">매수/변경</a>
     <a th:href="@{/purchase/trade/history}" class="tab active">변경내역</a>
   </nav>
 </header>
