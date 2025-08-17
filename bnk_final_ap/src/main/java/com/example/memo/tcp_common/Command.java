@@ -32,6 +32,9 @@ public enum Command {
     CONTRIBUTION_COMPANY_ACCOUNT_LIST, // 출금계좌 조회
     CONTRIBUTION_PAYABLE_ITEM_LIST,
     CONTRIBUTION_EXECUTE_ITEMS, // 선택 항목 입금 실행;
+    
+	/* OCR 관련 */
+    FAMILY_CERT_OCR,
 
     
     /*IRP가입관련*/

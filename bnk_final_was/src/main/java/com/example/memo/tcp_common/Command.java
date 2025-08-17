@@ -31,6 +31,9 @@ public enum Command {
     CONTRIBUTION_PAYABLE_ITEM_LIST,
     CONTRIBUTION_EXECUTE_ITEMS, // 선택 항목 입금 실행;
     
+	/* OCR 관련 */
+    FAMILY_CERT_OCR,
+    
     
     /*IRP가입관련*/
     IRP_JOIN_CREATE_DRAFT,      // step1: 초안 생성
@@ -82,5 +85,7 @@ public enum Command {
     ADMIN_CRAWL_GRANT_FILE_DOWNLOAD,
     ADMIN_CRAWL_CHECK_FILE_TASK,
     ADMIN_CRAWL_CHECK_UPDATE;
+
+	
 
 }
