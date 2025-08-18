@@ -1,6 +1,4 @@
 package com.example.memo.tcp_common;
-
-
 /*여기 추가로 정의하세요*/
 public enum Command {
     USER_GET,
@@ -86,6 +84,10 @@ public enum Command {
     /*관리자 크롤링 데이터 관련 명령어*/
     ADMIN_CRAWL_GRANT_FILE_DOWNLOAD,
     ADMIN_CRAWL_CHECK_FILE_TASK,
-    ADMIN_CRAWL_CHECK_UPDATE;
+    ADMIN_CRAWL_CHECK_UPDATE,
+	
+	USER_LOGIN, //사용자 로그인
+	USER_REGISTER,// 회원가입
+	SURVEY_SUBMIT; //투자성향제출
     
 }

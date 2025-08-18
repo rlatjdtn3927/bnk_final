@@ -33,7 +33,7 @@ public enum Command {
     
 	/* OCR 관련 */
     FAMILY_CERT_OCR,
-    
+
     
     /*IRP가입관련*/
     IRP_JOIN_CREATE_DRAFT,      // step1: 초안 생성
@@ -43,7 +43,7 @@ public enum Command {
     IRP_JOIN_GET,
     IRP_JOIN_TAX_PURPOSE, 
     IRP_JOIN_RETIRED_PURPOSE, 
-    IRP_JOIN_COMPLETE,			// 계좌개설/완료
+    IRP_JOIN_COMPLETE,		// 계좌개설/완료
     
     // ===== 보유현황 탭 =====
     SUMMARY_GET,              // SummaryHandler: 총 평가액/수익률/입금합/당일입금/운용수익 요약 조회
@@ -84,8 +84,10 @@ public enum Command {
     /*관리자 크롤링 데이터 관련 명령어*/
     ADMIN_CRAWL_GRANT_FILE_DOWNLOAD,
     ADMIN_CRAWL_CHECK_FILE_TASK,
-    ADMIN_CRAWL_CHECK_UPDATE;
-
+    ADMIN_CRAWL_CHECK_UPDATE,
 	
-
+	USER_LOGIN, //사용자 로그인
+	USER_REGISTER,// 회원가입
+	SURVEY_SUBMIT; //투자성향제출
+    
 }
