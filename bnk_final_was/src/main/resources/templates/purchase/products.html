@@ -5,15 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>상품관리</title>
   <link th:href="@{/css/purchase.css}" rel="stylesheet"/>
+  <style>
+    .tiles { display:grid; grid-template-columns: repeat(3,1fr); gap:16px; }
+    .tile { border:1px solid #eee; border-radius:16px; padding:18px; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.04); cursor:pointer; text-align:center; }
+    .tile:hover{ box-shadow:0 4px 14px rgba(0,0,0,.08); transform: translateY(-1px); }
+    .tile .tit{ font-weight:700; }
+    .muted {color:#6b7280;}
+    @media (max-width: 860px){ .tiles{grid-template-columns:1fr;} }
+  </style>
 </head>
 <body>
+
+<!-- 공통 헤더 (탭 2개만) -->
 <header class="header">
-  <div class="brand"><span class="dot"></span> 상품관리</div>
+  <div class="brand">BNK 퇴직연금</div>
   <nav class="tabs">
     <a th:href="@{/purchase/holdings}" class="tab">보유현황</a>
     <a th:href="@{/purchase/products}" class="tab active">상품관리</a>
-    <a th:href="@{/purchase/trade}" class="tab">매수/변경</a>
-    <a th:href="@{/purchase/trade/history}" class="tab">변경내역</a>
   </nav>
 </header>
 
@@ -69,9 +77,36 @@
     </div>
   </section>
 
+  <!-- 3) (내장) 매수예정상품 변경내역 -->
+  <section class="card mt-16">
+    <div class="section-title">매수예정상품 변경내역</div>
+    <div class="grid grid-3">
+      <div>
+        <label>조회 시작일(선택)</label>
+        <input id="histFrom" class="input" type="date"/>
+      </div>
+      <div>
+        <label>조회 종료일(선택)</label>
+        <input id="histTo" class="input" type="date"/>
+      </div>
+      <div class="row" style="margin-top:22px">
+        <button class="btn" id="loadHistoryBtn">불러오기</button>
+        <span class="badge" id="histStatus">대기</span>
+      </div>
+    </div>
+
+    <div class="mt-16">
+      <table class="table">
+        <thead>
+        <tr><th>날짜</th><th>계좌유형</th><th>상품ID/이름</th><th class="num">평가금액</th></tr>
+        </thead>
+        <tbody id="historyBody"><tr><td colspan="4">데이터 없음</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
 </main>
 
-<!-- 외부 스크립트 -->
 <script th:src="@{/js/purchase/products.js}"></script>
 </body>
 </html>

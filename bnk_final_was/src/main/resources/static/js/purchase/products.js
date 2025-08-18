@@ -1,82 +1,103 @@
 /* -------------------------------------------------------------------
- * products.js — 상품관리 탭
+ * products.js — 상품관리 탭 (단일 파일)
  *
- * 기능
- * 1) 업무 타일 클릭 → /purchase/trade?flow=... (스텝1로 이동)
- * 2) 보유상품 조회 → GET /purchase/api/portfolio
- *
- * 주의
- * - "보유상품 즉시 변경" UI는 제거(기획 반영).
- * - 에러/로딩 상태는 상단 뱃지로 표시.
+ * 역할
+ * 1) 보유상품 목록 조회  : GET  /purchase/api/portfolio
+ * 2) 변경내역 조회       : GET  /purchase/api/trade/pending/history
+ * 3) 보유변경/만기예약/매수예정 위저드 진입(별도 페이지 step1로 이동)
  * ------------------------------------------------------------------ */
+(function(){
+  const $  = (s, el=document)=> el.querySelector(s);
+  const fmt = n => (n===null||n===undefined) ? "-" : Number(n).toLocaleString();
 
-(function () {
-  'use strict';
+  /* ------------ 공통: 계좌 파라미터 읽기 + 검증 ------------- */
+  function readAccountOrThrow() {
+    const accountType = $('#accountType')?.value?.trim();
+    const acountId    = $('#acountId')?.value?.trim();
+    if(!accountType) throw new Error('계좌유형을 선택하세요.');
+    if(!acountId)    throw new Error('acountId를 입력하세요.');
+    return { accountType, acountId };
+  }
 
-  const $ = (s) => document.querySelector(s);
-  const qs = (o) => new URLSearchParams(o).toString();
+  /* ---------------- 1) 보유상품 목록 ------------------------ */
+  async function loadPortfolio(){
+    try{
+      $('#statusBadge').textContent = '조회중…';
+      const { accountType, acountId } = readAccountOrThrow();
+      const qs = new URLSearchParams({accountType, acountId}).toString();
+      const res = await fetch(`/purchase/api/portfolio?${qs}`);
+      if(!res.ok) throw new Error('보유목록 호출 실패');
+      const list = await res.json();
 
-  /* --------- 업무 선택 → 위저드 스텝1로 --------- */
-  function gotoFlow(flow) {
-    // PageController.tradeEntry 가 /purchase/trade/{FLOW}/step1 로 리다이렉트함
+      const tbody = $('#portfolioBody');
+      tbody.innerHTML = '';
+      if(!list || list.length===0){
+        tbody.innerHTML = '<tr><td colspan="4">데이터 없음</td></tr>';
+      }else{
+        list.forEach(it=>{
+          const tr = document.createElement('tr');
+          tr.innerHTML =
+            `<td>${it.productId ?? '-'}</td>
+             <td>${it.productType ?? '-'}</td>
+             <td class="num">${it.quantity ?? '-'}</td>
+             <td class="num">${fmt(it.evalAmt)}</td>`;
+          tbody.appendChild(tr);
+        });
+      }
+      $('#statusBadge').textContent = '완료';
+    }catch(e){
+      console.error(e);
+      $('#statusBadge').textContent = '오류';
+      alert(e.message || '보유상품 조회 중 오류');
+    }
+  }
+
+  /* ---------------- 2) 변경내역 조회 ------------------------ */
+  async function loadHistory(){
+    try{
+      $('#histStatus').textContent = '조회중…';
+      const { accountType, acountId } = readAccountOrThrow();
+      const from = $('#histFrom')?.value || '';
+      const to   = $('#histTo')?.value || '';
+      const qs = new URLSearchParams({ accountType, acountId, from, to }).toString();
+      const res = await fetch(`/purchase/api/trade/pending/history?${qs}`);
+      if(!res.ok) throw new Error('변경내역 호출 실패');
+      const rows = await res.json();
+
+      const tbody = $('#historyBody');
+      tbody.innerHTML = '';
+      if(!rows || rows.length===0){
+        tbody.innerHTML = '<tr><td colspan="4">데이터 없음</td></tr>';
+      }else{
+        rows.forEach(r=>{
+          const tr = document.createElement('tr');
+          tr.innerHTML =
+            `<td>${r.txnDate ?? '-'}</td>
+             <td>${r.accountType ?? '-'}</td>
+             <td>${(r.productId ?? '-') + ' / ' + (r.productName ?? '-')}</td>
+             <td class="num">${fmt(r.evalAmt)}</td>`;
+          tbody.appendChild(tr);
+        });
+      }
+      $('#histStatus').textContent = '완료';
+    }catch(e){
+      console.error(e);
+      $('#histStatus').textContent = '오류';
+      alert(e.message || '변경내역 조회 중 오류');
+    }
+  }
+
+  /* ---------------- 3) 위저드 진입 -------------------------- */
+  function gotoFlow(flow){
     location.href = `/purchase/trade?flow=${encodeURIComponent(flow)}`;
   }
 
-  /* --------- 보유상품 목록 조회 --------- */
-  async function loadPortfolio() {
-    const accountType = $('#accountType')?.value?.trim() ?? '';
-    const acountId = $('#acountId')?.value?.trim() ?? '';
+  /* ---------------- 바인딩 ------------------------------- */
+  $('#loadPortfolio')?.addEventListener('click', loadPortfolio);
+  $('#loadHistoryBtn')?.addEventListener('click', loadHistory);
+  $('#acountId')?.addEventListener('keydown', (e)=>{ if(e.key==='Enter') loadPortfolio(); });
 
-    if (!accountType || !acountId) {
-      alert('계좌유형과 acountId를 입력하세요.');
-      return;
-    }
-
-    const badge = $('#statusBadge');
-    if (badge) badge.textContent = '불러오는 중...';
-
-    try {
-      const url = `/purchase/api/portfolio?` + qs({ accountType, acountId });
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('목록 호출 실패');
-
-      const list = await res.json(); // [{productId,productType,quantity,evalAmt,...}]
-      const tbody = $('#portfolioBody');
-      tbody.innerHTML = '';
-
-      if (!list || list.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4">데이터 없음</td></tr>';
-      } else {
-        for (const it of list) {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${it.productId ?? '-'}</td>
-            <td>${it.productType ?? '-'}</td>
-            <td class="num">${it.quantity ?? 0}</td>
-            <td class="num">${it.evalAmt ?? 0}</td>`;
-          tbody.appendChild(tr);
-        }
-      }
-      if (badge) badge.textContent = '완료';
-    } catch (e) {
-      console.error(e);
-      if (badge) badge.textContent = '실패';
-      alert(e.message || '보유상품 조회 중 오류가 발생했습니다.');
-    }
-  }
-
-  /* --------- 이벤트 바인딩 --------- */
-  window.addEventListener('DOMContentLoaded', () => {
-    $('#goChange')?.addEventListener('click', () => gotoFlow('CHANGE'));
-    $('#goMaturity')?.addEventListener('click', () => gotoFlow('MATURITY'));
-    $('#goPending')?.addEventListener('click', () => gotoFlow('PENDING'));
-
-    $('#loadPortfolio')?.addEventListener('click', loadPortfolio);
-    $('#acountId')?.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        loadPortfolio();
-      }
-    });
-  });
+  $('#goChange')?.addEventListener('click', ()=>gotoFlow('CHANGE'));
+  $('#goMaturity')?.addEventListener('click', ()=>gotoFlow('MATURITY'));
+  $('#goPending')?.addEventListener('click', ()=>gotoFlow('PENDING'));
 })();

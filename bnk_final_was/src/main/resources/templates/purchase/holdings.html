@@ -1,4 +1,3 @@
-<!-- src/main/resources/templates/purchase/holdings.html -->
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -8,29 +7,26 @@
   <link th:href="@{/css/purchase.css}" rel="stylesheet"/>
 </head>
 <body>
+
+<!-- 공통 헤더 (탭 2개만) -->
 <header class="header">
   <div class="brand">BNK 퇴직연금</div>
   <nav class="tabs">
     <a th:href="@{/purchase/holdings}" class="tab active">보유현황</a>
     <a th:href="@{/purchase/products}" class="tab">상품관리</a>
-    <!-- 기본 진입은 PENDING/step1 -->
-    <a th:href="@{/purchase/trade/PENDING/step1}" class="tab">매수/변경</a>
   </nav>
 </header>
 
 <main class="container">
-  <!-- (기존 내용 유지) 요약/입금/내역 -->
+  <!-- 계정/계좌 선택 -->
   <section class="card">
     <div class="grid grid-3">
-      <div>
-        <label>계좌유형</label>
+      <div><label>계좌유형</label>
         <select id="accountType" class="input">
-          <option value="IRP">IRP</option>
-          <option value="DC">DC</option>
+          <option value="IRP">IRP</option><option value="DC">DC</option>
         </select>
       </div>
-      <div>
-        <label>계좌 식별자(acountId)</label>
+      <div><label>계좌 식별자(acountId)</label>
         <input id="acountId" class="input" placeholder="IRP: 계좌번호 / DC: dc_account.id"/>
       </div>
       <div class="row" style="margin-top:22px">
@@ -41,6 +37,7 @@
     <pre id="summaryBox" class="mt-8" style="white-space:pre-wrap;">(요약 표시)</pre>
   </section>
 
+  <!-- 입금 -->
   <section class="card mt-16">
     <div class="row">
       <input id="depositAmount" class="input" type="number" placeholder="입금 금액"/>
@@ -50,6 +47,7 @@
     <span class="badge mt-8" id="depositStatus">대기</span>
   </section>
 
+  <!-- 거래/입금 내역 -->
   <section class="card mt-16">
     <div class="grid grid-2">
       <div>
@@ -67,12 +65,6 @@
         </table>
       </div>
     </div>
-  </section>
-
-  <section class="mt-16">
-    <!-- 명확히 step1로 이동 -->
-    <a class="btn" th:href="@{/purchase/trade/PENDING/step1}">상품/매수 변경으로 이동</a>
-    <a class="btn ghost" th:href="@{/purchase/trade/history}">매수예정 변경내역 보기</a>
   </section>
 </main>
 
