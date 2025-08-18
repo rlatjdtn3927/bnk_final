@@ -13,39 +13,45 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class IrpJoinViewController {
 	
+	//IRP가입하러 가는 페이지
 	@GetMapping("/irp-join")
 	public String firstIrpPage() {
 		return "irp/irp-join";
 	}
 	
+	@GetMapping("/step1-purpose")
+	public String purposePage(Model model) {
+		model.addAttribute("userId", 2L); //테스트용 고정 ID
+		return "irp/step1-purpose"; 
+	}
+	
 	@GetMapping("/{joinId}/tax-form")
-    public String taxFormPage(@PathVariable Long joinId, Model model) {
+    public String taxFormPage(@PathVariable("joinId") Long joinId, Model model) {
         model.addAttribute("joinId", joinId);
-        return "irp/tax-form";
+        return "irp/tax-form";	// templates/irp/tax-form.html
     }
 	
-	@GetMapping("/retire-form")
-	public String retireFormPage() {
+	@GetMapping("/{joinId}/retire-form")
+	public String retireFormPage(@PathVariable("joinId") Long joinId, Model model) {
+		model.addAttribute("joinId", joinId);
 		return "irp/retire-form";
 	}
 	
-	@GetMapping("/step1-purpose")
-	public String purposePage() {
-	    return "irp/step1-purpose"; // templates/irp/step1-purpose.html
+	@GetMapping("/{joinId}/step2-agree")
+	public String agreePage(@PathVariable("joinId") Long joinId, Model model) {
+		model.addAttribute("joinId", joinId);
+	    return "irp/step2-agree";
 	}
-	/*
-	@GetMapping("/step1-qual")
-	public String qualPage() {
-		return "irp/step1-contract-qual"; 
-	}
-	*/
-	@GetMapping("/step2-agree")
-	public String agreePage() {
-	    return "irp/step2-agree"; 
+	/*/irp/join/23/step3-contract*/
+	@GetMapping("/{joinId}/step3-contract")
+	public String contractPage(@PathVariable("joinId") Long joinId, Model model) {
+		model.addAttribute("joinId", joinId);
+	    return "irp/step3-contract"; 
 	}
 	
-	@GetMapping("/step3-account")
-	public String accountPage() {
-	    return "irp/step3-contract-account"; 
+	@GetMapping("/{joinId}/step4-portfolio")
+	public String portfolioPage(@PathVariable("joinId") Long joinId, Model model) {
+		model.addAttribute("joinId", joinId);
+		return "irp/step4-portfolio";
 	}
 }

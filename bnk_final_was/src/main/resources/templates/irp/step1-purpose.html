@@ -16,42 +16,35 @@
 
       <div class="purpose-grid">
         <!-- 세액공제 -->
-        <form th:action="@{/join/draft}" method="post" style="margin:0">
-          <input type="hidden" name="userId" th:value="${userId}" />
-          <input type="hidden" name="joinPurpose" value="세액공제" />
-          <button type="submit" class="purpose-card purpose--tax">
-            <div class="purpose-icon">
-              <img th:src="@{/images/irp/icon-tax.svg}" alt="세액공제" width="38" height="38">
-            </div>
-            <div class="purpose-text">
-              <p class="title">연말정산 세액공제</p>
-              <p class="caption">개인 적립금 입금</p>
-            </div>
-          </button>
-        </form>
+        <button type="button" class="purpose-card purpose--tax" data-purpose="세액공제">
+          <div class="purpose-icon">
+            <img th:src="@{/images/icon-tax.jpg}" alt="세액공제" width="38" height="38">
+          </div>
+          <div class="purpose-text">
+            <p class="title">연말정산 세액공제</p>
+            <p class="caption">개인 적립금 입금</p>
+          </div>
+        </button>
 
         <!-- 퇴직금 수령 -->
-        <form th:action="@{/join/draft}" method="post" style="margin:0">
-          <input type="hidden" name="userId" th:value="${userId}" />
-          <input type="hidden" name="joinPurpose" value="퇴직금 수령" />
-          <button type="submit" class="purpose-card purpose--retire">
-            <div class="purpose-icon">
-              <img th:src="@{/images/irp/icon-retire.svg}" alt="퇴직금 수령" width="38" height="38">
-            </div>
-            <div class="purpose-text">
-              <p class="title">퇴직금 수령</p>
-              <p class="caption">퇴직금 입금</p>
-            </div>
-          </button>
-        </form>
+        <button type="button" class="purpose-card purpose--retire" data-purpose="퇴직금 수령">
+          <div class="purpose-icon">
+            <img th:src="@{/images/icon-retire.jpg}" alt="퇴직금 수령" width="38" height="38">
+          </div>
+          <div class="purpose-text">
+            <p class="title">퇴직금 수령</p>
+            <p class="caption">퇴직금 입금</p>
+          </div>
+        </button>
       </div>
-	  
     </div>
+    
 	  <div class="helpbar">· 상담센터 : 평일 09시 ~ 18시(공휴일 제외) / 상담하기 : 1588-6200</div>
   </div>
   
-  <script>
-    const USER_ID = /*[[${userId}]]*/ 0; // th:utext로도 가능
+  <!-- 서버에서 테스트 userId 주입 -->
+  <script th:inline="javascript">
+    const USER_ID = /*[[${userId}]]*/ 0;
   </script>
   
   <script>
@@ -71,10 +64,11 @@
           btn.disabled = true;
           try {
             // DraftJoinDto { userId, joinPurpose }와 키 맞춤
-            const data = await postJson('/join/draft', {
+            const data = await postJson('/irp/join/draft', {
               userId: USER_ID,
               joinPurpose: purpose
             });
+            console.log('draft response:', data);
 
             // sendAndWrap() 래핑 구조에 맞춰 joinId 추출
             const joinId = data?.data?.joinId ?? data?.joinId;
@@ -84,7 +78,7 @@
             if (purpose === '세액공제') {
               window.location.href = `/irp/join/${joinId}/tax-form`;
             } else {
-              window.location.href = `/irp/join/retire-form?joinId=${joinId}`;
+              window.location.href = `/irp/join/${joinId}/retire-form`;
             }
           } catch (e) {
             console.error(e);

@@ -1,25 +1,78 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>IRP가입하기 - 세액공제용</title>
+<link rel="stylesheet" th:href="@{/css/tax-form.css}" />
 </head>
 <body>
-
-
-<script>
-  function getJoinIdOrBack() {
-    const params = new URLSearchParams(location.search);
-    const id = params.get('joinId');
-    if (!id) {
-      alert('joinId가 없습니다. 처음으로 이동합니다.');
-      location.href = '/irp/join/step1-purpose';
-      return null;
-    }
-    return Number(id);
-  }
-
-  const joinId = getJoinIdOrBack();
+<script th:inline="javascript">
+  const joinId = /*[[${joinId}]]*/ 0;
 </script>
+
+  <div class="section">
+	<h1>개인IRP가입하기(세액공제 목적)</h1>
+	
+	<!-- 진행 단계 (Step Bar) -->
+    <ul class="step-bar">
+      <li class="active">01. 개인형IRP신규가입</li>
+      <li>02. 계약서동의</li>
+      <li>03. 가입정보입력</li>
+      <li>04. 포트폴리오 설정</li>
+      <li>05. 상품가입완료</li>
+    </ul>
+	  
+	<div class="form-card">
+	  <div class="form-card__head">
+	    가입자 정보 확인
+	  </div>
+	  
+	  <div class="form-card__body">
+	    <label for="irpQualType">자격유형</label>
+	    <select id="irpQualType">
+	      <option value="근로자">근로자</option>
+	      <option value="자영업자">자영업자</option>
+	    </select>
+	
+	    <label for="businessNo">사업자등록번호</label>
+	    <input id="businessNo" placeholder="숫자13자리 (예: 7610100021188)" />
+	  </div>
+	
+	  <div class="form-card__foot">
+	    <button id="saveBtn">확인</button>
+	  </div>
+	</div>
+  </div>
+
+  <script>
+    async function postJson(url, body) {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    }
+
+    document.getElementById('saveBtn').addEventListener('click', async () => {
+      const irpQualType = document.getElementById('irpQualType').value;
+      const businessNo  = document.getElementById('businessNo').value.trim();
+
+      // (선택) 아주 간단한 검증
+      if (!businessNo) { alert('사업자등록번호를 입력하세요.'); return; }
+
+      try {
+        await postJson(`/irp/join/${joinId}/tax`, { irpQualType, businessNo });
+        alert('세액공제 정보가 저장되었습니다.');
+        // 다음 단계로 이동 (원하는 경로로 변경)
+        location.href = `/irp/join/${joinId}/step2-agree`;
+      } catch (e) {
+        console.error(e);
+        alert('저장 중 오류가 발생했습니다.');
+      }
+    });
+  </script>
 </body>
 </html>

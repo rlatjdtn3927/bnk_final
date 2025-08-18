@@ -64,7 +64,7 @@ public class IrpJoinService {
         return joinRepository.save(join).getJoinId();
     }
 	
-	//step3-2: 계약정보 업데이트(부분 저장)
+	//step3: 계약정보 업데이트(부분 저장)
     @Transactional
     public void updateContract(Long joinId, Long annualAmt, Long newAmt,
                                String acctNo, String acctPwd, String branchOffice) {
@@ -72,7 +72,8 @@ public class IrpJoinService {
         
         //1) 계좌 비번 검증 (계좌 소유자 = join.userId)
         Long userId = join.getUserId().getUserId();
-        bankAccountService.verifyAccountPassword(acctNo, userId, acctPwd);
+        // 비밀번호 틀리면 즉시 예외 → 저장 차단
+        bankAccountService.verifyOrThrow(acctNo, userId, acctPwd);
         
         //2) 계좌 엔티티 로드
         BankAccount acct = bankRepository.findById(acctNo).orElseThrow();

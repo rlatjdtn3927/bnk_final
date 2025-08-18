@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.memo.irp.dto.BalanceReq;
 import com.example.memo.irp.dto.ContractUpdateDto;
 import com.example.memo.irp.dto.DraftJoinDto;
 import com.example.memo.irp.dto.JoinCompleteDto;
@@ -96,6 +97,18 @@ public class IrpJoinController {
         node.put("acctPwd", dto.getAcctPwd());         // ★ 출금계좌 비번 전달
         node.put("branchOffice", dto.getBranchOffice());
         return sendAndWrap(Command.IRP_JOIN_UPDATE_CONTRACT, node, "IRP_JOIN_UPDATE_CONTRACT");
+    }
+	
+	/** 잔액조회: 사용자 소유 계좌일 때만 현재 잔액 반환 */
+    @PostMapping("/join/{joinId}/account/balance")
+    public ResponseEntity<?> getAccountBalance(@PathVariable("joinId") Long joinId,
+                                               @RequestBody BalanceReq req) {
+    	ObjectNode node = mapper.createObjectNode()
+                .put("joinId", joinId)
+                .put("acctNo",  req.getAcctNo())
+                .put("acctPwd", req.getAcctPwd()); // 옵션
+
+        return sendAndWrap(Command.ACCOUNT_GET_BALANCE, node, "ACCOUNT_GET_BALANCE");
     }
 	
 	/* step4: 상품선택(업데이트) */
