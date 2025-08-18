@@ -88,6 +88,7 @@ public enum Command {
 	
 	USER_LOGIN, //사용자 로그인
 	USER_REGISTER,// 회원가입
+	PROFILE_RESULT_GET, //사용자의 투자성향 가져오기
 	SURVEY_SUBMIT; //투자성향제출
     
 }

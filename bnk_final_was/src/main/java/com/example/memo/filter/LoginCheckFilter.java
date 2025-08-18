@@ -17,7 +17,16 @@ public class LoginCheckFilter implements Filter {
         "/register",
         "/favicon.ico",
         "/company/login",
-        "/company/auth/login"
+        "/company/auth/login",
+        "/purchase",
+        "/purchase/trade",
+        "/purchase/api/trade",
+        "/purchase/api/portfolio",
+        "/purchase/api/holdings",
+        "/branches",
+        "/chatbot",
+        "/api/embeddings",
+        "/api/chat"
     );
 
     @Override
