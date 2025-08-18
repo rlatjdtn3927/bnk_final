@@ -7,7 +7,7 @@
 <body>
     <h2>Step1 Next 호출 테스트</h2>
 
-    <form id="step1Form" method="post" action="/purchase/trade/step1/next">
+    <form id="step1Form" method="post" action="/purchase/trade/step1/after-risk">
         <label for="flow">Flow:</label>
         <select name="flow" id="flow">
             <option value="RESERVE">RESERVE</option>
@@ -21,6 +21,15 @@
 
         <label for="accountType">계좌 Type:</label>
         <input type="text" id="accountType" name="accountType" value="IRP"/>
+		
+		<label for="riskGrade">투자위험등급</label>
+		<select name="riskGrade" id="riskGrade">
+		    <option value="안정형">안정형</option>
+			<option value="안전추구형">안전추구형</option>
+			<option value="위험중립형">위험중립형</option>
+			<option value="적극투자형">적극투자형</option>
+			<option value="공격투자형">공격투자형</option>
+		</select>
         <br/><br/>
 
         <input type="submit">POST 호출</input>

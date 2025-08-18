@@ -1,263 +1,510 @@
-<!-- templates/purchase/trade/step2.html (수정본) -->
+<!-- templates/purchase/trade/step2.html (최종 수정본) -->
 <th:block xmlns:th="http://www.thymeleaf.org" th:fragment="css">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <!-- 기타 CSS/JS -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <!-- 필요하면 추가 CSS/JS 삽입 -->
 </head>
-  <style id="page-css" hx-swap-oob="true">
-    /* 기존: .reserve-step2 { max-width: 768px; ... } */
-	.reserve-step2 {
-	  /* 넓은 화면에서는 960px까지 넓게, 그 외엔 뷰포트 92% 사용 */
-	  width: min(92vw, 960px);
-	  margin: 0 auto;
-	  padding: 16px 16px 120px;
-	}
-    .page-title { font-weight: 700; font-size: 20px; margin-bottom: 4px; }
-    .page-sub { color:#666; font-size: 13px; margin-bottom: 12px; }
-    .steps { display:flex; gap:6px; align-items:center; margin: 12px 0 18px; }
-    .step-dot { width:22px; height:22px; line-height:22px; text-align:center; border-radius:50%; background:#eee; font-size:12px; color:#888; }
-    .step-dot.active { background:#ff6b6b; color:#fff; font-weight:700; }
-    .card { border:1px solid #eee; border-radius:12px; padding:14px; background:#fff; }
-    .user-card { display:grid; grid-template-columns: 1fr 1fr; gap:8px 12px; }
-    .badge { display:inline-block; padding:2px 8px; border-radius:999px; background:#f3f4f6; font-size:12px; margin-right:6px; }
-    .badge.risk { background:#ffe5e5; color:#cc2b2b; }
-    .section-title { font-weight:700; font-size:16px; margin:18px 0 10px; }
-    .control { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
-    .control label { color:#666; font-size:13px; }
-    .retain-list { display:flex; flex-direction:column; gap:10px; }
-    .retain-card { border:1px solid #f0f0f0; border-radius:12px; padding:12px; }
-    .retain-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; }
-    .retain-name { font-weight:600; margin-bottom:8px; }
-    .ratio-row { display:flex; align-items:center; gap:8px; }
-    .ratio-row input[type="number"] { width:90px; padding:6px 8px; border:1px solid #ddd; border-radius:8px; }
-    .remove { border:none; background:transparent; font-size:18px; line-height:1; cursor:pointer; color:#bbb; }
-    .total { display:flex; align-items:center; justify-content:space-between; margin-top:10px; font-size:14px; }
-    progress { width:100%; height:10px; }
-    .help { font-size:12px; margin-top:6px; }
-    .help.ok { color:#2e7d32; }
-    .help.warn { color:#e68a00; }
-    .help.error { color:#c62828; }
 
-    /* 하단 고정 영역 */
-    .page-bottom {
-      position: fixed; left:0; right:0; bottom:0;
-      padding:12px 16px calc(12px + env(safe-area-inset-bottom));
-      background:#fff; border-top:1px solid #eee;
-    }
-    .page-bottom .stack {
-	  width: min(92vw, 960px);
-	  margin: 0 auto;
-	  display: flex;
-	  flex-direction: column;
-	  gap: 10px;
-	}
+<style id="page-css" hx-swap-oob="true">
+  /* 레이아웃 */
+  .reserve-step2{width:min(92vw,960px);margin:0 auto;padding:16px 16px 132px}
+  .page-title{font-weight:700;font-size:20px;margin-bottom:4px}
+  .page-sub{color:#666;font-size:13px;margin-bottom:12px}
 
-    /* 버튼들 */
-    .btn-primary {
-      width:100%; padding:14px; border:none; border-radius:10px;
-      background:#ff5252; color:#fff; font-weight:700; font-size:16px; cursor:pointer;
-    }
-    .btn-primary:disabled { background:#ffd6d6; cursor:not-allowed; }
+  .card{border:1px solid #eee;border-radius:12px;padding:14px;background:#fff}
+  .user-card{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+  .badge{display:inline-block;padding:2px 8px;border-radius:999px;background:#f3f4f6;font-size:12px;margin-right:6px}
+  .badge.risk{background:#ffe5e5;color:#cc2b2b}
+  .section-title{font-weight:700;font-size:16px;margin:18px 0 10px}
 
-    .btn-outline-red {
-      width:fit-content; padding:10px 14px; border-radius:999px;
-      border:1px solid #f2b7b7; background:#fff;
-      color:#e26666; font-weight:600; font-size:14px; cursor:pointer;
-      display:inline-flex; align-items:center; gap:8px;
-      box-shadow:0 0 0 0 rgba(0,0,0,0); /* 깔끔한 외곽만 */
-    }
-    .btn-outline-red:disabled { opacity:.6; cursor:not-allowed; }
-    .btn-outline-red .plus { font-weight:700; }
+  /* 보유/선택 상품 카드 */
+  .retain-list{display:flex;flex-direction:column;gap:10px}
+  .retain-card{border:1px solid #f0f0f0;border-radius:12px;padding:12px}
+  .retain-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+  .retain-name{font-weight:600;margin-bottom:8px}
+  .ratio-row{display:flex;align-items:center;gap:8px}
+  .ratio-row input[type="number"]{width:90px;padding:6px 8px;border:1px solid #ddd;border-radius:8px}
+  .remove{border:none;background:transparent;font-size:18px;line-height:1;cursor:pointer;color:#bbb}
+  .total{display:flex;align-items:center;justify-content:space-between;margin-top:10px;font-size:14px}
+  progress{width:100%;height:10px}
+  .help{font-size:12px;margin-top:6px}
+  .help.ok{color:#2e7d32}.help.warn{color:#e68a00}.help.error{color:#c62828}
 
-    /* 반응형 */
-	@media (max-width: 768px) {
-	  .reserve-step2 { padding: 12px 12px 120px; }
-	  .user-card { grid-template-columns: 2fr; }
-	  .btn-outline-red { width: 100%; justify-content: center; }
-	}
-  </style>
+  /* 하단 고정 버튼 */
+  .page-bottom{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid #eee}
+  .page-bottom .stack{width:min(92vw,960px);margin:0 auto;display:flex;flex-direction:column;gap:10px}
+  .btn-primary{width:100%;padding:14px;border:none;border-radius:10px;background:#ff5252;color:#fff;font-weight:700;font-size:16px;cursor:pointer}
+  .btn-primary:disabled{background:#ffd6d6;cursor:not-allowed}
+  .btn-outline-red{width:fit-content;padding:10px 14px;border-radius:999px;border:1px solid #f2b7b7;background:#fff;color:#e26666;font-weight:600;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+  .btn-outline-red:disabled{opacity:.6;cursor:not-allowed}
+  .btn-outline-red .plus{font-weight:700}
+
+  /* 모달 */
+  .modal{position:fixed;inset:0;display:none;align-items:stretch;justify-content:center;background:rgba(0,0,0,.4);z-index:999}
+  .modal.open{display:flex}
+  .modal-panel{width:min(960px,92vw);height:96vh;background:#fff;border-radius:16px 16px 0 0;margin-top:4vh;display:flex;flex-direction:column;overflow:hidden}
+  .modal-head{padding:16px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .modal-title{font-weight:700}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .tab{padding:6px 12px;border:1px solid #e5e7eb;border-radius:999px;background:#fff;cursor:pointer;font-size:13px}
+  .tab.active{background:#111827;color:#fff;border-color:#111827}
+  .modal-controls{display:flex;align-items:center;gap:8px}
+  .select{border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;background:#fff}
+
+  .modal-body{flex:1;overflow:auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+  .prod-card{border:1px solid #eee;border-radius:12px;padding:12px;display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center}
+  .prod-left{display:flex;align-items:center;gap:10px}
+  .prod-actions{display:flex;gap:8px}
+  .btn{border:1px solid #e5e7eb;border-radius:8px;background:#fff;padding:8px 10px;font-size:13px;cursor:pointer}
+  .btn.gray{background:#f9fafb}
+  .chip{display:inline-block;border-radius:999px;padding:2px 8px;background:#f3f4f6;font-size:11px;margin-right:4px}
+  .chip.guarantee{background:#e8f5e9;color:#2e7d32}
+  .chip.noguarantee{background:#fff4e5;color:#b45a00}
+
+  .modal-foot{padding:12px 16px;border-top:1px solid #eee;display:flex;gap:10px}
+  .modal-foot .grow{flex:1}
+  .btn-secondary{padding:12px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;cursor:pointer}
+  .btn-cta{padding:12px;border-radius:10px;border:none;background:#ff5252;color:#fff;font-weight:700;cursor:pointer}
+
+  @media (max-width:768px){
+    .reserve-step2{padding:12px 12px 132px}
+    .user-card{grid-template-columns:1fr}
+    .btn-outline-red{width:100%;justify-content:center}
+    .modal-panel{height:100vh;margin-top:0;border-radius:0}
+  }
+</style>
 </th:block>
 
 <th:block xmlns:th="http://www.thymeleaf.org" th:fragment="content">
-  <section class="reserve-step2">
-    <!-- 상단 타이틀/스텝 -->
-    <div class="page-title">매수예정상품등록/변경</div>
-    <div class="page-sub">매수예정상품 추가 및 운용비율 등록</div>
+<section class="reserve-step2">
+  <!-- 타이틀 -->
+  <div class="page-title">매수예정상품등록/변경</div>
+  <div class="page-sub">매수예정상품 추가 및 운용비율 등록</div>
 
-    <!-- 사용자/계좌 정보 -->
-    <div class="card" id="user-card">
-      <div class="user-card">
-        <div>
-          <div style="font-size:12px; color:#666;">계좌유형</div>
-          <div id="accountType">-</div>
-        </div>
-        <div>
-          <div style="font-size:12px; color:#666;">계좌번호</div>
-          <div id="accountNumber">-</div>
-        </div>
-        <div>
-          <div style="font-size:12px; color:#666;">성명</div>
-          <div id="userName">-</div>
-        </div>
-        <div>
-          <div style="font-size:12px; color:#666;">투자성향</div>
-          <div><span class="badge risk" id="riskGrade">-</span></div>
-        </div>
+  <!-- 사용자/계좌 박스 -->
+  <div class="card" id="user-card">
+    <div class="user-card">
+      <div>
+        <div style="font-size:12px;color:#666">계좌유형</div>
+        <div id="accountType">-</div>
       </div>
-    </div>
-
-    <!-- 본인부담금 운용 섹션 -->
-    <div class="section-title">본인부담금으로 상품운용</div>
-    <div class="card">
-      <div class="retain-list" id="retainList"><!-- 보유상품 카드 렌더링 영역 --></div>
-
-      <div class="total">
-        <div>합계: <strong><span id="totalPercent">0</span>%</strong></div>
-        <progress id="totalProgress" max="100" value="0"></progress>
+      <div>
+        <div style="font-size:12px;color:#666">계좌번호</div>
+        <div id="accountNumber">-</div>
       </div>
-      <div id="totalHelp" class="help warn">합계를 100%로 맞춰주세요</div>
-    </div>
-
-    <!-- 서버에서 내려준 모델값 보관 -->
-    <div id="model-data"
-         th:data-flow="${flow}"
-         th:data-account-type="${accountType}"
-         th:data-account-id="${accountId}">
-    </div>
-  </section>
-
-  <!-- 하단 고정 버튼: 위=매수상품 추가(외곽선), 아래=다음(기본) -->
-  <div class="page-bottom">
-    <div class="stack">
-      <button id="addProductBtn" class="btn-outline-red" type="button">
-        매수상품 추가 <span class="plus" aria-hidden="true">+</span>
-      </button>
-      <button id="nextBtn" class="btn-primary" type="button">다음</button>
+      <div>
+        <div style="font-size:12px;color:#666">성명</div>
+        <div id="userName">-</div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:#666">투자성향</div>
+        <div><span class="badge risk" id="riskGrade">-</span></div>
+      </div>
     </div>
   </div>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', initStep2);
+  <!-- 운용비율 편집 -->
+  <div class="section-title">본인부담금으로 상품운용</div>
+  <div class="card">
+    <div class="retain-list" id="retainList"><!-- 선택/보유 상품 카드 --></div>
 
-    async function initStep2() {
-      const modelEl = document.getElementById('model-data');
-      const model = {
-        flow: modelEl?.dataset?.flow ?? '',
-        accountType: modelEl?.dataset?.accountType ?? '',
-        accountId: modelEl?.dataset?.accountId ?? ''
-      };
+    <div class="total">
+      <div>합계: <strong><span id="totalPercent">0</span>%</strong></div>
+      <progress id="totalProgress" max="100" value="0"></progress>
+    </div>
+    <div id="totalHelp" class="help warn">합계를 100%로 맞춰주세요</div>
+  </div>
 
-      await loadUserInfo(model);
-      await loadRetainList();
+  <!-- 서버 모델 값(데이터 속성으로 보관) -->
+  <div id="model-data"
+       th:data-flow="${ModelValueDto?.flow}"
+       th:data-account-type="${ModelValueDto?.accountType}"
+       th:data-account-id="${ModelValueDto?.accountId}"
+       th:data-risk-grade="${ModelValueDto?.riskGrade}"
+       th:data-risk-grade-num="${ModelValueDto?.riskGradeNum}"><!-- riskGradeNum 없으면 빈값 --></div>
+</section>
 
-      // 버튼 동작은 아직 미연결 (요청사항)
-      document.getElementById('addProductBtn')?.addEventListener('click', () => {});
-      document.getElementById('nextBtn')?.addEventListener('click', () => {});
-    }
+<!-- 하단 고정 버튼 -->
+<div class="page-bottom">
+  <div class="stack">
+    <button id="addProductBtn" class="btn-outline-red" type="button">
+      매수상품 추가 <span class="plus" aria-hidden="true">+</span>
+    </button>
+    <button id="nextBtn" class="btn-primary" type="button">다음</button>
+  </div>
+</div>
 
-    // 1) 사용자 정보 로드
-    async function loadUserInfo(model) {
-      try {
-        const res = await fetch('/retain-api/reserve/user-info', { method: 'POST' });
-        if (!res.ok) throw new Error('user-info failed');
-        const data = await res.json();
-        const u = data.userInfo || {};
+<!-- 다음 단계 제출용 폼(동기 POST) -->
+<form id="nextForm" method="post" action="/purchase/trade/step3/next" style="display:none">
+  <input type="hidden" name="flow" id="f_flow" />
+  <input type="hidden" name="accountType" id="f_accountType" />
+  <input type="hidden" name="accountId" id="f_accountId" />
+  <input type="hidden" name="riskGrade" id="f_riskGrade" />
+  <!-- prodId:ratio 리스트(JSON 문자열) -->
+  <input type="hidden" name="sourceProdId" id="f_sourceProdId" />
+</form>
 
-        document.getElementById('accountType').textContent  = u.accountType || model.accountType || '-';
-        document.getElementById('accountNumber').textContent= u.accountNumber || '-';
-        document.getElementById('userName').textContent     = u.userName || '-';
-        document.getElementById('riskGrade').textContent    = u.riskGrade || '-';
+<!-- ====== 상품 모달 ====== -->
+<div id="productModal" class="modal" aria-hidden="true">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <div>
+        <div id="modalTitle" class="modal-title">상품조회</div>
+        <div class="tabs" role="tablist" aria-label="상품분류">
+          <button class="tab active" data-cat="deposit" type="button" role="tab" aria-selected="true">정기예금</button>
+          <button class="tab" data-cat="tdf" type="button" role="tab">TDF</button>
+          <button class="tab" data-cat="fund" type="button" role="tab">펀드</button>
+          <button class="tab" data-cat="etf" type="button" role="tab">ETF</button>
+          <button class="tab" data-cat="cash" type="button" role="tab" disabled title="현금성 자산은 준비중입니다">현금성 자산</button>
+        </div>
+      </div>
+      <div class="modal-controls">
+        <span class="badge risk" id="modalRiskBadge">적극투자형</span>
+        <label for="sortSelect" class="visually-hidden">정렬</label>
+        <select id="sortSelect" class="select">
+          <option value="default">정렬 없음</option>
+          <option value="rate">금리(예금)</option>
+          <option value="ret3m">수익률(3개월)</option>
+          <option value="ret1y">수익률(1년)</option>
+        </select>
+      </div>
+    </div>
 
-        model.accountType = model.accountType || u.accountType || '';
-        model.accountId   = model.accountId   || u.accountNumber || '';
-      } catch (e) {
-        console.error(e);
-      }
-    }
+    <div id="modalBody" class="modal-body"><!-- 상품카드 목록 --></div>
 
-    // 2) 보유상품(운용비율) 로드 & 렌더
-    async function loadRetainList() {
-      try {
-        const res = await fetch('/retain-api/reserve/retain', { method: 'POST' });
-        if (!res.ok) throw new Error('retain failed');
-        const items = await res.json();
-        renderRetain(items || []);
-      } catch (e) {
-        console.error(e);
-        renderRetain([]);
-      }
-    }
+    <div class="modal-foot">
+      <button type="button" class="btn-secondary" id="closeModalBtn">닫기</button>
+      <div class="grow"></div>
+      <button type="button" class="btn-cta" id="addSelectedBtn">추가</button>
+    </div>
+  </div>
+</div>
 
-    function renderRetain(items) {
-      const wrap = document.getElementById('retainList');
-      wrap.innerHTML = '';
-      items.forEach(it => {
-        const el = document.createElement('div');
-        el.className = 'retain-card';
-        el.dataset.productId = it.productId;
+<script>
+  // ===== 전역 상태 =====
+  // 선택된 매수상품: { [productId]: { ratio:number, meta:object } }
+  const selectedMap = new Map();
 
-        el.innerHTML = `
-          <div class="retain-head">
-            <div>
-              <span class="badge">${it.category || '상품'}</span>
-              <span class="badge risk">${it.riskGradeText || ''}</span>
-            </div>
-            <button class="remove" title="삭제" aria-label="삭제">&times;</button>
-          </div>
-          <div class="retain-name">${escapeHtml(it.productName || '')}</div>
-          <div class="ratio-row">
-            <label>운용비율</label>
-            <input type="number" class="ratio-input" min="0" max="100" step="1" value="${it.retainRatio ?? 0}">
-            <span>%</span>
-          </div>
-        `;
+  // 초기화
+  document.addEventListener('DOMContentLoaded', initStep2);
 
-        el.querySelector('.remove').addEventListener('click', () => { el.remove(); updateTotal(); });
-        el.querySelector('.ratio-input').addEventListener('input', updateTotal);
-        wrap.appendChild(el);
+  async function initStep2() {
+    const model = readModel();
+    hydrateHiddenForm(model);
+    await loadUserInfo(model);
+    await bootstrapSelectedFromServer(); // 기존 보유/선택 반영
+    renderSelected();                    // 카드 렌더
+
+    // 버튼 이벤트
+    document.getElementById('addProductBtn')?.addEventListener('click', openProductModal);
+    document.getElementById('nextBtn')?.addEventListener('click', submitNext);
+
+    // 모달 이벤트
+    document.getElementById('closeModalBtn').addEventListener('click', closeProductModal);
+    document.getElementById('addSelectedBtn').addEventListener('click', addCheckedFromModal);
+    document.getElementById('sortSelect').addEventListener('change', reloadModalList);
+    document.getElementById('productModal').addEventListener('click', (e)=>{
+      if(e.target.id === 'productModal') closeProductModal();
+    });
+
+    // 탭 전환
+    document.querySelectorAll('.tab[data-cat]').forEach(tab=>{
+      tab.addEventListener('click', ()=>{
+        if(tab.disabled) return;
+        document.querySelectorAll('.tab').forEach(t=>{t.classList.remove('active'); t.setAttribute('aria-selected','false');});
+        tab.classList.add('active'); tab.setAttribute('aria-selected','true');
+        reloadModalList();
       });
-      updateTotal();
-    }
+    });
 
-    function updateTotal() {
-      const vals = [...document.querySelectorAll('.ratio-input')].map(i => Number(i.value) || 0);
-      const total = vals.reduce((a,b) => a + b, 0);
+    // ESC 닫기
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === 'Escape') closeProductModal();
+    });
+  }
 
-      document.getElementById('totalPercent').textContent = total;
-      document.getElementById('totalProgress').value = Math.min(total, 100);
+  function readModel(){
+    const el = document.getElementById('model-data');
+    const m = {
+      flow: el?.dataset?.flow ?? '',
+      accountType: el?.dataset?.accountType ?? '',
+      accountId: el?.dataset?.accountId ?? '',
+      riskGrade: el?.dataset?.riskGrade ?? '',
+      riskGradeNum: Number(el?.dataset?.riskGradeNum ?? '') || 0
+    };
+    document.getElementById('modalRiskBadge').textContent = m.riskGrade || '-';
+    return m;
+  }
 
-      const help = document.getElementById('totalHelp');
-      const nextBtn  = document.getElementById('nextBtn');
+  function hydrateHiddenForm(m){
+    document.getElementById('f_flow').value = m.flow || '';
+    document.getElementById('f_accountType').value = m.accountType || '';
+    document.getElementById('f_accountId').value = m.accountId || '';
+    document.getElementById('f_riskGrade').value = m.riskGrade || '';
+  }
 
-      if (total > 100) {
-        help.textContent = '합계가 100%를 초과했습니다';
-        help.className = 'help error';
-        nextBtn.disabled = true;
-      } else if (total < 100) {
-        help.textContent = '합계를 100%로 맞춰주세요';
-        help.className = 'help warn';
-        nextBtn.disabled = false; // 합계 100% 아니어도 다음 단계로 이동을 허용한다면 활성화 유지
-      } else {
-        help.textContent = '합계가 100%입니다';
-        help.className = 'help ok';
-        nextBtn.disabled = false;
-      }
-    }
+  // --- 사용자 정보(상단 카드) ---
+  async function loadUserInfo(model){
+    try{
+      const res = await fetch('/retain-api/reserve/user-info', {method:'POST'});
+      if(!res.ok) throw new Error('user-info failed');
+      const data = await res.json();
+      const u = data.userInfo || {};
+      document.getElementById('accountType').textContent = u.accountType || model.accountType || '-';
+      document.getElementById('accountNumber').textContent = u.accountNumber || '-';
+      document.getElementById('userName').textContent = u.userName || '-';
+      document.getElementById('riskGrade').textContent = u.riskGrade || model.riskGrade || '-';
+    }catch(e){ console.error(e); }
+  }
 
-    function escapeHtml(str) {
-      if (!str) return '';
-      return str.replace(/[&<>"']/g, function(m) {
-        switch (m) {
-          case '&': return '&amp;';
-          case '<': return '&lt;';
-          case '>': return '&gt;';
-          case '"': return '&quot;';
-          case "'": return '&#39;';
-          default: return m;
-        }
+  // --- 초기 선택(보유/기등록)을 서버에서 받아 반영 ---
+  async function bootstrapSelectedFromServer(){
+    try{
+      const res = await fetch('/retain-api/reserve/retain', {method:'POST'});
+      if(!res.ok) throw new Error('retain failed');
+      const arr = await res.json(); // [{productId, productName, retainRatio, category, riskGradeText, ...}]
+      (arr||[]).forEach(it=>{
+        selectedMap.set(it.productId, { ratio:Number(it.retainRatio ?? 0), meta:it });
       });
+    }catch(e){
+      console.error(e);
     }
-  </script>
+  }
+
+  // --- 선택된 상품 카드 렌더 ---
+  function renderSelected(){
+    const wrap = document.getElementById('retainList');
+    wrap.innerHTML = '';
+    for(const [pid, obj] of selectedMap.entries()){
+      const it = obj.meta || {};
+      const card = document.createElement('div');
+      card.className = 'retain-card';
+      card.dataset.productId = pid;
+
+      card.innerHTML = `
+        <div class="retain-head">
+          <div>
+            <span class="badge">${escapeHtml(it.category || '상품')}</span>
+            ${it.riskGradeText ? `<span class="badge risk">${escapeHtml(it.riskGradeText)}</span>` : ``}
+          </div>
+          <button class="remove" title="삭제" aria-label="삭제">&times;</button>
+        </div>
+        <div class="retain-name">${escapeHtml(it.productName || '')}</div>
+        <div class="ratio-row">
+          <label>운용비율</label>
+          <input type="number" class="ratio-input" min="0" max="100" step="1" value="${Number(obj.ratio)||0}">
+          <span>%</span>
+        </div>
+      `;
+      card.querySelector('.remove').addEventListener('click', ()=>{
+        selectedMap.delete(pid);
+        card.remove();
+        updateTotal();
+      });
+      card.querySelector('.ratio-input').addEventListener('input', (e)=>{
+        const v = Number(e.target.value)||0;
+        const cur = selectedMap.get(pid); if(cur){ cur.ratio = v; }
+        updateTotal();
+      });
+
+      wrap.appendChild(card);
+    }
+    updateTotal();
+  }
+
+  function updateTotal(){
+    let total = 0;
+    document.querySelectorAll('.ratio-input').forEach(i => { total += (Number(i.value)||0); });
+    document.getElementById('totalPercent').textContent = total;
+    document.getElementById('totalProgress').value = Math.min(total, 100);
+
+    const help = document.getElementById('totalHelp');
+    const nextBtn = document.getElementById('nextBtn');
+
+    if(total > 100){
+      help.textContent = '합계가 100%를 초과했습니다';
+      help.className = 'help error';
+      nextBtn.disabled = true;
+    }else if(total < 100){
+      help.textContent = '합계를 100%로 맞춰주세요';
+      help.className = 'help warn';
+      nextBtn.disabled = false;  // 정책에 맞게 조정 가능
+    }else{
+      help.textContent = '합계가 100%입니다';
+      help.className = 'help ok';
+      nextBtn.disabled = false;
+    }
+  }
+
+  // --- 다음 단계(동기 제출) ---
+  function submitNext(){
+    // DOM의 현재 값으로 selectedMap 동기화
+    document.querySelectorAll('.retain-card').forEach(card=>{
+      const pid = card.dataset.productId;
+      const ratio = Number(card.querySelector('.ratio-input')?.value)||0;
+      const cur = selectedMap.get(pid);
+      if(cur){ cur.ratio = ratio; }
+    });
+
+    // "prodId:ratio" 리스트(JSON 문자열)
+    const list = [];
+    for(const [pid, obj] of selectedMap.entries()){
+      list.push(`${pid}:${Number(obj.ratio)||0}`);
+    }
+    document.getElementById('f_sourceProdId').value = JSON.stringify(list);
+
+    // 제출
+    document.getElementById('nextForm').submit();
+  }
+
+  // ===== 모달 & 상품조회 =====
+  function openProductModal(){
+    document.getElementById('productModal').classList.add('open');
+    reloadModalList();
+  }
+  function closeProductModal(){
+    document.getElementById('productModal').classList.remove('open');
+  }
+
+  function currentCategory(){
+    const active = document.querySelector('.tab.active');
+    return active?.dataset?.cat || 'deposit';
+  }
+
+  async function reloadModalList(){
+    const cat = currentCategory();
+    const sort = document.getElementById('sortSelect').value;
+    const url = ({
+      deposit: '/product-api/list/deposit',
+      tdf:     '/product-api/list/tdf',
+      fund:    '/product-api/list/fund',
+      etf:     '/product-api/list/etf'
+    })[cat];
+
+    const model = readModel();
+    const payload = { riskGradeNum: model.riskGradeNum, sort };
+    let items = [];
+
+    try{
+      const res = await fetch(url, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      if(!res.ok) throw new Error('fetch list fail');
+      items = await res.json(); // 서버에서 각 카테고리별 필드 제공
+    }catch(e){
+      console.error(e);
+      items = [];
+    }
+
+    // 클라이언트 정렬(서버 정렬과 병행 가능)
+    items = sortItems(items, cat, sort);
+
+    renderModalList(items, cat);
+  }
+
+  function sortItems(items, cat, sort){
+    const arr = [...(items||[])];
+    if(sort === 'rate'){
+      arr.sort((a,b)=>(Number(b.interestRate||0) - Number(a.interestRate||0)));
+    }else if(sort === 'ret3m'){
+      arr.sort((a,b)=>(Number(b.return3m||0) - Number(a.return3m||0)));
+    }else if(sort === 'ret1y'){
+      arr.sort((a,b)=>(Number(b.return1y||0) - Number(a.return1y||0)));
+    }
+    return arr;
+  }
+
+  function renderModalList(items, cat){
+    const body = document.getElementById('modalBody');
+    body.innerHTML = '';
+
+    (items||[]).forEach(it=>{
+      const pid = it.productId || it.prodId || '';
+      const name = it.productName || it.name || pid;
+
+      // 이미 선택된 것은 체크박스 체크 처리
+      const checked = selectedMap.has(pid) ? 'checked' : '';
+
+      // 공통 카드
+      const card = document.createElement('div');
+      card.className = 'prod-card';
+      card.innerHTML = `
+        <div class="prod-left">
+          <input type="checkbox" class="pick" data-pid="${escapeAttr(pid)}" ${checked} />
+        </div>
+        <div class="prod-mid">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+            ${
+              cat === 'deposit'
+                ? `<span class="chip guarantee">원리금보장</span>`
+                : `<span class="chip noguarantee">원리금 비보장</span>`
+            }
+            ${it.riskGradeText ? `<span class="chip">${escapeHtml(it.riskGradeText)}</span>`:''}
+            ${it.fundType ? `<span class="chip">${escapeHtml(it.fundType)}</span>`:''}
+          </div>
+          <div style="font-weight:700;margin-bottom:6px">${escapeHtml(name)}</div>
+
+          ${
+            cat === 'deposit'
+              ? `<div>금리: <strong>${Number(it.interestRate ?? 0)}</strong> %</div>`
+              : `
+                <div style="display:flex;gap:12px;flex-wrap:wrap">
+                  <span>총보수: <strong>${fmtPct(it.totalFee)}</strong></span>
+                  <span>수익률(3개월): <strong>${fmtPct(it.return3m)}</strong></span>
+                  <span>수익률(1년): <strong>${fmtPct(it.return1y)}</strong></span>
+                </div>
+              `
+          }
+        </div>
+        <div class="prod-actions">
+          <button class="btn gray" type="button">상품상세</button>
+          ${cat === 'deposit' ? '' : `<button class="btn" type="button">설명서 및 약관</button>`}
+        </div>
+      `;
+
+      body.appendChild(card);
+    });
+  }
+
+  function addCheckedFromModal(){
+    // 체크된 상품들을 selectedMap에 ratio=0으로 추가
+    document.querySelectorAll('#modalBody .pick:checked').forEach(chk=>{
+      const pid = chk.dataset.pid;
+      // 메타(표시용)는 DOM에서 역직렬화가 어려우므로 간단 필드만 저장,
+      // 상세 메타는 재조회시 덮어쓸 수 있도록 최소한만 보관
+      const meta = extractMetaFromCard(chk.closest('.prod-card'));
+      if(!selectedMap.has(pid)){
+        selectedMap.set(pid, { ratio:0, meta:meta });
+      }
+    });
+    renderSelected();
+    closeProductModal();
+  }
+
+  function extractMetaFromCard(card){
+    // 화면에 보이는 주요 텍스트만 수집
+    const name = card.querySelector('.prod-mid > div:nth-child(2)')?.textContent?.trim() || '';
+    const chips = [...card.querySelectorAll('.chip')].map(c=>c.textContent.trim());
+    const isGuarantee = chips.some(t=>t.includes('원리금보장'));
+    const riskChip = chips.find(t=>/위험|투자성향|보수|등급/.test(t)) || '';
+    const fundType = chips.find(t=>t && t!==riskChip && !t.includes('보장')) || '';
+    return {
+      productName: name,
+      category: isGuarantee ? '정기예금' : (fundType || '상품'),
+      riskGradeText: !isGuarantee ? riskChip : ''
+    };
+  }
+
+  // ===== 유틸 =====
+  function escapeHtml(str){ if(!str) return ''; return String(str).replace(/[&<>"']/g, (m)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+  function escapeAttr(str){ return escapeHtml(str).replace(/"/g,'&quot;'); }
+  function fmtPct(v){
+    const n = Number(v);
+    if(Number.isFinite(n)) return n.toFixed(2) + '%';
+    return '-';
+  }
+</script>
 </th:block>

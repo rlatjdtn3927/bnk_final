@@ -20,6 +20,7 @@ public class ModelValueDto {
 	
 	/*Step 2에서 추가 : 보유상품 목록*/
 	String riskGrade; // profile_type 유형명
+	String riskGradeNum;
 	String targetProdId; // 만기 변경 및 보유 변경 시 선택한 상품ID
 	/*Step 2에서 추가*/
 	

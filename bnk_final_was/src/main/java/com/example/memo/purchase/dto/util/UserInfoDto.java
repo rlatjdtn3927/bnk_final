@@ -13,4 +13,5 @@ public class UserInfoDto {
 	String userName;
 	String accountNumber;
 	String riskGrade;
+	Integer riskGradeNum;
 }
