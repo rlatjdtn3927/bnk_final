@@ -1,5 +1,5 @@
 // src/main/java/com/example/memo/purchase/web/PortfolioApiController.java
-package com.example.memo.purchase.controller;
+package com.example.memo.purchase.controller.holdings;
 
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpClientService;
