@@ -16,6 +16,7 @@ import com.example.memo.purchase.dto.util.UserInfoDto;
 @RequestMapping("/retain-api/reserve")
 public class Step2ReserveAPIController {
 	
+	
 	@PostMapping("/user-info")
 	public ResponseEntity<?> userInfo() {
 		UserInfoDto dto = UserInfoDto.builder()

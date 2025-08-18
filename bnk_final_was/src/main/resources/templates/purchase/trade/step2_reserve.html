@@ -1,7 +1,19 @@
-<!-- templates/purchase/trade/step2.html (예시) -->
+<!-- templates/purchase/trade/step2.html (수정본) -->
 <th:block xmlns:th="http://www.thymeleaf.org" th:fragment="css">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- 기타 CSS/JS -->
+</head>
   <style id="page-css" hx-swap-oob="true">
-    .reserve-step2 { max-width: 720px; margin: 0 auto; padding: 16px 16px 100px; }
+    /* 기존: .reserve-step2 { max-width: 768px; ... } */
+	.reserve-step2 {
+	  /* 넓은 화면에서는 960px까지 넓게, 그 외엔 뷰포트 92% 사용 */
+	  width: min(92vw, 960px);
+	  margin: 0 auto;
+	  padding: 16px 16px 120px;
+	}
     .page-title { font-weight: 700; font-size: 20px; margin-bottom: 4px; }
     .page-sub { color:#666; font-size: 13px; margin-bottom: 12px; }
     .steps { display:flex; gap:6px; align-items:center; margin: 12px 0 18px; }
@@ -27,9 +39,44 @@
     .help.ok { color:#2e7d32; }
     .help.warn { color:#e68a00; }
     .help.error { color:#c62828; }
-    .page-bottom { position: fixed; left:0; right:0; bottom:0; padding:12px 16px; background:#fff; border-top:1px solid #eee; }
-    .btn-primary { width:100%; padding:14px; border:none; border-radius:10px; background:#ff5252; color:#fff; font-weight:700; font-size:16px; cursor:pointer; }
+
+    /* 하단 고정 영역 */
+    .page-bottom {
+      position: fixed; left:0; right:0; bottom:0;
+      padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+      background:#fff; border-top:1px solid #eee;
+    }
+    .page-bottom .stack {
+	  width: min(92vw, 960px);
+	  margin: 0 auto;
+	  display: flex;
+	  flex-direction: column;
+	  gap: 10px;
+	}
+
+    /* 버튼들 */
+    .btn-primary {
+      width:100%; padding:14px; border:none; border-radius:10px;
+      background:#ff5252; color:#fff; font-weight:700; font-size:16px; cursor:pointer;
+    }
     .btn-primary:disabled { background:#ffd6d6; cursor:not-allowed; }
+
+    .btn-outline-red {
+      width:fit-content; padding:10px 14px; border-radius:999px;
+      border:1px solid #f2b7b7; background:#fff;
+      color:#e26666; font-weight:600; font-size:14px; cursor:pointer;
+      display:inline-flex; align-items:center; gap:8px;
+      box-shadow:0 0 0 0 rgba(0,0,0,0); /* 깔끔한 외곽만 */
+    }
+    .btn-outline-red:disabled { opacity:.6; cursor:not-allowed; }
+    .btn-outline-red .plus { font-weight:700; }
+
+    /* 반응형 */
+	@media (max-width: 768px) {
+	  .reserve-step2 { padding: 12px 12px 120px; }
+	  .user-card { grid-template-columns: 2fr; }
+	  .btn-outline-red { width: 100%; justify-content: center; }
+	}
   </style>
 </th:block>
 
@@ -64,14 +111,6 @@
     <!-- 본인부담금 운용 섹션 -->
     <div class="section-title">본인부담금으로 상품운용</div>
     <div class="card">
-      <div class="control">
-        <label for="changeType">운용변경</label>
-        <select id="changeType">
-          <option value="KEEP">유지</option>
-          <option value="CHANGE">변경</option>
-        </select>
-      </div>
-
       <div class="retain-list" id="retainList"><!-- 보유상품 카드 렌더링 영역 --></div>
 
       <div class="total">
@@ -81,11 +120,6 @@
       <div id="totalHelp" class="help warn">합계를 100%로 맞춰주세요</div>
     </div>
 
-    <!-- 하단 고정 버튼 -->
-    <div class="page-bottom">
-      <button id="addProductBtn" class="btn-primary">매수상품 추가</button>
-    </div>
-
     <!-- 서버에서 내려준 모델값 보관 -->
     <div id="model-data"
          th:data-flow="${flow}"
@@ -93,6 +127,16 @@
          th:data-account-id="${accountId}">
     </div>
   </section>
+
+  <!-- 하단 고정 버튼: 위=매수상품 추가(외곽선), 아래=다음(기본) -->
+  <div class="page-bottom">
+    <div class="stack">
+      <button id="addProductBtn" class="btn-outline-red" type="button">
+        매수상품 추가 <span class="plus" aria-hidden="true">+</span>
+      </button>
+      <button id="nextBtn" class="btn-primary" type="button">다음</button>
+    </div>
+  </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', initStep2);
@@ -108,7 +152,9 @@
       await loadUserInfo(model);
       await loadRetainList();
 
-      document.getElementById('addProductBtn').addEventListener('click', () => goStep3(model));
+      // 버튼 동작은 아직 미연결 (요청사항)
+      document.getElementById('addProductBtn')?.addEventListener('click', () => {});
+      document.getElementById('nextBtn')?.addEventListener('click', () => {});
     }
 
     // 1) 사용자 정보 로드
@@ -116,7 +162,7 @@
       try {
         const res = await fetch('/retain-api/reserve/user-info', { method: 'POST' });
         if (!res.ok) throw new Error('user-info failed');
-        const data = await res.json(); // { userInfo: {...} }
+        const data = await res.json();
         const u = data.userInfo || {};
 
         document.getElementById('accountType').textContent  = u.accountType || model.accountType || '-';
@@ -124,12 +170,10 @@
         document.getElementById('userName').textContent     = u.userName || '-';
         document.getElementById('riskGrade').textContent    = u.riskGrade || '-';
 
-        // 서버 모델이 비어있으면 user-info로 보정
         model.accountType = model.accountType || u.accountType || '';
         model.accountId   = model.accountId   || u.accountNumber || '';
       } catch (e) {
         console.error(e);
-        // 최소한의 기본값 유지
       }
     }
 
@@ -138,7 +182,7 @@
       try {
         const res = await fetch('/retain-api/reserve/retain', { method: 'POST' });
         if (!res.ok) throw new Error('retain failed');
-        const items = await res.json(); // FundRetainDto[]
+        const items = await res.json();
         renderRetain(items || []);
       } catch (e) {
         console.error(e);
@@ -172,7 +216,6 @@
 
         el.querySelector('.remove').addEventListener('click', () => { el.remove(); updateTotal(); });
         el.querySelector('.ratio-input').addEventListener('input', updateTotal);
-
         wrap.appendChild(el);
       });
       updateTotal();
@@ -186,22 +229,35 @@
       document.getElementById('totalProgress').value = Math.min(total, 100);
 
       const help = document.getElementById('totalHelp');
-      const btn  = document.getElementById('addProductBtn');
+      const nextBtn  = document.getElementById('nextBtn');
 
       if (total > 100) {
         help.textContent = '합계가 100%를 초과했습니다';
         help.className = 'help error';
-        btn.disabled = true;
+        nextBtn.disabled = true;
       } else if (total < 100) {
         help.textContent = '합계를 100%로 맞춰주세요';
         help.className = 'help warn';
-        btn.disabled = false; // 합계 100%가 아니어도 다음단계로 넘어가서 추가 선택 가능하다면 활성화 유지
+        nextBtn.disabled = false; // 합계 100% 아니어도 다음 단계로 이동을 허용한다면 활성화 유지
       } else {
         help.textContent = '합계가 100%입니다';
         help.className = 'help ok';
-        btn.disabled = false;
+        nextBtn.disabled = false;
       }
     }
 
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>"']/g, function(m) {
+        switch (m) {
+          case '&': return '&amp;';
+          case '<': return '&lt;';
+          case '>': return '&gt;';
+          case '"': return '&quot;';
+          case "'": return '&#39;';
+          default: return m;
+        }
+      });
+    }
   </script>
 </th:block>
