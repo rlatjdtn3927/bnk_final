@@ -40,5 +40,13 @@ public enum Command {
     IRP_JOIN_TAX_PURPOSE, 
     IRP_JOIN_RETIRED_PURPOSE, 
     IRP_JOIN_COMPLETE,			// 계좌개설/완료
+    
+    
+    
+   
+    USER_LOGIN,// 사용자 로그인 
+    USER_REGISTER, //회원가입
+    
+    
 
 }

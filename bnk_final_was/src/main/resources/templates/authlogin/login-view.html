@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>통합 로그인</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      /* Brand → #D71921 */
+      --brand:#D71921; 
+      --brand-700:#b11217; /* hover/darker */
+      --bg:#fff2f2; 
+      --card:#ffffff; 
+      --text:#111827; 
+      --muted:#6b7280;
+      --primary:var(--brand); 
+      --primary-700:var(--brand-700); 
+      --line:#e5e7eb;
+      --btn:var(--brand);
+      --shadow:0 12px 28px rgba(0,0,0,.10);
+      --radius:16px;
+      --input-radius:12px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family: "Noto Sans KR", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: radial-gradient(1200px 600px at 10% -10%, #ffe1e1 0%, transparent 60%) , var(--bg);
+      color:var(--text);
+    }
+    .wrap{max-width:900px; margin:56px auto; padding:0 16px;}
+    .grid{ display:grid; grid-template-columns: 1fr; gap:16px; }
+    @media(min-width:860px){ .grid{grid-template-columns: 520px;} .wrap{display:flex; justify-content:center;} }
+
+    .card{ background:var(--card); border-radius:24px; box-shadow:var(--shadow); padding:28px 28px 22px; border:1px solid #f1f5f9; }
+
+    .logo{ display:flex; justify-content:center; align-items:center; gap:10px; margin-top:4px;}
+    .logo-badge{width:42px;height:42px;border-radius:10px;background:var(--brand); display:inline-flex; align-items:center; justify-content:center; color:#fff; font-weight:900}
+    .title{ text-align:center; font-size:28px; font-weight:800; margin:10px 0 6px;}
+    .subtitle{ text-align:center; color:var(--muted); margin-bottom:18px; }
+
+    .input{
+      width:100%; padding:14px 14px; border:1px solid var(--line); border-radius: var(--input-radius);
+      font-size:16px; outline:none; transition:border-color .15s ease, box-shadow .15s ease;
+      background:#fff;
+    }
+    .input:focus{ border-color:#fecaca; box-shadow: 0 0 0 4px rgba(215,25,33,.15); }
+
+    .row{ display:flex; flex-direction:column; gap:12px; }
+    .btn{
+      width:100%; padding:14px 16px; border:none; border-radius:14px;
+      background: var(--btn); color:#fff; font-weight:800; font-size:16px; cursor:pointer;
+      margin-top:8px;
+    }
+    .btn:hover{ background: var(--primary-700); }
+    .btn[disabled]{ opacity:.7; cursor:not-allowed; }
+
+    .links{ display:flex; justify-content:center; gap:18px; margin-top:10px; font-size:14px;}
+    .links a{ color:#334155; text-decoration:none;}
+    .links a:hover{ text-decoration:underline; }
+
+    .section{ background:#fff; border-radius:16px; padding:18px; border:1px solid #eef2f7; box-shadow:0 6px 20px rgba(0,0,0,.06); }
+    .section-title{ color:#475569; font-size:14px; margin:0 0 10px 4px; }
+    .sso-wrap{ display:flex; flex-direction:column; gap:10px; }
+    .sso{
+      display:flex; align-items:center; justify-content:center; gap:10px;
+      border-radius:12px; padding:12px; border:1px solid var(--line); background:#f8fafc; cursor:pointer; font-weight:700;
+    }
+    /* Brand-tinted SSO buttons */
+    .sso.red{ background:#ffe6e6; border-color:#fecaca; }
+    .sso.blue{ background:#fdeaea; border-color:#fecaca; }
+
+    .sso-row{ display:flex; flex-wrap:wrap; gap:8px; }
+    .chip{ display:inline-flex; align-items:center; gap:8px; padding:10px 12px; border-radius:999px; background:#fff5f5; font-weight:700; font-size:14px; border:1px solid #ffd1d1; }
+    .chip.lock::before{content:"🔒";} .chip.n::before{content:"🟢";} .chip.k::before{content:"🟡";}
+    .chip.i::before{content:"🪪";} .chip.s::before{content:"✉️";}
+
+    .error{ color:#dc2626; text-align:center; margin-top:10px; min-height:18px; }
+    .tip { color:#64748b; font-size:12px; text-align:center; margin-top:8px; }
+
+    .field{ display:flex; flex-direction:column; gap:6px;}
+    .pw-wrap{ position:relative; }
+    .pw-toggle{ position:absolute; right:12px; top:50%; transform:translateY(-50%); border:none; background:transparent; cursor:pointer; color:#475569; font-weight:700; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="grid">
+      <!-- 메인 로그인 카드 -->
+      <div class="card">
+        <div class="logo">
+          <span class="logo-badge">G</span>
+        </div>
+        <div class="title">통합 로그인</div>
+        <div class="subtitle">서비스에 오신 것을 환영합니다.</div>
+
+        <form id="login-form" autocomplete="on" class="row" novalidate>
+          <div class="field">
+            <input class="input" id="username" name="username" type="text" placeholder="아이디" autocomplete="username" />
+          </div>
+
+          <div class="field pw-wrap">
+            <input class="input" id="password" name="password" type="password" placeholder="비밀번호" autocomplete="current-password" />
+            <button type="button" id="togglePw" class="pw-toggle" aria-controls="password" aria-label="비밀번호 표시 전환">표시</button>
+          </div>
+
+          <button type="submit" id="loginBtn" class="btn">로그인</button>
+          <div id="errorMsg" class="error" role="status" aria-live="polite"></div>
+
+          <div class="links">
+            <a href="/register">회원가입</a>
+            <a href="#" onclick="alert('아이디찾기 기능 준비 중입니다.');return false;">아이디찾기</a>
+            <a href="#" onclick="alert('비밀번호찾기 기능 준비 중입니다.');return false;">비밀번호찾기</a>
+          </div>
+        </form>
+      </div>
+
+      <!-- 간편인증 / 소셜 섹션 -->
+      <div class="section">
+        <div class="section-title">다양한 간편 로그인을 이용하세요</div>
+        <div class="sso-wrap">
+          <div class="sso">
+            <span>간편인증 로그인</span>
+            <span style="margin-left:8px; font-size:12px; color:#475569;">(예: 톡/패스/뱅크 등)</span>
+          </div>
+          <div class="sso red">모바일신분증 로그인</div>
+          <div class="sso blue">디지털원패스 로그인</div>
+
+          <div class="sso-row" style="margin-top:4px;">
+            <span class="chip n">네이버로그인</span>
+            <span class="chip k">카카오로그인</span>
+            <span class="chip i lock">인증서로그인</span>
+            <span class="chip s lock">SMS로그인</span>
+          </div>
+        </div>
+        <div class="tip">* 간편 로그인/인증 연동은 준비 중입니다.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 비밀번호 표시/숨기기
+    document.getElementById('togglePw').addEventListener('click', () => {
+      const pw = document.getElementById('password');
+      const btn = document.getElementById('togglePw');
+      if (pw.type === 'password') { pw.type = 'text'; btn.textContent = '숨김'; }
+      else { pw.type = 'password'; btn.textContent = '표시'; }
+    });
+
+    // 로그인 처리
+    document.getElementById("login-form").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const errorMsg = document.getElementById("errorMsg");
+      const loginBtn = document.getElementById("loginBtn");
+      errorMsg.textContent = "";
+
+      if (!username || !password) {
+        errorMsg.textContent = "아이디와 비밀번호를 입력하세요.";
+        return;
+      }
+
+      // 중복 제출 방지 + 로딩 표시
+      const originalBtnText = loginBtn.textContent;
+      loginBtn.disabled = true;
+      loginBtn.textContent = "로그인 중...";
+
+      // 5초 타임아웃(네트워크 지연 대비)
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+
+      try {
+        const res = await fetch("/login-api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ username, password }),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeout);
+
+        // 항상 JSON 기대
+        const data = await res.json().catch(() => null);
+
+        if (!res.ok || !data || data.success !== true) {
+          errorMsg.textContent = (data && data.message) || "로그인 실패";
+          return;
+        }
+
+        // ✅ 성공 → 백엔드가 내려준 경로 우선, 없으면 /main
+        location.href = (data.redirect && typeof data.redirect === "string") ? data.redirect : "/main";
+
+      } catch (err) {
+        if (err.name === "AbortError") {
+          errorMsg.textContent = "요청 시간이 초과되었습니다. 잠시 후 다시 시도하세요.";
+        } else {
+          errorMsg.textContent = "네트워크 오류가 발생했습니다.";
+        }
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = originalBtnText;
+      }
+    });
+  </script>
+</body>
+</html>

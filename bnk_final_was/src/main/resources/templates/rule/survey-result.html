@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>투자성향 분석 결과</title>
+  <style>
+    body { font-family: "Noto Sans KR", sans-serif; text-align: center; margin-top: 50px; }
+    h2 { font-size: 24px; margin-bottom: 20px; }
+    p { font-size: 18px; }
+    .desc { font-size: 16px; color: #555; margin-top: 10px; }
+    .link { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #4f46e5; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; }
+    .link:hover { background: #3730a3; }
+  </style>
+</head>
+<body>
+  <h2>📊 투자성향 분석 결과</h2>
+
+  <p>총 점수: <strong th:text="${score}">점수</strong> 점</p>
+  <p>분류된 투자성향: <strong th:text="${type}">성향</strong></p>
+
+  <hr/>
+
+  <div th:switch="${type}">
+    <div th:case="'공격투자형'"><p class="desc">📈 높은 수익을 추구하며 위험도 감수 가능한 투자자입니다.</p></div>
+    <div th:case="'적극투자형'"><p class="desc">📊 적절한 위험을 감수하면서 수익을 기대하는 유형입니다.</p></div>
+    <div th:case="'위험중립형'"><p class="desc">⚖️ 안정성과 수익을 균형 있게 추구하는 투자자입니다.</p></div>
+    <div th:case="'안정추구형'"><p class="desc">🔒 원금 손실을 최소화하고자 하는 보수적인 성향입니다.</p></div>
+    <div th:case="'안정형'"><p class="desc">🛡 가능한 한 손실 없는 투자를 선호하는 초보 투자자입니다.</p></div>
+    <div th:case="*"><p class="desc">❓ 분석 결과가 존재하지 않습니다.</p></div>
+  </div>
+
+  <a href="/main" class="link">메인 페이지로 돌아가기</a>
+</body>
+</html>

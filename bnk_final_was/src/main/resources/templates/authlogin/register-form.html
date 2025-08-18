@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>회원가입</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      /* Brand */
+      --brand:#D71921; --brand-700:#b11217;
+      --bg:#fff2f2; --card:#ffffff; --text:#111827; --muted:#6b7280; --line:#e5e7eb;
+      --shadow:0 12px 28px rgba(0,0,0,.10);
+      --radius:24px; --input-radius:12px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family: "Noto Sans KR", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: radial-gradient(1200px 600px at 10% -10%, #ffe1e1 0%, transparent 60%), var(--bg);
+      color:var(--text);
+    }
+    .wrap{max-width:900px; margin:56px auto; padding:0 16px; display:flex; justify-content:center;}
+    .card{ width:540px; background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:28px; border:1px solid #f1f5f9; }
+    .title{ text-align:center; font-size:28px; font-weight:800; margin:4px 0 6px;}
+    .subtitle{ text-align:center; color:var(--muted); margin-bottom:18px; }
+
+    label{ display:block; font-size:14px; color:#374151; margin:10px 0 6px; }
+    .row{ display:flex; gap:10px; }
+    .input, select{
+      width:100%; padding:12px 14px; border:1px solid var(--line); border-radius:var(--input-radius);
+      font-size:15px; outline:none; background:#fff; transition: border-color .15s, box-shadow .15s;
+    }
+    .input:focus, select:focus{ border-color:#fecaca; box-shadow:0 0 0 4px rgba(215,25,33,.15); }
+
+    /* PW 토글 아이콘 위치 고정 */
+    .pw-wrap{ position:relative; }
+    .pw-wrap .input{ padding-right:44px; }
+    .pw-toggle{ position:absolute; right:10px; top:50%; transform:translateY(-50%); height:28px; min-width:34px; border:none; border-radius:8px; background:#fff0f0; color:#b11217; cursor:pointer; font-weight:700; }
+    .pw-toggle:hover{ background:#ffe2e2; }
+
+    .agree{ display:flex; align-items:center; gap:8px; margin-top:10px; color:#374151; }
+    .btn{ width:100%; padding:14px 16px; border:none; border-radius:14px; background:var(--brand); color:#fff; font-weight:800; font-size:16px; cursor:pointer; margin-top:14px; }
+    .btn:hover{ background:var(--brand-700); }
+
+    .links{ text-align:center; margin-top:12px; }
+    .links a{ color:#334155; text-decoration:none; font-weight:700; }
+    .links a:hover{ text-decoration:underline; }
+
+    .err{ color:#dc2626; text-align:center; margin-top:10px; min-height:18px; }
+    .ok{ color:#16a34a; text-align:center; margin-top:10px; min-height:18px; font-weight:700; }
+    .muted{ color:#6b7280; font-size:12px; text-align:center; margin-top:8px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="title">회원가입</div>
+      <div class="subtitle">필수 정보를 입력하고 계정을 만들어 주세요.</div>
+
+      <form id="register-form" novalidate>
+        <label>아이디</label>
+        <input type="text" id="username" class="input" autocomplete="username" placeholder="영문/숫자 4~15자" />
+
+        <div class="row">
+          <div style="flex:1">
+            <label>닉네임</label>
+            <input type="text" id="nickname" class="input" />
+          </div>
+          <div style="width:140px">
+            <label>성별</label>
+            <select id="gender">
+              <option value="M">남</option>
+              <option value="F">여</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div style="flex:1">
+            <label>이메일</label>
+            <input type="email" id="email" class="input" autocomplete="email" placeholder="example@domain.com" />
+          </div>
+          <div style="width:180px">
+            <label>생년월일</label>
+            <input type="date" id="birthDate" class="input" />
+          </div>
+        </div>
+
+        <label>직종</label>
+        <select id="job" required>
+          <option value="">-- 선택하세요 --</option>
+          <option value="STUDENT">학생</option>
+          <option value="JOB_SEEKER">취업준비생</option>
+          <option value="DEVELOPER">개발자</option>
+          <option value="DESIGNER">디자이너</option>
+          <option value="PLANNER">기획자</option>
+          <option value="MARKETER">마케터</option>
+          <option value="SALES">영업직</option>
+          <option value="TEACHER">교사 / 강사</option>
+          <option value="PUBLIC_SERVANT">공무원 / 공공기관</option>
+          <option value="OFFICE_WORKER">일반 사무직</option>
+          <option value="FREELANCER">프리랜서</option>
+          <option value="MEDICAL">의료인</option>
+          <option value="LEGAL">법률 / 회계 전문가</option>
+          <option value="SELF_EMPLOYED">자영업자</option>
+          <option value="PRODUCTION">생산직 / 제조업</option>
+          <option value="DRIVER">운전 / 물류</option>
+          <option value="STAY_AT_HOME">전업주부</option>
+          <option value="RETIRED">퇴직자</option>
+          <option value="UNEMPLOYED">무직</option>
+          <option value="ETC">기타</option>
+        </select>
+
+        <div class="row">
+          <div style="flex:1" class="pw-wrap">
+            <label>비밀번호</label>
+            <input type="password" id="password" class="input" autocomplete="new-password" placeholder="영문+숫자 6자 이상" />
+            <button type="button" class="pw-toggle" data-target="password">표시</button>
+          </div>
+          <div style="flex:1" class="pw-wrap">
+            <label>비밀번호 확인</label>
+            <input type="password" id="confirmPassword" class="input" autocomplete="new-password" />
+            <button type="button" class="pw-toggle" data-target="confirmPassword">표시</button>
+          </div>
+        </div>
+
+        <label class="agree">
+          <input type="checkbox" id="agreeTerms" />
+          약관에 동의합니다.
+        </label>
+
+        <button type="submit" class="btn">가입하기</button>
+        <div id="errorMsg" class="err"></div>
+        <div id="okMsg" class="ok"></div>
+        <div class="links">
+          이미 계정이 있나요? <a href="/login-view">로그인</a>
+        </div>
+        <div class="muted">회원가입 완료 후 로그인 화면으로 이동합니다.</div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // 비밀번호 표시/숨김 (토글 위치는 CSS로 고정)
+    document.querySelectorAll('.pw-toggle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetId = btn.getAttribute('data-target');
+        const input = document.getElementById(targetId);
+        if (input.type === 'password') { input.type = 'text'; btn.textContent = '숨김'; }
+        else { input.type = 'password'; btn.textContent = '표시'; }
+      });
+    });
+
+    document.getElementById("register-form").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const data = {
+        username: document.getElementById("username").value.trim(),
+        nickname: document.getElementById("nickname").value.trim(),
+        gender: document.getElementById("gender").value,
+        birthDate: document.getElementById("birthDate").value,
+        email: document.getElementById("email").value.trim(),
+        job: document.getElementById("job").value,
+        password: document.getElementById("password").value,
+        confirmPassword: document.getElementById("confirmPassword").value,
+        agreeTerms: document.getElementById("agreeTerms").checked
+      };
+
+      const err = document.getElementById("errorMsg");
+      const ok = document.getElementById("okMsg");
+      err.textContent = ""; ok.textContent = "";
+
+      // 규칙: 아이디 4~15자 영문/숫자, 비번 6자 이상 영문+숫자 조합, 이메일 형식, 직종/약관 필수
+      const idOk = /^[a-zA-Z0-9]{4,15}$/.test(data.username);
+      const pwOk = /^(?=.*[A-Za-z])(?=.*\d).{6,}$/.test(data.password);
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email);
+
+      if (!idOk) { err.textContent = "아이디는 4~15자, 영문과 숫자만 가능합니다."; return; }
+      if (!pwOk) { err.textContent = "비밀번호는 6자 이상, 영문+숫자 조합이어야 합니다."; return; }
+      if (data.password !== data.confirmPassword) { err.textContent = "비밀번호가 일치하지 않습니다."; return; }
+      if (!emailOk) { err.textContent = "이메일 형식을 확인하세요."; return; }
+      if (!data.job) { err.textContent = "직종을 선택하세요."; return; }
+      if (!data.agreeTerms) { err.textContent = "약관에 동의해 주세요."; return; }
+
+      try{
+        const res = await fetch("/user-api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify(data)
+        });
+
+        const text = await res.text();
+        let payload = {};
+        try { payload = JSON.parse(text); } catch { payload = { ok: res.ok, message: text }; }
+
+        if (!res.ok || payload.ok === false) { err.textContent = payload.message || "회원가입 실패"; return; }
+
+        ok.textContent = "가입 완료! 로그인 화면으로 이동합니다.";
+        setTimeout(() => location.href = "/login-view", 800);
+      }catch(e){
+        err.textContent = "네트워크 오류가 발생했습니다.";
+      }
+    });
+  </script>
+</body>
+</html>
