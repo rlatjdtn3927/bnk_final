@@ -1,10 +1,121 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-<meta charset="UTF-8">
-<title>Insert title here</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BNK 퇴직연금</title>
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-	<h1>메인페이지다.</h1>
+  <div class="mobile-container">
+    <!-- 오버레이 / 사이드내비 -->
+    <div class="overlay"></div>
+    <nav class="side-nav" aria-label="사이드 메뉴">
+      <div class="side-nav-header">
+        <button class="close-btn" aria-label="메뉴 닫기">&times;</button>
+      </div>
+      <ul>
+        <li><a href="#">마이페이지</a></li>
+        <li><a href="#">부부 IRP</a></li>
+        <li><a href="#">이벤트</a></li>
+        <li><a href="#">공지사항</a></li>
+        <li><a href="#">고객센터</a></li>
+        <li><a href="#">로그아웃</a></li>
+      </ul>
+    </nav>
+
+    <!-- 헤더 -->
+    <header class="main-header">
+      <img src="images/logo.png" alt="BNK 퇴직연금 로고" class="logo" />
+      <button class="hamburger-menu" aria-label="메뉴 열기">
+        <span></span><span></span><span></span>
+      </button>
+    </header>
+
+    <!-- 본문 -->
+    <main class="content">
+      <!-- 상단 자산 카드 -->
+      <section class="greeting-section">
+        <h2><span class="user-name">홍길동</span>님의 퇴직연금</h2>
+        <p class="asset-amount">12,345,678원</p>
+        <div class="asset-details">
+          <span>어제보다 <span class="positive">+12,000원</span></span>
+          <a href="#" class="btn-details">자세히 보기</a>
+        </div>
+      </section>
+
+      <!-- 빠른 메뉴 (SVG 아이콘) -->
+      <section class="quick-menu" aria-label="빠른 메뉴">
+        <a href="#" class="menu-item">
+          <div class="icon"><i data-lucide="piggy-bank" aria-hidden="true"></i></div>
+          <span>IRP 가입</span>
+        </a>
+        <a href="#" class="menu-item">
+          <div class="icon"><i data-lucide="line-chart" aria-hidden="true"></i></div>
+          <span>상품 찾기</span>
+        </a>
+        <a href="#" class="menu-item">
+          <div class="icon"><i data-lucide="refresh-cw" aria-hidden="true"></i></div>
+          <span>상품 변경</span>
+        </a>
+        <a href="#" class="menu-item">
+          <div class="icon"><i data-lucide="message-square" aria-hidden="true"></i></div>
+          <span>퇴직연금 상담</span>
+        </a>
+      </section>
+
+      <!-- 프로모션 -->
+      <section class="promo-banner">
+        <h3>함께해서 더 든든한<br>BNK 부부연동 IRP</h3>
+        <p>배우자와 함께 관리하고 혜택도 두 배로!</p>
+        <a href="#" class="btn-promo">자세히 알아보기</a>
+      </section>
+
+      <!-- 추천 상품 -->
+      <section class="info-section">
+        <h3>이런 상품 어떠세요?</h3>
+
+        <div class="info-card">
+          <h4>BNK 안정성장 TDF 2045</h4>
+          <p>은퇴 시점에 맞춰 자산을 자동으로 운용해주는 스마트한 펀드</p>
+          <div class="tags">
+            <span class="tag is-blue">#TDF</span>
+            <span class="tag is-ivory">#자동운용</span>
+            <span class="tag is-lilac">#장기투자</span>
+          </div>
+        </div>
+
+        <div class="info-card">
+          <h4>BNK 단기채권 플러스 펀드</h4>
+          <p>안정적인 국공채에 투자하여 꾸준한 수익을 추구하는 상품</p>
+          <div class="tags">
+            <span class="tag is-green">#안정형</span>
+            <span class="tag is-pink">#채권형</span>
+            <span class="tag is-ivory">#저위험</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- 하단 내비 (SVG 아이콘) -->
+    <nav class="bottom-nav" aria-label="하단 내비게이션">
+      <a href="#" class="nav-item active" aria-current="page">
+        <div class="icon"><i data-lucide="home"></i></div><span>홈</span>
+      </a>
+      <a href="#" class="nav-item">
+        <div class="icon"><i data-lucide="pie-chart"></i></div><span>보유현황</span>
+      </a>
+      <a href="#" class="nav-item">
+        <div class="icon"><i data-lucide="shopping-bag"></i></div><span>상품관리</span>
+      </a>
+      <a href="#" class="nav-item">
+        <div class="icon"><i data-lucide="building-2"></i></div><span>영업점</span>
+      </a>
+    </nav>
+  </div>
+
+  <!-- Lucide (SVG 아이콘) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="js/script.js"></script>
 </body>
 </html>
