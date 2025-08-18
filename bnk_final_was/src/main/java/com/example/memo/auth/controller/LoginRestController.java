@@ -91,8 +91,11 @@ public class LoginRestController {
             request.changeSessionId();
 
             // ✅ 세션 저장 (설문 컨트롤러와 통일)
-            session.setAttribute("LOGIN_USER_ID", userId);
-            session.setAttribute("username", username);
+            session.setAttribute("LOGIN_USER_ID", userId); // 사장님 이거 뭐에요
+            session.setAttribute("username", username); // 얘도 ???
+            
+            session.setAttribute("user", userId);
+
 
             Map<String, Object> payload = new HashMap<>();
             payload.put("userId", userId);

@@ -7,9 +7,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.memo.auth.dto.UserRegisterDTO;
-import com.example.memo.auth.entity.UserEntity;
-import com.example.memo.auth.repository.UserRepository;
 import com.example.memo.company.service.CryptoService;
+import com.example.memo.jpa.entity.user.UserEntity;
+import com.example.memo.jpa.repository.user.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
