@@ -27,9 +27,6 @@ public class SurveyResultController {
     public String submitAndView(@RequestBody SurveySubmitReq req,
                                 @SessionAttribute(value = "LOGIN_USER_ID", required = false) Long userId,
                                 Model model) {
-        if (userId == null) {
-            return "redirect:/login-view";
-        }
 
         try {
             // userId 추가
