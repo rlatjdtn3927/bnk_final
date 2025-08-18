@@ -14,7 +14,7 @@ public class LoginCheckFilter implements Filter {
         "/login-view",
         "/login-view/logout-view",
         "/user-api/register",
-        "/register-form",
+        "/register",
         "/favicon.ico",
         "/company/login"
     );
