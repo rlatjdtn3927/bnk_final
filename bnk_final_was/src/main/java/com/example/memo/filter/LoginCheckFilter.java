@@ -16,7 +16,9 @@ public class LoginCheckFilter implements Filter {
         "/user-api/register",
         "/register",
         "/favicon.ico",
-        "/company/login"
+        "/company/login",
+        "/purchase/trade",
+        "/retain-api/reserve"
     );
 
     @Override

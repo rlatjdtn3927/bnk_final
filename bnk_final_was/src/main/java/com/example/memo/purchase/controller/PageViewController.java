@@ -25,7 +25,7 @@ public class PageViewController {
     public String tradeEntry(@RequestParam(name = "flow", required = false) String flow, RedirectAttributes rttr) {
     	ModelValueDto dto = new ModelValueDto();
     	dto.setFlow(flow);
-    	rttr.addAttribute("modelValueDto", dto);
+    	rttr.addAttribute("ModelValueDto", dto);
         return "redirect:/purchase/trade/step1";
     }
     
