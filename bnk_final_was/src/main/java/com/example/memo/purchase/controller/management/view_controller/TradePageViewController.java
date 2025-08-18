@@ -23,7 +23,11 @@ public class TradePageViewController {
     @PostMapping("/step1/next") //model: flow, 계좌 id, type 
     public String step1Next(@RequestBody ModelValueDto dto, Model model) {
     		model.addAttribute("ModelValueDto", dto);
-        return "purchase/trade/step2"; // 보유상품목록 view
+    		if(dto.getFlow().equals("RESERVE")) {
+    			 return "purchase/trade/step2_reserve"; // 보유상품목록 view
+    		} else {
+    			 return "purchase/trade/step2_others"; // 보유상품목록 view
+    		}
     }
     
     @PostMapping("/step2/next") //model: flow, 계좌 id, type, 투자성향등급 or 대상 상품 ID
