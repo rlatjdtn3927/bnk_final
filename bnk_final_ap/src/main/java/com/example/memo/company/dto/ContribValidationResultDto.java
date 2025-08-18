@@ -15,5 +15,6 @@ public class ContribValidationResultDto {
     private Integer totalRecords;
     private Integer okCount;
     private Integer errorCount;
+    private Long totalOkAmount;  
     private List<ContribValidationItemDto> items;
 }

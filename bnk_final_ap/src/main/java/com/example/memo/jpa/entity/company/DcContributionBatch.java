@@ -55,7 +55,7 @@ public class DcContributionBatch {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private BatchStatus status; // DRAFT → VALIDATED → CONFIRMED → EXECUTED
+    private BatchStatus status;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -69,8 +69,25 @@ public class DcContributionBatch {
     @OneToMany(mappedBy = "batch", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DcContributionItem> items = new ArrayList<>();
 
+    /**
+     * 배치(파일)의 전체적인 처리 현황
+     * DRAFT: 초안, VALIDATED: 검증완료, CONFIRMED: 확정, PROCESSING: 처리중, EXECUTED: 실행완료
+     */
     public enum BatchStatus {
-        DRAFT, VALIDATED, CONFIRMED, EXECUTED, FAILED, CANCELED
+        DRAFT("초안"),
+        VALIDATED("검증완료"),
+        CONFIRMED("확정"),
+        PROCESSING("처리중"), 
+        EXECUTED("실행완료"),
+        FAILED("실패"),
+        CANCELED("취소");
+
+        @Getter
+        private final String displayName;
+
+        BatchStatus(String displayName) {
+            this.displayName = displayName;
+        }
     }
 
     public void addItem(DcContributionItem item) {

@@ -3,6 +3,7 @@ package com.example.memo.company.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -132,7 +133,7 @@ public class DcContributionService {
                 .map(DcMember::getId)
                 .collect(Collectors.toSet());
 
-        // [수정] 필요한 데이터만 미리 조회 (잔고 조회 제거)
+        // 필요한 데이터만 미리 조회 (잔고 조회 제거)
         Map<Long, Boolean> accountActiveMap = new HashMap<>();
         accountRepo.findByMemberIds(memberIds).forEach(a -> {
             if (a.getDcMember() != null) {
@@ -144,6 +145,7 @@ public class DcContributionService {
         Map<Long, Long> annualSalaryMap = toMapLong(dcMemberRepo.findAnnualSalaryPairs(memberIds));
 
         int ok = 0, err = 0;
+        long okSum = 0L;
         List<ContribValidationItemDto> itemDtos = new ArrayList<>();
 
         for (DcContributionItem it : batch.getItems()) {
@@ -173,7 +175,7 @@ public class DcContributionService {
                     }
                 }
 
-                // [수정] 납입금액 "최소금액" 검증 (연간임금총액 1/12 이상)
+                // 납입금액 "최소금액" 검증 (연간임금총액 1/12 이상)
                 if (errorMessage == null) {
                     long annualSalary = annualSalaryMap.getOrDefault(m.getId(), 0L);
                     if (annualSalary <= 0) {
@@ -200,7 +202,9 @@ public class DcContributionService {
             boolean isSuccess = (errorMessage == null);
             if (isSuccess) {
                 ok++;
+                okSum += Optional.ofNullable(it.getAmount()).orElse(0L);
                 it.setValidationStatus(DcContributionItem.ValidationStatus.SUCCESS);
+                it.setPaymentStatus(DcContributionItem.PaymentStatus.PENDING); 
             } else {
                 err++;
                 it.setValidationStatus(DcContributionItem.ValidationStatus.FAIL);
@@ -211,7 +215,7 @@ public class DcContributionService {
                     // ... (이하 동일)
                     .itemId(it.getId())
                     .amount(it.getAmount() == null ? 0L : it.getAmount())
-                    .validationStatus(isSuccess ? "SUCCESS" : "FAIL")
+                    .validationStatus(isSuccess ? "OK" : "FAIL")
                     .errorMessage(errorMessage)
                     .dcMember(lite)
                     .build());
@@ -229,6 +233,7 @@ public class DcContributionService {
                 .totalRecords(batch.getTotalRecords())
                 .okCount(ok)
                 .errorCount(err)
+                .totalOkAmount(okSum)
                 .items(itemDtos)
                 .build();
     }
@@ -299,127 +304,40 @@ public class DcContributionService {
     
     
     /**
-     * 최종 납입 실행: 실행 시점에 재검증 로직을 추가하여 데이터 정합성을 보장합니다.
-     * 1. 확정된 배치(CONFIRMED)인지 확인합니다.
-     * 2. 검증 시 '성공'이었던 가입자 목록을 가져옵니다.
-     * 3. [중요] 실행하는 바로 이 순간, 가입자들의 최신 '재직' 상태를 다시 조회합니다.
-     * 4. 최신 상태까지 유효한 가입자만 최종 납입 대상으로 필터링합니다.
-     * 5. 최종 대상의 총액을 계산하여 회사 계좌에서 출금합니다.
-     * 6. 최종 대상 가입자들의 DC 계좌에 입금하고 내역을 기록합니다.
-     * 7. 배치 상태를 '실행완료(EXECUTED)'로 변경합니다.
-     *
-     * @param batchId         실행할 배치 ID
-     * @param companyId       회사의 ID (소유권 확인용)
-     * @param sourceAccountId 출금할 회사의 계좌 ID
-     * @return 실행 결과 (상태, 처리 금액 등)
-     */
-    @Transactional
-    public Map<String, Object> executeBatch(Long batchId, Long companyId, Long sourceAccountId) {
-        // --- 1. 기본 정보 조회 및 검증 ---
-        DcContributionBatch b = batchRepo.findBatchWithItemsById(batchId)
-                .orElseThrow(() -> new EntityNotFoundException("Batch not found: " + batchId));
-
-        if (!Objects.equals(b.getCompany().getId(), companyId)) {
-            throw new IllegalStateException("해당 회사의 납입 건이 아닙니다.");
-        }
-
-        if (b.getStatus() != DcContributionBatch.BatchStatus.CONFIRMED) {
-            throw new IllegalStateException("확정(CONFIRMED) 상태가 아니므로 납입을 실행할 수 없습니다.");
-        }
-
-        // --- 2. 검증 시점 '성공' 건 필터링 ---
-        List<DcContributionItem> successItems = b.getItems().stream()
-                .filter(i -> i.getValidationStatus() == DcContributionItem.ValidationStatus.SUCCESS)
-                .toList();
-
-        if (successItems.isEmpty()) {
-            throw new IllegalStateException("납입할 대상(성공 건)이 없습니다.");
-        }
-
-        // --- 3. [핵심] 실행 시점 재검증 ---
-        Set<Long> memberIds = successItems.stream().map(it -> it.getDcMember().getId()).collect(Collectors.toSet());
-        Map<Long, String> latestStatusMap = toMap(statusRepo.findLatestStatusPairs(memberIds)); // 최신 상태 DB 조회
-
-        long finalTotalAmount = 0;
-        List<DcContributionItem> itemsToPay = new ArrayList<>();
-
-        for (DcContributionItem it : successItems) {
-            DcMember m = it.getDcMember();
-            String currentStatus = latestStatusMap.getOrDefault(m.getId(), "UNKNOWN");
-
-            // 실행 직전 최종 재검증: 지금도 여전히 재직 상태인지 확인
-            if ("재직".equals(currentStatus) || "ACTIVE".equalsIgnoreCase(currentStatus)) {
-                itemsToPay.add(it); // 최종 납입 대상에 추가
-                finalTotalAmount += Optional.ofNullable(it.getAmount()).orElse(0L);
-            } else {
-                // 검증 때와 상태가 달라진 경우: 로그를 남기고 납입에서 제외
-                // log.warn("납입 실행 제외: 회원 ID {}의 상태가 변경됨 (검증시: 재직, 실행시: {})", m.getId(), currentStatus);
-                it.setErrorMessage("실행 시점 상태 변경으로 납입 제외됨 (현재: " + currentStatus + ")");
-                // 필요시 실행 상태를 관리하는 별도 컬럼(e.g., executionStatus)을 FAIL로 업데이트 할 수 있습니다.
-            }
-        }
-
-        if (itemsToPay.isEmpty()) {
-            throw new IllegalStateException("최종 납입 대상이 없습니다 (상태 변경 등으로 모두 제외됨).");
-        }
-
-        // --- 4. 회사 계좌 출금 (최종 계산된 금액 기준) ---
-        // 동시성 문제를 방지하기 위해 PESSIMISTIC_WRITE Lock 사용을 권장합니다.
-        // CompanyAccount src = companyAccountRepository.findByIdAndCompanyIdWithLock(sourceAccountId, companyId)
-        CompanyAccount src = companyAccountRepository.findByIdAndCompanyId(sourceAccountId, companyId)
-                .orElseThrow(() -> new IllegalStateException("출금계좌를 찾을 수 없습니다. (ID: " + sourceAccountId + ")"));
-
-        long srcBalance = parseLongSafe(src.getBalance());
-        if (srcBalance < finalTotalAmount) {
-            throw new IllegalStateException("출금계좌 잔액이 부족합니다. (필요: " + finalTotalAmount + ", 현재: " + srcBalance + ")");
-        }
-        src.setBalance(Long.toString(srcBalance - finalTotalAmount));
-
-
-        // --- 5. 가입자 DC 계좌 입금 및 이력 기록 (최종 필터링된 리스트 기준) ---
-        LocalDateTime now = LocalDateTime.now();
-        for (DcContributionItem it : itemsToPay) {
-            DcMember m = it.getDcMember();
-            DcAccount dest = accountRepo.findByDcMember_Id(m.getId())
-                    .orElseThrow(() -> new IllegalStateException("가입자의 DC계좌를 찾을 수 없습니다: " + m.getName()));
-
-            long dBal = Optional.ofNullable(dest.getBalance()).orElse(0L);
-            dest.setBalance(dBal + it.getAmount());
-
-            DcDepositHistory h = DcDepositHistory.builder()
-                    .item(it)
-                    .sourceAccount(src)
-                    .destinationAccount(dest)
-                    .paidAmount(it.getAmount())
-                    .paidAt(now)
-                    .build();
-            dcDepositHistoryRepository.save(h);
-        }
-
-        // --- 6. 배치 상태 최종 변경 ---
-        b.setStatus(DcContributionBatch.BatchStatus.EXECUTED);
-
-        return Map.of("batchId", b.getId(),
-                      "status", b.getStatus().name(),
-                      "paidAmount", finalTotalAmount, // 최종 처리된 금액으로 응답
-                      "paidAt", now.toString());
-    }
-    
-    /**
      * 개별 납입 예정 항목 목록 조회
      */
     @Transactional(readOnly = true)
-    public Page<PayableItemDto> listPayableItems(Long companyId, List<DcContributionBatch.BatchStatus> statuses, LocalDate from, LocalDate to, Pageable pageable) {
-        List<DcContributionBatch.BatchStatus> effectiveStatuses = statuses;
-        // 만약 상태 목록이 비어있거나 null이면, 조회 가능한 기본 상태 목록을 설정 (예: 확정, 실행)
-        if (effectiveStatuses == null || effectiveStatuses.isEmpty()) {
-            effectiveStatuses = List.of(DcContributionBatch.BatchStatus.CONFIRMED, DcContributionBatch.BatchStatus.EXECUTED);
+    public Page<PayableItemDto> listPayableItems(Long companyId, LocalDate from, LocalDate to, String paymentStatus, Pageable pageable) {
+
+        // [추가] 1. 컨트롤러에서 어떤 문자열을 받았는지 확인
+    	System.out.println("SERVICE_LOG_1: Controller에서 받은 paymentStatus 문자열: '" + paymentStatus + "'");
+
+        List<DcContributionItem.PaymentStatus> statusesToSearch;
+        
+        if (paymentStatus != null && !"ALL".equalsIgnoreCase(paymentStatus)) {
+            statusesToSearch = List.of(DcContributionItem.PaymentStatus.valueOf(paymentStatus.toUpperCase()));
+        } else {
+            statusesToSearch = Arrays.asList(
+                DcContributionItem.PaymentStatus.PENDING, 
+                DcContributionItem.PaymentStatus.PAID, 
+                DcContributionItem.PaymentStatus.SKIPPED,
+                DcContributionItem.PaymentStatus.FAILED
+            );
         }
-        return itemRepo.findPayableItems(companyId, effectiveStatuses, from, to, pageable);
+        
+        // [추가] 2. Repository로 어떤 Enum 리스트를 보낼 것인지 확인
+    	System.out.println("SERVICE_LOG_2: Repository로 보낼 statusesToSearch 리스트: {}" +  statusesToSearch);
+        return itemRepo.findPayableItemsWithStatus(
+                companyId,
+                from,
+                to,
+                statusesToSearch,
+                pageable
+        );
     }
     
     /**
-     * [신규] 선택된 항목들 기반으로 최종 입금 실행
+     * 선택된 항목들 기반으로 최종 입금 실행
      */
     @Transactional
     public Map<String, Object> executePaymentByItems(Long companyId, List<Long> itemIds, Long sourceAccountId) {
@@ -434,6 +352,8 @@ public class DcContributionService {
 
         long finalTotalAmount = 0;
         List<DcContributionItem> validatedItems = new ArrayList<>();
+        // 영향을 받는 배치를 추적하기 위해 Set을 사용 (중복 방지)
+        Set<DcContributionBatch> affectedBatches = new HashSet<>();
 
         // 2. 실행 직전 최종 유효성 검증 및 금액 계산
         for (DcContributionItem item : itemsToPay) {
@@ -441,17 +361,30 @@ public class DcContributionService {
             if (!item.getBatch().getCompany().getId().equals(companyId)) {
                 throw new IllegalStateException("타 회사의 납입 항목이 포함되어 있습니다. (항목 ID: " + item.getId() + ")");
             }
+            
+            // 이미 처리된 건은 건너뜀 (예: PAID, SKIPPED)
+            if (item.getPaymentStatus() != null && item.getPaymentStatus() != DcContributionItem.PaymentStatus.PENDING) {
+                log.warn("이미 처리된 항목이므로 건너뜁니다. (항목 ID: {}, 상태: {})", item.getId(), item.getPaymentStatus());
+                continue;
+            }
+            
             // 최종 상태 확인
             String currentStatus = latestStatusMap.getOrDefault(item.getDcMember().getId(), "UNKNOWN");
             if ("재직".equals(currentStatus) || "ACTIVE".equalsIgnoreCase(currentStatus)) {
                 validatedItems.add(item);
                 finalTotalAmount += item.getAmount();
             } else {
-                 log.warn("입금 실행 제외: 회원 ID {}의 상태가 변경됨 (실행시: {})", item.getDcMember().getId(), currentStatus);
+                // 입금 제외된 항목의 상태를 SKIPPED로 변경
+                item.setPaymentStatus(DcContributionItem.PaymentStatus.SKIPPED);
+                log.warn("입금 실행 제외: 회원 ID {}의 상태가 변경됨 (실행시: {})", item.getDcMember().getId(), currentStatus);
             }
+            // 검증 과정에서 연관된 모든 배치를 추가
+            affectedBatches.add(item.getBatch());
         }
         
         if (validatedItems.isEmpty()) {
+            // 모든 항목이 제외되었더라도, SKIPPED 상태는 저장되어야 하므로 배치를 업데이트
+            updateBatchStatusIfCompleted(affectedBatches);
             throw new IllegalStateException("최종 납입 대상이 없습니다 (상태 변경 등으로 모두 제외됨).");
         }
 
@@ -466,7 +399,6 @@ public class DcContributionService {
 
         // 4. 가입자 DC 계좌 입금 및 이력 기록
         LocalDateTime now = LocalDateTime.now();
-        Set<DcContributionBatch> affectedBatches = new HashSet<>();
         for (DcContributionItem it : validatedItems) {
             DcMember m = it.getDcMember();
             DcAccount dest = accountRepo.findByDcMember_Id(m.getId())
@@ -483,15 +415,19 @@ public class DcContributionService {
                     .paidAt(now)
                     .build();
             dcDepositHistoryRepository.save(h);
-            affectedBatches.add(it.getBatch());
             
-            // Item의 상태도 EXECUTED로 변경 (별도 상태 필드가 있다면)
-            // it.setExecutionStatus(ExecutionStatus.SUCCESS); 
-
+            // 입금 처리된 항목의 상태를 PAID로 변경
+            it.setPaymentStatus(DcContributionItem.PaymentStatus.PAID);
+            
+            // 배치가 '확정' 상태일 경우 '처리중'으로 변경
+            DcContributionBatch batch = it.getBatch();
+            if (batch.getStatus() == DcContributionBatch.BatchStatus.CONFIRMED) {
+                batch.setStatus(DcContributionBatch.BatchStatus.PROCESSING);
+            }
         }
         
+        // 모든 처리가 끝난 후, 영향을 받은 배치들의 최종 상태를 업데이트
         updateBatchStatusIfCompleted(affectedBatches);
-
 
         // 5. 결과 반환
         return Map.of("processedCount", validatedItems.size(),
@@ -500,20 +436,28 @@ public class DcContributionService {
     }
     
     /**
-     * [신규 추가] 영향을 받은 Batch들의 모든 Item이 처리 완료되었는지 확인하고 상태를 업데이트하는 메소드
+     * 영향을 받은 Batch들의 모든 Item이 처리 완료되었는지 확인하고 상태를 업데이트하는 메소드
      */
     private void updateBatchStatusIfCompleted(Set<DcContributionBatch> batches) {
         for (DcContributionBatch batch : batches) {
-            // 해당 배치의 모든 '성공(VALIDATED)' 판정 항목들의 개수
-            long totalSuccessItemsInBatch = batch.getItems().stream()
-                                                 .filter(i -> i.getValidationStatus() == DcContributionItem.ValidationStatus.SUCCESS)
-                                                 .count();
-            
-            // 해당 배치에 대해 실제로 입금 처리된 내역(History)의 개수
-            long paidItemsInBatch = dcDepositHistoryRepository.countByItem_Batch(batch);
+            // 해당 배치의 모든 '성공(SUCCESS)' 판정 항목들을 가져옴
+            List<DcContributionItem> payableItems = batch.getItems().stream()
+                    .filter(i -> i.getValidationStatus() == DcContributionItem.ValidationStatus.SUCCESS)
+                    .toList();
 
-            // 두 숫자가 같으면 모든 건이 처리된 것이므로, Batch의 상태를 EXECUTED로 변경
-            if (totalSuccessItemsInBatch > 0 && totalSuccessItemsInBatch == paidItemsInBatch) {
+            if (payableItems.isEmpty()) {
+                continue; // 처리할 항목이 없으면 건너뜀
+            }
+            
+            // 모든 성공 항목이 '입금완료(PAID)' 또는 '입금제외(SKIPPED)' 상태인지 확인
+            boolean allItemsProcessed = payableItems.stream()
+                    .allMatch(item ->
+                            item.getPaymentStatus() == DcContributionItem.PaymentStatus.PAID ||
+                            item.getPaymentStatus() == DcContributionItem.PaymentStatus.SKIPPED
+                    );
+
+            // 모든 건이 처리되었다면, Batch의 상태를 EXECUTED로 변경
+            if (allItemsProcessed) {
                 batch.setStatus(DcContributionBatch.BatchStatus.EXECUTED);
             }
         }

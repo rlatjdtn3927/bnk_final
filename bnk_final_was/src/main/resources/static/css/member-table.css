@@ -1,0 +1,78 @@
+@charset "UTF-8";
+
+:root{
+  --pri:#c82020; --ink:#0b1324; --mut:#6b7280;
+  --bg:#f5f7fb; --card:#fff; --line:#e5e7eb; --shadow:0 8px 24px rgba(0,0,0,.06);
+  --ok:#16a34a; --amber:#f59e0b; --blue:#2563eb;
+  --sticky:64px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body.bnk-body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:Pretendard,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; text-rendering:optimizeLegibility;
+}
+.wrap{max-width:1200px; margin:32px auto; padding:0 24px 96px}
+
+/* 헤더/툴바 */
+.page-head{display:flex; align-items:center; gap:16px; margin-bottom:12px}
+.page-head h1{margin:0; font-size:28px; font-weight:900}
+.toolbar{display:flex; align-items:center; gap:12px; margin-left:auto}
+.seg{display:flex; gap:6px; padding:4px; background:#fff; border:1px solid var(--line); border-radius:999px}
+.seg-btn{border:0; background:transparent; padding:8px 12px; border-radius:999px; font-weight:800; cursor:pointer; color:#1a1a1a}
+.seg-btn.is-active{background:#f2f4ff; color:#1f2a8a}
+.search input{width:260px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; outline:none}
+.search input:focus{border-color:#b8c7ff; box-shadow:0 0 0 3px rgba(184,199,255,.35)}
+.sel-all{display:flex; align-items:center; gap:8px; font-weight:700}
+
+/* 카드/테이블 */
+.datacard{background:var(--card); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow)}
+.table-wrap{position:relative; border-radius:18px; overflow:hidden}
+.tbl{width:100%; border-collapse:separate; border-spacing:0}
+thead th{
+  position:sticky; top:0; z-index:2;
+  background:#fbfbfd; color:#3b4453; font-weight:800; font-size:13px; text-align:left;
+  padding:12px 12px; border-bottom:1px solid var(--line)
+}
+tbody td{padding:12px 12px; border-bottom:1px solid var(--line); vertical-align:middle}
+tbody tr:hover{background:#f6f9ff}
+tbody tr.selected{background:#eef3ff}
+.name .n{font-weight:800}
+.name .s{color:var(--mut); font-size:12px}
+.mono{font-variant-numeric:tabular-nums; font-feature-settings:"tnum"}
+.nowrap{white-space:nowrap}
+.num{text-align:right; font-variant-numeric:tabular-nums}
+.act{white-space:nowrap}
+
+/* 칩/버튼 */
+.chip{display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:6px 10px; font-weight:800; font-size:12px; background:#f5f6f8; border:1px solid var(--line)}
+.chip-green{background:#e3fcef; color:var(--ok)}
+.chip-amber{background:#fff0b3; color:var(--amber)}
+.chip-blue{background:#deebff; color:var(--blue)}
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:6px; border-radius:10px; font-weight:800; cursor:pointer; border:1px solid transparent}
+.btn-primary{background:var(--pri); color:#fff; padding:8px 12px}
+.btn-ghost{background:#f3f4f6; color:#111; padding:8px 12px; border:1px solid var(--line)}
+.btn-disabled{background:#f3f4f6; color:#98a2b3; padding:8px 12px; border:1px solid var(--line); cursor:not-allowed}
+.icon{padding:6px 10px; border-radius:10px}
+
+/* 빈 상태 */
+.empty{padding:28px; text-align:center; color:var(--mut)}
+
+/* 하단 일괄바 */
+.bulkbar{position:fixed; left:0; right:0; bottom:0; height:var(--sticky); background:#fff; border-top:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; padding:0 24px; transform:translateY(100%); transition:transform .25s ease; z-index:50}
+.bulkbar.visible{transform:none}
+
+/* 디테일 드로어 */
+.drawer{
+  position:fixed; top:0; right:-420px; width:420px; height:100vh; background:#fff; border-left:1px solid var(--line);
+  box-shadow:-10px 0 24px rgba(0,0,0,.06); transition:right .25s ease; z-index:60
+}
+.drawer.open{right:0}
+.drawer-head{display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid var(--line)}
+.drawer-head strong{font-size:18px}
+.drawer-head .x{all:unset; cursor:pointer; font-size:22px; color:#6b7280}
+.drawer-body{padding:18px; line-height:1.9}
+.drawer-body .dl{display:flex; align-items:center; justify-content:space-between; padding:8px 0}
+.drawer-body .dl span{color:var(--mut)}
+.drawer-body hr{border:none; border-top:1px solid var(--line); margin:10px 0}

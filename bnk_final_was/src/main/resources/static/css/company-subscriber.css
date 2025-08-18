@@ -1,0 +1,212 @@
+@charset "UTF-8";
+
+:root{
+  --pri:#c82020;              /* BNK 메인 레드 */
+  --pri-h:#b01b1b;
+  --ink:#0b1324;
+  --mut:#6b7280;
+  --bg:#f5f7fb;
+  --card:#ffffff;
+  --line:#e5e7eb;
+  --ok:#0f9d58;
+  --err:#de350b;
+  --dup:#ffab00;
+  --shadow:0 8px 24px rgba(0,0,0,.08);
+  --sticky-h: 72px;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body.bnk-body{
+  margin:0;
+  font-family:Pretendard, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color:var(--ink);
+  background:var(--bg);
+}
+
+/* 레이아웃 */
+.wrap{max-width:1200px; margin:32px auto 110px; padding:0 24px; padding-bottom: calc(var(--sticky-h) + 24px); }
+.page-head h1{margin:0 0 6px; font-size:28px; font-weight:900; letter-spacing:-.2px}
+.page-head .desc{margin:0 0 18px; color:var(--mut)}
+
+/* 카드 */
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:18px;
+  box-shadow:var(--shadow);
+  padding:18px;
+  margin-bottom:18px;
+}
+.card-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px}
+.card-head h2{margin:0; font-size:18px; font-weight:900}
+
+/* 버튼 */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  padding:10px 16px; border-radius:10px; border:1px solid transparent;
+  font-weight:800; cursor:pointer; text-decoration:none; user-select:none;
+  transition:filter .15s ease, background .15s ease, border-color .15s ease;
+}
+.btn-primary{background:var(--pri); color:#fff}
+.btn-primary:hover{filter:brightness(.97)}
+.btn-outline{background:#fff; color:var(--ink); border-color:var(--line)}
+.btn-outline:hover{border-color:#c9d4ff}
+.btn-ghost{background:#f3f4f6; color:#1a1a1a}
+.btn-ghost:hover{filter:brightness(.96)}
+.btn:disabled{opacity:.6; cursor:not-allowed}
+
+/* 드롭존 */
+.dropzone{
+  border:2px dashed #cfd6e6; border-radius:16px; background:#fbfcff;
+  padding:28px; text-align:center; position:relative; outline:none;
+}
+.dropzone.is-hover{background:#f6f9ff; border-color:#b9c6ff}
+.dropzone input[type=file]{position:absolute; inset:0; opacity:0; cursor:pointer}
+.dz-inner{pointer-events:none}
+.dz-icon{font-size:24px; margin-bottom:4px}
+.dz-title{font-size:16px; font-weight:800}
+.dz-sub{color:var(--mut); font-size:12px}
+
+.upload-bar{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:12px}
+.file-pill{
+  display:inline-flex; align-items:center; gap:10px; padding:8px 12px; border-radius:999px;
+  background:#f3f6ff; border:1px solid #dce6ff; color:#1a1a1a;
+}
+.file-pill .x{all:unset; cursor:pointer; padding:0 6px; font-weight:900}
+.note{margin-top:10px; color:var(--mut)}
+
+/* 요약칩 */
+.summary{display:flex; gap:12px; flex-wrap:wrap; margin:8px 0 14px}
+.chip{display:inline-flex; align-items:center; gap:8px; background:#f5f6f8; border:1px solid var(--line);
+  border-radius:999px; padding:8px 12px; font-weight:800}
+.chip i{display:inline-block; width:10px; height:10px; border-radius:50%}
+.chip.total i{background:var(--pri)}
+.chip.ok i{background:var(--ok)}
+.chip.err i{background:var(--err)}
+.chip.dup i{background:var(--dup)}
+.chip b{margin-left:4px}
+
+/* 테이블 */
+.table-wrap{border:1px solid var(--line); border-radius:14px; overflow:hidden}
+.tbl{width:100%; border-collapse:collapse; min-width: 1100px}
+.tbl th, .tbl td{padding:12px 14px; border-bottom:1px solid var(--line); text-align:left}
+.tbl thead th{background:#fbfbfd; color:#445; font-size:13px}
+.tbl tbody tr:nth-child(even){background:#fbfcff}
+.tbl tbody tr:hover{background:#f6f9ff}
+.tr-error{background:#fff5f0}
+.tr-dup{background:#fff9e8}
+.with-tip{position:relative}
+.with-tip .tip{
+  visibility:hidden; opacity:0; position:absolute; left:0; bottom:100%; transform:translateY(-8px);
+  background:#222; color:#fff; padding:8px 10px; border-radius:8px; font-size:12px; white-space:pre-wrap; min-width:220px; z-index:5;
+  transition:opacity .12s ease, transform .12s ease;
+}
+.with-tip:hover .tip{visibility:visible; opacity:1; transform:translateY(-4px)}
+
+/* 가로 스크롤: 이중 래퍼 */
+.table-outer{
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:#fff;
+  overflow:hidden;               /* 모서리 둥글게 유지 */
+}
+.table-scroll{
+  overflow:auto;                 /* ← 가로/세로 스크롤 허용 */
+  max-width:100%;
+}
+
+/* 하단 고정 바 */
+.sticky-bar{
+  position:fixed; left:0; right:0; bottom:0; z-index:50;
+  height: var(--sticky-h);                 /* ← 추가 */
+  display:flex; align-items:center; justify-content:space-between;
+  background:#fff; border-top:1px solid var(--line);
+  padding:0 24px;                          /* 높이 지정했으므로 수직 패딩 제거/조정 */
+}
+.sticky-bar .muted{color:var(--mut)}
+
+/* 스피너 */
+.spinner-mask[hidden] {
+  display: none;
+}
+
+.spinner-mask{
+  position:fixed; inset:0; background:rgba(255,255,255,.6); display:flex; align-items:center; justify-content:center; z-index:100;
+}
+.spinner{
+  width:54px; height:54px; border-radius:50%; border:6px solid #e3e7ef; border-top-color:var(--pri);
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+
+
+/* === 글자 렌더링 개선(윈도우/맥 공통) === */
+body.bnk-body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  letter-spacing: -0.2px;          /* 한글 살짝 다듬기 */
+}
+
+/* === 표 기본 타이포 정리 === */
+.tbl {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: #14171f;
+}
+
+/* 칸 여백 조금 키워서 답답함 해소 */
+.tbl th, .tbl td { 
+  padding: 14px 16px;
+  vertical-align: middle;
+  word-break: keep-all;            /* 한글 단어 중간 줄바꿈 방지 */
+}
+
+/* 헤더 색감/굵기 조정 */
+.tbl thead th {
+  background: #f8f9fc;
+  color: #3b4453;
+  font-weight: 700;
+  border-bottom-color: #e7eaf0;
+}
+
+/* === 숫자/날짜/전화번호 가독성: 고정폭 숫자 + 줄바꿈 금지 === */
+/* 주민번호(2), 입사일(3), 기산일(4), 임금(5), 이메일(7 제외), 휴대폰(8), 상태(9), 가입일(10) */
+.tbl td:nth-child(2),
+.tbl td:nth-child(3),
+.tbl td:nth-child(4),
+.tbl td:nth-child(5),
+.tbl td:nth-child(8),
+.tbl td:nth-child(9),
+.tbl td:nth-child(10),
+.tbl th:nth-child(2),
+.tbl th:nth-child(3),
+.tbl th:nth-child(4),
+.tbl th:nth-child(5),
+.tbl th:nth-child(8),
+.tbl th:nth-child(9),
+.tbl th:nth-child(10) {
+  font-variant-numeric: tabular-nums;   /* 숫자 너비 고정 → 깔끔하게 정렬 */
+  font-feature-settings: "tnum";
+  white-space: nowrap;                  /* 줄바꿈 방지 */
+}
+
+/* 금액은 오른쪽 정렬이 더 안정적 */
+.tbl td:nth-child(5) { text-align: right; }
+
+/* 이름은 한 줄 유지 */
+.tbl td:nth-child(1) { white-space: nowrap; }
+
+/* 이메일은 너무 길어 보이면 살짝 작게 */
+.tbl td:nth-child(7) { font-size: 14px; }
+
+/* 호버/줄무늬 톤 정리(너무 붉지 않게) */
+.tbl tbody tr:nth-child(even) { background:#fbfcff; }
+.tbl tbody tr:hover { background:#f3f6ff; }
+
+/* 오류/중복 강조 톤 미세 조정(텍스트는 그대로 또렷하게) */
+.tr-error { background: #fff6f1; }
+.tr-dup   { background: #fff9ec; }
+

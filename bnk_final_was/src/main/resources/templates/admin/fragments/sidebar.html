@@ -1,0 +1,24 @@
+<aside xmlns:th="http://www.thymeleaf.org"
+       id="sidebar"
+       hx-swap-oob="true"
+       th:fragment="sidebar(activeCategory, subcats, activeCode)">
+
+  <div style="padding:20px 14px 8px 24px;font-weight:700;">
+    <span th:text="${@sidebarService.nameOf(activeCategory)}"></span>
+  </div>
+
+  <!-- 메뉴가 2개 이상일 때만 목록 표시 -->
+  <ul class="submenu" style="list-style:none;margin:0;padding:8px 0;"
+      th:if="${#lists.size(subcats) > 1}">
+    <li th:each="s : ${subcats}">
+	<a th:text="${s.label}"
+	   th:href="@{/admin/page/{code}(code=${s.code})}"
+	   th:attr="hx-get=@{/admin/ui/page/{code}(code=${s.code})},
+	            hx-target='#content',
+	            hx-push-url=@{/admin/page/{code}(code=${s.code})}"
+	   th:classappend="${s.code == activeCode} ? 'is-active'">
+	</a>
+
+    </li>
+  </ul>
+</aside>

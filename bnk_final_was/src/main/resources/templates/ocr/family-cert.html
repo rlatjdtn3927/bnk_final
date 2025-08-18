@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>가족관계증명서 OCR 테스트 (One Page)</title>
+  <style>
+    body{font-family:system-ui, -apple-system, Segoe UI, Roboto, sans-serif; max-width:860px; margin:32px auto; padding:0 16px;}
+    .card{border:1px solid #e5e7eb; border-radius:12px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,.05);}
+    .row{display:flex; gap:10px; align-items:center; margin:10px 0;}
+    .row > *{flex:1}
+    .row label{flex:0 0 140px; font-weight:600}
+    button{padding:10px 16px; border:0; border-radius:10px; background:#111827; color:#fff; cursor:pointer}
+    button:disabled{opacity:.6; cursor:not-allowed}
+    .muted{color:#6b7280; font-size:12px}
+    .ok{color:#065f46; font-weight:700}
+    .fail{color:#991b1b; font-weight:700}
+    .spinner{display:none; margin-left:8px}
+    pre{background:#f8fafc; padding:12px; border-radius:8px; overflow:auto}
+    .grid{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+    .field{padding:10px; border:1px solid #e5e7eb; border-radius:10px; background:#fff}
+    .field b{display:block; color:#374151; margin-bottom:6px}
+  </style>
+</head>
+<body>
+  <h2>가족관계증명서 OCR 테스트</h2>
+
+  <div class="card">
+    <div class="row">
+      <label for="file">PDF 업로드</label>
+      <input type="file" id="file" accept=".pdf" />
+    </div>
+    <div class="row">
+      <label for="expected">신청인 성명</label>
+      <input id="expected" placeholder="예: 홍길동" />
+    </div>
+    <div class="row" style="justify-content:flex-end">
+      <span class="muted">* 4MB 이하 PDF 권장</span>
+      <button id="runBtn">OCR 요청</button>
+      <span id="spin" class="spinner">⌛ 처리중…</span>
+    </div>
+  </div>
+
+  <div id="resultWrap" class="card" style="margin-top:18px; display:none">
+    <h3>결과</h3>
+    <div id="pretty" class="grid" style="margin-top:8px"></div>
+    <div style="margin-top:12px">
+      <label><input type="checkbox" id="toggleRaw"> RAW JSON 보기</label>
+      <pre id="raw" style="display:none"></pre>
+    </div>
+  </div>
+
+  <script>
+    const $ = (s)=>document.querySelector(s);
+    const runBtn = $('#runBtn'), spin = $('#spin');
+
+    async function fileToBase64(file){
+      const buf = await file.arrayBuffer();
+      // 큰 파일에서도 메모리 폭주 방지용 chunk 인코딩
+      let bin = '', bytes = new Uint8Array(buf), step = 0x8000;
+      for(let i=0;i<bytes.length;i+=step){
+        bin += String.fromCharCode.apply(null, bytes.subarray(i,i+step));
+      }
+      return btoa(bin);
+    }
+
+    function renderPretty(json){
+      const kv = [
+        ['문서 종류', json.docType],
+        ['본인 성명', json.applicantName],
+        ['본인 주민등록번호', json.applicantRrn],
+        ['배우자 성명', json.spouseName],
+        ['배우자 주민등록번호', json.spouseRrn],
+        ['검증 결과', json.verified ? '✅ 성공' : '❌ 실패'],
+        ['사유', json.reason || '']
+      ];
+      $('#pretty').innerHTML = kv.map(([k,v]) =>
+        `<div class="field"><b>${k}</b><div>${v ?? '-'}</div></div>`
+      ).join('');
+      $('#raw').textContent = JSON.stringify(json, null, 2);
+      $('#resultWrap').style.display = 'block';
+    }
+
+    async function run(){
+      const f = $('#file').files[0];
+      const name = ($('#expected').value || '').trim();
+
+      if(!f){ alert('PDF 파일을 선택하세요.'); return; }
+      if(f.type !== 'application/pdf'){ alert('PDF 형식만 지원합니다.'); return; }
+      if(!name){ alert('신청인 성명을 입력하세요.'); return; }
+
+      try{
+        runBtn.disabled = true; spin.style.display = 'inline';
+        const base64 = await fileToBase64(f);
+
+        const res = await fetch('/api/family/ocr', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            base64Data: base64,
+            format: 'pdf',
+            expectedApplicantName: name
+          })
+        });
+
+        // 서버가 에러 바디를 문자열로 줄 수도 있으니 방어적으로 처리
+        const text = await res.text();
+        let json;
+        try { json = JSON.parse(text); } catch(e){ json = { verified:false, reason:text || '서버 응답 파싱 실패' }; }
+        renderPretty(json);
+
+      }catch(err){
+        renderPretty({ verified:false, reason: String(err) });
+      }finally{
+        runBtn.disabled = false; spin.style.display = 'none';
+      }
+    }
+
+    runBtn.addEventListener('click', run);
+    $('#toggleRaw').addEventListener('change', (e)=>{
+      $('#raw').style.display = e.target.checked ? 'block' : 'none';
+    });
+  </script>
+</body>
+</html>

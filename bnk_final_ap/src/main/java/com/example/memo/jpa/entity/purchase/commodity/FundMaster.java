@@ -45,7 +45,7 @@ public class FundMaster extends BaseEntity{
     @Column(name = "management_company", length = 100)
     private String managementCompany;
 
-    @Column(name = "total_expense_ratio", precision = 5, scale = 2)
+    @Column(name = "total_expense_ratio", precision = 8, scale = 4)
     private BigDecimal totalExpenseRatio;
 
     @Column(name = "category", length = 10)
@@ -53,6 +53,9 @@ public class FundMaster extends BaseEntity{
 
     @Column(name = "channel")
     private Integer channel;
+    
+    @Column(name = "status", length = 20)
+    private String status;  //"INSERTED", "UPDATED"
 }
 
 //fundMasterRepository.deleteById("abc");

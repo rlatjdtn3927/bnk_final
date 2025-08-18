@@ -1,0 +1,10 @@
+<th:block xmlns:th="http://www.thymeleaf.org">
+  <!-- 사이드바 OOB 교체: 프래그먼트 자체 루트(aside)에 hx-swap-oob 있음 -->
+  <th:block th:replace="~{admin/fragments/sidebar :: sidebar(${activeCategory}, ${subcats}, ${activeCode})}"></th:block>
+
+  <!-- 페이지별 CSS (각 페이지의 <style id="page-css" hx-swap-oob="true">가 OOB로 적용됨) -->
+  <th:block th:replace="~{${pageView} :: css}"></th:block>
+
+  <!-- 본문은 #content 타깃으로 스왑 -->
+  <th:block th:replace="~{${pageView} :: content}"></th:block>
+</th:block>
