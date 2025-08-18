@@ -13,7 +13,7 @@ public class LoginViewController {
     // 로그인 화면: GET /login-view 또는 /login-view/
     @GetMapping({"", "/"})
     public String loginPage() {
-        return "/authlogin/login-view";
+        return "authlogin/login-view";
     }
 
 
@@ -23,7 +23,7 @@ public class LoginViewController {
         Object uid = session.getAttribute("user");
         if (uid == null) uid = session.getAttribute("LOGIN_USER_ID");
         if (uid == null) return "redirect:/login-view";
-        return "/authlogin/main"; 
+        return "authlogin/main"; 
     }
 
     // 로그아웃: GET /login-view/logout-view

@@ -9,46 +9,49 @@ import java.util.List;
 
 public class LoginCheckFilter implements Filter {
 
-	private static final List<String> excludeUrls = List.of(
-		    "/login-api/login",
-		    "/login-view",
-		    "/login-view/logout-view",
-		    "/user-api/register",
-		    "/register-form",
-		    "/favicon.ico"
-		);
+    private static final List<String> excludeUrls = List.of(
+        "/login-api/login",
+        "/login-view",
+        "/login-view/logout-view",
+        "/user-api/register",
+        "/register-form",
+        "/favicon.ico",
+        "/company/login"
+    );
 
-		private static final String[] staticPrefixes = { "/css", "/js", "/images", "/webjars" };
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) 
+            throws IOException, ServletException {
+        
+        HttpServletRequest httpReq = (HttpServletRequest) request;
+        HttpServletResponse httpRes = (HttpServletResponse) response;
 
-		@Override
-		public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-		        throws IOException, ServletException {
+        String requestURI = httpReq.getRequestURI();
 
-		    HttpServletRequest req = (HttpServletRequest) request;
-		    HttpServletResponse res = (HttpServletResponse) response;
-		    String uri = req.getRequestURI();
+        // 1) 제외 경로라면 바로 통과
+        if (isExcluded(requestURI)) {
+            chain.doFilter(request, response);
+            return;
+        }
 
-		    // 정적 리소스는 통과
-		    for (String p : staticPrefixes) {
-		        if (uri.startsWith(p)) { chain.doFilter(request, response); return; }
-		    }
-		    // 화이트리스트 통과
-		    if (excludeUrls.contains(uri)) { chain.doFilter(request, response); return; }
+        // 2) 세션에서 로그인 체크
+        HttpSession session = httpReq.getSession(false);
+        if (session == null || session.getAttribute("user") == null) {
+            // 회사 전용 경로 요청 시 → /company/login 으로
+            if (requestURI.startsWith("/company")) {
+                httpRes.sendRedirect("/company/login");
+            } else {
+                // 기본은 고객용 로그인 페이지
+                httpRes.sendRedirect("/login-view");
+            }
+            return;
+        }
 
-		    // 보호 대상: 메인/설문 화면/설문 API
-		    boolean needsLogin =
-		            uri.startsWith("/main") ||
-		            uri.startsWith("/survey-view") ||
-		            uri.startsWith("/survey-api");
+        // 3) 로그인 되어있으면 다음 필터로
+        chain.doFilter(request, response);
+    }
 
-		    if (needsLogin) {
-		        HttpSession session = req.getSession(false);
-		        if (session == null || session.getAttribute("user") == null) {
-		            res.sendRedirect("/login-view");
-		            return;
-		        }
-		    }
-		    chain.doFilter(request, response);
-		}
-
+    private boolean isExcluded(String uri) {
+        return excludeUrls.stream().anyMatch(uri::startsWith);
+    }
 }

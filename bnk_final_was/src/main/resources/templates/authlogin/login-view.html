@@ -65,7 +65,6 @@
       display:flex; align-items:center; justify-content:center; gap:10px;
       border-radius:12px; padding:12px; border:1px solid var(--line); background:#f8fafc; cursor:pointer; font-weight:700;
     }
-    /* Brand-tinted SSO buttons */
     .sso.red{ background:#ffe6e6; border-color:#fecaca; }
     .sso.blue{ background:#fdeaea; border-color:#fecaca; }
 
@@ -189,8 +188,8 @@
           return;
         }
 
-        // ✅ 성공 → 백엔드가 내려준 경로 우선, 없으면 /main
-        location.href = (data.redirect && typeof data.redirect === "string") ? data.redirect : "/main";
+        // ✅ 성공 → 백엔드가 내려준 경로 우선, 없으면 /login-view/main
+        location.href = (data.redirect && typeof data.redirect === "string") ? data.redirect : "/login-view/main";
 
       } catch (err) {
         if (err.name === "AbortError") {

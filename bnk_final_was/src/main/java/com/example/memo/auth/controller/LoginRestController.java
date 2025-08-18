@@ -64,13 +64,13 @@ public class LoginRestController {
             String apMessage = root.path("message").asText("");
 
             if (!success) {
-                // AP에서 실패로 준 경우 그대로 전달
                 body.put("success", false);
                 body.put("code", isBlank(apCode) ? "ERROR" : apCode);
                 body.put("message", isBlank(apMessage) ? "로그인 실패" : apMessage);
                 body.put("data", null);
-                // 인증 실패면 401, 그 외 내부 에러면 502로 맵핑
-                HttpStatus status = "INVALID_CREDENTIALS".equals(apCode) ? HttpStatus.UNAUTHORIZED : HttpStatus.BAD_GATEWAY;
+                HttpStatus status = "INVALID_CREDENTIALS".equals(apCode) 
+                        ? HttpStatus.UNAUTHORIZED 
+                        : HttpStatus.BAD_GATEWAY;
                 return ResponseEntity.status(status).body(body);
             }
 
@@ -80,7 +80,6 @@ public class LoginRestController {
             String username = d.path("username").asText(null);
 
             if (userId <= 0) {
-                // 성공인데 필수 데이터가 비정상인 경우 방어
                 body.put("success", false);
                 body.put("code", "BAD_AP_RESPONSE");
                 body.put("message", "AP 데이터 형식이 올바르지 않습니다.");
@@ -88,11 +87,11 @@ public class LoginRestController {
                 return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(body);
             }
 
-            // 세션 고정화 방지: 로그인 성공 시 세션 ID 갱신
+            // 세션 고정화 방지
             request.changeSessionId();
 
-            // 세션 저장
-            session.setAttribute("user", userId);
+            // ✅ 세션 저장 (설문 컨트롤러와 통일)
+            session.setAttribute("LOGIN_USER_ID", userId);
             session.setAttribute("username", username);
 
             Map<String, Object> payload = new HashMap<>();
@@ -103,9 +102,7 @@ public class LoginRestController {
             body.put("code", "OK");
             body.put("message", "로그인 성공");
             body.put("data", payload);
-
-            // ★ 추가: 프론트가 바로 이동할 경로 전달
-            body.put("redirect", "/main");
+            body.put("redirect", "/login-view/main");
 
             return ResponseEntity.ok(body);
 
