@@ -81,7 +81,7 @@ public enum Command {
     DO_HISTORY,               // DefaultOptionHandler: 디폴트옵션 변경 이력
     
     ACCOUNT_OVERVIEW_GET, // ✅ Step1 계좌목록
-    
+    BUY_PLAN_CURRENT_LIST_GET, //매수예정상품의 경우 변경 전 내역 보여주기
     /*관리자 크롤링 데이터 관련 명령어*/
     ADMIN_CRAWL_GRANT_FILE_DOWNLOAD,
     ADMIN_CRAWL_CHECK_FILE_TASK,
