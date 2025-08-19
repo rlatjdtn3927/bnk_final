@@ -156,7 +156,6 @@
       const totCnt = document.getElementById('totCnt');
       const okSum = document.getElementById('okSum');
       const batchStatus = document.getElementById('batchStatus');
-      const infoBox = document.getElementById('infoBox');
       const tbody = document.getElementById('tbody');
       const errBox = document.getElementById('errBox');
       const okBox = document.getElementById('okBox');
@@ -181,19 +180,7 @@
 
       let rows = [];            // OK 항목(실행 후보)
       let selected = new Set(); // 선택된 itemId
-      let accounts = [];        // 회사 출금 계좌 목록
-
-      function renderAccounts(){
-        acctSel.innerHTML = '';
-        accounts.forEach(a=>{
-          const opt = document.createElement('option');
-          opt.value = a.id;
-          opt.textContent = `${a.name} (${a.number})`;
-          opt.dataset.balance = a.balance ?? 0;
-          acctSel.appendChild(opt);
-        });
-        updateAcctBalance();
-      }
+      let sourceAccountId = null; // 단일 출금계좌 ID
 
       function updateAcctBalance(){
         const opt = acctSel.selectedOptions[0];
@@ -206,8 +193,7 @@
         let sum = 0;
         rows.forEach(r => { if (selected.has(r.itemId)) sum += Number(r.amount||0); });
         selSum.textContent = fmtMoney(sum);
-        execBtn.disabled = !(selected.size && acctSel.value);
-        // 전체선택 토글 상태 동기화
+        execBtn.disabled = !(selected.size && (acctSel.value || sourceAccountId));
         chkAll.checked = selected.size && selected.size === rows.length;
       }
 
@@ -233,7 +219,6 @@
         tbody.innerHTML = '';
         tbody.appendChild(frag);
 
-        // 각 체크박스 이벤트
         tbody.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
           cb.addEventListener('change', e=>{
             const id = Number(e.target.dataset.id);
@@ -266,10 +251,8 @@
           });
           okSum.textContent = fmtMoney(typeof data.totalOkAmount === 'number' ? data.totalOkAmount : sumOk);
 
-          // 배치 상태 텍스트(추정)
           batchStatus.textContent = (data.errorCount===0) ? 'VALIDATED/CONFIRMED' : 'DRAFT';
 
-          // 기본 선택: 모두 선택
           selected = new Set(rows.map(r=>r.itemId));
           renderTable();
           updateSelectionUI();
@@ -280,83 +263,118 @@
         }
       }
 
-      async function loadAccounts(){
+      // 단일 출금계좌 조회 (rows[0] 사용, select 비활성화)
+      async function fetchAndSetSourceAccount(){
         try{
-          // 회사 출금 계좌 목록 엔드포인트 예시
-          const res = await fetch('/company/account/list');
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.message || '계좌 조회 실패');
+          const res = await fetch('/company/dc/contribution/source-accounts', {
+            headers: { 'Accept': 'application/json' }
+          });
+          const isJson = (res.headers.get('content-type') || '').includes('application/json');
+          const data = isJson ? await res.json() : null;
 
-          // 기대 스키마: [{id, name, number, balance}]
-          accounts = Array.isArray(data) ? data : (Array.isArray(data.accounts) ? data.accounts : []);
-          renderAccounts();
+          if (!res.ok) {
+            const msg = data?.message || data?.error || '출금 계좌 조회 실패';
+            throw new Error(msg);
+          }
+
+          const rows = Array.isArray(data?.rows) ? data.rows : [];
+          if (rows.length === 0) {
+            acctSel.innerHTML = '<option value="">등록된 출금계좌가 없습니다</option>';
+            acctSel.disabled = true;
+            acctBal.textContent = '잔액: -원';
+            execBtn.disabled = true;
+            return;
+          }
+
+          const account = rows[0]; // 단일 계좌
+          sourceAccountId = account.accountId;
+
+          acctSel.innerHTML = '';
+          const opt = document.createElement('option');
+          opt.value = String(account.accountId);
+          opt.textContent = `${account.accountNo}`;
+          opt.dataset.balance = Number(account.balance || 0);
+          acctSel.appendChild(opt);
+          acctSel.disabled = true; // 1개 고정
+
+          updateAcctBalance();
+          updateSelectionUI();
         }catch(e){
-          // 계좌가 없어도 페이지는 보이되 실행은 막음
           acctSel.innerHTML = '<option value="">계좌를 불러오지 못했습니다</option>';
+          acctSel.disabled = true;
           execBtn.disabled = true;
           errBox.style.display = 'block';
           errBox.textContent = '계좌 조회 실패: ' + e.message;
         }
       }
 
-      async function executePayment(){
-        if (!selected.size){ alert('납입 대상을 선택하세요.'); return; }
-        if (!acctSel.value){ alert('출금 계좌를 선택하세요.'); return; }
-        if (!confirm('선택한 항목에 대해 납입을 실행하시겠습니까?')) return;
+   	  async function executePayment(){
+   		  if (!selected.size){ alert('납입 대상을 선택하세요.'); return; }
 
-        const origText = execBtn.textContent;
-        execBtn.disabled = true;
-        execBtn.textContent = '납입 실행 중...';
-        errBox.style.display = 'none'; okBox.style.display = 'none';
+   		  // 단일 계좌: select 값이 비어도 전역 sourceAccountId 사용
+   		  const srcId = Number(acctSel.value || sourceAccountId);
+   		  if (!srcId){ alert('출금 계좌를 확인하세요.'); return; }
 
-        try{
-          const payload = {
-            batchId,
-            itemIds: Array.from(selected),
-            sourceAccountId: Number(acctSel.value)
-          };
-          // 실행 엔드포인트 예시: 서버에 맞게 조정 가능
-          const res = await fetch('/company/dc/contribution/execute-by-items', {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify(payload)
-          });
+   		  if (!confirm('선택한 항목에 대해 납입을 실행하시겠습니까?')) return;
 
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.message || '납입 실행 실패');
+   		  const origText = execBtn.textContent;
+   		  execBtn.disabled = true;
+   		  execBtn.textContent = '납입 실행 중...';
+   		  errBox.style.display = 'none'; 
+   		  okBox.style.display = 'none';
 
-          okBox.style.display = 'block';
-          okBox.textContent =
-            `납입 완료: 처리 ${data.processedCount ?? '-'}건, 총액 ${Number(data.totalPaidAmount||0).toLocaleString()}원, 시각 ${data.paidAt || '-'}`;
+   		  try{
+   		    const payload = {
+   		      itemIds: Array.from(selected),
+   		      sourceAccountId: srcId
+   		    };
 
-          // 실행 후 선택 해제 및 재조회(선택)
-          selected.clear();
-          await loadSummaryAndItems();
-          updateSelectionUI();
-        }catch(e){
-          errBox.style.display = 'block';
-          errBox.textContent = '실행 실패: ' + e.message;
-          execBtn.disabled = false;
-          execBtn.textContent = origText;
-          return;
-        }
+   		    const res = await fetch('/company/dc/contribution/execute-items', {
+   		      method: 'POST',
+   		      headers: { 'Content-Type': 'application/json' },
+   		      body: JSON.stringify(payload)
+   		    });
 
-        execBtn.textContent = '납입 실행';
-        execBtn.disabled = false;
-      }
+   		    const isJson = (res.headers.get('content-type') || '').includes('application/json');
+   		    const result = isJson ? await res.json() : null;
+
+   		    if (!res.ok) throw new Error(result?.message || '입금 처리 실패');
+
+   		    // 알림/상태표시
+   		    const cnt = result?.processedCount ?? 0;
+   		    const sum = Number(result?.totalPaidAmount || 0);
+   		    alert(`입금 처리가 성공적으로 요청되었습니다.\n- 처리 건수: ${cnt}건\n- 총 입금액: ${sum.toLocaleString()}원`);
+
+   		    // 화면 갱신
+   		    selected.clear();
+   		    await loadSummaryAndItems(); // 우리 페이지의 재조회 함수
+   		    updateSelectionUI();
+
+   		    // 만약 네 화면이 페이징 렌더러(fetchAndRender)가 있으면 아래 한 줄을 사용해도 됨:
+   		    // await fetchAndRender(currentPage);
+
+   		  } catch (e) {
+   		    errBox.style.display = 'block';
+   		    errBox.textContent = '실행 실패: ' + e.message;
+   		  } finally {
+   		    execBtn.textContent = '납입 실행';
+   		    execBtn.disabled = false;
+   		  }
+   		}
+
 
       // 이벤트 바인딩
       acctSel.addEventListener('change', updateAcctBalance);
       chkAll.addEventListener('change', ()=>{
         if (chkAll.checked) selected = new Set(rows.map(r=>r.itemId));
         else selected.clear();
-        renderTable(); // 체크박스 상태 갱신
+        renderTable();
         updateSelectionUI();
       });
       execBtn.addEventListener('click', executePayment);
 
       // 초기 로드
-      Promise.all([loadSummaryAndItems(), loadAccounts()]);
+      Promise.all([loadSummaryAndItems(), fetchAndSetSourceAccount()]);
     })();
   </script>
 </body>

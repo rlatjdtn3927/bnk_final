@@ -37,7 +37,9 @@ public class UserService {
 
         String rrnRaw = dto.getRrn().replaceAll("[^0-9]", "");
         if (rrnRaw.length() != 13) throw new IllegalArgumentException("BAD_REQUEST");
-
+        System.out.println("test user rrn: " + rrnRaw);
+        
+        
         String rrnEnc = cryptoService.encrypt(rrnRaw);                 // ✅ 암호화
         String pwHash = passwordEncoder.encode(dto.getPassword());     // ✅ bcrypt
 
