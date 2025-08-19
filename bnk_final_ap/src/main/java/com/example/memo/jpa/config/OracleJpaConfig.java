@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.JpaVendorAdapter;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -29,10 +30,10 @@ import jakarta.persistence.EntityManagerFactory;
 )
 //다중 DB환경에서 적용
 public class OracleJpaConfig {
-	//Oracle DB를 JPA로 사용할 수 있도록 수동 설정
-	
-	//Oracle DB에 접속하기 위한 JDBC 설정->JPA에서만 사용되도록 지정
-	//Oracle 연결 설정
+   //Oracle DB를 JPA로 사용할 수 있도록 수동 설정
+   
+   //Oracle DB에 접속하기 위한 JDBC 설정->JPA에서만 사용되도록 지정
+   //Oracle 연결 설정
     @Bean(name = "oracleDs")
     public DataSource oracleDs(@Value("${spring.datasource.url}") String url,
                                @Value("${spring.datasource.username}") String username,
@@ -54,7 +55,7 @@ public class OracleJpaConfig {
         LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
         emf.setDataSource(oracleDs);
         //어떤 Entity 인식할지 지정
-        emf.setPackagesToScan("com.example.memo.jpa"); 
+        emf.setPackagesToScan("com.example.memo"); 
 
         //Hibernate 사용할 수 있도록
         JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
@@ -74,7 +75,7 @@ public class OracleJpaConfig {
             @Qualifier("oracleEmf") EntityManagerFactory emf) {
         return new JpaTransactionManager(emf);
     }
-
+    
     // 예외 번역기 (선택)
     @Bean
     public PersistenceExceptionTranslationPostProcessor exceptionTranslation() {
