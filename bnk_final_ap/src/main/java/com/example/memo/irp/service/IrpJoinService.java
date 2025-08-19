@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.memo.irp.dto.AccountContractResult;
+import com.example.memo.irp.dto.JoinSummaryResult;
 import com.example.memo.irp.util.AccountNumberGenerator;
 import com.example.memo.irp.util.ContractNumberGenerator;
 import com.example.memo.jpa.entity.irp.BankAccount;
@@ -137,44 +138,63 @@ public class IrpJoinService {
         joinRepository.save(join);
     }
 	*/
-	//완료: 가입성공 후 계좌개설 + join에 연결
+	
+	/*step4: 가입정보확인*/
+	@Transactional(readOnly = true)
+	public JoinSummaryResult prepareOpen(Long joinId) {
+		IrpJoinEntity join = joinRepository.findById(joinId)
+		        .orElseThrow(() -> new IllegalArgumentException("가입건 없음: " + joinId));
+
+		return new JoinSummaryResult(
+	        join.getJoinPurpose(),
+	        join.getBranchOffice(),
+	        join.getAnnualContribAmt(), // Long
+	        join.getNewContribAmt()     // Long
+	    );
+	}
+	
+	//완료: step4에서 만든 값을 그대로 사용해서 활성화
 	@Transactional
 	public AccountContractResult completeJoinAndOpenIrpAccount(Long joinId, String irpPwd) {
-		
-		// 1) 가입건 조회
-		IrpJoinEntity join = joinRepository.findById(joinId).orElseThrow(
-				() -> new IllegalArgumentException("가입건 없음: " + joinId));
-		
-		//이미 계좌 연결되어 있으면 중복 생성 방지
-		if (join.getIrpAccount() != null) {
-			IrpAccount acc = join.getIrpAccount();
-			return new AccountContractResult(acc.getIrpAcctNo(), acc.getContractNo());
+	    IrpJoinEntity join = joinRepository.findById(joinId)
+	        .orElseThrow(() -> new IllegalArgumentException("가입건 없음: " + joinId));
+
+	    // 이미 활성화(개설 완료)된 경우 멱등 처리
+	    if (join.getIrpAccount() != null && "ACTIVE".equals(join.getIrpAccount().getStatus())) {
+	        IrpAccount acc = join.getIrpAccount();
+	        return new AccountContractResult(acc.getIrpAcctNo(), acc.getContractNo());
 	    }
-		
-		// 완료 전 필수값 검증(예시)
-        requireContractReady(join);
-		
-		//2) 계좌번호 생성
-        String newAcctNo = accountNumberGenerator.next(); //예: "20250808-00001" (IRP계좌번호)
-        String newContractNo = contractNumberGenerator.next(); // 예: IRP2025081100123 (IRP계약번호)
-        
-        //3) IRP 계좌 생성
-        IrpAccount acct = IrpAccount.builder()
-                .irpAcctNo(newAcctNo)
-                .user(join.getUserId())
-                .balance(BigDecimal.ZERO)
-                .contractNo(newContractNo)
-                .irpPwd(irpPwd)
-                .status("ACTIVE")
-                .build();
+
+	    // 필수값 점검
+	    requireContractReady(join);
+
+	    // 비밀번호 4자리 검증
+	    if (irpPwd == null || !irpPwd.matches("\\d{4}")) {
+	        throw new IllegalArgumentException("IRP 비밀번호는 4자리 숫자여야 합니다.");
+	    }
+	    
+	    // 계약번호 최초 생성
+        String contractNo = (join.getContractNo() == null)
+            ? contractNumberGenerator.next()
+            : join.getContractNo();
+        join.setContractNo(contractNo);
+
+	    // 계좌 최초 생성 + 활성화
+        IrpAccount acct = (join.getIrpAccount() != null) ? join.getIrpAccount() : new IrpAccount();
+        if (acct.getIrpAcctNo() == null) {
+            acct.setIrpAcctNo(accountNumberGenerator.next());
+        }
+        acct.setUser(join.getUserId());
+        acct.setBalance(BigDecimal.ZERO); // 금액 타입 정책에 맞게 유지
+        acct.setContractNo(contractNo);
+        acct.setIrpPwd(irpPwd); // 운영은 해시/솔트 권장
+        acct.setStatus("ACTIVE");
+
         irpAccountRepository.save(acct);
-        
-        // 4) 가입건에 계좌 연결
         join.setIrpAccount(acct);
-        join.setContractNo(newContractNo);
         joinRepository.save(join);
-		
-		return new AccountContractResult(newAcctNo, newContractNo);
+
+        return new AccountContractResult(acct.getIrpAcctNo(), contractNo);
 	}
 	
 	private void requireContractReady(IrpJoinEntity join){

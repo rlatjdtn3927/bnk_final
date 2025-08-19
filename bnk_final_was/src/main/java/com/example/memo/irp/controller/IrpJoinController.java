@@ -15,7 +15,6 @@ import com.example.memo.irp.dto.BalanceReq;
 import com.example.memo.irp.dto.ContractUpdateDto;
 import com.example.memo.irp.dto.DraftJoinDto;
 import com.example.memo.irp.dto.JoinCompleteDto;
-import com.example.memo.irp.dto.ProductMasterDto;
 import com.example.memo.irp.dto.RetirePurposeDto;
 import com.example.memo.irp.dto.TaxPurposeDto;
 import com.example.memo.tcp_common.Command;
@@ -25,6 +24,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -86,9 +86,32 @@ public class IrpJoinController {
         return sendAndWrap(Command.IRP_JOIN_RETIRED_PURPOSE, node, "IRP_JOIN_RETIRED_PURPOSE");
     }
 	
+	/** 잔액조회: 사용자 소유 계좌일 때만 현재 잔액 반환 */
+	@PostMapping("/join/{joinId}/account/balance")
+	public ResponseEntity<?> getAccountBalance(@PathVariable("joinId") Long joinId,
+			@RequestBody BalanceReq req) {
+		ObjectNode node = mapper.createObjectNode()
+				.put("joinId", joinId)
+				.put("acctNo",  req.getAcctNo())
+				.put("acctPwd", req.getAcctPwd()); // 옵션
+		
+		return sendAndWrap(Command.ACCOUNT_GET_BALANCE, node, "ACCOUNT_GET_BALANCE");
+	}
+	
+	/** 출금계좌번호 조회 */
+	@PostMapping("/join/{joinId}/account/no")
+	public @ResponseBody ResponseEntity<?> getAccountNo(@PathVariable("joinId") Long joinId) {
+		ObjectNode node = mapper.createObjectNode().put("joinId", joinId);
+		return sendAndWrap(Command.ACCOUNT_GET_NUMBER, node, "ACCOUNT_GET_NUMBER");
+	}
+	
 	//Step3: 계약정보 업데이트 (연한도/신규/출금계좌/관리영업점)
 	@PutMapping("/join/{joinId}/contract")
-    public ResponseEntity<?> updateContract(@PathVariable("joinId") Long joinId, @RequestBody ContractUpdateDto dto) {
+    public ResponseEntity<?> updateContract(
+    		@PathVariable("joinId") Long joinId,
+    		@RequestBody ContractUpdateDto dto,
+    		HttpSession session) {
+		
         ObjectNode node = mapper.createObjectNode();
         node.put("joinId", joinId);
         node.put("annualContribAmt", dto.getAnnualContribAmt());
@@ -96,27 +119,15 @@ public class IrpJoinController {
         node.put("acctNo", dto.getAcctNo());
         node.put("acctPwd", dto.getAcctPwd());         // ★ 출금계좌 비번 전달
         node.put("branchOffice", dto.getBranchOffice());
-        return sendAndWrap(Command.IRP_JOIN_UPDATE_CONTRACT, node, "IRP_JOIN_UPDATE_CONTRACT");
+        ResponseEntity<JsonNode> res = sendAndWrap(Command.IRP_JOIN_UPDATE_CONTRACT, node, "IRP_JOIN_UPDATE_CONTRACT");
+        
+        // AP가 정상 처리했을 때만 Step4 진입 허용 플래그 세팅
+        if (res.getStatusCode().is2xxSuccessful()) {
+            session.setAttribute(contractSavedKey(joinId), Boolean.TRUE);
+        }
+        return res;
     }
 	
-	/** 잔액조회: 사용자 소유 계좌일 때만 현재 잔액 반환 */
-    @PostMapping("/join/{joinId}/account/balance")
-    public ResponseEntity<?> getAccountBalance(@PathVariable("joinId") Long joinId,
-                                               @RequestBody BalanceReq req) {
-    	ObjectNode node = mapper.createObjectNode()
-                .put("joinId", joinId)
-                .put("acctNo",  req.getAcctNo())
-                .put("acctPwd", req.getAcctPwd()); // 옵션
-
-        return sendAndWrap(Command.ACCOUNT_GET_BALANCE, node, "ACCOUNT_GET_BALANCE");
-    }
-    
-    /** 출금계좌번호 조회 */
-    @PostMapping("/join/{joinId}/account/no")
-    public @ResponseBody ResponseEntity<?> getAccountNo(@PathVariable("joinId") Long joinId) {
-        ObjectNode node = mapper.createObjectNode().put("joinId", joinId);
-        return sendAndWrap(Command.ACCOUNT_GET_NUMBER, node, "ACCOUNT_GET_NUMBER");
-    }
     
 	/* step4: 상품선택(업데이트) 
     @PutMapping("/join/{joinId}/product")
@@ -127,14 +138,44 @@ public class IrpJoinController {
         return sendAndWrap(Command.IRP_JOIN_UPDATE_PRODUCT, node, "IRP_JOIN_UPDATE_PRODUCT");
     }
     */
+    //step4: 가입정보확인 (요약 페이지)
+    @GetMapping("/join/{joinId}/infoConfir")
+    public ResponseEntity<?> getInfoConfir(@PathVariable("joinId") Long joinId, HttpSession session) {
+    	Object flag = session.getAttribute(contractSavedKey(joinId));
+        boolean allowed = (flag instanceof Boolean) && ((Boolean) flag);
+        if (!allowed) {
+            ObjectNode err = mapper.createObjectNode()
+                .put("error", "PRECONDITION_REQUIRED")
+                .put("message", "계약 정보 저장 후에 요약을 조회할 수 있습니다.");
+            return ResponseEntity.status(HttpStatus.PRECONDITION_REQUIRED).body(err);
+        }
+
+        ObjectNode node = mapper.createObjectNode().put("joinId", joinId);
+        // ✅ 이름은 그대로 쓰지만, AP에서는 ‘요약만’ 돌려주도록 수정
+        return sendAndWrap(Command.IRP_JOIN_PREPARE_OPEN, node, "IRP_JOIN_PREPARE_OPEN");
+    }
 	
-	/* 가입완료 → IRP계좌 개설 (계좌번호와 계약번호는 서버에서 자동 생성)*/
+	//step5: 가입완료 → IRP계좌 개설
     @PostMapping("/join/{joinId}/complete")
-    public ResponseEntity<?> completeJoin(@PathVariable("joinId") Long joinId, @RequestBody JoinCompleteDto dto) {
-        ObjectNode node = mapper.createObjectNode();
-        node.put("joinId", joinId);
-        node.put("irpPwd", dto.getIrpPwd());	// 신규 IRP계좌 비밀번호
-        return sendAndWrap(Command.IRP_JOIN_COMPLETE, node, "IRP_JOIN_COMPLETE");
+    public ResponseEntity<?> completeJoin(@PathVariable("joinId") Long joinId, 
+    									  @RequestBody JoinCompleteDto dto, 
+    									  HttpSession session) {
+    	ObjectNode node = mapper.createObjectNode()
+                .put("joinId", joinId)
+                .put("irpPwd", dto.getIrpPwd()); // 4자리 숫자
+
+        ResponseEntity<JsonNode> res = 
+        		sendAndWrap(Command.IRP_JOIN_COMPLETE, node, "IRP_JOIN_COMPLETE");
+
+        if (res.getStatusCode().is2xxSuccessful()) {
+        	session.removeAttribute(contractSavedKey(joinId)); // 플래그 정리
+        }
+        return res;
+    }
+    
+    /** 세션 키 상수 */
+    private String contractSavedKey(long joinId) {
+        return "contractSaved:" + joinId;
     }
     
     private void mask(ObjectNode n, String key) {
@@ -156,19 +197,23 @@ public class IrpJoinController {
     
     /** 공통 TCP 호출 & 응답 래핑 */
     private ResponseEntity<JsonNode> sendAndWrap(Command cmd, JsonNode payload, String logCtx) {
-        try {
+    	try {
             JsonNode res = tcpService.sendMessage(new TcpMessage(cmd, payload));
             if (res == null || res.isNull()) {
-                // 비즈니스적으로 빈 응답을 허용해야 한다면 204로도 고려 가능
-                return ResponseEntity.ok(mapper.createObjectNode());
+                ObjectNode err = mapper.createObjectNode()
+                    .put("ok", false)
+                    .put("error", "UPSTREAM_EMPTY")
+                    .put("message", "상위(AP) 응답이 비어 있습니다.");
+                return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(err);
             }
             return ResponseEntity.ok(res);
         } catch (Exception e) {
             log.warn("{} failed: payload={}, err={}", logCtx, safePayloadForLog(payload), e.toString());
             ObjectNode err = mapper.createObjectNode()
-                    .put("error", "INTERNAL_ERROR")
-                    .put("message", "서버 처리 중 오류가 발생했습니다.");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(err);
+                .put("ok", false)
+                .put("error", "INTERNAL_ERROR")
+                .put("message", "서버 처리 중 오류가 발생했습니다.");
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(err);
         }
     }
 }

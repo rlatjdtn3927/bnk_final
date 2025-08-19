@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>IRP가입하기 - 신규가입완료</title>
+<link rel="stylesheet" th:href="@{/css/step5-complete.css}" />
+</head>
+<body>
+<script th:inline="javascript">
+  const joinId = /*[[${joinId}]]*/ 0;
+</script>
+
+<div class="section">
+  <h1>개인IRP가입하기</h1>
+
+  <ul class="step-bar">
+    <li>01. 개인IRP신규가입</li>
+    <li>02. 계약서동의</li>
+    <li>03. 가입정보입력</li>
+    <li>04. 가입정보확인</li>
+    <li class="active">05. 신규가입완료</li>
+  </ul>
+  
+  <div id="resultCard" class="card" style="display:none; margin-top:16px;">
+    <div class="card__head">개설 결과</div>
+    <div class="card__body">
+      <table class="kv">
+        <tr><th>IRP 계약번호</th><td id="contractNo">-</td></tr>
+        <tr><th>IRP 계좌번호</th><td id="irpAcctNo">-</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- 신규 계좌비밀번호 입력 -->
+  <div class="card">
+    <div class="card__head">신규 계좌비밀번호 입력</div>
+    <div class="card__body">
+      <div class="field">
+        <label>신규 계좌비밀번호</label>
+        <input id="irpPwd1" class="input" type="password" inputmode="numeric" maxlength="4" placeholder="4자리 숫자" />
+      </div>
+      <div class="field">
+        <label>신규 계좌비밀번호 확인</label>
+        <input id="irpPwd2" class="input" type="password" inputmode="numeric" maxlength="4" placeholder="비밀번호 확인" />
+      </div>
+      <p class="help">※ 4자리 숫자, 두 입력이 동일해야 합니다.</p>
+    </div>
+    <div class="card__foot">
+      <button id="nextBtn">확인</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function validatePwd(pwd) { return /^\d{4}$/.test(pwd); }
+
+	async function completeJoin() {
+	  const pwd = document.getElementById('irpPwd').value.trim();
+	  if (!validatePwd(pwd)) {
+	    alert('비밀번호는 숫자 4자리여야 합니다.');
+	    document.getElementById('irpPwd').focus();
+	    return;
+	  }
+	  try {
+	    const res = await fetch(`/irp/join/${joinId}/complete`, {
+	      method: 'POST',
+	      headers: { 'Content-Type': 'application/json' },
+	      body: JSON.stringify({ irpPwd: pwd })
+	    });
+	    if (!res.ok) {
+	      const err = await res.json().catch(() => ({}));
+	      alert(err.message || '가입 완료 처리 중 오류가 발생했습니다.');
+	      return;
+	    }
+	    const data = await res.json();
+	
+	    // ✅ AP가 생성한 번호 표시
+	    document.getElementById('contractNo').textContent = data.contractNo ?? '-';
+	    document.getElementById('irpAcctNo').textContent  = data.irpAcctNo ?? '-';
+	    document.getElementById('resultCard').style.display = '';
+	
+	    // 중복 제출 방지
+	    document.getElementById('irpPwd').setAttribute('disabled', 'disabled');
+	    document.getElementById('btnComplete').setAttribute('disabled', 'disabled');
+	
+	  } catch (e) {
+	    console.error(e);
+	    alert('네트워크 오류가 발생했습니다.');
+	  }
+	}
+
+    document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('btnComplete').addEventListener('click', completeJoin);
+  });
+  
+</script>
+</body>
+</html>

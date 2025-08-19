@@ -3,12 +3,69 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>IRP가입하기 - 포트폴리오 설정(상품등록)</title>
-<link rel="stylesheet" th:href="@{/css/step4-portfolio.css}" />
+<title>IRP가입하기 - 가입정보확인</title>
+<link rel="stylesheet" th:href="@{/css/step4-infoConfir.css}" />
 </head>
 <body>
 <script th:inline="javascript">
   const joinId = /*[[${joinId}]]*/ 0;
+</script>
+
+<div class="section">
+  <h1>개인IRP가입하기</h1>
+
+  <ul class="step-bar">
+    <li>01. 개인IRP신규가입</li>
+    <li>02. 계약서동의</li>
+    <li>03. 가입정보입력</li>
+    <li class="active">04. 가입정보확인</li>
+    <li>05. 신규가입완료</li>
+  </ul>
+
+  <!-- 신규가입정보 -->
+  <div class="card">
+    <div class="card__head">신규가입정보</div>
+    <div class="card__body">
+      <table class="kv">
+        <tr><th>상품명</th><td>개인IRP(개인형퇴직연금)</td></tr>
+        <tr><th>연간납입한도</th><td id="annualContribAmt">-</td></tr>
+        <tr><th>신규금액</th><td id="newContribAmt">-</td></tr>
+        <tr><th>관리영업점</th><td id="branchOffice">-</td></tr>
+      </table>
+      <p class="check">위의 내용으로 신규 가입 하시겠습니까?</p>
+    </div>
+  </div>
+  <div class="actions" style="margin-top:16px; display:flex; gap:8px;">
+    <a class="btn" th:href="@{/irp/step3-contract}" role="button">이전</a>
+    <a class="btn primary" th:href="@{/irp/step5-complete(joinId=${joinId})}" role="button">다음</a>
+  </div>
+</div>
+
+<script>
+  async function loadSummary() {
+    try {
+      const res = await fetch(`/api/irp/join/${joinId}/infoConfir`, { method: 'GET' });
+
+      if (res.status === 428) { // PRECONDITION_REQUIRED
+        const err = await res.json().catch(() => ({}));
+        alert(err.message || '계약 정보 저장 후에 요약을 조회할 수 있습니다.');
+        location.href = '/irp/step3-contract';
+        return;
+      }
+      if (!res.ok) throw new Error('요약 조회 실패');
+
+      const data = await res.json();
+      // ✅ 계약/계좌번호는 내려오지 않음
+      document.getElementById('joinPurpose').textContent     = data.joinPurpose ?? '-';
+      document.getElementById('branchOffice').textContent    = data.branchOffice ?? '-';
+      document.getElementById('annualContribAmt').textContent= data.annualContribAmt ?? '-';
+      document.getElementById('newContribAmt').textContent   = data.newContribAmt ?? '-';
+    } catch (e) {
+      console.error(e);
+      alert('요약 정보 로딩 중 오류가 발생했습니다.');
+    }
+  }
+  document.addEventListener('DOMContentLoaded', loadSummary);
 </script>
 
 </body>

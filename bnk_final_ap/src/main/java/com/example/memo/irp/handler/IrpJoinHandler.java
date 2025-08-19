@@ -5,11 +5,11 @@ import java.time.LocalDate;
 import org.springframework.stereotype.Component;
 
 import com.example.memo.irp.dto.AccountContractResult;
+import com.example.memo.irp.dto.JoinSummaryResult;
 import com.example.memo.irp.service.IrpJoinService;
 import com.example.memo.jpa.entity.irp.IrpJoinEntity;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpMessageHandler;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -86,7 +86,7 @@ public class IrpJoinHandler implements TcpMessageHandler {
                 ObjectNode res = mapper.createObjectNode().put("joinId", joinId);
                 return res;
             }
-			case IRP_JOIN_UPDATE_CONTRACT: {	// step3-2: 계약정보 업데이트
+			case IRP_JOIN_UPDATE_CONTRACT: {	// step3: 계약정보 업데이트
 				try {
 					Long joinId = data.get("joinId").asLong();
 					Long annualAmt = data.path("annualContribAmt").asLong(0);
@@ -108,9 +108,7 @@ public class IrpJoinHandler implements TcpMessageHandler {
 			        err.put("ok", false);
 			        err.put("error", e.getMessage() == null ? "요청이 거부되었습니다." : e.getMessage());
 			        return err;
-				}
-                
-                
+				} 
             }
 			/*
 			case IRP_JOIN_UPDATE_PRODUCT: {		// step4: 상품 저장
@@ -119,15 +117,33 @@ public class IrpJoinHandler implements TcpMessageHandler {
                 joinService.updateJoinProduct(joinId, productId);
                 return mapper.createObjectNode().put("result", "OK");
             }*/
-			case IRP_JOIN_COMPLETE: { // 가입완료 → IRP계좌 생성
-                Long joinId = data.get("joinId").asLong();
-                String irpPwd = data.get("irpPwd").asText();
-                
-                // 서비스가 계좌번호와 계약번호를 돌려주도록 구성 가능
-                //String irpAcctNo = joinService.completeJoinAndOpenIrpAccount(joinId, irpPwd);
-                AccountContractResult result = joinService.completeJoinAndOpenIrpAccount(joinId, irpPwd);
+			case IRP_JOIN_PREPARE_OPEN: { // Step4 진입 시 번호 확정 + 요약 조회
+			    Long joinId = data.get("joinId").asLong();
+			    // 서비스는 요약 DTO를 돌려줌 (Long 타입 금액 사용)
+		        JoinSummaryResult s = joinService.prepareOpen(joinId);
+
+		        ObjectNode res = mapper.createObjectNode();
+		        res.put("ok", true);
+		        res.put("joinId", joinId);
+
+		        // 화면 요약 필드만 내려줌
+		        if (s.getJoinPurpose() != null)      res.put("joinPurpose", s.getJoinPurpose());
+		        if (s.getAnnualContribAmt() != null) res.put("annualContribAmt", s.getAnnualContribAmt());
+		        if (s.getNewContribAmt() != null)    res.put("newContribAmt", s.getNewContribAmt());
+		        if (s.getBranchOffice() != null)     res.put("branchOffice", s.getBranchOffice());
+
+		        return res;
+			}
+			
+			case IRP_JOIN_COMPLETE: { // Step5: 여기서 계약번호+IRP계좌번호 생성 & ACTIVE
+				Long joinId = data.get("joinId").asLong();
+		        String irpPwd = data.path("irpPwd").asText(); // 4자리 숫자
+
+		        AccountContractResult result = joinService.completeJoinAndOpenIrpAccount(joinId, irpPwd);
                 
                 ObjectNode res = mapper.createObjectNode();
+                res.put("ok", true);
+                res.put("joinId", joinId);
                 res.put("irpAcctNo", result.getIrpAcctNo());
                 res.put("contractNo", result.getContractNo());
                 return res;

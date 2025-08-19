@@ -19,8 +19,8 @@
       <li>01. 개인IRP신규가입</li>
       <li>02. 계약서동의</li>
       <li class="active">03. 가입정보입력</li>
-      <li>04. 포트폴리오 설정</li>
-      <li>05. 상품가입완료</li>
+      <li>04. 가입정보확인</li>
+      <li>05. 신규가입완료</li>
     </ul>
 
     <!-- 카드 -->
@@ -179,13 +179,26 @@
 
   // ---------- 저장 ----------
   document.getElementById('saveBtn').addEventListener('click', async () => {
-    const payload = {
-      annualContribAmt: toNumber(document.getElementById('annualContribAmt').value),
-      newContribAmt:    toNumber(document.getElementById('newContribAmt').value),
-      acctNo:           onlyDigits(document.getElementById('acctNo').value),
-      acctPwd:          document.getElementById('acctPwd').value.trim(),
-      branchOffice:     document.getElementById('branchOffice').value.trim()
-    };
+	  const annualVal = document.getElementById('annualContribAmt').value.trim();
+	  const newVal    = document.getElementById('newContribAmt').value.trim();
+	  const acctNo    = document.getElementById('acctNo').value.trim();
+	  const acctPwd   = document.getElementById('acctPwd').value.trim();
+	  const branch    = document.getElementById('branchOffice').value.trim();
+
+	  // ✅ 필수 입력값 체크
+	  if (!annualVal) { alert('연간 한도 금액을 입력하세요.'); return; }
+	  if (!newVal)    { alert('신규 입금 금액을 입력하세요.'); return; }
+	  if (!acctNo)    { alert('출금계좌번호를 입력하세요.'); return; }
+	  if (!acctPwd)   { alert('출금계좌 비밀번호를 입력하세요.'); return; }
+	  if (!branch)    { alert('관리 영업점을 입력하세요.'); return; }
+
+	  const payload = {
+	    annualContribAmt: toNumber(annualVal),
+	    newContribAmt:    toNumber(newVal),
+	    acctNo,      // 하이픈 포함 그대로
+	    acctPwd,
+	    branchOffice: branch
+	  };
 
     try {
       await putJson(`/irp/join/${joinId}/contract`, payload);

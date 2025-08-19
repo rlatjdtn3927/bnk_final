@@ -43,6 +43,7 @@ public enum Command {
     IRP_JOIN_GET,
     IRP_JOIN_TAX_PURPOSE, 
     IRP_JOIN_RETIRED_PURPOSE, 
+    IRP_JOIN_PREPARE_OPEN,
     IRP_JOIN_COMPLETE,			// 계좌개설/완료
     ACCOUNT_GET_BALANCE,			// 출금계좌 잔액조회
     ACCOUNT_GET_NUMBER,
