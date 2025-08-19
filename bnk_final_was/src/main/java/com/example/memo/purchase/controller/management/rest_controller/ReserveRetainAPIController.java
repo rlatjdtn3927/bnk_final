@@ -7,65 +7,86 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import com.example.memo.purchase.dto.util.FundRetainDto;
-import com.example.memo.purchase.dto.util.UserInfoDto;
 
-import ch.qos.logback.core.model.Model;
+import com.example.memo.purchase.dto.trade.PassValueDto;
+import com.example.memo.purchase.dto.trade.RetainRequestDto;
+import com.example.memo.purchase.dto.trade.UserInfoDto;
+import com.example.memo.tcp_common.Command;
+import com.example.memo.tcp_common.TcpClientService;
+import com.example.memo.tcp_common.TcpMessage;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/retain-api/reserve")
+@RequiredArgsConstructor
 public class ReserveRetainAPIController {
 	
-    /** 상단 사용자/계좌 카드용 하드코딩 데이터 */
-    @PostMapping("/user-info")
-    public Map<String, Object> userInfo() {
-        Map<String, Object> user = new HashMap<>();
-        user.put("userName", "홍길동");
-        user.put("accountType", "IRP");
-        user.put("accountNumber", "123-45-67890");
-        user.put("riskGrade", "적극투자형"); // 뷰 상단 뱃지
-        user.put("riskGradeNum", 5);       // 모달 요청 바디에 들어가는 값과 매칭
+	private final TcpClientService tcpClientService;
+	private final ObjectMapper mapper;
+	
+    /** 상단 사용자/계좌 카드용 데이터 */
+	@PostMapping("/user-info")
+	public ResponseEntity<?> userInfo(HttpSession session) {
+	    PassValueDto dto = (PassValueDto) session.getAttribute("PassValueDto");
+	    String userName = (String) session.getAttribute("userName");
 
-        return Map.of("userInfo", user);
-    }
+	    // 세션에 값이 없을 때도 NPE 없이 안전하게
+	    if (dto == null) {
+	        UserInfoDto empty = UserInfoDto.builder()
+	            .accountId("-")
+	            .accountType("-")
+	            .userName(userName != null ? userName : "-")
+	            .riskGrade("-")
+	            .riskGradeNum(0)
+	            .build();
+	        return ResponseEntity.ok(Map.of("userInfo", empty));
+	    }
+
+	    String riskText = dto.getRiskGrade();
+	    int riskGradeNum;
+	    switch (riskText != null ? riskText : "") {
+	        case "안정형":   riskGradeNum = 5; break;
+	        case "안전추구형": riskGradeNum = 4; break;
+	        case "위험중립형": riskGradeNum = 3; break;
+	        case "적극투자형": riskGradeNum = 2; break;
+	        case "공격투자형": riskGradeNum = 1; break;
+	        default:         riskGradeNum = 0; break; // 미정/없음
+	    }
+
+	    dto.setRiskGradeNum(riskGradeNum);
+	    session.setAttribute("PassValueDto", dto);
+
+	    UserInfoDto userInfo = UserInfoDto.builder()
+	        .accountId(dto.getAccountId())
+	        .accountType(dto.getAccountType())
+	        .userName(userName != null ? userName : "-")
+	        .riskGrade(riskText != null ? riskText : "-")
+	        .riskGradeNum(riskGradeNum) // ★ 포함!
+	        .build();
+
+	    return ResponseEntity.ok(Map.of("userInfo", userInfo));
+	}
 
     /** 보유/이미 선택된 상품 목록(운용비율 포함) */
-    @PostMapping("/retain")
-    public List<Map<String, Object>> retainList() {
-        List<Map<String, Object>> list = new ArrayList<>();
-
-        // 정기예금 예시
-        list.add(new HashMap<>() {{
-            put("productId", "DEP-IRP-001");
-            put("productName", "SBI저축은행퇴직연금정기예금(개인형IRP) 1년제");
-            put("retainRatio", 30);                // 현재 운용비율
-            put("category", "정기예금");
-            put("riskGradeText", "원리금보장");
-        }});
-
-        // 펀드 예시
-        list.add(new HashMap<>() {{
-            put("productId", "FUND-001");
-            put("productName", "신한BNPP코어주식형(퇴직연금)");
-            put("retainRatio", 40);
-            put("category", "펀드");
-            put("riskGradeText", "높음");
-        }});
-
-        // ETF 예시
-        list.add(new HashMap<>() {{
-            put("productId", "ETF-002");
-            put("productName", "KODEX S&P500(퇴직연금)");
-            put("retainRatio", 30);
-            put("category", "ETF");
-            put("riskGradeText", "중간");
-        }});
-
-        return list;
+	@PostMapping("/retain")
+    public ResponseEntity<?> retainList(HttpSession session) {
+    	
+    	RetainRequestDto dto = new RetainRequestDto();
+    	dto.setUserId((Long)session.getAttribute("userId"));
+    	JsonNode msg = mapper.valueToTree(dto);
+    	TcpMessage message = new TcpMessage(Command.BUY_PLAN_CURRENT, msg);
+    	JsonNode response = tcpClientService.sendMessage(message);
+        
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
 	
@@ -73,8 +94,7 @@ public class ReserveRetainAPIController {
 
 
 //@PostMapping("/user-info")
-//public ResponseEntity<?> userInfo(@RequestParam String riskText) {
-//	String[] riskGrades = {"안정형", "안전추구형", "위험중립형", "적극투자형", "공격투자형"};
+//public ResponseEntity<?> userInfo() {
 //	Integer riskGradeNum = 0;
 //	switch (riskText) {
 //		case "안정형" : {
@@ -96,8 +116,7 @@ public class ReserveRetainAPIController {
 //		case "공격투자형" : {
 //			riskGradeNum = 6;
 //			break;
-//		}
-//		
+//		}	
 //	}
 //	UserInfoDto dto = UserInfoDto.builder()
 //			.accountType("IRP")

@@ -4,7 +4,11 @@ package com.example.memo.jpa.repository.purchase.commodity;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.example.memo.jpa.entity.purchase.commodity.FundMaster;
 
@@ -34,4 +38,25 @@ public interface FundMasterRepository extends JpaRepository<FundMaster, String> 
 
     /** 카테고리 + 코드 검색 */
     List<FundMaster> findByCategoryIgnoreCaseAndProductIdContainingIgnoreCase(String category, String q);
+    
+    @Query("SELECT DISTINCT f " +
+    	       "FROM FundMaster f " +
+    	       "JOIN f.cumulativePerformances cp " +
+    	       "WHERE f.category = :category " +
+    	       "  AND f.riskGradeNum >= :riskGradeNum " +
+    	       "  AND cp.periodCode = :periodCode " +
+    	       "  AND cp.fundReturn IS NOT NULL " +
+    	       "  AND cp.referenceDate = (" +
+    	       "       SELECT MAX(c2.referenceDate) " +
+    	       "       FROM CumulativePerformance c2 " +
+    	       "       WHERE c2.fund = f " +
+    	       "         AND c2.periodCode = cp.periodCode" +
+    	       "  ) " +
+    	       "ORDER BY cp.fundReturn DESC")
+    	Page<FundMaster> findByCategoryAndRiskGradeNumAndPeriodCodeOrderByFundReturnDesc(
+    	        @Param("category") String category,
+    	        @Param("riskGradeNum") Integer riskGradeNum,
+    	        @Param("periodCode") String periodCode,
+    	        Pageable pageable
+    	);
 }

@@ -1,4 +1,4 @@
-package com.example.memo.purchase.dto.util;
+package com.example.memo.purchase.dto.trade;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,7 +8,7 @@ import lombok.Setter;
 
 @Getter @Setter
 @Builder @NoArgsConstructor @AllArgsConstructor
-public class FundRetainDto {
+public class CurrentRetainDto {
     private String productId;
     private String productName;
     private String category;

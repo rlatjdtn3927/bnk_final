@@ -85,9 +85,15 @@ public enum Command {
     ADMIN_CRAWL_GRANT_FILE_DOWNLOAD,
     ADMIN_CRAWL_CHECK_FILE_TASK,
     ADMIN_CRAWL_CHECK_UPDATE,
-	
+    /*관리자 크롤링 데이터 관련 명령어*/
+    
 	USER_LOGIN, //사용자 로그인
 	USER_REGISTER,// 회원가입
-	SURVEY_SUBMIT; //투자성향제출
-    
+	SURVEY_SUBMIT, //투자성향제출
+	
+	/*매수예정 상품 등록 관련 명령어*/
+	BUY_PLAN_CURRENT,
+	BUY_PLAN_UPDATE,
+	/*매수예정 상품 등록 관련 명령어*/
+	
 }

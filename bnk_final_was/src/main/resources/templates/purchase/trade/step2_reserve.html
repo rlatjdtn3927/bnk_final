@@ -1,9 +1,8 @@
-<!-- templates/purchase/trade/step2.html (최종 수정본) -->
+<!-- templates/purchase/trade/step2.html (모달 더보기 페이지네이션 + 모바일 반응형 적용본) -->
 <th:block xmlns:th="http://www.thymeleaf.org" th:fragment="css">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <!-- 필요하면 추가 CSS/JS 삽입 -->
 </head>
 
 <style id="page-css" hx-swap-oob="true">
@@ -46,16 +45,18 @@
   .modal-panel{width:min(960px,92vw);height:96vh;background:#fff;border-radius:16px 16px 0 0;margin-top:4vh;display:flex;flex-direction:column;overflow:hidden}
   .modal-head{padding:16px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;gap:10px}
   .modal-title{font-weight:700}
-  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-  .tab{padding:6px 12px;border:1px solid #e5e7eb;border-radius:999px;background:#fff;cursor:pointer;font-size:13px}
+  .tabs{display:flex;gap:8px;flex-wrap:nowrap;overflow:auto;-webkit-overflow-scrolling:touch}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{padding:6px 12px;border:1px solid #e5e7eb;border-radius:999px;background:#fff;cursor:pointer;font-size:13px;white-space:nowrap}
   .tab.active{background:#111827;color:#fff;border-color:#111827}
   .modal-controls{display:flex;align-items:center;gap:8px}
   .select{border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;background:#fff}
 
   .modal-body{flex:1;overflow:auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px}
-  .prod-card{border:1px solid #eee;border-radius:12px;padding:12px;display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center}
-  .prod-left{display:flex;align-items:center;gap:10px}
-  .prod-actions{display:flex;gap:8px}
+  .prod-card{border:1px solid #eee;border-radius:12px;padding:12px;display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"left mid actions";gap:10px;align-items:center}
+  .prod-left{grid-area:left;display:flex;align-items:center;gap:10px}
+  .prod-mid{grid-area:mid;min-width:0}
+  .prod-actions{grid-area:actions;display:flex;gap:8px;justify-self:end}
   .btn{border:1px solid #e5e7eb;border-radius:8px;background:#fff;padding:8px 10px;font-size:13px;cursor:pointer}
   .btn.gray{background:#f9fafb}
   .chip{display:inline-block;border-radius:999px;padding:2px 8px;background:#f3f4f6;font-size:11px;margin-right:4px}
@@ -67,11 +68,29 @@
   .btn-secondary{padding:12px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;cursor:pointer}
   .btn-cta{padding:12px;border-radius:10px;border:none;background:#ff5252;color:#fff;font-weight:700;cursor:pointer}
 
+  /* 모달 하단 더보기 바 */
+  .modal-more{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 0}
+  .btn-loadmore{padding:10px 14px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-weight:600}
+  .btn-loadmore[disabled]{opacity:.6;cursor:not-allowed}
+  .more-meta{font-size:12px;color:#666}
+
   @media (max-width:768px){
     .reserve-step2{padding:12px 12px 132px}
-    .user-card{grid-template-columns:1fr}
     .btn-outline-red{width:100%;justify-content:center}
     .modal-panel{height:100vh;margin-top:0;border-radius:0}
+    .modal-body{padding:10px 12px}
+
+    /* 상품 카드 세로 스택 */
+    .prod-card{
+      grid-template-areas:
+        "mid"
+        "left"
+        "actions";
+      grid-template-columns:1fr;
+      align-items:stretch;
+    }
+    .prod-actions{justify-self:stretch}
+    .prod-actions .btn{flex:1}
   }
 </style>
 </th:block>
@@ -91,7 +110,7 @@
       </div>
       <div>
         <div style="font-size:12px;color:#666">계좌번호</div>
-        <div id="accountNumber">-</div>
+        <div id="accountId">-</div>
       </div>
       <div>
         <div style="font-size:12px;color:#666">성명</div>
@@ -107,7 +126,7 @@
   <!-- 운용비율 편집 -->
   <div class="section-title">본인부담금으로 상품운용</div>
   <div class="card">
-    <div class="retain-list" id="retainList"><!-- 선택/보유 상품 카드 --></div>
+    <div class="retain-list" id="retainList"></div>
 
     <div class="total">
       <div>합계: <strong><span id="totalPercent">0</span>%</strong></div>
@@ -116,119 +135,119 @@
     <div id="totalHelp" class="help warn">합계를 100%로 맞춰주세요</div>
   </div>
 
-  <!-- 서버 모델 값(데이터 속성으로 보관) -->
+  <!-- 서버 세션 값 -->
   <div id="model-data"
-       th:data-flow="${ModelValueDto?.flow}"
-       th:data-account-type="${ModelValueDto?.accountType}"
-       th:data-account-id="${ModelValueDto?.accountId}"
-       th:data-risk-grade="${ModelValueDto?.riskGrade}"
-       th:data-risk-grade-num="${ModelValueDto?.riskGradeNum}"><!-- riskGradeNum 없으면 빈값 --></div>
-</section>
-
-<!-- 하단 고정 버튼 -->
-<div class="page-bottom">
-  <div class="stack">
-    <button id="addProductBtn" class="btn-outline-red" type="button">
-      매수상품 추가 <span class="plus" aria-hidden="true">+</span>
-    </button>
-    <button id="nextBtn" class="btn-primary" type="button">다음</button>
+       th:data-flow="${session.PassValueDto?.flow ?: ''}"
+       th:data-account-type="${session.PassValueDto?.accountType ?: ''}"
+       th:data-account-id="${session.PassValueDto?.accountId ?: ''}"
+       th:data-risk-grade="${session.PassValueDto?.riskGrade ?: ''}"
+       th:data-risk-grade-num="${session.PassValueDto?.riskGradeNum ?: 0}">
   </div>
-</div>
 
-<!-- 다음 단계 제출용 폼(동기 POST) -->
-<form id="nextForm" method="post" action="/purchase/trade/step3/next" style="display:none">
-  <input type="hidden" name="flow" id="f_flow" />
-  <input type="hidden" name="accountType" id="f_accountType" />
-  <input type="hidden" name="accountId" id="f_accountId" />
-  <input type="hidden" name="riskGrade" id="f_riskGrade" />
-  <!-- prodId:ratio 리스트(JSON 문자열) -->
-  <input type="hidden" name="sourceProdId" id="f_sourceProdId" />
-</form>
+  <!-- 하단 버튼 -->
+  <div class="page-bottom">
+    <div class="stack">
+      <button id="addProductBtn" class="btn-outline-red" type="button">
+        매수상품 추가 <span class="plus" aria-hidden="true">+</span>
+      </button>
+      <button id="nextBtn" class="btn-primary" type="button">다음</button>
+    </div>
+  </div>
 
-<!-- ====== 상품 모달 ====== -->
-<div id="productModal" class="modal" aria-hidden="true">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal-head">
-      <div>
-        <div id="modalTitle" class="modal-title">상품조회</div>
-        <div class="tabs" role="tablist" aria-label="상품분류">
-          <button class="tab active" data-cat="deposit" type="button" role="tab" aria-selected="true">정기예금</button>
-          <button class="tab" data-cat="tdf" type="button" role="tab">TDF</button>
-          <button class="tab" data-cat="fund" type="button" role="tab">펀드</button>
-          <button class="tab" data-cat="etf" type="button" role="tab">ETF</button>
-          <button class="tab" data-cat="cash" type="button" role="tab" disabled title="현금성 자산은 준비중입니다">현금성 자산</button>
+  <!-- 다음 단계 제출용 폼 -->
+  <form id="nextForm" method="post" action="/purchase/trade/step3/next" style="display:none">
+    <input type="hidden" name="flow" id="f_flow" />
+    <input type="hidden" name="accountType" id="f_accountType" />
+    <input type="hidden" name="accountId" id="f_accountId" />
+    <input type="hidden" name="riskGrade" id="f_riskGrade" />
+    <input type="hidden" name="sourceProdId" id="f_sourceProdId" />
+  </form>
+
+  <!-- ====== 상품 모달 ====== -->
+  <div id="productModal" class="modal" aria-hidden="true">
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head">
+        <div>
+          <div id="modalTitle" class="modal-title">상품조회</div>
+          <div class="tabs" role="tablist" aria-label="상품분류">
+            <button class="tab active" data-cat="deposit" type="button" role="tab" aria-selected="true">정기예금</button>
+            <button class="tab" data-cat="tdf" type="button" role="tab">TDF</button>
+            <button class="tab" data-cat="fund" type="button" role="tab">펀드</button>
+            <button class="tab" data-cat="etf" type="button" role="tab">ETF</button>
+            <button class="tab" data-cat="cash" type="button" role="tab" disabled title="현금성 자산은 준비중입니다">현금성 자산</button>
+          </div>
+        </div>
+        <div class="modal-controls">
+          <span class="badge risk" id="modalRiskBadge">-</span>
+          <label for="sortSelect" class="visually-hidden">정렬/기간</label>
+          <select id="sortSelect" class="select"></select>
+          <button id="applySortBtn" class="btn" type="button">조회</button>
         </div>
       </div>
-      <div class="modal-controls">
-        <span class="badge risk" id="modalRiskBadge">적극투자형</span>
-        <label for="sortSelect" class="visually-hidden">정렬</label>
-        <select id="sortSelect" class="select">
-          <option value="default">정렬 없음</option>
-          <option value="rate">금리(예금)</option>
-          <option value="ret3m">수익률(3개월)</option>
-          <option value="ret1y">수익률(1년)</option>
-        </select>
+
+      <div id="modalBody" class="modal-body"></div>
+
+      <div class="modal-foot">
+        <button type="button" class="btn-secondary" id="closeModalBtn">닫기</button>
+        <div class="grow"></div>
+        <button type="button" class="btn-cta" id="addSelectedBtn">추가</button>
       </div>
     </div>
-
-    <div id="modalBody" class="modal-body"><!-- 상품카드 목록 --></div>
-
-    <div class="modal-foot">
-      <button type="button" class="btn-secondary" id="closeModalBtn">닫기</button>
-      <div class="grow"></div>
-      <button type="button" class="btn-cta" id="addSelectedBtn">추가</button>
-    </div>
   </div>
-</div>
+
+</section>
 
 <script>
   // ===== 전역 상태 =====
-  // 선택된 매수상품: { [productId]: { ratio:number, meta:object } }
-  const selectedMap = new Map();
+  const selectedMap = new Map(); // { pid -> { ratio, meta } }
+  const pageState = { deposit:0, fund:0, etf:0, tdf:0, size:10 };
+  let lastDocsByProd = new Map(); // prodId -> [FileUrlDto]
+  const pageMeta = { deposit:null, fund:null, etf:null, tdf:null };
 
-  // 초기화
+  const PERIOD_CODE_MAP = { '1M':'1개월', '3M':'3개월', '6M':'6개월', '1Y':'1년' };
+
   document.addEventListener('DOMContentLoaded', initStep2);
 
   async function initStep2() {
     const model = readModel();
     hydrateHiddenForm(model);
     await loadUserInfo(model);
-    await bootstrapSelectedFromServer(); // 기존 보유/선택 반영
-    renderSelected();                    // 카드 렌더
+    await bootstrapSelectedFromServer();
+    renderSelected();
 
-    // 버튼 이벤트
     document.getElementById('addProductBtn')?.addEventListener('click', openProductModal);
     document.getElementById('nextBtn')?.addEventListener('click', submitNext);
-
-    // 모달 이벤트
     document.getElementById('closeModalBtn').addEventListener('click', closeProductModal);
     document.getElementById('addSelectedBtn').addEventListener('click', addCheckedFromModal);
-    document.getElementById('sortSelect').addEventListener('change', reloadModalList);
+
+    document.getElementById('applySortBtn').addEventListener('click', ()=>{
+      pageState[currentCategory()] = 0;  // 정렬 변경 시 페이지 리셋
+      reloadModalList(false);
+    });
+
     document.getElementById('productModal').addEventListener('click', (e)=>{
       if(e.target.id === 'productModal') closeProductModal();
     });
 
-    // 탭 전환
     document.querySelectorAll('.tab[data-cat]').forEach(tab=>{
       tab.addEventListener('click', ()=>{
         if(tab.disabled) return;
         document.querySelectorAll('.tab').forEach(t=>{t.classList.remove('active'); t.setAttribute('aria-selected','false');});
         tab.classList.add('active'); tab.setAttribute('aria-selected','true');
-        reloadModalList();
+        pageState[currentCategory()] = 0; // 탭 바꿀 때 페이지 리셋
+        buildSortUI(); // 탭에 맞게 셀렉트 재구성
+        reloadModalList(false);
       });
     });
 
-    // ESC 닫기
-    document.addEventListener('keydown', (e)=>{
-      if(e.key === 'Escape') closeProductModal();
-    });
+    document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeProductModal(); });
   }
 
   function readModel(){
     const el = document.getElementById('model-data');
     const m = {
       flow: el?.dataset?.flow ?? '',
-      accountType: el?.dataset?.accountType ?? '',
+      accountType: el?.dataset?.accountType ?? '', // "IRP" | "DC"
       accountId: el?.dataset?.accountId ?? '',
       riskGrade: el?.dataset?.riskGrade ?? '',
       riskGradeNum: Number(el?.dataset?.riskGradeNum ?? '') || 0
@@ -245,31 +264,302 @@
   }
 
   // --- 사용자 정보(상단 카드) ---
-  async function loadUserInfo(model){
+  async function loadUserInfo(){
     try{
-      const res = await fetch('/retain-api/reserve/user-info', {method:'POST'});
+      const res = await fetch('/retain-api/reserve/user-info', { method:'POST' });
       if(!res.ok) throw new Error('user-info failed');
       const data = await res.json();
       const u = data.userInfo || {};
-      document.getElementById('accountType').textContent = u.accountType || model.accountType || '-';
-      document.getElementById('accountNumber').textContent = u.accountNumber || '-';
-      document.getElementById('userName').textContent = u.userName || '-';
-      document.getElementById('riskGrade').textContent = u.riskGrade || model.riskGrade || '-';
-    }catch(e){ console.error(e); }
-  }
 
-  // --- 초기 선택(보유/기등록)을 서버에서 받아 반영 ---
-  async function bootstrapSelectedFromServer(){
-    try{
-      const res = await fetch('/retain-api/reserve/retain', {method:'POST'});
-      if(!res.ok) throw new Error('retain failed');
-      const arr = await res.json(); // [{productId, productName, retainRatio, category, riskGradeText, ...}]
-      (arr||[]).forEach(it=>{
-        selectedMap.set(it.productId, { ratio:Number(it.retainRatio ?? 0), meta:it });
-      });
-    }catch(e){
+      // 상단 카드 채우기
+      document.getElementById('accountType').textContent = u.accountType || '-';
+      document.getElementById('accountId').textContent   = u.accountId   || '-';
+      document.getElementById('userName').textContent    = u.userName    || '-';
+      document.getElementById('riskGrade').textContent   = u.riskGrade   || '-';
+      document.getElementById('modalRiskBadge').textContent = u.riskGrade || '-';
+
+      // 세션 변경분을 dataset & 히든 폼에도 반영
+      const md = document.getElementById('model-data');
+      if (md){
+        md.dataset.accountType   = u.accountType || md.dataset.accountType || '';
+        md.dataset.accountId     = u.accountId   || md.dataset.accountId   || '';
+        md.dataset.riskGrade     = u.riskGrade   || md.dataset.riskGrade   || '';
+        md.dataset.riskGradeNum  = String(u.riskGradeNum ?? md.dataset.riskGradeNum ?? '0');
+      }
+
+      document.getElementById('f_accountType').value = u.accountType || '';
+      document.getElementById('f_accountId').value   = u.accountId   || '';
+      document.getElementById('f_riskGrade').value   = u.riskGrade   || '';
+    } catch(e){
       console.error(e);
     }
+  }
+
+  // --- 초기 선택(보유/기등록) ---
+  async function bootstrapSelectedFromServer() {
+    try {
+      const res = await fetch('/retain-api/reserve/retain', {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!res.ok) throw new Error(`retain failed: ${res.status}`);
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : (Array.isArray(data?.resultList) ? data.resultList : []);
+      list.forEach(it => {
+        const pid = it.productId ?? it.product_id;
+        if (!pid) return;
+        const ratioNum = Number(it.retainRatio ?? it.ratio ?? it.allocationPercent ?? 0);
+        selectedMap.set(pid, { ratio: Number.isFinite(ratioNum) ? ratioNum : 0, meta: it });
+      });
+    } catch (e) { console.error(e); }
+  }
+
+  // ===== 모달 =====
+  function openProductModal(){
+    buildSortUI();
+    document.getElementById('productModal').classList.add('open');
+    reloadModalList(false);
+  }
+  function closeProductModal(){
+    document.getElementById('productModal').classList.remove('open');
+  }
+  function currentCategory(){
+    const active = document.querySelector('.tab.active');
+    return active?.dataset?.cat || 'deposit';
+  }
+
+  // 카테고리별 셀렉트 옵션 구성 (서버 트리거 전용)
+  function buildSortUI(){
+    const sel = document.getElementById('sortSelect');
+    const cat = currentCategory();
+    sel.innerHTML = ''; // reset
+
+    if(cat === 'deposit'){
+      // 예금: 계좌유형에 따라 sortedBy 값만 달라짐. 사용자에겐 "금리순"만 보여줌.
+      sel.append(new Option('금리순', 'rate', true, true));
+    }else if(cat === 'fund' || cat === 'etf' || cat === 'tdf'){
+      // 펀드류: periodCode 선택
+      sel.append(new Option('1개월 수익률', '1개월'));
+      sel.append(new Option('3개월 수익률', '3개월', true, true)); // 기본 3M
+      sel.append(new Option('6개월 수익률', '6개월'));
+      sel.append(new Option('1년 수익률', '1년'));
+    }else{
+      sel.append(new Option('옵션 없음', '', true, true));
+    }
+  }
+
+  // 서버 호출용 DTO 만들기
+  function makeRequestDto(cat, model){
+    const page = pageState[cat] ?? 0;
+    const size = pageState.size ?? 10;
+
+    if(cat === 'deposit'){
+      // 원리금 보장
+      const sortedBy = (model.accountType || '').toUpperCase() === 'IRP' ? 'irpRate' : 'dcRate';
+      return { category: 'pg', page, size, sortedBy };
+    }else if(cat === 'fund' || cat === 'etf' || cat === 'tdf'){
+      const periodCode = document.getElementById('sortSelect').value || '3M';
+      return { category: cat, riskGradeNum: model.riskGradeNum || 0, page, size, periodCode };
+    }else{
+      return { category: cat, page, size };
+    }
+  }
+
+  // fileUrlList -> Map(prodId -> [FileUrlDto])
+  function groupDocsByProd(fileUrlList){
+    const m = new Map();
+    (fileUrlList || []).forEach(d=>{
+      const key = d.prodId || d.productId;
+      if(!key) return;
+      if(!m.has(key)) m.set(key, []);
+      m.get(key).push(d);
+    });
+    return m;
+  }
+  function mergeDocsByProd(baseMap, addMap){
+    const out = new Map(baseMap);
+    for(const [k, arr] of addMap.entries()){
+      if(!out.has(k)) out.set(k, []);
+      out.get(k).push(...arr);
+    }
+    return out;
+  }
+
+  async function reloadModalList(append = false){
+    const cat = currentCategory();
+    const model = readModel();
+    const dto = makeRequestDto(cat, model);
+
+    let data;
+    try{
+      const res = await fetch('/product-api/search', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(dto)
+      });
+      if(!res.ok) throw new Error('search failed');
+      data = await res.json();
+    }catch(e){
+      console.error(e);
+      if(!append){
+        renderModalList([], cat, new Map(), model, null, append);
+      }
+      return;
+    }
+
+    const pageJson = data?.resultList || {};
+    const items = Array.isArray(pageJson?.content) ? pageJson.content : [];
+
+    const freshDocsByProd = groupDocsByProd(data?.fileUrlList);
+    lastDocsByProd = append ? mergeDocsByProd(lastDocsByProd, freshDocsByProd) : freshDocsByProd;
+
+    pageMeta[cat] = pageJson || null;
+
+    renderModalList(items, cat, lastDocsByProd, model, pageJson, append);
+  }
+
+  function renderModalList(items, cat, docsByProd, model, page, append = false){
+    const body = document.getElementById('modalBody');
+
+    if(!append){
+      body.innerHTML = '';
+    }else{
+      const oldMore = body.querySelector('.modal-more');
+      if(oldMore) oldMore.remove();
+    }
+
+    (items||[]).forEach(it=>{
+      const pid = it.productId || it.prodId || '';
+      const name = buildDisplayName(it, cat);
+      const checked = selectedMap.has(pid) ? 'checked' : '';
+
+      let rateText = '';
+      if(cat === 'deposit'){
+        const isIRP = (model.accountType || '').toUpperCase() === 'IRP';
+        const rate = Number(isIRP ? it.irpRate : it.dcRate);
+        rateText = `금리: <strong>${Number.isFinite(rate) ? rate : '-'}</strong> %`;
+      }
+
+      let fundMetaHtml = '';
+      if(cat !== 'deposit'){
+        const fee = toPct(it.totalExpenseRatio);
+        const pc = it.periodCode;
+        const pcLabel = PERIOD_CODE_MAP[pc] || pc || '';
+        const ret = toPct(it.fundReturn);
+        fundMetaHtml = `
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <span>총보수: <strong>${fee}</strong></span>
+            <span>수익률(${escapeHtml(pcLabel)}): <strong>${ret}</strong></span>
+          </div>
+        `;
+      }
+
+      const card = document.createElement('div');
+      card.className = 'prod-card';
+      card.innerHTML = `
+        <div class="prod-left">
+          <input type="checkbox" class="pick" data-pid="${escapeAttr(pid)}" ${checked} />
+        </div>
+        <div class="prod-mid">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+            ${cat === 'deposit' ? `<span class="chip guarantee">원리금보장</span>` : `<span class="chip noguarantee">원리금 비보장</span>`}
+            ${it.riskGradeText ? `<span class="chip">${escapeHtml(it.riskGradeText)}</span>`:''}
+            ${it.fundType ? `<span class="chip">${escapeHtml(it.fundType)}</span>`:''}
+          </div>
+          <div style="font-weight:700;margin-bottom:6px">${escapeHtml(name)}</div>
+          ${cat === 'deposit' ? `<div>${rateText}</div>` : fundMetaHtml}
+        </div>
+        <div class="prod-actions">
+          <button class="btn gray" type="button" data-action="detail" data-pid="${escapeAttr(pid)}">상품상세</button>
+          <button class="btn" type="button" data-action="docs" data-pid="${escapeAttr(pid)}">설명서 및 약관</button>
+        </div>
+      `;
+
+      // 체크박스 동기화
+      card.querySelector('.pick').addEventListener('change', (e)=>{
+        const pid = e.target.dataset.pid;
+        if(e.target.checked){
+          if(!selectedMap.has(pid)){
+            selectedMap.set(pid, { ratio:0, meta: buildMetaForSelection(it, cat, model) });
+          }
+        }else{
+          selectedMap.delete(pid);
+        }
+      });
+
+      // 버튼 핸들러
+      card.querySelectorAll('.prod-actions .btn').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const action = btn.dataset.action;
+          const pid = btn.dataset.pid;
+          if(action === 'docs'){
+            const docs = docsByProd.get(pid) || [];
+            if(docs.length === 0){ alert('등록된 문서가 없습니다.'); return; }
+            docs.forEach(d=>{ if(d.fileUrl) window.open(d.fileUrl, '_blank'); });
+          }else if(action === 'detail'){
+            alert('상세 페이지는 준비중입니다.');
+          }
+        });
+      });
+
+      body.appendChild(card);
+    });
+
+    // 하단 더보기 UI
+    renderMoreBar(page, cat);
+  }
+
+  function buildDisplayName(it, cat){
+    if(cat === 'deposit'){
+      const bank = it.bankName || '';
+      const name = it.productName || '';
+      const years = (it.maturityYears != null) ? ` ${it.maturityYears}` : '';
+      const merged = `${bank} ${name}${years}`.trim();
+      return merged || (it.prodName || it.productId || '');
+    }
+    return it.productName || it.prodName || it.productId || '';
+  }
+
+  function buildMetaForSelection(it, cat, model){
+    if(cat === 'deposit'){
+      return { productName: buildDisplayName(it, cat), category: '정기예금', riskGradeText: '' };
+    }
+    return { productName: buildDisplayName(it, cat), category: it.category || (cat.toUpperCase()), riskGradeText: it.riskGradeText || '' , fundType: it.fundType};
+  }
+
+  function renderMoreBar(page, cat){
+    const body = document.getElementById('modalBody');
+    // 기존 more 바 제거
+    const old = body.querySelector('.modal-more');
+    if(old) old.remove();
+
+    if(!page || !Number.isFinite(page.totalPages) || page.totalPages <= 1) return;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'modal-more';
+
+    const meta = document.createElement('span');
+    meta.className = 'more-meta';
+    meta.textContent = `페이지 ${ (page.number ?? 0) + 1 } / ${ page.totalPages }`;
+
+    const btn = document.createElement('button');
+    btn.className = 'btn-loadmore';
+    btn.type = 'button';
+    btn.textContent = page.last ? '마지막 페이지' : '더보기';
+    btn.disabled = !!page.last;
+
+    if(!page.last){
+      btn.addEventListener('click', ()=> loadMore(cat));
+    }
+
+    wrap.appendChild(meta);
+    wrap.appendChild(btn);
+    body.appendChild(wrap);
+  }
+
+  async function loadMore(cat){
+    pageState[cat] = (pageState[cat] ?? 0) + 1;
+    await reloadModalList(true); // append
   }
 
   // --- 선택된 상품 카드 렌더 ---
@@ -285,8 +575,9 @@
       card.innerHTML = `
         <div class="retain-head">
           <div>
-            <span class="badge">${escapeHtml(it.category || '상품')}</span>
+          	${it.fundType ? `<span class="badge">${escapeHtml('원리금비보장')}</span>` : `<span class="badge">${escapeHtml('원리금보장')}</span>`}
             ${it.riskGradeText ? `<span class="badge risk">${escapeHtml(it.riskGradeText)}</span>` : ``}
+            ${it.fundType ? `<span class="badge">${escapeHtml(it.fundType)}</span>` : ``}
           </div>
           <button class="remove" title="삭제" aria-label="삭제">&times;</button>
         </div>
@@ -329,7 +620,7 @@
     }else if(total < 100){
       help.textContent = '합계를 100%로 맞춰주세요';
       help.className = 'help warn';
-      nextBtn.disabled = false;  // 정책에 맞게 조정 가능
+      nextBtn.disabled = false;  // 정책에 맞게 조정
     }else{
       help.textContent = '합계가 100%입니다';
       help.className = 'help ok';
@@ -339,7 +630,6 @@
 
   // --- 다음 단계(동기 제출) ---
   function submitNext(){
-    // DOM의 현재 값으로 selectedMap 동기화
     document.querySelectorAll('.retain-card').forEach(card=>{
       const pid = card.dataset.productId;
       const ratio = Number(card.querySelector('.ratio-input')?.value)||0;
@@ -347,161 +637,29 @@
       if(cur){ cur.ratio = ratio; }
     });
 
-    // "prodId:ratio" 리스트(JSON 문자열)
     const list = [];
     for(const [pid, obj] of selectedMap.entries()){
       list.push(`${pid}:${Number(obj.ratio)||0}`);
     }
     document.getElementById('f_sourceProdId').value = JSON.stringify(list);
-
-    // 제출
     document.getElementById('nextForm').submit();
   }
 
-  // ===== 모달 & 상품조회 =====
-  function openProductModal(){
-    document.getElementById('productModal').classList.add('open');
-    reloadModalList();
-  }
-  function closeProductModal(){
-    document.getElementById('productModal').classList.remove('open');
-  }
-
-  function currentCategory(){
-    const active = document.querySelector('.tab.active');
-    return active?.dataset?.cat || 'deposit';
-  }
-
-  async function reloadModalList(){
-    const cat = currentCategory();
-    const sort = document.getElementById('sortSelect').value;
-    const url = ({
-      deposit: '/product-api/list/deposit',
-      tdf:     '/product-api/list/tdf',
-      fund:    '/product-api/list/fund',
-      etf:     '/product-api/list/etf'
-    })[cat];
-
-    const model = readModel();
-    const payload = { riskGradeNum: model.riskGradeNum, sort };
-    let items = [];
-
-    try{
-      const res = await fetch(url, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(payload)
-      });
-      if(!res.ok) throw new Error('fetch list fail');
-      items = await res.json(); // 서버에서 각 카테고리별 필드 제공
-    }catch(e){
-      console.error(e);
-      items = [];
-    }
-
-    // 클라이언트 정렬(서버 정렬과 병행 가능)
-    items = sortItems(items, cat, sort);
-
-    renderModalList(items, cat);
-  }
-
-  function sortItems(items, cat, sort){
-    const arr = [...(items||[])];
-    if(sort === 'rate'){
-      arr.sort((a,b)=>(Number(b.interestRate||0) - Number(a.interestRate||0)));
-    }else if(sort === 'ret3m'){
-      arr.sort((a,b)=>(Number(b.return3m||0) - Number(a.return3m||0)));
-    }else if(sort === 'ret1y'){
-      arr.sort((a,b)=>(Number(b.return1y||0) - Number(a.return1y||0)));
-    }
-    return arr;
-  }
-
-  function renderModalList(items, cat){
-    const body = document.getElementById('modalBody');
-    body.innerHTML = '';
-
-    (items||[]).forEach(it=>{
-      const pid = it.productId || it.prodId || '';
-      const name = it.productName || it.name || pid;
-
-      // 이미 선택된 것은 체크박스 체크 처리
-      const checked = selectedMap.has(pid) ? 'checked' : '';
-
-      // 공통 카드
-      const card = document.createElement('div');
-      card.className = 'prod-card';
-      card.innerHTML = `
-        <div class="prod-left">
-          <input type="checkbox" class="pick" data-pid="${escapeAttr(pid)}" ${checked} />
-        </div>
-        <div class="prod-mid">
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px">
-            ${
-              cat === 'deposit'
-                ? `<span class="chip guarantee">원리금보장</span>`
-                : `<span class="chip noguarantee">원리금 비보장</span>`
-            }
-            ${it.riskGradeText ? `<span class="chip">${escapeHtml(it.riskGradeText)}</span>`:''}
-            ${it.fundType ? `<span class="chip">${escapeHtml(it.fundType)}</span>`:''}
-          </div>
-          <div style="font-weight:700;margin-bottom:6px">${escapeHtml(name)}</div>
-
-          ${
-            cat === 'deposit'
-              ? `<div>금리: <strong>${Number(it.interestRate ?? 0)}</strong> %</div>`
-              : `
-                <div style="display:flex;gap:12px;flex-wrap:wrap">
-                  <span>총보수: <strong>${fmtPct(it.totalFee)}</strong></span>
-                  <span>수익률(3개월): <strong>${fmtPct(it.return3m)}</strong></span>
-                  <span>수익률(1년): <strong>${fmtPct(it.return1y)}</strong></span>
-                </div>
-              `
-          }
-        </div>
-        <div class="prod-actions">
-          <button class="btn gray" type="button">상품상세</button>
-          ${cat === 'deposit' ? '' : `<button class="btn" type="button">설명서 및 약관</button>`}
-        </div>
-      `;
-
-      body.appendChild(card);
-    });
-  }
-
   function addCheckedFromModal(){
-    // 체크된 상품들을 selectedMap에 ratio=0으로 추가
     document.querySelectorAll('#modalBody .pick:checked').forEach(chk=>{
       const pid = chk.dataset.pid;
-      // 메타(표시용)는 DOM에서 역직렬화가 어려우므로 간단 필드만 저장,
-      // 상세 메타는 재조회시 덮어쓸 수 있도록 최소한만 보관
-      const meta = extractMetaFromCard(chk.closest('.prod-card'));
       if(!selectedMap.has(pid)){
-        selectedMap.set(pid, { ratio:0, meta:meta });
+        selectedMap.set(pid, { ratio:0, meta: { productName:'', category:'상품', riskGradeText:'' } });
       }
     });
     renderSelected();
     closeProductModal();
   }
 
-  function extractMetaFromCard(card){
-    // 화면에 보이는 주요 텍스트만 수집
-    const name = card.querySelector('.prod-mid > div:nth-child(2)')?.textContent?.trim() || '';
-    const chips = [...card.querySelectorAll('.chip')].map(c=>c.textContent.trim());
-    const isGuarantee = chips.some(t=>t.includes('원리금보장'));
-    const riskChip = chips.find(t=>/위험|투자성향|보수|등급/.test(t)) || '';
-    const fundType = chips.find(t=>t && t!==riskChip && !t.includes('보장')) || '';
-    return {
-      productName: name,
-      category: isGuarantee ? '정기예금' : (fundType || '상품'),
-      riskGradeText: !isGuarantee ? riskChip : ''
-    };
-  }
-
   // ===== 유틸 =====
   function escapeHtml(str){ if(!str) return ''; return String(str).replace(/[&<>"']/g, (m)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
   function escapeAttr(str){ return escapeHtml(str).replace(/"/g,'&quot;'); }
-  function fmtPct(v){
+  function toPct(v){
     const n = Number(v);
     if(Number.isFinite(n)) return n.toFixed(2) + '%';
     return '-';
