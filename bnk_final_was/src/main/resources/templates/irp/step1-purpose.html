@@ -2,21 +2,92 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>IRP가입하기 - 가입목적 선택</title>
+<link rel="stylesheet" th:href="@{/css/step1-purpose.css}" />
 </head>
 <body>
-<input type="hidden" id="userId" th:value="${testUserId}"/>
-<div class="grid">
-  <button class="tile blue" data-purpose="세액공제">
-    <div class="title">연말정산 세액공제</div><div class="sub">개인 적립금 입금</div>
-  </button>
-  <button class="tile green" data-purpose="퇴직금수령">
-    <div class="title">퇴직금 수령</div><div class="sub">퇴직금 입금</div>
-  </button>
-</div>
+  <div class="section">
+    <h1 class="title">IRP 신규가입</h1>
 
-<script>
+    <div class="guide-card">
+      <p class="guide-title">IRP 가입용도 확인</p>
+      <p class="guide-desc">개인형IRP 가입용도를 선택하십시오.</p>
+
+      <div class="purpose-grid">
+        <!-- 세액공제 -->
+        <button type="button" class="purpose-card purpose--tax" data-purpose="세액공제">
+          <div class="purpose-icon">
+            <img th:src="@{/images/icon-tax.jpg}" alt="세액공제" width="38" height="38">
+          </div>
+          <div class="purpose-text">
+            <p class="title">연말정산 세액공제</p>
+            <p class="caption">개인 적립금 입금</p>
+          </div>
+        </button>
+
+        <!-- 퇴직금 수령 -->
+        <button type="button" class="purpose-card purpose--retire" data-purpose="퇴직금 수령">
+          <div class="purpose-icon">
+            <img th:src="@{/images/icon-retire.jpg}" alt="퇴직금 수령" width="38" height="38">
+          </div>
+          <div class="purpose-text">
+            <p class="title">퇴직금 수령</p>
+            <p class="caption">퇴직금 입금</p>
+          </div>
+        </button>
+      </div>
+    </div>
+    
+	  <div class="helpbar">· 상담센터 : 평일 09시 ~ 18시(공휴일 제외) / 상담하기 : 1588-6200</div>
+  </div>
   
-</script>
+  <!-- 서버에서 테스트 userId 주입 -->
+  <script th:inline="javascript">
+    const USER_ID = /*[[${userId}]]*/ 0;
+  </script>
+  
+  <script>
+  	async function postJson(url, body) {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ` + (await res.text()));
+      return res.json();
+    }
+	
+  	document.querySelectorAll('.purpose-card').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const purpose = btn.dataset.purpose; // "세액공제" | "퇴직금 수령"
+          btn.disabled = true;
+          try {
+            // DraftJoinDto { userId, joinPurpose }와 키 맞춤
+            const data = await postJson('/irp/join/draft', {
+              userId: USER_ID,
+              joinPurpose: purpose
+            });
+            console.log('draft response:', data);
+
+            // sendAndWrap() 래핑 구조에 맞춰 joinId 추출
+            const joinId = data?.data?.joinId ?? data?.joinId;
+            if (!joinId) throw new Error('joinId 응답 누락');
+
+            // 목적별 다음 단계 이동 (프로젝트 라우팅에 맞게 수정)
+            if (purpose === '세액공제') {
+              window.location.href = `/irp/join/${joinId}/tax-form`;
+            } else {
+              window.location.href = `/irp/join/${joinId}/retire-form`;
+            }
+          } catch (e) {
+            console.error(e);
+            alert('요청 처리 중 오류가 발생했습니다.');
+          } finally {
+            btn.disabled = false;
+          }
+        });
+      });
+  </script>
 </body>
 </html>

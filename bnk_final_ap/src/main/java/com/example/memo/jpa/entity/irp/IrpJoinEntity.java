@@ -38,11 +38,6 @@ public class IrpJoinEntity {
 	//가입목적
     @Column(name="join_purpose", nullable=false, length=20)
 	private String joinPurpose;	// 세액공제, 퇴직금수령, 계약이전
-    
-	//운용상품
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "product_id")
-    private ProductMaster productId;	// FK (product_master)
 	
 	//연 납입 한도 금액
     @Column(name="annual_contrib_amt")

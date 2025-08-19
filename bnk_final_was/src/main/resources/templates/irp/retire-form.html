@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>IRP가입하기 - 퇴직금 수령용</title>
+<link rel="stylesheet" th:href="@{/css/retire-form.css}" />
+</head>
+<body>
+<script th:inline="javascript">
+  const joinId = /*[[${joinId}]]*/ 0;
+</script>
+
+  <div class="section">
+    <h1>개인IRP가입하기(퇴직금수령 목적)</h1>
+
+    <!-- 동일한 진행 단계 바 (필요 시 active만 조정) -->
+    <ul class="step-bar">
+      <li class="active">01. 개인형IRP신규가입</li>
+      <li>02. 계약서동의</li>
+      <li>03. 가입정보입력</li>
+      <li>04. 포트폴리오 설정</li>
+      <li>05. 상품가입완료</li>
+    </ul>
+
+    <!-- 카드 -->
+    <div class="form-card">
+      <div class="form-card__head">
+        가입자 정보 확인
+      </div>
+
+      <div class="form-card__body">
+        <div class="field">
+          <label for="retireDate">퇴직일</label>
+          <input type="date" id="retireDate" class="input" />
+        </div>
+
+        <div class="field">
+          <label for="retireReason">퇴직 사유</label>
+          <input type="text" id="retireReason" class="input" placeholder="예: 정년퇴직, 계약만료 등" />
+        </div>
+
+        <div class="field">
+          <label for="corpName">회사명</label>
+          <input type="text" id="corpName" class="input" placeholder="예: 삼성전자" />
+        </div>
+
+        <div class="field">
+          <label for="severanceAmt">퇴직금(원)</label>
+          <input
+            type="text"
+            id="severanceAmt"
+            class="input"
+            placeholder="숫자만 입력"
+            oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+          />
+        </div>
+      </div>
+
+      <div class="form-card__foot">
+        <button id="saveBtn">확인</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  async function postJson(url, body) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  }
+
+  // 간단한 필수값 검증
+  function validate() {
+    const retireDate   = document.getElementById('retireDate').value;
+    const retireReason = document.getElementById('retireReason').value.trim();
+    const corpName     = document.getElementById('corpName').value.trim();
+    const severance    = document.getElementById('severanceAmt').value.trim();
+
+    if (!retireDate)   return '퇴직일을 입력하세요.';
+    if (!retireReason) return '퇴직 사유를 입력하세요.';
+    if (!corpName)     return '회사명을 입력하세요.';
+    if (!severance)    return '퇴직금을 입력하세요.';
+
+    return null;
+  }
+  
+  // 숫자 콤마
+  const severanceInput = document.getElementById("severanceAmt");
+
+  severanceInput.addEventListener("input", function (e) {
+    let value = e.target.value.replace(/[^0-9]/g, ""); // 숫자만
+    if (value) {
+      value = Number(value).toLocaleString("ko-KR");  // 천 단위 콤마
+    }
+    e.target.value = value;
+  });
+
+  function getSeveranceAmt() {
+    return Number(severanceInput.value.replace(/,/g, "") || 0);
+  }
+
+  document.getElementById('saveBtn').addEventListener('click', async () => {
+    const err = validate();
+    if (err) { alert(err); return; }
+
+    const retireDate   = document.getElementById('retireDate').value;	// "YYYY-MM-DD"
+    const retireReason = document.getElementById('retireReason').value.trim();
+    const corpName     = document.getElementById('corpName').value.trim();
+    const severanceAmt = getSeveranceAmt();
+
+    try {
+      await postJson(`/irp/join/${joinId}/retire`, {
+        retireDate, retireReason, corpName, severanceAmt,
+        withholdDoc: null // DTO에 필드가 있다면 기본값 전달
+      });
+      alert('퇴직금 수령 정보가 저장되었습니다.');
+      
+      location.href = `/irp/join/${joinId}/step3-contract`;
+    } catch (e) {
+      console.error(e);
+      alert('저장 중 오류가 발생했습니다.');
+    }
+  });
+</script>
+</body>
+</html>
