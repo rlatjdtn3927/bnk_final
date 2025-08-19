@@ -38,7 +38,7 @@
       </div>
     </div>
 
-    <form th:action="@{|/purchase/trade/${flow}/step4/next|}" method="post">
+    <form th:action="@{/purchase/trade/step5/next}" method="post">
       <input type="hidden" name="userId" th:value="${userId}">
       <input type="hidden" name="accountType" th:value="${accountType}">
       <input type="hidden" name="acountId" th:value="${acountId}">

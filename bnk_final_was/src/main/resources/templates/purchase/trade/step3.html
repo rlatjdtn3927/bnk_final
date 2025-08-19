@@ -1,216 +1,39 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>STEP2. 상품 선택</title>
-  <link th:href="@{/css/purchase.css}" rel="stylesheet"/>
+  <meta charset="UTF-8">
+  <title>Step 3. 상품 선택</title>
+  <link rel="stylesheet" href="/css/common.css" />
 </head>
 <body>
-	<header class="header">
-		  <div class="brand">BNK 퇴직연금</div>
-		  <nav class="tabs">
-		    <a th:href="@{/purchase/holdings}" class="tab">보유현황</a>
-		    <a th:href="@{/purchase/products}" class="tab">상품관리</a>
-		  </nav>
-	</header>
+<header class="header">
+  <div class="brand">BNK 퇴직연금</div>
+  <nav class="tabs">
+    <a th:href="@{/purchase/holdings}" class="tab">보유현황</a>
+    <a th:href="@{/purchase/products}" class="tab">상품관리</a>
+  </nav>
+</header>
 
-<main class="container">
-  <section class="card">
-    <div class="section-title">STEP2. 상품 선택(합계 100%)</div>
+<main>
+  <h1>Step 3. 상품 선택</h1>
+  <div class="flow-badge"
+       th:text="${PassValueDto.flow != null} ? ${PassValueDto.flow} : 'FLOW 미지정'">FLOW</div>
 
-    <!-- 유지 파라미터 -->
-    <input type="hidden" id="flow"        th:value="${flow}">
-    <input type="hidden" id="userId"      th:value="${userId}">
-    <input type="hidden" id="accountType" th:value="${accountType}">
-    <input type="hidden" id="acountId"    th:value="${acountId}">
-    <input type="hidden" id="prevItems"   th:value="${items}">
+  <form th:action="@{/purchase/trade/step3/next}" method="post">
+    <!-- 예시: 상품 ID 선택 -->
+    <label>
+      <input type="checkbox" name="productIds" value="FUND_001"> 펀드 상품 1
+    </label>
+    <label>
+      <input type="checkbox" name="productIds" value="ETF_002"> ETF 상품 2
+    </label>
 
-    <!-- MATURITY 플로우 전용: 전환대상 예금/전환일 -->
-    <div class="card" th:if="${flow}=='MATURITY'">
-      <div class="badge">만기 변경예약: 원본 예금 / 전환일</div>
-      <div class="grid grid-3 mt-8">
-        <div>
-          <label>원본 예금(상품ID)</label>
-          <select class="input" id="maturityProductId">
-            <option value="">불러오는 중...</option>
-          </select>
-        </div>
-        <div>
-          <label>전환일</label>
-          <input type="date" class="input" id="changeDate" th:value="${changeDate}">
-        </div>
-        <div class="row" style="margin-top:22px">
-          <button type="button" class="btn" id="reloadMaturity">예금 목록 갱신</button>
-        </div>
-      </div>
-      <small class="mt-8">※ “예금(원리금보장)” 보유분이 월별/상품별로 표시됩니다.</small>
-    </div>
+    <input type="hidden" th:name="accountId" th:value="${PassValueDto.accountId}" />
+    <input type="hidden" th:name="accountType" th:value="${PassValueDto.accountType}" />
+    <input type="hidden" th:name="flow" th:value="${PassValueDto.flow}" />
 
-    <div class="row mt-16">
-      <select id="cat" class="input" style="max-width:220px">
-        <option value="PRINCIPAL">예금(원리금보장)</option>
-        <option value="FUND">펀드</option>
-        <option value="ETF">ETF</option>
-        <option value="TDF">TDF</option>
-        <option value="CASH">현금성 자산</option>
-      </select>
-      <input id="q" class="input" placeholder="상품명/코드">
-      <button id="searchBtn" class="btn">검색</button>
-      <button id="addCashBtn" class="btn">현금성 추가</button>
-    </div>
-
-    <table class="table mt-8">
-      <thead><tr><th>상품ID</th><th>이름/정보</th><th></th></tr></thead>
-      <tbody id="searchBody"><tr><td colspan="3">검색 결과 없음</td></tr></tbody>
-    </table>
-
-    <div class="mt-16">
-      <div class="badge">선택한 상품 & 비율(합 100%)</div>
-      <table class="table mt-8">
-        <thead><tr><th>상품ID</th><th>유형/이름</th><th>비율(%)</th><th></th></tr></thead>
-        <tbody id="chosenBody"><tr><td colspan="4">선택 없음</td></tr></tbody>
-      </table>
-      <div class="mt-8"><b>합계:</b> <span id="ratioSum">0%</span></div>
-
-      <form th:action="@{|/purchase/trade/${flow}/step2/next|}" method="post" onsubmit="return goNext();">
-        <input type="hidden" name="userId" th:value="${userId}">
-        <input type="hidden" name="accountType" th:value="${accountType}">
-        <input type="hidden" name="acountId" th:value="${acountId}">
-        <input type="hidden" id="itemsJson" name="itemsJson">
-        <!-- MATURITY 옵션 -->
-        <input type="hidden" id="maturityProductIdField" name="maturityProductId" th:value="${maturityProductId}">
-        <input type="hidden" id="changeDateField" name="changeDate" th:value="${changeDate}">
-        <button class="btn primary mt-8" type="submit">다음(서류 동의)</button>
-      </form>
-    </div>
-  </section>
+    <button type="submit">다음 단계</button>
+  </form>
 </main>
-
-<script>
-  const flow = document.getElementById('flow').value;
-  const searchBody = document.getElementById('searchBody');
-  const chosenBody = document.getElementById('chosenBody');
-  const ratioSumEl = document.getElementById('ratioSum');
-  let chosen = []; // {productType, productId, name, ratio}
-
-  // 이전 선택 복원
-  (function hydrate(){
-    const prev = document.getElementById('prevItems').value;
-    if(prev){
-      try{ chosen = JSON.parse(prev); renderChosen(); }catch(e){}
-    }
-  })();
-
-  // MATURITY: 예금 목록 로드
-  async function loadMaturityList(){
-    const accountType = document.getElementById('accountType').value;
-    const acountId = document.getElementById('acountId').value;
-    const qs = new URLSearchParams({accountType, acountId}).toString();
-    const res = await fetch(`/purchase/api/trade/maturity/list?${qs}`);
-    const rows = await res.json(); // [{productId,productName,rate,...}]
-    const sel = document.getElementById('maturityProductId');
-    if(!Array.isArray(rows)||rows.length===0){
-      sel.innerHTML = `<option value="">예금 보유가 없습니다</option>`;
-      return;
-    }
-    sel.innerHTML = rows.map(r => `<option value="${r.productId}">${r.productId} - ${r.productName} (${r.rate}%)</option>`).join('');
-    // 기존 값 유지
-    const prev = document.getElementById('maturityProductIdField').value;
-    if(prev) sel.value = prev;
-  }
-  if(flow==='MATURITY'){
-    loadMaturityList();
-    document.getElementById('reloadMaturity')?.addEventListener('click', loadMaturityList);
-  }
-
-  // 검색
-  document.getElementById('searchBtn').addEventListener('click', async ()=>{
-    const category = document.getElementById('cat').value;
-    const q = document.getElementById('q').value.trim();
-    if(category==='CASH'){ alert('현금성은 [현금성 추가]를 사용하세요.'); return; }
-    const qs = new URLSearchParams({category, q}).toString();
-    const res = await fetch(`/purchase/api/trade/products?${qs}`);
-    const rows = await res.json();
-    if(!Array.isArray(rows) || rows.length===0){
-      searchBody.innerHTML = `<tr><td colspan="3">검색 결과 없음</td></tr>`;
-      return;
-    }
-    searchBody.innerHTML = rows.map(r=>`
-      <tr>
-        <td>${r.productId||''}</td>
-        <td>${r.productName||r.name||'-'}</td>
-        <td><button class="btn" data-add='${JSON.stringify({productType:category, productId:r.productId, name:r.productName||r.name})}'>담기</button></td>
-      </tr>
-    `).join('');
-  });
-
-  // 담기/현금성 추가
-  searchBody.addEventListener('click', e=>{
-    const btn = e.target.closest('button[data-add]');
-    if(!btn) return;
-    const item = JSON.parse(btn.dataset.add);
-    if(chosen.some(x=>x.productType===item.productType && x.productId===item.productId)){
-      alert('이미 담긴 상품입니다.'); return;
-    }
-    chosen.push({ ...item, ratio:0 });
-    renderChosen();
-  });
-  document.getElementById('addCashBtn').addEventListener('click', ()=>{
-    if(chosen.some(x=>x.productType==='CASH')){
-      alert('현금성은 하나만 담을 수 있습니다.'); return;
-    }
-    chosen.push({productType:'CASH', productId:null, name:'현금성 자산', ratio:0});
-    renderChosen();
-  });
-
-  function renderChosen(){
-    if(chosen.length===0){ chosenBody.innerHTML = `<tr><td colspan="4">선택 없음</td></tr>`; ratioSumEl.textContent='0%'; return; }
-    chosenBody.innerHTML = chosen.map((x,idx)=>`
-      <tr>
-        <td>${x.productId??'-'}</td>
-        <td>${x.productType} / ${x.name??'-'}</td>
-        <td><input type="number" min="0" max="100" value="${x.ratio}" data-idx="${idx}" class="input" style="width:100px"></td>
-        <td><button class="btn" data-del="${idx}">삭제</button></td>
-      </tr>
-    `).join('');
-    refreshSum();
-  }
-  chosenBody.addEventListener('input', e=>{
-    const idx = e.target.dataset.idx;
-    if(idx==null) return;
-    chosen[idx].ratio = parseInt(e.target.value||'0',10);
-    refreshSum();
-  });
-  chosenBody.addEventListener('click', e=>{
-    const del = e.target.dataset.del;
-    if(del==null) return;
-    chosen.splice(parseInt(del,10),1);
-    renderChosen();
-  });
-  function refreshSum(){
-    const sum = chosen.reduce((a,b)=>a+(parseInt(b.ratio||0,10)),0);
-    ratioSumEl.textContent = sum + '%';
-  }
-
-  function goNext(){
-    // MATURITY: 원본예금/전환일 체크
-    if(flow==='MATURITY'){
-      const pidSel = document.getElementById('maturityProductId');
-      const cd = document.getElementById('changeDate').value;
-      if(!pidSel?.value){ alert('원본 예금을 선택하세요.'); return false; }
-      if(!cd){ alert('전환일을 선택하세요.'); return false; }
-      document.getElementById('maturityProductIdField').value = pidSel.value;
-      document.getElementById('changeDateField').value = cd;
-    }
-
-    const sum = chosen.reduce((a,b)=>a+(parseInt(b.ratio||0,10)),0);
-    if(sum!==100){ alert('비율 합계가 100%여야 합니다.'); return false; }
-    document.getElementById('itemsJson').value = JSON.stringify(chosen.map(x=>({
-      productType: x.productType, productId: x.productId, ratio: parseInt(x.ratio,10)||0
-    })));
-    return true;
-  }
-</script>
 </body>
 </html>
