@@ -33,7 +33,9 @@ public enum Command {
     
 	/* OCR 관련 */
     FAMILY_CERT_OCR,
-
+    UPLOAD_FAMILY_DOC,
+    PRESIGN_FAMILY_DOC,  // 추가: presigned GET URL 생성
+    LIST_REVIEW_DOCS ,    // (선택) review 폴더 리스트
     
     /*IRP가입관련*/
     IRP_JOIN_CREATE_DRAFT,      // step1: 초안 생성
