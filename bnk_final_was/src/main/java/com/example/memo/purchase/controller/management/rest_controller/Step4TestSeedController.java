@@ -1,17 +1,20 @@
 // WAS - src/main/java/com/example/memo/purchase/controller/management/rest_controller/Step4TestSeedController.java
 package com.example.memo.purchase.controller.management.rest_controller;
 
-import com.example.memo.purchase.dto.trade.FileUrlDto;
-import com.example.memo.purchase.dto.trade.PassValueDto;
-import jakarta.servlet.http.HttpSession;
-import lombok.RequiredArgsConstructor;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.view.RedirectView;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import com.example.memo.purchase.dto.trade.FileUrlDto;
+import com.example.memo.purchase.dto.trade.PassValueDto;
+import com.example.memo.purchase.dto.trade.SourceProductDto;
+
+import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,9 +30,13 @@ public class Step4TestSeedController {
 
         // 선택 상품(비율) 예시: PG0012345 60% + FND00077 40%
         dto.setSourceProdIdList(List.of(
-                Map.of("PG0012345", 60),
-                Map.of("FND00077", 40)
-        ));
+        	    Map.of(SourceProductDto.builder()
+        	                           .productId("PG0012345")
+        	                           .productName("상품A").build(), 60),
+        	    Map.of(SourceProductDto.builder()
+        	                           .productId("FND00077")
+        	                           .productName("펀드77").build(), 40)
+        	));
 
         // 문서 목록(세션만 사용하므로 여기서 넣어줘야 화면에 뜬다)
         List<FileUrlDto> files = new ArrayList<>();

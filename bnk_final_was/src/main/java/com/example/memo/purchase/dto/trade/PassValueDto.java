@@ -27,7 +27,7 @@ public class PassValueDto {
    /*Step 2에서 추가*/
    
    /*Step 3에서 추가 : 상품목록*/
-   private List<Map<String,Integer>> sourceProdIdList; // 상품목록에서 선택한 상품ID --> 1.매수예정 등록: 여러개 
+   private List<Map<SourceProductDto,Integer>> sourceProdIdList; // 상품목록에서 선택한 상품ID --> 1.매수예정 등록: 여러개 
    private String sourceProdId; // 2,3. 만기 및 변경: 1개
    private List<FileUrlDto> fileUrlList;
    /*Step 3에서 추가*/
