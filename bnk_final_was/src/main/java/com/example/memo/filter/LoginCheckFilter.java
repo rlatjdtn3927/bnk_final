@@ -26,7 +26,16 @@ public class LoginCheckFilter implements Filter {
         
         // 정적 리소스
         "/css", "/js", "/images", "/webjars", "/static"
-        
+
+        "/purchase",
+        "/purchase/trade",
+        "/purchase/api/trade",
+        "/purchase/api/portfolio",
+        "/purchase/api/holdings",
+        "/branches",
+        "/chatbot",
+        "/api/embeddings",
+        "/api/chat"
     );
 
     @Override
