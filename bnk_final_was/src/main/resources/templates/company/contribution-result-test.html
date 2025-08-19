@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <title>DC 부담금 납입 - 결과확인/실행</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{
+      --pri:#0052cc; --pri-h:#0045ab; --red:#de350b; --green:#00875A;
+      --bd:#dfe1e6; --ink:#172b4d; --mut:#6b778c;
+      --bg:#f4f5f7; --card:#ffffff; --hover:#f0f6ff;
+      --radius:12px; --shadow:0 4px 10px rgba(9,30,66,.12);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;padding:32px 20px;background:var(--bg);color:var(--ink);
+      font-family:Pretendard,system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+    .wrap{max-width:1080px;margin:0 auto}
+    .page-title{display:flex;align-items:flex-end;gap:12px;margin:0 0 12px}
+    .page-title h1{margin:0;font-size:24px;font-weight:800}
+    .page-sub{color:var(--mut);font-size:14px}
+    .hr{height:1px;background:var(--bd);margin:18px 0 22px;border:0}
+
+    .stepper{display:flex;gap:16px;align-items:center;margin-bottom:18px}
+    .step{display:flex;align-items:center;gap:10px}
+    .dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--bd);
+      color:var(--mut);display:grid;place-items:center;font-weight:700;background:#fff}
+    .step.is-active .dot{border-color:var(--pri);color:#fff;background:var(--pri)}
+    .step.is-done .dot{border-color:var(--green);background:#e3fcef;color:#01694b}
+    .label{font-size:13px;color:var(--mut)}
+    .bar{flex:1;height:2px;background:var(--bd)}
+
+    .card{background:var(--card);border:1px solid var(--bd);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .card .hd{padding:18px 18px 0}
+    .card .bd{padding:18px}
+    .card .ft{padding:16px 18px;border-top:1px solid var(--bd);background:#fafbfc;border-radius:0 0 var(--radius) var(--radius)}
+
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    @media (max-width:900px){.stats{grid-template-columns:repeat(2,1fr)}}
+    .stat{background:#fafbfc;border:1px solid var(--bd);border-radius:10px;padding:14px;text-align:center}
+    .stat .lab{font-size:13px;color:var(--mut);margin-bottom:6px}
+    .stat .val{font-size:20px;font-weight:800}
+    .ok{color:var(--green)} .err{color:var(--red)}
+
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .input{border:1px solid var(--bd);border-radius:10px;background:#fff;padding:10px 12px;font-size:14px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--bd);
+      background:#fff;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer;text-decoration:none}
+    .btn:hover{background:#f7f8fa}
+    .btn[disabled]{opacity:.6;cursor:not-allowed}
+    .btn-primary{border:0;background:var(--pri);color:#fff}
+    .btn-primary:hover{background:var(--pri-h)}
+    .btn-danger{border:0;background:var(--red);color:#fff}
+    .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;border-radius:999px;padding:6px 10px;border:1px solid var(--bd);color:var(--mut)}
+
+    .table-wrap{border:1px solid var(--bd);border-radius:12px;overflow:hidden}
+    table{width:100%;border-collapse:separate;border-spacing:0;font-size:14px}
+    thead th{position:sticky;top:0;background:#f8f9fb;border-bottom:1px solid var(--bd);text-align:left;padding:10px 12px;font-weight:700}
+    tbody td{border-top:1px solid var(--bd);padding:10px 12px;vertical-align:top}
+    .badge{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:700}
+    .badge-ok{background:#e3fcef;color:#01694b;border:1px solid #79f2c0}
+
+    .alert{padding:10px 12px;border:1px solid #ffe58f;background:#fffbe6;color:#7a5a00;border-radius:10px;font-size:13px}
+    .alert-error{border-color:#ffccc7;background:#fff2f0;color:#a8071a}
+
+    .summary-line{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .spacer{flex:1 1 auto}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="page-title">
+      <h1>DC 부담금 납입 - 결과확인/실행</h1>
+      <span class="chip">배치 ID: <span id="chip-batch">-</span></span>
+    </div>
+    <p class="page-sub">확정된 항목을 선택하여 실제 납입을 실행합니다.</p>
+    <div class="hr"></div>
+
+    <!-- 스텝퍼 -->
+    <div class="stepper" aria-label="진행 단계">
+      <div class="step is-done"><div class="dot">1</div><div class="label">정보입력</div></div>
+      <div class="bar"></div>
+      <div class="step is-done"><div class="dot">2</div><div class="label">검증</div></div>
+      <div class="bar"></div>
+      <div class="step is-active"><div class="dot">3</div><div class="label">결과확인</div></div>
+    </div>
+
+    <!-- 요약 -->
+    <section class="card">
+      <div class="bd">
+        <div class="stats">
+          <div class="stat"><div class="lab">정상 건수</div><div id="okCnt" class="val ok">0</div></div>
+          <div class="stat"><div class="lab">총 건수</div><div id="totCnt" class="val">0</div></div>
+          <div class="stat"><div class="lab">정상 합계 금액</div><div id="okSum" class="val">0원</div></div>
+          <div class="stat"><div class="lab">배치 상태</div><div id="batchStatus" class="val">-</div></div>
+        </div>
+      </div>
+      <div class="ft">
+        <div id="infoBox" class="alert">확정된 항목만 납입할 수 있습니다. 출금계좌를 선택하고 납입 대상을 체크하세요.</div>
+      </div>
+    </section>
+
+    <!-- 계좌/액션 -->
+    <section class="card">
+      <div class="bd">
+        <div class="summary-line">
+          <label class="chip" for="acctSel">출금 계좌</label>
+          <select id="acctSel" class="input" style="min-width:260px"></select>
+          <span id="acctBal" class="chip">잔액: -원</span>
+          <div class="spacer"></div>
+          <span class="chip">선택 건수: <b id="selCnt">0</b></span>
+          <span class="chip">선택 합계: <b id="selSum">0원</b></span>
+          <button id="execBtn" class="btn btn-primary" disabled>납입 실행</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 항목 표 -->
+    <section class="table-wrap card" aria-label="납입 대상">
+      <div class="hd">
+        <div class="row">
+          <h2 style="margin:0;font-size:18px;font-weight:800">납입 대상</h2>
+          <label class="chip" for="chkAll">
+            <input type="checkbox" id="chkAll" style="transform:translateY(1px);margin-right:6px"> 전체선택
+          </label>
+        </div>
+      </div>
+      <div class="bd" style="padding:0">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:40px"></th>
+              <th style="width:28%">회원명</th>
+              <th style="width:18%">금액</th>
+              <th style="width:14%">상태</th>
+              <th>비고</th>
+            </tr>
+          </thead>
+          <tbody id="tbody">
+            <tr><td colspan="5" style="text-align:center;color:var(--mut);padding:22px">불러오는 중...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="ft">
+        <div id="errBox" class="alert-error alert" style="display:none">오류가 발생했습니다.</div>
+        <div id="okBox" class="alert" style="display:none">납입이 완료되었습니다.</div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    (function(){
+      const qs = new URLSearchParams(location.search);
+      const batchId = Number(qs.get('batchId'));
+      const chipBatch = document.getElementById('chip-batch');
+      const okCnt = document.getElementById('okCnt');
+      const totCnt = document.getElementById('totCnt');
+      const okSum = document.getElementById('okSum');
+      const batchStatus = document.getElementById('batchStatus');
+      const infoBox = document.getElementById('infoBox');
+      const tbody = document.getElementById('tbody');
+      const errBox = document.getElementById('errBox');
+      const okBox = document.getElementById('okBox');
+
+      const acctSel = document.getElementById('acctSel');
+      const acctBal = document.getElementById('acctBal');
+      const execBtn = document.getElementById('execBtn');
+      const chkAll = document.getElementById('chkAll');
+      const selCnt = document.getElementById('selCnt');
+      const selSum = document.getElementById('selSum');
+
+      chipBatch.textContent = batchId || '-';
+      if (!batchId) {
+        alert('batchId가 없습니다. 업로드부터 다시 진행해 주세요.');
+        location.href = '/company/dc/contribution/upload-page';
+        return;
+      }
+
+      const fmtMoney = n => Number(n||0).toLocaleString() + '원';
+      const getName = r => (r.dcMember && r.dcMember.name) ? r.dcMember.name : '(알 수 없는 가입자)';
+      const isOk = r => (r.validationStatus||'').toUpperCase() === 'OK';
+
+      let rows = [];            // OK 항목(실행 후보)
+      let selected = new Set(); // 선택된 itemId
+      let accounts = [];        // 회사 출금 계좌 목록
+
+      function renderAccounts(){
+        acctSel.innerHTML = '';
+        accounts.forEach(a=>{
+          const opt = document.createElement('option');
+          opt.value = a.id;
+          opt.textContent = `${a.name} (${a.number})`;
+          opt.dataset.balance = a.balance ?? 0;
+          acctSel.appendChild(opt);
+        });
+        updateAcctBalance();
+      }
+
+      function updateAcctBalance(){
+        const opt = acctSel.selectedOptions[0];
+        const bal = opt ? Number(opt.dataset.balance || 0) : 0;
+        acctBal.textContent = `잔액: ${fmtMoney(bal)}`;
+      }
+
+      function updateSelectionUI(){
+        selCnt.textContent = String(selected.size);
+        let sum = 0;
+        rows.forEach(r => { if (selected.has(r.itemId)) sum += Number(r.amount||0); });
+        selSum.textContent = fmtMoney(sum);
+        execBtn.disabled = !(selected.size && acctSel.value);
+        // 전체선택 토글 상태 동기화
+        chkAll.checked = selected.size && selected.size === rows.length;
+      }
+
+      function renderTable(){
+        if (!rows.length){
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--mut);padding:22px">표시할 항목이 없습니다.</td></tr>';
+          return;
+        }
+        const frag = document.createDocumentFragment();
+        rows.forEach(r=>{
+          const tr = document.createElement('tr');
+          const name = getName(r);
+          const amt = fmtMoney(r.amount||0);
+          const checked = selected.has(r.itemId) ? 'checked' : '';
+          tr.innerHTML = `
+            <td><input type="checkbox" data-id="${r.itemId}" ${checked}></td>
+            <td>${name}</td>
+            <td>${amt}</td>
+            <td><span class="badge badge-ok">OK</span></td>
+            <td>-</td>`;
+          frag.appendChild(tr);
+        });
+        tbody.innerHTML = '';
+        tbody.appendChild(frag);
+
+        // 각 체크박스 이벤트
+        tbody.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
+          cb.addEventListener('change', e=>{
+            const id = Number(e.target.dataset.id);
+            if (e.target.checked) selected.add(id); else selected.delete(id);
+            updateSelectionUI();
+          });
+        });
+      }
+
+      async function loadSummaryAndItems(){
+        try{
+          const res = await fetch('/company/dc/contribution/validate', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ batchId })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message || '검증 조회 실패');
+
+          const ok = Number(data.okCount||0);
+          const tot = Number(data.totalRecords || (Array.isArray(data.items)? data.items.length : 0));
+          okCnt.textContent = ok;
+          totCnt.textContent = tot;
+
+          let sumOk = 0;
+          const items = Array.isArray(data.items) ? data.items : [];
+          rows = items.filter(isOk).map(r=>{
+            sumOk += Number(r.amount||0);
+            return r;
+          });
+          okSum.textContent = fmtMoney(typeof data.totalOkAmount === 'number' ? data.totalOkAmount : sumOk);
+
+          // 배치 상태 텍스트(추정)
+          batchStatus.textContent = (data.errorCount===0) ? 'VALIDATED/CONFIRMED' : 'DRAFT';
+
+          // 기본 선택: 모두 선택
+          selected = new Set(rows.map(r=>r.itemId));
+          renderTable();
+          updateSelectionUI();
+
+        }catch(e){
+          errBox.style.display = 'block';
+          errBox.textContent = '결과 조회 실패: ' + e.message;
+        }
+      }
+
+      async function loadAccounts(){
+        try{
+          // 회사 출금 계좌 목록 엔드포인트 예시
+          const res = await fetch('/company/account/list');
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message || '계좌 조회 실패');
+
+          // 기대 스키마: [{id, name, number, balance}]
+          accounts = Array.isArray(data) ? data : (Array.isArray(data.accounts) ? data.accounts : []);
+          renderAccounts();
+        }catch(e){
+          // 계좌가 없어도 페이지는 보이되 실행은 막음
+          acctSel.innerHTML = '<option value="">계좌를 불러오지 못했습니다</option>';
+          execBtn.disabled = true;
+          errBox.style.display = 'block';
+          errBox.textContent = '계좌 조회 실패: ' + e.message;
+        }
+      }
+
+      async function executePayment(){
+        if (!selected.size){ alert('납입 대상을 선택하세요.'); return; }
+        if (!acctSel.value){ alert('출금 계좌를 선택하세요.'); return; }
+        if (!confirm('선택한 항목에 대해 납입을 실행하시겠습니까?')) return;
+
+        const origText = execBtn.textContent;
+        execBtn.disabled = true;
+        execBtn.textContent = '납입 실행 중...';
+        errBox.style.display = 'none'; okBox.style.display = 'none';
+
+        try{
+          const payload = {
+            batchId,
+            itemIds: Array.from(selected),
+            sourceAccountId: Number(acctSel.value)
+          };
+          // 실행 엔드포인트 예시: 서버에 맞게 조정 가능
+          const res = await fetch('/company/dc/contribution/execute-by-items', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify(payload)
+          });
+
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message || '납입 실행 실패');
+
+          okBox.style.display = 'block';
+          okBox.textContent =
+            `납입 완료: 처리 ${data.processedCount ?? '-'}건, 총액 ${Number(data.totalPaidAmount||0).toLocaleString()}원, 시각 ${data.paidAt || '-'}`;
+
+          // 실행 후 선택 해제 및 재조회(선택)
+          selected.clear();
+          await loadSummaryAndItems();
+          updateSelectionUI();
+        }catch(e){
+          errBox.style.display = 'block';
+          errBox.textContent = '실행 실패: ' + e.message;
+          execBtn.disabled = false;
+          execBtn.textContent = origText;
+          return;
+        }
+
+        execBtn.textContent = '납입 실행';
+        execBtn.disabled = false;
+      }
+
+      // 이벤트 바인딩
+      acctSel.addEventListener('change', updateAcctBalance);
+      chkAll.addEventListener('change', ()=>{
+        if (chkAll.checked) selected = new Set(rows.map(r=>r.itemId));
+        else selected.clear();
+        renderTable(); // 체크박스 상태 갱신
+        updateSelectionUI();
+      });
+      execBtn.addEventListener('click', executePayment);
+
+      // 초기 로드
+      Promise.all([loadSummaryAndItems(), loadAccounts()]);
+    })();
+  </script>
+</body>
+</html>

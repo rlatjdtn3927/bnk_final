@@ -13,13 +13,30 @@ public class BankViewController {
 		return "admin/admin-login"; 
 	}
 	
+	
 	@GetMapping("/request/pending")
 	public String dcRequestPage() {
 		return "admin/request-approval";
 	}
-
+	
+	
+	/*
+	@GetMapping("/layout")
+	public String adminMain() {
+		return "admin/admin-layout";
+	}
+	 */
+	
+	/*
     @GetMapping
     public String mainPage() {
         return "admin/admin-main"; 
     }
+    */
+    
+    // --------------
+    // 여기부터
+
+    
+    
 }

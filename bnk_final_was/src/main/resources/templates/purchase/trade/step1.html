@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>STEP1. 계좌/잔액 확인</title>
+  <link th:href="@{/css/purchase.css}" rel="stylesheet"/>
+</head>
+<body>
+	<header class="header">
+	  <div class="brand">BNK 퇴직연금</div>
+	  <nav class="tabs">
+	    <a th:href="@{/purchase/holdings}" class="tab">보유현황</a>
+	    <a th:href="@{/purchase/products}" class="tab">상품관리</a>
+	  </nav>
+	</header>
+
+<main class="container">
+  <section class="card">
+    <div class="section-title">STEP1. 계좌/잔액 확인</div>
+
+    <form id="frm" onsubmit="return false;">
+      <div class="grid grid-3">
+        <div>
+          <label>사용자 ID <span class="req">*</span></label>
+          <input id="userId" name="userId" class="input" th:value="${userId}" placeholder="예: 1001" required/>
+        </div>
+        <div>
+          <label>계좌유형 <span class="req">*</span></label>
+          <select id="accountType" name="accountType" class="input" required>
+            <option value="IRP" th:selected="${accountType=='IRP'}">IRP</option>
+            <option value="DC"  th:selected="${accountType=='DC'}">DC</option>
+          </select>
+        </div>
+        <div>
+          <label>acountId <span class="req">*</span></label>
+          <input id="acountId" name="acountId" class="input"
+                 th:value="${acountId}" placeholder="IRP 계좌번호 / DC 계정ID" required/>
+        </div>
+      </div>
+
+      <div class="row mt-8">
+        <button id="checkBtn" type="button" class="btn">사전 체크</button>
+        <span id="statusBadge" class="badge">대기</span>
+      </div>
+
+      <pre id="checkResult" class="mt-8" style="white-space:pre-wrap;"></pre>
+
+      <div class="row mt-8">
+        <a class="btn ghost" th:href="@{/purchase/holdings}">입금 페이지로</a>
+        <button id="nextBtn" type="button" class="btn primary">다음(상품 선택)</button>
+      </div>
+    </form>
+  </section>
+</main>
+
+<script>
+  const flow = /*[[${flow}]]*/ 'PENDING';
+
+  const $ = (sel) => document.querySelector(sel);
+  const qs = (obj) => new URLSearchParams(obj).toString();
+
+  function pickForm() {
+    return {
+      userId: $('#userId').value.trim(),
+      accountType: $('#accountType').value.trim(),
+      acountId: $('#acountId').value.trim()
+    };
+  }
+
+  async function callPrereq(form) {
+    const url = `/purchase/api/trade/check?` + qs(form);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('사전 체크 호출 실패');
+    return res.json();
+  }
+
+  function validate(form) {
+    const miss = [];
+    if (!form.userId) miss.push('사용자 ID');
+    if (!form.accountType) miss.push('계좌유형');
+    if (!form.acountId) miss.push('acountId');
+    if (miss.length) {
+      alert(`다음 항목을 입력하세요: ${miss.join(', ')}`);
+      return false;
+    }
+    return true;
+  }
+
+  $('#checkBtn').addEventListener('click', async () => {
+    const form = pickForm();
+    if (!validate(form)) return;
+
+    $('#statusBadge').textContent = '확인 중...';
+    try {
+      const data = await callPrereq(form);
+      $('#checkResult').textContent = JSON.stringify(data, null, 2);
+      $('#statusBadge').textContent = data.error ? '실패' : 'OK';
+      if (data.error) alert(data.error);
+    } catch (e) {
+      $('#statusBadge').textContent = '실패';
+      alert(e.message);
+    }
+  });
+
+  // "다음"은 필수값 검증 + 사전 체크 성공 시에만 이동
+  $('#nextBtn').addEventListener('click', async () => {
+    const form = pickForm();
+    if (!validate(form)) return;
+
+    $('#statusBadge').textContent = '확인 중...';
+    try {
+      const data = await callPrereq(form);
+      if (data.error) {
+        $('#statusBadge').textContent = '실패';
+        alert(data.error);
+        return;
+      }
+      $('#statusBadge').textContent = 'OK';
+      const query = qs(form);
+      location.href = `/purchase/trade/${flow}/step2?` + query;
+    } catch (e) {
+      $('#statusBadge').textContent = '실패';
+      alert(e.message);
+    }
+  });
+</script>
+</body>
+</html>

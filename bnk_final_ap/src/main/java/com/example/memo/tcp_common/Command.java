@@ -1,6 +1,4 @@
 package com.example.memo.tcp_common;
-
-
 /*여기 추가로 정의하세요*/
 public enum Command {
     USER_GET,
@@ -22,15 +20,19 @@ public enum Command {
     ACCOUNT_REQUEST_GET_PENDING,  // 승인 대기중인 요청 목록 조회
     ACCOUNT_REQUEST_APPROVE_BULK,  // 일괄 승인
     ACCOUNT_REQUEST_REJECT_BULK,   // 일괄 거절
+    ACCOUNT_REQUEST_GET_APPROVED,
+    ACCOUNT_REQUEST_GET_REJECTED,
 	ACCOUNT_GET_DETAILS,// 계좌 상세 조회
 	CONTRIBUTION_BATCH_CREATE,
     CONTRIBUTION_BATCH_VALIDATE,    // 부담금 일괄 등록 검증 실행
     CONTRIBUTION_BATCH_CONFIRM,   
     CONTRIBUTION_BATCH_LIST,
     CONTRIBUTION_COMPANY_ACCOUNT_LIST, // 출금계좌 조회
-    CONTRIBUTION_BATCH_EXECUTE,          // 선택 배치 입금 실행
     CONTRIBUTION_PAYABLE_ITEM_LIST,
     CONTRIBUTION_EXECUTE_ITEMS, // 선택 항목 입금 실행;
+    
+	/* OCR 관련 */
+    FAMILY_CERT_OCR,
 
     
     /*IRP가입관련*/
@@ -44,4 +46,51 @@ public enum Command {
     IRP_JOIN_COMPLETE,			// 계좌개설/완료
     ACCOUNT_GET_BALANCE,			// 출금계좌 잔액조회
     ACCOUNT_GET_NUMBER,
+    IRP_JOIN_COMPLETE,		// 계좌개설/완료
+    
+    // ===== 보유현황 탭 =====
+    SUMMARY_GET,              // SummaryHandler: 총 평가액/수익률/입금합/당일입금/운용수익 요약 조회
+
+    TXN_LIST,                 // TransactionHandler: TRANSACTION_HISTORY 목록 조회
+
+    DEPOSIT_LIST,             // DepositHandler: DEPOSIT_HISTORY 목록 조회
+    DEPOSIT_CREATE,           // DepositHandler: 계좌 입금(즉시 반영)
+
+    // ===== 상품관리 탭 (보유/변경) =====
+    PORTFOLIO_LIST,           // PortfolioHandler: 보유상품 목록
+    PORTFOLIO_CHANGE_PREVIEW, // PortfolioHandler: 보유상품 변경 미리보기(시뮬)
+    PORTFOLIO_CHANGE_APPLY,   // PortfolioHandler: 보유상품 변경 적용(즉시 반영)
+
+    // ===== 위저드 공통(등록/변경/만기) =====
+    TRADE_PREREQ_CHECK,       // TradePrereqHandler: 로그인/IRP 계좌 존재/잔액 사전 체크
+
+    PRODUCT_SEARCH,           // ProductHandler: 상품 검색(FUND/ETF/TDF/PRINCIPAL, q=검색어)
+    DOCUMENT_LIST,            // DocumentHandler: 선택 상품의 서류 목록(FundDocument/PrincipalDocument)
+
+    ALLOCATION_PREVIEW,       // AllocationHandler: 운용비율 합계 검증 및 금액/수량 미리보기
+    ALLOCATION_APPLY,         // AllocationHandler: 배분 확정(거래/보유/잔액 즉시 반영)
+
+    // ===== 매수예정 =====
+    PENDING_BUY_LIST,         // PendingBuyHandler: 매수예정상품 목록
+    PENDING_BUY_UPSERT,       // PendingBuyHandler: 매수예정 등록/변경
+    PENDING_BUY_HISTORY,      // PendingBuyHandler: 매수예정 변경내역(날짜별)
+
+    // ===== 만기예정 변경예약 =====
+    MATURITY_RESERVATION_LIST,  // MaturityReservationHandler: 만기 예정 목록
+    MATURITY_RESERVATION_APPLY, // MaturityReservationHandler: 만기 변경예약 등록/적용
+
+    // ===== 디폴트옵션 =====
+    DO_UPSERT,                // DefaultOptionHandler: 디폴트옵션 등록/변경
+    DO_HISTORY,               // DefaultOptionHandler: 디폴트옵션 변경 이력
+    
+    
+    /*관리자 크롤링 데이터 관련 명령어*/
+    ADMIN_CRAWL_GRANT_FILE_DOWNLOAD,
+    ADMIN_CRAWL_CHECK_FILE_TASK,
+    ADMIN_CRAWL_CHECK_UPDATE,
+	
+	USER_LOGIN, //사용자 로그인
+	USER_REGISTER,// 회원가입
+	SURVEY_SUBMIT; //투자성향제출
+    
 }

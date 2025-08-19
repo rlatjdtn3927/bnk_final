@@ -2,20 +2,26 @@ package com.example.memo.company.dto;
 
 import java.time.LocalDate;
 
-import com.example.memo.jpa.entity.company.DcContributionBatch;
+import com.example.memo.jpa.entity.company.DcContributionItem.PaymentStatus;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter
 public class PayableItemDto {
     private Long itemId;
-    private DcContributionBatch.BatchStatus status; // 진행상태
-    private String memberName; // 가입자명(회원명)
-    private String accountNo;  // 계좌번호
-    private LocalDate planDate; // 입금예정일
-    private Long amount;       // 기업부담금
+    private String planDate;
+    private String memberName;
+    private String accountNo;
+    private Long amount;
+    private String status; // 최종적으로 '입금대기' 같은 한글명이 담길 필드
+
+    // 이 생성자가 JPQL의 new 키워드에 의해 호출
+    public PayableItemDto(Long itemId, LocalDate planDate, String memberName, String accountNo, Long amount, PaymentStatus paymentStatus) {
+        this.itemId = itemId;
+        this.planDate = planDate.toString();
+        this.memberName = memberName;
+        this.accountNo = accountNo;
+        this.amount = amount;
+        this.status = paymentStatus.getDisplayName(); // Enum 객체에서 한글 이름을 꺼내 저장
+    }
 }

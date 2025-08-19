@@ -1,326 +1,400 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>가입자 명부</title>
-    <style>
-        :root {
-            --primary-color: #0052cc; --border-color: #dfe1e6; --text-color: #172b4d;
-            --text-light: #5e6c84; --background-light: #fafbfc; --background-white: #ffffff;
-            --hover-light: #f0f6ff; --green: #00875A; --yellow: #FFAB00; --blue: #0052cc;
-        }
-        *, *::before, *::after { box-sizing: border-box; }
-        body { font-family: Pretendard, sans-serif; background-color: var(--background-light); margin: 0; padding: 40px 20px; }
-        .container { max-width: 900px; margin: auto; background-color: var(--background-white); border-radius: 8px; box-shadow: 0 4px 8px -2px rgba(9, 30, 66, 0.25); padding: 32px; }
-        .header-main { display: flex; justify-content: space-between; align-items: center; }
-        h2 { font-size: 24px; font-weight: 600; margin: 0; }
-        .filter-controls { display: flex; gap: 10px; padding: 16px; margin: 20px -16px; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
-        .filter-controls input, .filter-controls select { border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 12px; font-size: 14px; }
-        .filter-controls input { flex-grow: 1; }
-        .subscriber-list { list-style: none; padding: 0; margin: 0; }
-        .subscriber-card { display: flex; align-items: center; gap: 16px; padding: 16px; border-bottom: 1px solid var(--border-color); transition: background-color 0.2s; }
-        .subscriber-card:hover { background-color: var(--hover-light); }
-        .subscriber-card input[type="checkbox"] { width: 20px; height: 20px; }
-        .subscriber-card .info { flex-grow: 1; }
-        .subscriber-card .info .line1 { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-        .subscriber-card .info .name { font-weight: 600; font-size: 16px; }
-        .subscriber-card .info .birthdate { color: var(--text-light); }
-        .subscriber-card .info .line2 { font-size: 13px; color: var(--text-light); }
-        .subscriber-card .actions button { padding: 6px 12px; font-size: 13px; border-radius: 6px; cursor: pointer; border: 1px solid; }
-        .subscriber-card .actions .btn-request { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
-        .subscriber-card .actions .btn-disabled { background-color: var(--background-light); color: var(--text-light); border-color: var(--border-color); cursor: not-allowed; }
-        .subscriber-card .actions .btn-view-account { background-color: white; color: var(--text-color); border-color: var(--border-color); } /* 계좌 보기 버튼 스타일 */
-        .status-tag { padding: 3px 8px; border-radius: 10px; font-size: 12px; font-weight: 500; }
-        .status-possible { background-color: #E3FCEF; color: var(--green); }
-        .status-pending { background-color: #FFF0B3; color: var(--yellow); }
-        .status-completed { background-color: #DEEBFF; color: var(--blue); }
-        .bulk-action-bar { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; padding: 16px 24px; background-color: var(--text-color); color: white; border-radius: 8px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); transition: bottom 0.3s ease-in-out; }
-        .bulk-action-bar.visible { bottom: 30px; }
-        .bulk-action-bar button { background-color: var(--primary-color); color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; }
+  <meta charset="UTF-8" />
+  <title>가입자 명부 | BNK 퇴직연금</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+  <style>
+    @charset "UTF-8";
 
-        .modal-overlay {
-            display: none; position: fixed; z-index: 1000;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.6);
-            justify-content: center; align-items: center;
-        }
-        .modal-overlay.visible { display: flex; }
-        .modal-content {
-            background-color: white; border-radius: 8px;
-            width: 90%; max-width: 500px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            animation: fadeIn 0.3s ease-out;
-        }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--border-color); }
-        .modal-header h3 { margin: 0; font-size: 18px; }
-        .modal-body { padding: 24px; line-height: 1.8; }
-        .modal-body hr { border: none; border-top: 1px solid var(--border-color); margin: 16px 0; }
-        .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light); }
-    </style>
+    :root {
+      /* 새로운 색상 팔레트: 전문적이고 세련된 다크 블루 테마 */
+      --pri: #4f46e5;
+      --pri-light: #eef2ff;
+      --pri-text: #3730a3;
+      --ink: #111827;
+      --mut: #6b7280;
+      --bg: #f8f9fc;
+      --card: #ffffff;
+      --line: #e5e7eb;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -4px rgba(0, 0, 0, 0.07);
+      --ok: #16a34a;
+      --ok-light: #f0fdf4;
+      --amber: #f59e0b;
+      --amber-light: #fffbeb;
+      --blue: #2563eb;
+      --blue-light: #eff6ff;
+      --sticky: 64px;
+    }
+
+    * { box-sizing: border-box }
+
+    html, body { height: 100% }
+
+    body.bnk-body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Pretendard, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+      letter-spacing: -0.02em;
+    }
+
+    .wrap { max-width: 1100px; margin: 32px auto; padding: 0 24px 96px }
+
+    /* 헤더/툴바 */
+    .page-head { display: flex; align-items: center; gap: 16px; margin-bottom: 20px }
+    .page-head h1 { margin: 0; font-size: 28px; font-weight: 800 }
+    .toolbar { display: flex; align-items: center; gap: 12px; margin-left: auto }
+    .seg { display: flex; gap: 6px; padding: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 999px }
+    .seg-btn {
+      border: 0;
+      background: transparent;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      color: var(--mut);
+      transition: all 0.2s ease-in-out;
+    }
+    .seg-btn.is-active { background: var(--pri-light); color: var(--pri-text); font-weight: 700; }
+    .search input {
+      width: 240px;
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      outline: none;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .search input:focus {
+      border-color: var(--pri);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, .15);
+    }
+
+    /* === ⭐ 핵심 개선: 카드형 목록 === */
+    .datacard { background: transparent; border: none; box-shadow: none; }
+    .table-wrap { border-radius: 12px; overflow: hidden; }
+    .tbl { width: 100%; border-collapse: collapse; border-spacing: 0; }
+    .tbl thead { display: none; } /* 테이블 헤더는 숨기고 카드 내부에 제목 표시 */
+    .tbl tbody tr { display: block; margin-bottom: 12px; }
+    .tbl tbody td {
+        display: block;
+        padding: 0;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--card);
+        box-shadow: var(--shadow);
+        transition: all 0.2s ease-in-out;
+    }
+    .tbl tbody tr:hover td { border-color: var(--pri); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+    .tbl tbody tr.is-selected td { border-color: var(--pri); background: #fafaff; }
+
+    /* 카드 내부 구조 */
+    .member-card { display: flex; align-items: center; padding: 20px; gap: 20px; }
+    .member-card .select-box { padding-right: 12px; }
+    .member-card .select-box input { width: 18px; height: 18px; }
+
+    .member-profile { flex-grow: 1; }
+    .member-profile .name { font-size: 18px; font-weight: 700; color: var(--ink); }
+    .member-profile .birth { font-size: 13px; color: var(--mut); margin-top: 4px; font-variant-numeric: tabular-nums; }
+
+    .member-details { display: flex; gap: 24px; text-align: right; padding-right: 24px; }
+    .detail-item { min-width: 120px; }
+    .detail-item .label { font-size: 12px; color: var(--mut); margin-bottom: 6px; }
+    .detail-item .value { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .detail-item .value.mono { white-space: nowrap; }
+
+    .member-status .chip { font-size: 13px; padding: 6px 12px; }
+
+    .member-actions { padding-left: 24px; border-left: 1px solid var(--line); }
+
+    /* 칩/버튼 */
+    .chip {
+        display: inline-flex; align-items: center; gap: 6px; border-radius: 999px;
+        padding: 6px 10px; font-weight: 600; font-size: 12px;
+        border: 1px solid transparent;
+    }
+    .chip-green { background: var(--ok-light); color: var(--ok); }
+    .chip-amber { background: var(--amber-light); color: var(--amber); }
+    .chip-blue { background: var(--blue-light); color: var(--blue); }
+
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; border-radius:10px; font-weight:700; cursor:pointer; border:1px solid transparent; transition: all 0.2s; }
+    .btn-primary { background:var(--pri); color:#fff; padding:10px 16px; font-size: 14px; }
+    .btn-primary:hover { background: #4338ca; }
+
+    .btn-icon { all: unset; display: inline-flex; padding: 8px; border-radius: 999px; cursor: pointer; transition: background 0.2s; }
+    .btn-icon:hover { background: #f3f4f6; }
+    .btn-icon svg { width: 20px; height: 20px; color: var(--mut); }
+    .btn-icon.primary svg { color: var(--pri); }
+    .btn-icon.disabled { cursor: not-allowed; }
+    .btn-icon.disabled svg { color: #d1d5db; }
+
+
+    /* 빈 상태 */
+    .empty { padding: 60px; text-align: center; color: var(--mut); background: var(--card); border-radius: 12px; }
+
+    /* 하단 일괄바 */
+    .bulkbar {
+        position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 150%);
+        width: auto; max-width: 600px;
+        background: var(--ink); color: #fff;
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 12px 12px 12px 24px;
+        transition: transform .3s ease-in-out;
+        z-index: 50;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    .bulkbar.visible { transform: translate(-50%, 0); }
+    .bulkbar #selcount { font-weight: 600; }
+    .bulkbar .btn-primary { background: #fff; color: var(--ink); }
+
+    /* 디테일 드로어 */
+    .drawer {
+        position: fixed; top: 0; right: -420px; width: 420px; height: 100vh;
+        background: #fff; border-left: 1px solid var(--line);
+        box-shadow: var(--shadow-lg); transition: right .3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 60;
+    }
+    .drawer.open { right: 0; }
+    .drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--line); }
+    .drawer-head strong { font-size: 18px; font-weight: 700; }
+    .drawer-head .x { all: unset; cursor: pointer; font-size: 24px; color: var(--mut); }
+    .drawer-body { padding: 24px; line-height: 1.9; }
+    .drawer-body .dl { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; }
+    .drawer-body .dl span { color: var(--mut); font-size: 14px; }
+    .drawer-body .dl b { font-weight: 600; font-size: 15px; }
+    .drawer-body hr { border: none; border-top: 1px solid var(--line); margin: 12px 0; }
+  </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header-main">
-            <h2>가입자 명부</h2>
-            <div><input type="checkbox" id="select-all-checkbox"> 전체 선택</div>
-        </div>
-        <div class="filter-controls">
-            <input type="search" id="name-search" placeholder="이름으로 검색">
-            <select id="employment-status-filter">
-                <option value="ALL">전체 (재직/퇴직)</option>
-                <option value="ACTIVE" selected>재직</option>
-                <option value="INACTIVE">퇴직</option>
-            </select>
-            <select id="account-status-filter">
-                <option value="ALL">전체 (계좌 상태)</option>
-                <option value="POSSIBLE">신청 가능</option>
-                <option value="PENDING">처리중</option>
-                <option value="COMPLETED">개설 완료</option>
-            </select>
-        </div>
-        <ul id="subscriber-list" class="subscriber-list">
-            </ul>
-    </div>
+<body class="bnk-body">
 
-    <div id="bulk-action-bar" class="bulk-action-bar">
-        <span id="selected-count">0명 선택됨</span>
-        <button id="bulk-request-btn">선택 가입자 일괄 신청</button>
+<main class="wrap">
+  <header class="page-head">
+    <h1>가입자 명부</h1>
+    <div class="toolbar">
+      <div class="seg">
+        <button class="seg-btn is-active" data-employ="ACTIVE">재직</button>
+        <button class="seg-btn" data-employ="INACTIVE">퇴직</button>
+        <button class="seg-btn" data-employ="ALL">전체</button>
+      </div>
+      <div class="seg">
+        <button class="seg-btn is-active" data-acc="ALL">전체</button>
+        <button class="seg-btn" data-acc="POSSIBLE">신청 가능</button>
+        <button class="seg-btn" data-acc="PENDING">처리중</button>
+        <button class="seg-btn" data-acc="COMPLETED">개설 완료</button>
+      </div>
+      <div class="search">
+        <input id="q" type="search" placeholder="이름 검색" />
+      </div>
     </div>
-    
-        <div id="account-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>계좌 상세 정보</h3>
-                <button id="modal-close-btn" class="close-btn">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p><strong>가입자명:</strong> <span id="modal-member-name"></span></p>
-                <p><strong>생년월일:</strong> <span id="modal-birth-date"></span></p>
-                <hr>
-                <p><strong>계좌번호:</strong> <span id="modal-account-no"></span></p>
-                <p><strong>계좌상태:</strong> <span id="modal-account-status"></span></p>
-                <p><strong>잔액:</strong> <span id="modal-balance"></span> 원</p>
-                <p><strong>개설일:</strong> <span id="modal-created-at"></span></p>
-            </div>
-        </div>
+  </header>
+
+  <section class="datacard">
+    <div class="table-wrap">
+      <table class="tbl" id="tbl">
+        <thead></thead>
+        <tbody id="tbody">
+          </tbody>
+      </table>
+      <div id="empty" class="empty" hidden>해당 조건의 가입자가 없습니다.</div>
     </div>
+  </section>
+
+  <div class="bulkbar" id="bulkbar">
+    <span id="selcount">0명 선택</span>
+    <button class="btn btn-primary" id="bulkRequest">선택 항목 일괄 신청</button>
+  </div>
+</main>
+
+<aside class="drawer" id="drawer">
+  <div class="drawer-head">
+    <strong id="d-name">이름</strong>
+    <button class="x" id="drawerClose">×</button>
+  </div>
+  <div class="drawer-body">
+    <div class="dl"><span>생년월일</span><b id="d-birth">-</b></div>
+    <div class="dl"><span>재직상태</span><b id="d-status">-</b></div>
+    <div class="dl"><span>입사일</span><b id="d-join">-</b></div>
+    <div class="dl"><span>연봉</span><b id="d-salary">-</b></div>
+    <hr/>
+    <div class="dl"><span>계좌번호</span><b id="d-accno">-</b></div>
+    <div class="dl"><span>계좌상태</span><b id="d-accst">-</b></div>
+    <div class="dl"><span>잔액</span><b id="d-balance">-</b></div>
+    <div class="dl"><span>계좌개설일</span><b id="d-created">-</b></div>
+  </div>
+</aside>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // 필터 요소들
-        const nameSearch = document.getElementById('name-search');
-        const employmentFilter = document.getElementById('employment-status-filter');
-        const accountFilter = document.getElementById('account-status-filter');
+  // ---------- 상태 ----------
+  let employ = 'ACTIVE', acc = 'ALL';
+  let data = []; // 데이터는 load()를 통해 서버에서 받아옵니다.
 
-        // 필터 변경 시 데이터 다시 불러오기 (300ms 지연 적용으로 성능 최적화)
-        let searchTimeout;
-        nameSearch.addEventListener('input', () => {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(fetchAndRenderSubscribers, 300);
-        });
-        employmentFilter.addEventListener('change', fetchAndRenderSubscribers);
-        accountFilter.addEventListener('change', fetchAndRenderSubscribers);
+  const el = (q) => document.querySelector(q);
+  const $$ = (q) => Array.from(document.querySelectorAll(q));
 
-        // 일괄 신청 버튼
-        document.getElementById('bulk-request-btn').addEventListener('click', handleBulkRequest);
-        
-        // 전체 선택
-        document.getElementById('select-all-checkbox').addEventListener('change', handleSelectAll);
-       
-        const modal = document.getElementById('account-modal');
-        document.getElementById('modal-close-btn').addEventListener('click', closeAccountModal);
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) { // 모달 배경 클릭 시 닫기
-                closeAccountModal();
-            }
-        });
-        
-        // 최초 데이터 로드
-        fetchAndRenderSubscribers();
+  // ---------- 유틸 & 아이콘 ----------
+  const fmt = (n) => Number(n || 0).toLocaleString(); // 콤마
+  const ICONS = {
+    view: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>`,
+    add: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`,
+    pending: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`
+  };
+  const chip = (s) => {
+    if (s === '개설 완료') return '<span class="chip chip-blue">개설 완료</span>';
+    if (s === '처리중') return '<span class="chip chip-amber">처리중</span>';
+    return '<span class="chip chip-green">신청 가능</span>';
+  };
+
+  // ---------- 렌더링 함수 ----------
+  function render(rows) {
+    const tb = el('#tbody');
+    tb.innerHTML = '';
+    el('#empty').hidden = rows && rows.length > 0;
+
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.dataset.memberId = r.memberId;
+      tr.innerHTML = `
+        <td>
+          <div class="member-card">
+            <div class="select-box">
+              <input type="checkbox" class="rowck" value="${r.memberId}" ${r.accountStatus === '신청 가능' ? '' : 'disabled'}>
+            </div>
+            <div class="member-profile">
+              <div class="name">${r.name}</div>
+              <div class="birth">${r.birthDate}</div>
+            </div>
+            <div class="member-details">
+              <div class="detail-item">
+                <div class="label">재직상태</div>
+                <div class="value">${r.status}</div>
+              </div>
+              <div class="detail-item">
+                <div class="label">입사일</div>
+                <div class="value mono">${r.startDate}</div>
+              </div>
+              <div class="detail-item">
+                <div class="label">연봉</div>
+                <div class="value mono">${fmt(r.annualSalary)}원</div>
+              </div>
+            </div>
+            <div class="member-status">
+              ${chip(r.accountStatus)}
+            </div>
+            <div class="member-actions">
+              ${r.accountStatus === '개설 완료'
+                ? `<button class="btn-icon" data-view="${r.memberId}" title="계좌 보기">${ICONS.view}</button>`
+                : r.accountStatus === '처리중'
+                ? `<button class="btn-icon disabled" disabled title="신청 처리중">${ICONS.pending}</button>`
+                : `<button class="btn-icon primary" data-req="${r.memberId}" title="계좌 개설 신청">${ICONS.add}</button>`}
+            </div>
+          </div>
+        </td>
+      `;
+      tr.addEventListener('click', e => {
+        if (e.target.closest('button, input')) return;
+        openDrawer(r.memberId);
+      });
+      tr.querySelector('.rowck')?.addEventListener('change', e => {
+        tr.classList.toggle('is-selected', e.target.checked);
+        updateBulkbar();
+      });
+      tr.querySelector('[data-req]')?.addEventListener('click', e => {
+        e.stopPropagation(); requestAccount([e.target.closest('[data-req]').dataset.req]);
+      });
+      tr.querySelector('[data-view]')?.addEventListener('click', e => {
+        e.stopPropagation(); openDrawer(e.target.closest('[data-view]').dataset.view);
+      });
+
+      tb.appendChild(tr);
     });
+    updateBulkbar();
+  }
 
-    // 서버에 데이터를 요청하고 화면을 다시 그리는 메인 함수
-    function fetchAndRenderSubscribers() {
-        const listElement = document.getElementById('subscriber-list');
-        listElement.innerHTML = `<p style="text-align:center; padding:40px;">불러오는 중...</p>`;
+  function updateBulkbar() {
+    const checked = $$('.rowck:checked');
+    el('#selcount').textContent = `${checked.length}명 선택`;
+    el('#bulkbar').classList.toggle('visible', checked.length > 0);
+  }
 
-        // 필터 값 가져오기
-        const name = document.getElementById('name-search').value;
-        const employmentStatus = document.getElementById('employment-status-filter').value;
-        const accountStatus = document.getElementById('account-status-filter').value;
-        
-        const params = new URLSearchParams({ name: name, status: employmentStatus, accountStatus: accountStatus });
-        const apiUrl = `/company/subscriber/list?${params.toString()}`;
-        
-        fetch(apiUrl)
-            .then(res => {
-                if (!res.ok) throw new Error('데이터 조회에 실패했습니다.');
-                return res.json();
-            })
-            .then(responseBody => {
-                // AP 서버가 TcpMessage로 감싸서 보내므로, 실제 데이터는 .data
-                renderCards(responseBody.data);
-            })
-            .catch(error => {
-                console.error(error);
-                listElement.innerHTML = `<p style="text-align:center; padding:40px;">${error.message}</p>`;
-            });
+  // ---------- [수정] 데이터 로드: 실제 fetch 로직으로 복원 ----------
+  async function load() {
+    const params = new URLSearchParams({
+      name: el('#q').value || '',
+      status: employ,
+      accountStatus: acc
+    });
+    const res = await fetch(`/company/subscriber/list?${params}`);
+    if (!res.ok) {
+        alert('데이터를 불러오는 데 실패했습니다.');
+        return;
     }
+    const body = await res.json();
+    data = body.data || [];
+    render(data);
+  }
 
-    // 데이터를 받아 카드 UI를 생성하는 함수
-    function renderCards(subscriberList) {
-        const listElement = document.getElementById('subscriber-list');
-        listElement.innerHTML = '';
-        if (!subscriberList || subscriberList.length === 0) {
-            listElement.innerHTML = `<p style="text-align:center; padding:40px;">해당 조건의 가입자가 없습니다.</p>`;
-            return;
-        }
-
-        subscriberList.forEach(sub => {
-            const card = document.createElement('li');
-            card.className = 'subscriber-card';
-            card.dataset.memberId = sub.memberId;
-
-            let statusTag, actionButton, checkbox;
-            const isRequestable = sub.accountStatus === '신청 가능';
-
-            switch (sub.accountStatus) {
-                case '개설 완료':
-                    statusTag = `<span class="status-tag status-completed">개설 완료</span>`;
-                    actionButton = `<button class="actions btn-view-account" data-member-id="${sub.memberId}">계좌 보기</button>`;
-                    break;
-                case '처리중':
-                    statusTag = `<span class="status-tag status-pending">처리중</span>`;
-                    actionButton = `<button class="actions btn-disabled" disabled>신청 처리중</button>`;
-                    break;
-                default: // 신청 가능
-                    statusTag = `<span class="status-tag status-possible">신청 가능</span>`;
-                    actionButton = `<button class="actions btn-request" data-id="${sub.memberId}">계좌 개설 신청</button>`;
-                    break;
-            }
-            
-            checkbox = `<input type="checkbox" class="subscriber-checkbox" value="${sub.memberId}" ${isRequestable ? '' : 'disabled'}>`;
-
-            card.innerHTML = `
-                ${checkbox}
-                <div class="info">
-                    <div class="line1">
-                        ${statusTag}
-                        <span class="name">${sub.name}</span>
-                        <span class="birthdate">${sub.birthDate}</span>
-                    </div>
-                    <div class="line2">
-                        ${sub.status} | 입사일: ${sub.startDate} | 연봉: ${sub.annualSalary.toLocaleString()}원
-                    </div>
-                </div>
-                <div class="actions">${actionButton}</div>
-            `;
-            // 개별 신청 버튼 이벤트
-            card.querySelector('.btn-request')?.addEventListener('click', (e) => {
-                e.stopPropagation();
-                handleIndividualRequest(sub.memberId);
-            });
-            // 체크박스 변경 시 액션 바 업데이트
-            card.querySelector('.subscriber-checkbox').addEventListener('change', updateActionBar);
-            
-            card.querySelector('.btn-view-account')?.addEventListener('click', (e) => {
-                e.stopPropagation();
-                openAccountModal(e.target.dataset.memberId);
-            });
-            
-            listElement.appendChild(card);
-        });
-        updateActionBar();
-    }
+  // ---------- 이벤트 바인딩 ----------
+  document.addEventListener('DOMContentLoaded', () => {
+    $$('.seg-btn').forEach(b => {
+      b.addEventListener('click', () => {
+        const segGroup = b.parentElement;
+        segGroup.querySelectorAll('.seg-btn').forEach(x => x.classList.remove('is-active'));
+        b.classList.add('is-active');
+        if (b.dataset.employ) employ = b.dataset.employ;
+        if (b.dataset.acc) acc = b.dataset.acc;
+        load();
+      });
+    });
+    el('#q').addEventListener('keydown', e => { if (e.key === 'Enter') load(); });
     
-    function updateActionBar() {
-        const selected = document.querySelectorAll('.subscriber-checkbox:checked');
-        const actionBar = document.getElementById('bulk-action-bar');
-        if (selected.length > 0) {
-            document.getElementById('selected-count').textContent = `${selected.length}명 선택됨`;
-            actionBar.classList.add('visible');
-        } else {
-            actionBar.classList.remove('visible');
-        }
-    }
+    el('#bulkRequest').addEventListener('click', () => {
+      const ids = $$('.rowck:checked').map(c => c.value);
+      if (ids.length === 0) return alert('대상이 없습니다.');
+      if (confirm(`${ids.length}명의 계좌 개설을 일괄 신청하시겠습니까?`)) requestAccount(ids);
+    });
+    el('#drawerClose').addEventListener('click', closeDrawer);
 
-    function handleSelectAll(event) {
-        document.querySelectorAll('.subscriber-checkbox:not(:disabled)')
-            .forEach(cb => cb.checked = event.target.checked);
-        updateActionBar();
-    }
+    load();
+  });
 
-    function handleIndividualRequest(memberId) {
-        if (confirm(`선택한 가입자의 계좌 개설을 신청하시겠습니까?`)) {
-            requestAccountOpening([memberId]);
-        }
-    }
+  // ---------- [수정] API 호출: 실제 fetch 로직으로 복원 ----------
+  async function requestAccount(memberIds) {
+    const r = await fetch('/company/dc/account/request', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ memberIds })
+    });
+    const d = await r.json();
+    if (!r.ok) return alert(d.message || '오류가 발생했습니다.');
+    alert(`${d.successCount || memberIds.length}건 신청 접수 완료`);
+    load(); // 목록 새로고침
+  }
 
-    function handleBulkRequest() {
-        const selectedIds = Array.from(document.querySelectorAll('.subscriber-checkbox:checked')).map(cb => cb.value);
-        if (selectedIds.length === 0) {
-            alert('계좌를 개설할 가입자를 선택해주세요.');
-            return;
-        }
-        if (confirm(`${selectedIds.length}명의 가입자에 대한 계좌 개설을 신청하시겠습니까?`)) {
-            requestAccountOpening(selectedIds);
-        }
-    }
+  async function openDrawer(memberId) {
+    const r = await fetch(`/company/account/details/${memberId}`);
+    if (!r.ok) return alert('상세 정보를 불러오지 못했습니다.');
+    const d = await r.json();
 
-    // 서버로 실제 계좌 개설을 요청하는 함수
-    function requestAccountOpening(memberIds) {
-        fetch('/company/dc/account/request', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ memberIds: memberIds })
-        })
-        .then(response => response.json().then(data => ({ ok: response.ok, data })))
-        .then(({ ok, data }) => {
-            if (!ok) throw new Error(data.message || '알 수 없는 오류');
-            
-            // AP 서버가 보내주는 실제 성공 건수를 표시합니다.
-            alert(`${data.successCount}건의 계좌 개설 신청이 정상적으로 접수되었습니다.`);
-            fetchAndRenderSubscribers(); // 성공 후 목록 새로고침
-        })
-        .catch(error => {
-            console.error('계좌 개설 신청 실패:', error);
-            alert(`계좌 개설 신청 중 오류가 발생했습니다: ${error.message}`);
-        });
-    }
-    
-    function openAccountModal(memberId) {
-        const modal = document.getElementById('account-modal');
-        modal.classList.add('visible');
-        
-        // 필드 초기화
-        document.getElementById('modal-member-name').textContent = '불러오는 중...';
-        document.getElementById('modal-birth-date').textContent = '-';
-        document.getElementById('modal-account-no').textContent = '-';
-        document.getElementById('modal-account-status').textContent = '-';
-        document.getElementById('modal-balance').textContent = '-';
-        document.getElementById('modal-created-at').textContent = '-';
-
-        fetch(`/company/account/details/${memberId}`)
-            .then(res => res.json())
-            .then(details => {
-                document.getElementById('modal-member-name').textContent = details.memberName;
-                document.getElementById('modal-birth-date').textContent = details.birthDate;
-                document.getElementById('modal-account-no').textContent = details.accountNo;
-                document.getElementById('modal-account-status').textContent = details.status;
-                document.getElementById('modal-balance').textContent = details.balance.toLocaleString();
-                document.getElementById('modal-created-at').textContent = new Date(details.createdAt).toLocaleString();
-            })
-            .catch(err => {
-                console.error(err);
-                alert('계좌 정보를 불러오는 데 실패했습니다.');
-                closeAccountModal();
-            });
-    }
-
-    function closeAccountModal() {
-        document.getElementById('account-modal').classList.remove('visible');
-    }
+    el('#d-name').textContent = d.memberName;
+    el('#d-birth').textContent = d.birthDate;
+    el('#d-status').textContent = d.status;
+    el('#d-join').textContent = d.startDate;
+    el('#d-salary').textContent = d.annualSalary ? `${fmt(d.annualSalary)}원` : '-';
+    el('#d-accno').textContent = d.accountNo || '-';
+    el('#d-accst').textContent = d.accountStatus || '-';
+    el('#d-balance').textContent = d.balance != null ? `${fmt(d.balance)}원` : '-';
+    el('#d-created').textContent = d.createdAt ? new Date(d.createdAt).toLocaleString() : '-';
+    el('#drawer').classList.add('open');
+  }
+  function closeDrawer() { el('#drawer').classList.remove('open'); }
 </script>
+
 </body>
 </html>

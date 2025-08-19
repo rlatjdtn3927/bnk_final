@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>STEP3. 서류 동의</title>
+  <link th:href="@{/css/purchase.css}" rel="stylesheet"/>
+</head>
+<body>
+	<header class="header">
+		  <div class="brand">BNK 퇴직연금</div>
+		  <nav class="tabs">
+		    <a th:href="@{/purchase/holdings}" class="tab">보유현황</a>
+		    <a th:href="@{/purchase/products}" class="tab">상품관리</a>
+		  </nav>
+	</header>
+
+<main class="container">
+  <section class="card">
+    <div class="section-title">STEP3. 상품별 서류 동의</div>
+
+    <!-- 유지 파라미터 -->
+    <input type="hidden" id="flow"        th:value="${flow}">
+    <input type="hidden" id="userId"      th:value="${userId}">
+    <input type="hidden" id="accountType" th:value="${accountType}">
+    <input type="hidden" id="acountId"    th:value="${acountId}">
+    <input type="hidden" id="items"       th:value="${items}">
+    <input type="hidden" id="docsSaved"   th:value="${docs}">
+    <input type="hidden" id="maturityProductId" th:value="${maturityProductId}">
+    <input type="hidden" id="changeDate"        th:value="${changeDate}">
+
+    <div class="row">
+      <label><input type="checkbox" id="agreeAll"> 모두 동의하기</label>
+    </div>
+
+    <div id="docList" class="mt-8">불러오는 중...</div>
+
+    <form th:action="@{|/purchase/trade/${flow}/step3/next|}" method="post" onsubmit="return goNext();">
+      <input type="hidden" name="userId" th:value="${userId}">
+      <input type="hidden" name="accountType" th:value="${accountType}">
+      <input type="hidden" name="acountId" th:value="${acountId}">
+      <input type="hidden" name="items" th:value="${items}">
+      <input type="hidden" id="docsField" name="docs">
+      <!-- MATURITY 옵션 -->
+      <input type="hidden" name="maturityProductId" th:value="${maturityProductId}">
+      <input type="hidden" name="changeDate" th:value="${changeDate}">
+      <button class="btn primary mt-8" type="submit">다음(미리보기)</button>
+    </form>
+  </section>
+</main>
+
+<script>
+  const items = JSON.parse(document.getElementById('items').value);
+  const docList = document.getElementById('docList');
+  const agreeAll = document.getElementById('agreeAll');
+  const docsField = document.getElementById('docsField');
+  const docsSaved = (document.getElementById('docsSaved').value || '').split(',').filter(Boolean);
+
+  (async function(){
+    const res = await fetch('/purchase/api/trade/documents', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({items})
+    });
+    const rows = await res.json(); // [{docId,docType,fileUrl},...]
+    if(!Array.isArray(rows) || rows.length===0){
+      docList.innerHTML = '해당 상품은 동의할 문서가 없습니다.';
+      return;
+    }
+    docList.innerHTML = rows.map(r=>{
+      const checked = docsSaved.includes(String(r.docId)) ? 'checked' : '';
+      return `
+        <div class="card mt-8">
+          <label>
+            <input type="checkbox" class="docChk" value="${r.docId}" ${checked}>
+            [${r.docType}] 문서 동의
+          </label>
+          <div class="mt-8">
+            <iframe src="${r.fileUrl}" style="width:100%;height:420px;border:1px solid #ddd;border-radius:12px"></iframe>
+          </div>
+        </div>`;
+    }).join('');
+  })();
+
+  agreeAll.addEventListener('change', ()=>{
+    document.querySelectorAll('.docChk').forEach(c=> c.checked = agreeAll.checked);
+  });
+
+  function goNext(){
+    const ids = Array.from(document.querySelectorAll('.docChk')).filter(c=>c.checked).map(c=>c.value);
+    if(ids.length===0){ alert('최소 1개 문서에 동의해주세요.'); return false; }
+    docsField.value = ids.join(',');
+    return true;
+  }
+</script>
+</body>
+</html>

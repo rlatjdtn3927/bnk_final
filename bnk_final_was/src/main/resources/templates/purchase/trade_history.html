@@ -1,0 +1,54 @@
+<!-- src/main/resources/templates/purchase/trade_history.html -->
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>매수예정 변경내역</title>
+  <link th:href="@{/css/purchase.css}" rel="stylesheet"/>
+</head>
+<body>
+	<header class="header">
+		  <div class="brand">BNK 퇴직연금</div>
+		  <nav class="tabs">
+		    <a th:href="@{/purchase/holdings}" class="tab">보유현황</a>
+		    <a th:href="@{/purchase/products}" class="tab">상품관리</a>
+		  </nav>
+	</header>
+
+<main class="container">
+
+  <section class="card">
+    <div class="section-title">계정/계좌 선택</div>
+    <div class="grid grid-3">
+      <div>
+        <label>계좌 유형</label>
+        <select id="accountType" class="input">
+          <option value="IRP">IRP</option>
+          <option value="DC">DC</option>
+        </select>
+      </div>
+      <div>
+        <label>계좌 식별자 (acountId)</label>
+        <input id="acountId" class="input" type="text"/>
+      </div>
+      <div class="row" style="margin-top:22px">
+        <button class="btn" id="loadBtn">불러오기</button>
+        <span class="badge" id="statusBadge">대기</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="card mt-16">
+    <div class="section-title">변경내역 (매수일 기준)</div>
+    <table class="table">
+      <thead><tr><th>날짜</th><th>계좌유형</th><th>상품ID/이름</th><th>평가금액</th></tr></thead>
+      <tbody id="historyBody"><tr><td colspan="4">데이터 없음</td></tr></tbody>
+    </table>
+  </section>
+
+</main>
+
+<script th:src="@{/js/purchase/trade_history.js}"></script>
+</body>
+</html>

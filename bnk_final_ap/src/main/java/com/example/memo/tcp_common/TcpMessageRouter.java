@@ -21,7 +21,7 @@ public class TcpMessageRouter {
 	
 	private final Map<Command, TcpMessageHandler> handlerMap = new EnumMap<>(Command.class);
 	
-    public TcpMessageRouter(List<TcpMessageHandler> handlers) {
+    public TcpMessageRouter(List<TcpMessageHandler> handlers) { // 스프링이 TcpMessageHandler을 구현한 구현체를 리스트로 만들어 자동 주입해줌
 		for(TcpMessageHandler handler : handlers) {
 			for(Command command : Command.values()) {
 				if(handler.supports(command)) {

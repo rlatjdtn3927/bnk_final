@@ -37,7 +37,7 @@ public class CompanyAuthController {
 
 			Object result = tcpService.sendMessage(msg);
 
-			System.out.println("result class: " + result.getClass().getName());
+//			System.out.println("result class: " + result.getClass().getName());
 			System.out.println("result content: " + result.toString());
 
 			// 실패 응답: 문자열이면 바로 에러 처리
