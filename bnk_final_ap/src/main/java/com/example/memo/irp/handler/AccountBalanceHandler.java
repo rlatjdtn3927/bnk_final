@@ -24,7 +24,7 @@ public class AccountBalanceHandler implements TcpMessageHandler{
 
 	@Override
 	public boolean supports(Command command) {
-		return command == Command.ACCOUNT_GET_BALANCE;
+		return command.name().startsWith("ACCOUNT_GET_");
 	}
 
 	@Override
@@ -62,6 +62,25 @@ public class AccountBalanceHandler implements TcpMessageHandler{
                     } catch (Exception ignore) {
                         return "{\"ok\":false,\"error\":\"serialize\"}";
                     }
+                }
+            }
+            case ACCOUNT_GET_NUMBER: {  // ← 추가
+                try {
+                    Long joinId = requireLong(data, "joinId");
+                    Long userId = irpJoinService.findByIdOrThrow(joinId).getUserId().getUserId();
+
+                    String acctNo = bankAccountService.getUserAccounts(userId).getAcctNo();
+
+                    ObjectNode res = mapper.createObjectNode();
+                    res.put("ok", true);
+                    res.put("acctNo", acctNo);
+                    return res;
+                } catch (Exception e) {
+                    ObjectNode err = mapper.createObjectNode();
+                    err.put("ok", false);
+                    err.put("error", e.getMessage() == null ? "account number inquiry failed" : e.getMessage());
+                    try { return mapper.writeValueAsString(err); }
+                    catch (Exception ignore) { return "{\"ok\":false,\"error\":\"serialize\"}"; }
                 }
             }
             default:

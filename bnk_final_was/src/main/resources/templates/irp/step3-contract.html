@@ -39,7 +39,7 @@
 	           placeholder="예: 12345678901234" />
     		<button type="button" id="btnBalance">잔액조회</button>
           </div>
-          <div id="balanceBox" class="help" style="margin-top:6px; display:none;"></div>
+          <div id="balanceBox" style="display:none;"></div>
 		</div>
 		
         <!-- 출금계좌 비밀번호 -->
@@ -137,9 +137,25 @@
     return text ? JSON.parse(text) : {};
   }
   
+  //페이지 로드시 출금계좌번호 자동 세팅
+  (async function preloadAcctNo() {
+    try {
+      const data = await postJson(`/irp/join/${joinId}/account/no`, {});
+      if (data && data.acctNo) {
+        const el = document.getElementById('acctNo');
+        el.value = data.acctNo;
+        el.readOnly = true;   // 입력 차단
+        // el.classList.add('readonly'); // (선택) 스타일 주고 싶으면
+      }
+    } catch (e) {
+      console.error('계좌번호 자동 세팅 실패', e);
+      // 실패 시 사용자가 직접 입력할 수 있게 그대로 둠(폴백)
+    }
+  })();
+  
   //---------- 잔액조회 ----------
   document.getElementById('btnBalance').addEventListener('click', async () => {
-    const acctNo = onlyDigits(document.getElementById('acctNo').value);
+	const acctNo = document.getElementById('acctNo').value.trim(); // 하이픈 포함 그대로 보냄
     const acctPwd = document.getElementById('acctPwd').value.trim(); // 옵션
     const balanceBox = document.getElementById('balanceBox');
 
@@ -174,7 +190,7 @@
     try {
       await putJson(`/irp/join/${joinId}/contract`, payload);
       alert('계약 정보가 저장되었습니다.');
-      location.href = `/irp/join/${joinId}/step4-portfolio`;
+      location.href = `/irp/join/${joinId}/step4-infoConfir`;
     } catch (e) {
       console.error(e);
       alert('저장 중 오류가 발생했습니다.');

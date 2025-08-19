@@ -87,32 +87,38 @@ public class IrpJoinHandler implements TcpMessageHandler {
                 return res;
             }
 			case IRP_JOIN_UPDATE_CONTRACT: {	// step3-2: 계약정보 업데이트
-                Long joinId = data.get("joinId").asLong();
-                Long annualAmt = data.path("annualContribAmt").asLong(0);
-                Long newAmt    = data.path("newContribAmt").asLong(0);
-                String acctNo  = data.get("acctNo").asText();
-                String acctPwd = data.get("acctPwd").asText();
-                String branch  = data.path("branchOffice").asText();
+				try {
+					Long joinId = data.get("joinId").asLong();
+					Long annualAmt = data.path("annualContribAmt").asLong(0);
+					Long newAmt    = data.path("newContribAmt").asLong(0);
+					String acctNo  = data.get("acctNo").asText();
+					String acctPwd = data.get("acctPwd").asText();
+					String branch  = data.path("branchOffice").asText();
+					
+					joinService.updateContract(joinId, annualAmt, newAmt, acctNo, acctPwd, branch);
+					ObjectNode res = mapper.createObjectNode();
+					res.put("result", "OK");
+					res.put("joinId", joinId);
+					res.put("updated", 1);
+					return res;
+					
+				} catch(IllegalArgumentException | SecurityException e) {
+					// 비밀번호 불일치/잔액부족 등 비즈니스 실패 (다음 페이지로 넘어가면 안 됨)
+			        ObjectNode err = mapper.createObjectNode();
+			        err.put("ok", false);
+			        err.put("error", e.getMessage() == null ? "요청이 거부되었습니다." : e.getMessage());
+			        return err;
+				}
                 
-                joinService.updateContract(joinId, annualAmt, newAmt, acctNo, acctPwd, branch);
-                ObjectNode res = mapper.createObjectNode();
-                res.put("result", "OK");
-                res.put("joinId", joinId);
-                res.put("updated", 1);
                 
-                try {
-                    return mapper.writeValueAsString(res);
-                } catch (JsonProcessingException e) {
-                    // 직렬화 실패 시 fallback
-                    return "{\"result\":\"ERROR\",\"message\":\"Serialization failed\"}";
-                }
             }
+			/*
 			case IRP_JOIN_UPDATE_PRODUCT: {		// step4: 상품 저장
                 Long joinId = data.get("joinId").asLong();
                 String productId = data.get("productId").asText();
                 joinService.updateJoinProduct(joinId, productId);
                 return mapper.createObjectNode().put("result", "OK");
-            }
+            }*/
 			case IRP_JOIN_COMPLETE: { // 가입완료 → IRP계좌 생성
                 Long joinId = data.get("joinId").asLong();
                 String irpPwd = data.get("irpPwd").asText();

@@ -110,8 +110,15 @@ public class IrpJoinController {
 
         return sendAndWrap(Command.ACCOUNT_GET_BALANCE, node, "ACCOUNT_GET_BALANCE");
     }
-	
-	/* step4: 상품선택(업데이트) */
+    
+    /** 출금계좌번호 조회 */
+    @PostMapping("/join/{joinId}/account/no")
+    public @ResponseBody ResponseEntity<?> getAccountNo(@PathVariable("joinId") Long joinId) {
+        ObjectNode node = mapper.createObjectNode().put("joinId", joinId);
+        return sendAndWrap(Command.ACCOUNT_GET_NUMBER, node, "ACCOUNT_GET_NUMBER");
+    }
+    
+	/* step4: 상품선택(업데이트) 
     @PutMapping("/join/{joinId}/product")
     public ResponseEntity<?> updateProduct(@PathVariable("joinId") Long joinId, @RequestBody ProductMasterDto dto) {
         ObjectNode node = mapper.createObjectNode();
@@ -119,6 +126,7 @@ public class IrpJoinController {
         node.put("productId", dto.getProductId());
         return sendAndWrap(Command.IRP_JOIN_UPDATE_PRODUCT, node, "IRP_JOIN_UPDATE_PRODUCT");
     }
+    */
 	
 	/* 가입완료 → IRP계좌 개설 (계좌번호와 계약번호는 서버에서 자동 생성)*/
     @PostMapping("/join/{joinId}/complete")

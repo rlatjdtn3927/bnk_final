@@ -49,9 +49,9 @@ public class IrpJoinViewController {
 	    return "irp/step3-contract"; 
 	}
 	
-	@GetMapping("/{joinId}/step4-portfolio")
+	@GetMapping("/{joinId}/step4-infoConfir")
 	public String portfolioPage(@PathVariable("joinId") Long joinId, Model model) {
 		model.addAttribute("joinId", joinId);
-		return "irp/step4-portfolio";
+		return "irp/step4-infoConfir";
 	}
 }
