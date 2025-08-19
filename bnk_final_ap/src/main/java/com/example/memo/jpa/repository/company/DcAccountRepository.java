@@ -39,5 +39,6 @@ public interface DcAccountRepository extends JpaRepository<DcAccount, Long> {
     @Query("SELECT a.dcMember.id, a.balance FROM DcAccount a WHERE a.dcMember.id IN :ids")
     List<Object[]> findBalancePairs(@Param("ids") Set<Long> memberIds);
 
-
+    // DcAccount.dcMember.id 를 기준으로 조회
+    List<DcAccount> findByDcMember_IdAndStatusNot(Long dcMemberId, String statusToExclude);
 }

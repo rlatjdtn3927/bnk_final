@@ -64,5 +64,4 @@ public class DcMember {
             dcMemberStatus.setDcMember(this);
         }
     }
-
 }

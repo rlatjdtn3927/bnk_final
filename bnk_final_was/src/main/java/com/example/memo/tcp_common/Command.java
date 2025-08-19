@@ -80,6 +80,7 @@ public enum Command {
     DO_UPSERT,                // DefaultOptionHandler: 디폴트옵션 등록/변경
     DO_HISTORY,               // DefaultOptionHandler: 디폴트옵션 변경 이력
     
+    ACCOUNT_OVERVIEW_GET, // ✅ Step1 계좌목록
     
     /*관리자 크롤링 데이터 관련 명령어*/
     ADMIN_CRAWL_GRANT_FILE_DOWNLOAD,

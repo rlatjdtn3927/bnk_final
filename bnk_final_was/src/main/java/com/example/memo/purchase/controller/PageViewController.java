@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import com.example.memo.purchase.dto.ModelValueDto;
+import com.example.memo.purchase.dto.PassValueDto;
 
 @Controller
 @RequestMapping("/purchase")
@@ -23,9 +23,9 @@ public class PageViewController {
     /******** 시작 ***********/	
     @GetMapping("/trade")
     public String tradeEntry(@RequestParam(name = "flow", required = false) String flow, RedirectAttributes rttr) {
-    	ModelValueDto dto = new ModelValueDto();
+    	PassValueDto dto = new PassValueDto();
     	dto.setFlow(flow);
-    	rttr.addAttribute("ModelValueDto", dto);
+    	rttr.addFlashAttribute("PassValueDto", dto);
         return "redirect:/purchase/trade/step1";
     }
     
