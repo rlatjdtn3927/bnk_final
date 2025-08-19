@@ -46,7 +46,6 @@ public enum Command {
     IRP_JOIN_COMPLETE,			// 계좌개설/완료
     ACCOUNT_GET_BALANCE,			// 출금계좌 잔액조회
     ACCOUNT_GET_NUMBER,
-    IRP_JOIN_COMPLETE,		// 계좌개설/완료
     
     // ===== 보유현황 탭 =====
     SUMMARY_GET,              // SummaryHandler: 총 평가액/수익률/입금합/당일입금/운용수익 요약 조회
