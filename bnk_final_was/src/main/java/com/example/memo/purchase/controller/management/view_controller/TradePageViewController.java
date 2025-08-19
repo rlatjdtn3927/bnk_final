@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.example.memo.purchase.dto.PassValueDto;
+import com.example.memo.purchase.dto.trade.PassValueDto;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpClientService;
 import com.example.memo.tcp_common.TcpMessage;
@@ -106,22 +106,39 @@ public class TradePageViewController {
     
     @PostMapping("/step2/next") //model: flow, 계좌 id, type, 투자성향등급 or 대상 상품 ID
     public String step2Next(PassValueDto dto, Model model) {
-    		model.addAttribute("ModelValueDto", dto);
+    		model.addAttribute("PassValueDto", dto);
         return "purchase/trade/step3"; // 상품선택목록 view
     }
-    
-    
-    
-    @PostMapping("/step3/next") //model: flow, 계좌 id, type, 투자성향등급 or 대상 상품 ID, 선택 상품 ID or IDs
-    public String step3Next(PassValueDto dto, Model model) {
-    		model.addAttribute("ModelValueDto", dto);
-        return "purchase/trade/step4"; // 서류 view
+    /** Step 3 (상품 선택) */
+    @GetMapping("/step3")
+    public String step3Page(HttpSession session) {
+        PassValueDto dto = (PassValueDto) session.getAttribute("PassValueDto");
+        if (dto == null) dto = new PassValueDto();
+        session.setAttribute("PassValueDto", dto);
+        return "purchase/trade/step3";
     }
-    
-    @PostMapping("/step4/next") //model: flow, 계좌 id, type, 투자성향등급 or 대상 상품 ID, 선택 상품 ID or IDs
+
+    @PostMapping("/step3/next")
+    public String step3Next(PassValueDto dto, HttpSession session) {
+        session.setAttribute("PassValueDto", dto);
+        return "redirect:/purchase/trade/step4";  // ★ POST 후 GET 으로 redirect
+    }
+
+    /** Step 4 (서류 확인) */
+    @GetMapping("/step4")
+    public String step4Page(HttpSession session, Model model) {
+        PassValueDto dto = (PassValueDto) session.getAttribute("PassValueDto");
+        if (dto == null) {
+            return "redirect:/purchase/trade/step3"; // 세션 없으면 다시 step3
+        }
+        model.addAttribute("PassValueDto", dto);
+        return "purchase/trade/step4"; // step4.html
+    }
+
+    @PostMapping("/step4/next")
     public String step4Next(PassValueDto dto, Model model) {
-    		model.addAttribute("ModelValueDto", dto);
-        return "purchase/trade/step5"; // 비교확인 view
+        model.addAttribute("PassValueDto", dto);
+        return "purchase/trade/step5";
     }
     
     @PostMapping("/step5/next") //model: flow, 계좌 id, type, 투자성향등급 or 대상 상품 ID, 선택 상품 ID or IDs
