@@ -1,0 +1,188 @@
+<!-- templates/link/apply.html -->
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <title>부부연동 신청</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <style>
+    :root{--bg:#0b1020;--card:#151b2d;--muted:#9aa4b2;--accent:#5dd0ff;--ok:#2ecc71;--warn:#ffb020;--bad:#ff5c5c}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:#e9eef5;font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,'Noto Sans KR',sans-serif}
+    .wrap{max-width:720px;margin:40px auto;padding:0 16px}
+    .card{background:var(--card);border:1px solid #26324e;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+    .header{padding:22px 22px 0}
+    .title{font-size:20px;margin:0 0 4px}
+    .sub{color:var(--muted);font-size:13px;margin:0 0 12px}
+    form{padding:22px;display:grid;gap:14px}
+    label{font-size:13px;color:#cfd7e1}
+    input[type=text],input[type=date],input[type=file]{width:100%;padding:12px 12px;border-radius:12px;border:1px solid #2a3656;background:#0f1526;color:#e9eef5}
+    .row{display:grid;gap:14px;grid-template-columns:1fr 1fr}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:12px;border:1px solid #2a3656;background:#0f1526;color:#e9eef5;cursor:pointer}
+    .btn.primary{background:linear-gradient(135deg,#2a9df4,#6dd5ff);border:none;color:#0a0f1e;font-weight:700}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .status{margin-top:16px;padding:14px;border-radius:12px;display:none}
+    .status.ok{display:block;background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.3);color:#d7ffe6}
+    .status.warn{display:block;background:rgba(255,176,32,.12);border:1px solid rgba(255,176,32,.35);color:#fff1d6}
+    .status.bad{display:block;background:rgba(255,92,92,.1);border:1px solid rgba(255,92,92,.35);color:#ffdede}
+    .kv{display:flex;justify-content:space-between;gap:12px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}
+    .kv b{color:#cfe6ff}
+    .muted{color:var(--muted);font-size:12px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .section-title{margin:16px 0 6px;font-weight:700;color:#cfe6ff}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="header">
+      <h1 class="title">부부연동 신청</h1>
+      <p class="sub" th:text="'세션 사용자: ' + (${sessionUserId} != null ? ${sessionUserId} : '로그인 필요')"></p>
+    </div>
+
+    <form id="applyForm" enctype="multipart/form-data">
+      <div>
+        <label>배우자 이름</label>
+        <input type="text" name="spouseName" placeholder="예: 김연동" required/>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>배우자 생년월일</label>
+          <input type="date" name="spouseBirth" required/>
+        </div>
+        <div>
+          <label>가족관계증명서 (PDF만) <span class="muted">(선택)</span></label>
+          <!-- ✅ PDF만 선택 -->
+          <input id="file" type="file" name="file" accept=".pdf,application/pdf"/>
+          <div id="fileWarn" class="muted" style="display:none;color:#ffb7b7">PDF만 업로드할 수 있습니다.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;align-items:center">
+        <button class="btn primary" type="submit" id="submitBtn">신청하기</button>
+        <span id="loading" class="muted" style="display:none">처리 중…</span>
+      </div>
+
+      <div id="statusBox" class="status"></div>
+
+      <!-- 결과: 링크 상태 -->
+      <div id="resultBox" style="display:none;margin:10px 22px 22px">
+        <div class="section-title">신청 결과</div>
+        <div class="kv"><b>linkId</b><span id="r-linkId"></span></div>
+        <div class="kv"><b>status</b><span id="r-status"></span></div>
+        <div class="kv"><b>nextAction</b><span id="r-nextAction"></span></div>
+        <div class="kv"><b>message</b><span id="r-message"></span></div>
+      </div>
+
+      <!-- ✅ OCR 출력 섹션 -->
+      <div id="ocrBox" style="display:none;margin:0 22px 22px">
+        <div class="section-title">OCR 추출 결과</div>
+        <div class="grid">
+          <div class="kv"><b>docType</b><span id="o-docType"></span></div>
+          <div class="kv"><b>ok</b><span id="o-ok"></span></div>
+          <div class="kv"><b>applicantName</b><span id="o-an"></span></div>
+          <div class="kv"><b>applicantBirth</b><span id="o-ab"></span></div>
+          <div class="kv"><b>spouseName</b><span id="o-sn"></span></div>
+          <div class="kv"><b>spouseBirth</b><span id="o-sb"></span></div>
+          <div class="kv"><b>spouseRelation</b><span id="o-rel"></span></div>
+          <div class="kv"><b>reason</b><span id="o-reason"></span></div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById('applyForm');
+  const fileInput = document.getElementById('file');
+  const fileWarn = document.getElementById('fileWarn');
+  const btn = document.getElementById('submitBtn');
+  const loading = document.getElementById('loading');
+  const statusBox = document.getElementById('statusBox');
+  const resultBox = document.getElementById('resultBox');
+  const ocrBox = document.getElementById('ocrBox');
+
+  const setStatus = (type, text) => {
+    statusBox.className = 'status ' + type;
+    statusBox.textContent = text;
+    statusBox.style.display = 'block';
+  };
+
+  // 파일 선택 시 즉시 PDF 검증
+  fileInput.addEventListener('change', () => {
+    const f = fileInput.files[0];
+    if (!f) { fileWarn.style.display = 'none'; return; }
+    const ok = f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf');
+    fileWarn.style.display = ok ? 'none' : 'block';
+    if (!ok) fileInput.value = '';
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    statusBox.style.display = 'none';
+    resultBox.style.display = 'none';
+    ocrBox.style.display = 'none';
+    loading.style.display = 'inline';
+    btn.disabled = true;
+
+    try {
+      // 최종 PDF 검증 (보안상 서버도 검증하지만, UX 위해 프론트에서도)
+      const f = fileInput.files[0];
+      if (f) {
+        const ok = f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf');
+        if (!ok) {
+          setStatus('bad', 'PDF 파일만 업로드할 수 있습니다.');
+          loading.style.display = 'none';
+          btn.disabled = false;
+          return;
+        }
+      }
+
+      const fd = new FormData(form);
+      const res = await fetch('/link/apply', {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' }, // 항상 JSON
+        body: fd
+      });
+      const json = await res.json();
+
+      if (!res.ok || json.success === false) {
+        const msg = (json && (json.message || (json.data && json.data.message))) || `실패(${res.status})`;
+        setStatus('bad', msg);
+        return;
+      }
+
+      const d = json.data || json;
+
+      setStatus(d.status === 'PENDING_SPOUSE' ? 'ok' : 'warn',
+                d.status === 'PENDING_SPOUSE' ? '배우자 수락 대기 상태입니다.' : '관리자 검토 대기 상태입니다.');
+
+      // 결과 카드
+      document.getElementById('r-linkId').textContent = d.linkId ?? '-';
+      document.getElementById('r-status').textContent = d.status ?? '-';
+      document.getElementById('r-nextAction').textContent = d.nextAction ?? '-';
+      document.getElementById('r-message').textContent = d.message ?? '-';
+      resultBox.style.display = 'block';
+
+      // ✅ OCR 결과 렌더
+      const o = d.ocr || {};
+      document.getElementById('o-docType').textContent = o.docType ?? '-';
+      document.getElementById('o-ok').textContent = o.ok === true ? 'true' : (o.ok === false ? 'false' : '-');
+      document.getElementById('o-an').textContent = o.applicantName ?? '-';
+      document.getElementById('o-ab').textContent = o.applicantBirth ?? '-';
+      document.getElementById('o-sn').textContent = o.spouseName ?? '-';
+      document.getElementById('o-sb').textContent = o.spouseBirth ?? '-';
+      document.getElementById('o-rel').textContent = o.spouseRelation === true ? 'true' : (o.spouseRelation === false ? 'false' : '-');
+      document.getElementById('o-reason').textContent = o.reason ?? '-';
+      ocrBox.style.display = 'block';
+
+    } catch (err) {
+      setStatus('bad', '네트워크 오류: ' + err.message);
+    } finally {
+      loading.style.display = 'none';
+      btn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>

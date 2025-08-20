@@ -14,6 +14,14 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequ
 
 import java.net.URLConnection;
 import java.time.Duration;
+import java.util.Base64;
+import java.util.UUID;
+
+
+/**
+ * AWS SDK v2 기반 S3 유틸.
+ * SpouseLinkService에서 호출하는 put(prefix, filename, bytes) 시그니처를 제공
+ */
 @Service
 @RequiredArgsConstructor
 public class S3Service {
@@ -24,23 +32,37 @@ public class S3Service {
     @Value("${cloud.aws.s3.bucket-name}")
     private String bucketName;
 
-    /** 바이트 업로드 (AES256 서버사이드 암호화) */
-    public String uploadBytes(byte[] data, String key, String contentType) {
+    /** 기존 코드 호환: prefix + 안전한 파일명으로 key 생성 후 업로드 */
+    public String put(String prefix, String filename, byte[] bytes) {
+        String safePrefix = normalizePrefix(prefix);
+        String safeName   = safeFilename(filename);
+        String key = safePrefix + UUID.randomUUID() + "_" + safeName;
+
+        String contentType = guessContentType(safeName);
+        uploadBytes(bytes, key, contentType);
+        return key;
+    }
+
+    /** Base64 본문 업로드 편의 함수 */
+    public String putBase64(String prefix, String filename, String base64) {
+        byte[] data = Base64.getDecoder().decode(base64);
+        return put(prefix, filename, data);
+    }
+
+    /** 바이트 업로드 (SSE-S3 적용) */
+    public void uploadBytes(byte[] data, String key, String contentType) {
         if (contentType == null || contentType.isBlank()) {
-            // 파일명 기반으로 추정(없으면 octet-stream)
-            String guessed = URLConnection.guessContentTypeFromName(key);
-            contentType = (guessed != null) ? guessed : "application/octet-stream";
+            contentType = guessContentType(key);
         }
 
         PutObjectRequest put = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)
                 .contentType(contentType)
-                .serverSideEncryption(ServerSideEncryption.AES256) // KMS 필요 없음
+                .serverSideEncryption(ServerSideEncryption.AES256) // KMS 불필요, S3 관리형 키
                 .build();
 
         s3Client.putObject(put, RequestBody.fromBytes(data));
-        return key;
     }
 
     /** 다운로드 */
@@ -61,19 +83,43 @@ public class S3Service {
         s3Client.deleteObject(del);
     }
 
-    /** 프리사인드 GET URL 생성 (예: 10분 유효) */
-    public String generatePresignedGetUrl(String key, Duration ttl) {
+    /** 프리사인드 GET URL 생성 (기본 10분 권장) */
+    public String presignedGetUrl(String key, Duration ttl) {
         GetObjectRequest get = GetObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)
                 .build();
 
         GetObjectPresignRequest presignReq = GetObjectPresignRequest.builder()
-                .signatureDuration(ttl) // 예: Duration.ofMinutes(10)
+                .signatureDuration(ttl == null ? Duration.ofMinutes(10) : ttl)
                 .getObjectRequest(get)
                 .build();
 
         PresignedGetObjectRequest presigned = s3Presigner.presignGetObject(presignReq);
         return presigned.url().toString();
+    }
+
+    /* ================= helpers ================= */
+
+    private String normalizePrefix(String prefix) {
+        if (prefix == null || prefix.isBlank()) return "";
+        String p = prefix.replace("\\", "/");
+        if (!p.endsWith("/")) p = p + "/";
+        if (p.startsWith("/")) p = p.substring(1);
+        return p;
+    }
+
+    private String safeFilename(String filename) {
+        if (filename == null || filename.isBlank()) return "file";
+        // 경로문자 제거 및 공백 정리
+        String f = filename.replace("\\", "/");
+        int idx = f.lastIndexOf('/');
+        if (idx >= 0) f = f.substring(idx + 1);
+        return f.replaceAll("[\\r\\n]", "").trim();
+    }
+
+    private String guessContentType(String nameOrKey) {
+        String guessed = URLConnection.guessContentTypeFromName(nameOrKey);
+        return (guessed != null) ? guessed : "application/octet-stream";
     }
 }
