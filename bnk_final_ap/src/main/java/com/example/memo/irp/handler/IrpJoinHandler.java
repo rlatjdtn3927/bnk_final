@@ -157,7 +157,7 @@ public class IrpJoinHandler implements TcpMessageHandler {
 			        ObjectNode res = mapper.createObjectNode();
 			        res.put("ok", true);
 			        res.put("joinId", joinId);
-			        res.put("irpAcctNo", r.getAcctNo());        // DTO의 계좌번호
+			        res.put("irpAcctNo", r.getIrpAcctNo());        // DTO의 계좌번호
 			        res.put("contractNo", r.getContractNo());   // DTO의 계약번호
 			        return res;
 

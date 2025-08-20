@@ -65,6 +65,7 @@ async function initOpen() {
   try {
     const res = await fetch(`/irp/join/${joinId}/init-open`, { method: 'POST' });
     const data = await res.json().catch(() => ({}));
+    console.log('init-open data:', data); // ★ 추가
     if (!res.ok || data.ok === false) {
       alert(data.message || data.error || '번호 생성 중 오류가 발생했습니다.');
       return;

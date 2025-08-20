@@ -8,5 +8,5 @@ import lombok.Data;
 public class InitOpenResponse {
 	//IRP계좌번호/계약번호 생성 dto 
     private String contractNo;
-    private String acctNo;
+    private String irpAcctNo;
 }
