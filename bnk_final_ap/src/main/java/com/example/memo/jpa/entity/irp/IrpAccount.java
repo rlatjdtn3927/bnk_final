@@ -37,14 +37,13 @@ public class IrpAccount {
     @Column(name = "contract_no", nullable=false, unique=true, length=30)
     private String contractNo;
     
-    @Column(name = "acct_pwd", length = 100, nullable = false)
-    private String irpPwd; //시간이 되면 해시 저장(암호화)
+    @Column(name = "acct_pwd", length = 100)
+    private String irpPwd; 
     
     @Column(length = 20)
     private String status;
     
     @PrePersist void prePersist() {
-        if (status == null) status = "ACTIVE";
         if (balance == null) balance = BigDecimal.ZERO;
     }
 }
