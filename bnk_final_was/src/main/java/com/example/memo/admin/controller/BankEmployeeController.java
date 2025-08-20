@@ -38,11 +38,11 @@ public class BankEmployeeController {
 
             if (responseNode != null && !responseNode.isNull()) {
                 // 1. AP 서버의 응답(JsonNode)을 DTO 객체로 변환
-                BankEmployeeLoginDto loginEmployee = objectMapper.treeToValue(responseNode, BankEmployeeLoginDto.class);
+                BankEmployeeLoginDto BankEmployee = objectMapper.treeToValue(responseNode, BankEmployeeLoginDto.class);
 
                 // 2. 세션을 가져와 DTO 객체를 저장
                 HttpSession session = request.getSession(true);
-                session.setAttribute("loginEmployee", loginEmployee);
+                session.setAttribute("BankEmployee", BankEmployee);
                 session.setMaxInactiveInterval(1800); // 30분
 
                 return ResponseEntity.ok().body(Map.of("redirectUrl", "/admin"));

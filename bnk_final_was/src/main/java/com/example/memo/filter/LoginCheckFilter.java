@@ -16,8 +16,26 @@ public class LoginCheckFilter implements Filter {
         "/user-api/register",
         "/register",
         "/favicon.ico",
+        
+        // 기업 로그인
         "/company/login",
-        "/company/auth/login"
+        "/company/auth/login",
+        
+        // 관리자 로그인
+        "/admin/login",
+        
+        // 정적 리소스
+        "/css", "/js", "/images", "/webjars", "/static",
+
+        "/purchase",
+        "/purchase/trade",
+        "/purchase/api/trade",
+        "/purchase/api/portfolio",
+        "/purchase/api/holdings",
+        "/branches",
+        "/chatbot",
+        "/api/embeddings",
+        "/api/chat"
     );
 
     @Override
@@ -36,36 +54,41 @@ public class LoginCheckFilter implements Filter {
 
         // 2) 세션/권한 체크 (영역별로 다르게)
         HttpSession session = req.getSession(false);
+        
+        boolean isAdmin   = uri.startsWith("/admin");
         boolean isCompany = uri.startsWith("/company");
 
         if (session == null) {
-            redirectToLogin(res, isCompany);
+            redirectToLogin(res, isAdmin, isCompany);
             return;
         }
 
-        if (isCompany) {
-            // 기업뱅킹 영역: loginManager만 확인
+        if (isAdmin) {
+            if (session.getAttribute("BankEmployee") == null) {
+                res.sendRedirect("/admin/login");
+                return;
+            }
+        } else if (isCompany) {
             if (session.getAttribute("loginManager") == null) {
-                redirectToLogin(res, true);
+                res.sendRedirect("/company/login");
                 return;
             }
         } else {
-            // 고객 영역: user만 확인
             if (session.getAttribute("user") == null) {
-                redirectToLogin(res, false);
+                res.sendRedirect("/login-view");
                 return;
             }
         }
 
-        // 3) 통과
         chain.doFilter(request, response);
     }
-
     private boolean isExcluded(String uri) {
         return excludePrefixes.stream().anyMatch(uri::startsWith);
     }
 
-    private void redirectToLogin(HttpServletResponse res, boolean company) throws IOException {
-        res.sendRedirect(company ? "/company/login" : "/login-view");
+    private void redirectToLogin(HttpServletResponse res, boolean admin, boolean company) throws IOException {
+        if (admin)   { res.sendRedirect("/admin/login");   return; }
+        if (company) { res.sendRedirect("/company/login"); return; }
+        res.sendRedirect("/login-view"); // 기본(고객)
     }
 }

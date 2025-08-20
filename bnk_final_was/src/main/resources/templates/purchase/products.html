@@ -31,18 +31,18 @@
   <section class="card">
     <div class="section-title">원하시는 업무를 선택하세요</div>
     <div class="tiles">
-      <div class="tile" id="goChange">
-        <div class="tit">보유상품 변경</div>
-        <div class="muted mt-4">현재 보유 중인 상품을 다른 상품으로 변경</div>
-      </div>
-      <div class="tile" id="goMaturity">
-        <div class="tit">만기상품 변경예약</div>
-        <div class="muted mt-4">예금(원리금보장) 만기분을 다른 상품으로 전환</div>
-      </div>
-      <div class="tile" id="goPending">
-        <div class="tit">매수예정상품 등록/변경</div>
-        <div class="muted mt-4">본인부담금 운용 비율 설정 후 매수</div>
-      </div>
+		<div class="tile" onclick="location.href='/purchase/trade?flow=CHANGE'">
+		    <div class="tit">보유상품 변경</div>
+		    <div class="muted mt-4">현재 보유 중인 상품을 다른 상품으로 변경</div>
+		  </div>
+		  <div class="tile" onclick="location.href='/purchase/trade?flow=MATURITY'">
+		    <div class="tit">만기상품 변경예약</div>
+		    <div class="muted mt-4">예금(원리금보장) 만기분을 다른 상품으로 전환</div>
+		  </div>
+		  <div class="tile" onclick="location.href='/purchase/trade?flow=RESERVE'">
+		    <div class="tit">매수예정상품 등록/변경</div>
+		    <div class="muted mt-4">본인부담금 운용 비율 설정 후 매수</div>
+		  </div>
     </div>
   </section>
 

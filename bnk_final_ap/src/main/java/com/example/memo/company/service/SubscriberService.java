@@ -20,10 +20,12 @@ import com.example.memo.jpa.entity.company.DcAccount;
 import com.example.memo.jpa.entity.company.DcAccountRequest;
 import com.example.memo.jpa.entity.company.DcMember;
 import com.example.memo.jpa.entity.company.DcMemberStatus;
+import com.example.memo.jpa.entity.user.UserEntity;
 import com.example.memo.jpa.repository.company.DcAccountRepository;
 import com.example.memo.jpa.repository.company.DcAccountRequestRepository;
 import com.example.memo.jpa.repository.company.DcMemberRepository;
 import com.example.memo.jpa.repository.company.DcMemberStatusRepository;
+import com.example.memo.jpa.repository.user.UserRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -51,6 +53,7 @@ public class SubscriberService {
     private final DcAccountRepository dcAccountRepository;
     private final DcAccountRequestRepository dcAccountRequestRepository;
     private final EntityManager em;
+    private final UserRepository userRepository;
     
     
     /**
@@ -68,16 +71,19 @@ public class SubscriberService {
 
             if (dto.getName() == null || dto.getName().isBlank()) errors.add("이름 누락");
             if (dto.getSsn() == null || dto.getSsn().isBlank()) errors.add("주민등록번호 누락");
+            
+            String normalized = normalizeDigits13(dto.getSsn());
 
             if (errors.isEmpty()) {
-                if (ssnInFile.contains(dto.getSsn())) {
-                    errors.add("파일 내 주민등록번호 중복");
-                } else if (dcMemberRepository.existsByRrn(cryptoService.encrypt(dto.getSsn()))) {
-                    errors.add("DB에 이미 등록된 주민등록번호");
-                }
+            	if (ssnInFile.contains(normalized)) {
+            	    errors.add("파일 내 주민등록번호 중복");
+            	} else if (dcMemberRepository.existsByRrn(
+            	               cryptoService.encrypt(normalized))) {
+            	    errors.add("DB에 이미 등록된 주민등록번호");
+            	}
             }
             
-            ssnInFile.add(dto.getSsn());
+            ssnInFile.add(normalized);
 
             result.put("subscriber", dto);
             result.put("valid", errors.isEmpty());
@@ -100,8 +106,16 @@ public class SubscriberService {
         for (int i = 0; i < dtoList.size(); i++) {
             SubscriberDto dto = dtoList.get(i);
             try {
+                // 주민번호 정규화 + 암호화
+                String rrnEnc = cryptoService.encrypt(normalizeDigits13(dto.getSsn()));
+
+                // user_account 조회
+                UserEntity user = userRepository.findByRrn(rrnEnc)
+                    .orElseThrow(() -> new IllegalStateException("회원가입된 사용자 아님"));
+
                 DcMember member = DcMember.builder()
-                        .rrn(cryptoService.encrypt(dto.getSsn()))
+                        .rrn(rrnEnc)
+                        .user(user) // 여기서 매핑!
                         .name(dto.getName())
                         .startDate(LocalDate.parse(dto.getEntryDate()))
                         .baseDate(LocalDate.parse(dto.getBaseDate()))
@@ -125,12 +139,13 @@ public class SubscriberService {
                 successCount++;
             } catch (Exception e) {
                 log.error("가입자 등록 실패 (행: {}): {}", i + 2, e.getMessage());
-                resultDto.addError(i + 2, "등록 중 서버 오류 발생");
+                resultDto.addError(i + 2, "등록 중 오류 발생: " + e.getMessage());
             }
         }
         resultDto.setResult(dtoList.size(), successCount);
         return resultDto;
     }
+
 
     /**
      * 조건에 맞는 회사의 가입자 명부 목록과 '계좌 상태'를 함께 조회
@@ -172,7 +187,12 @@ public class SubscriberService {
 
             try {
                 String decryptedRrn = cryptoService.decrypt(member.getRrn());
-                dto.setBirthDate(formatBirthdateFromServer(decryptedRrn));
+                String d13 = decryptedRrn == null ? null : decryptedRrn.replaceAll("[^0-9]", "");
+                if (d13 == null || d13.length() != 13) {
+                    dto.setBirthDate("형식 오류");
+                } else {
+                    dto.setBirthDate(formatBirthdateFromDigits13(d13)); // ← 변경
+                }
             } catch (Exception e) {
                 log.error("주민번호 복호화 실패 (Member ID: {}): {}", member.getId(), e.getMessage());
                 dto.setBirthDate("복호화 오류");
@@ -196,45 +216,33 @@ public class SubscriberService {
     }
 
     /**
-     * 주민번호 문자열을 생년월일(YYYY-MM-DD) 형식으로 변환하는 내부 헬퍼 메소드
+     * 숫자 13자리 주민번호에서 생년월일(YYYY-MM-DD) 계산
+     * d13 예: "9901011234567"
      */
-    private String formatBirthdateFromServer(String rrn) {
-        if (rrn == null || rrn.length() < 8) return "";
-        
-        String birthPart = rrn.substring(0, 6);
-        char genderDigit = rrn.charAt(7);
+    private String formatBirthdateFromDigits13(String d13) {
+        if (d13 == null || d13.length() != 13) return "";
+
+        String birth6 = d13.substring(0, 6); // YYMMDD
+        char genderDigit = d13.charAt(6);    // 7번째 자리
+
+        // 1,2,5,6: 1900년대생(5,6 외국인) / 3,4,7,8: 2000년대생(7,8 외국인)
         String yearPrefix;
-        
-        log.info("### 생년월일 변환 로직 실행! 주민번호 7번째 자리: {}", genderDigit);
-
-
-        // 1, 2, 5, 6: 1900년대생 (5, 6은 외국인)
-        // 3, 4, 7, 8: 2000년대생 (7, 8은 외국인)
         switch (genderDigit) {
-            case '1':
-            case '2':
-            case '5':
-            case '6':
-                yearPrefix = "19";
-                break;
-            case '3':
-            case '4':
-            case '7':
-            case '8':
-                yearPrefix = "20";
-                break;
+            case '1': case '2': case '5': case '6':
+                yearPrefix = "19"; break;
+            case '3': case '4': case '7': case '8':
+                yearPrefix = "20"; break;
             default:
-                // 1800년대생 등 예외 케이스는 일단 2000년대로 처리
-                yearPrefix = "20"; 
-                break;
+                // 예외 케이스는 일단 2000년대로 처리
+                yearPrefix = "20"; break;
         }
 
-        String year = yearPrefix + birthPart.substring(0, 2);
-        String month = birthPart.substring(2, 4);
-        String day = birthPart.substring(4, 6);
-
-        return String.format("%s-%s-%s", year, month, day);
+        String yyyy = yearPrefix + birth6.substring(0, 2);
+        String mm   = birth6.substring(2, 4);
+        String dd   = birth6.substring(4, 6);
+        return String.format("%s-%s-%s", yyyy, mm, dd);
     }
+
     
     private List<DcMember> findMembersByCriteria(Long companyId, String name, String employmentStatus, String accountStatus) {
         CriteriaBuilder cb = em.getCriteriaBuilder();
@@ -287,4 +295,12 @@ public class SubscriberService {
         );
         return subquery;
     }
+    
+    private String normalizeDigits13(String rrnRaw) {
+        if (rrnRaw == null) return null;
+        String d = rrnRaw.replaceAll("[^0-9]", "").trim(); // 숫자만 추출
+        if (d.length() != 13) throw new IllegalArgumentException("잘못된 주민등록번호");
+        return d;
+    }
+
 }

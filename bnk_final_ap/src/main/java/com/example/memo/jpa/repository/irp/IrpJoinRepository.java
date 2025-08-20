@@ -12,9 +12,8 @@ public interface IrpJoinRepository extends JpaRepository<IrpJoinEntity, Long>{
 	
 	@Query("""
 	        select j from IrpJoinEntity j
-	        join fetch j.userId u
-	        join fetch j.productId p
-	        join fetch j.acctNo a
+	        left join fetch j.userId u
+	        left join fetch j.acctNo a
 	        where j.joinId = :joinId
 	""")
 	Optional<IrpJoinEntity> findDetailById(@Param("joinId") Long joinId);

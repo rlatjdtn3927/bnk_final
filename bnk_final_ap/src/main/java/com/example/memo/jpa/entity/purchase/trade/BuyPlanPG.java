@@ -1,14 +1,12 @@
 package com.example.memo.jpa.entity.purchase.trade;
 
-import java.math.BigDecimal;
 
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import com.example.memo.jpa.entity.BaseEntity;
-import com.example.memo.jpa.entity.purchase.commodity.FundMaster;
 import com.example.memo.jpa.entity.purchase.commodity.PrincipalGuarantee;
-import com.example.memo.jpa.entity.user.User;
+import com.example.memo.jpa.entity.user.UserEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -43,7 +41,7 @@ public class BuyPlanPG extends BaseEntity{
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private UserEntity user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)

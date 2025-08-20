@@ -1,0 +1,235 @@
+body{
+  font-family: 'Pretendard', sans-serif;
+  margin:0;
+  padding: 0;
+  color: #222;
+}
+
+.section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  margin-bottom: 60px;
+}
+
+/* 상단 제목 */
+h1 {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 30px;
+  color: #1b3a6b;
+}
+
+.step-bar {
+  display: flex;
+  justify-content: center;
+  max-width: 980px;
+  margin: 0 auto 30px;
+  padding: 0;
+  list-style: none;
+  border: 1px solid #dfe6f2;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.step-bar li {
+  flex: 1;
+  text-align: center;
+  padding: 12px 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  border-right: 1px solid #dfe6f2;
+  background: #fff;
+}
+
+.step-bar li:last-child {
+  border-right: none;
+}
+
+.step-bar li.active {
+  background: #204f9b;
+  color: #fff;
+}
+
+/* 카드 레이아웃 */
+.form-card {
+  border: 1px solid #dfe6f2;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0,0,0,.08);
+  background: #fff;
+  overflow: hidden;
+}
+
+/* 상단 진행바 */
+.form-card__head {
+  padding: 16px 20px;
+  font-size: 18px;
+  font-weight: 700;
+  border-bottom: 1px solid #e6eef6;
+  background: #f5f8fc;
+  color: #1b3a6b
+}
+
+/* 본문 영역 */
+.form-card__body {
+  padding: 24px 20px;
+}
+
+.form-card__body label {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #243a63;
+}
+
+.form-card__body select,
+.form-card__body input {
+  display: block;
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #d8e0ef;
+  border-radius: 8px;
+  font-size: 15px;
+  color: #1a2a44;
+  background: #fff;
+  margin-bottom: 18px;
+  box-sizing: border-box;
+}
+
+.form-card__body select:focus,
+.form-card__body input:focus {
+  outline: 0;
+  border-color: #9bb7e6;
+  box-shadow: 0 0 0 3px rgba(51,102,204,.15);
+}
+
+/* 하단 버튼 */
+.form-card__foot {
+  border-top: 1px solid #e9eef6;
+  padding: 14px 20px;
+  text-align: center;
+  background: #fff;
+}
+
+button#saveBtn {
+  padding: 10px 22px;
+  border-radius: 8px;
+  background: #1e4e9e;
+  color: #fff;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,.08);
+}
+
+button#saveBtn:hover {
+  background: #1a458e;
+}
+
+/* 잔액조회 버튼 */
+#btnBalance {
+  height: 42px;
+  line-height: 42px;       	/* ✅ 버튼 내부 텍스트 세로 가운데 맞춤 */
+  padding: 0px 15px;
+  background-color: #fff;
+  color: #243a63;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid #d8e0ef;
+  border-radius: 6px;
+  cursor: pointer;
+  box-sizing: border-box;   /* border, padding 포함 */
+  margin-top: -18px;		/*버튼 위치조정*/
+  white-space: nowrap;   	/* 줄바꿈 방지 */
+}
+
+#btnBalance:hover {
+  background-color: #e9eef6;
+}
+
+#btnBalance:active {
+  background-color: #2c5683;
+}
+
+/* 잔액 표시 영역 */
+#balanceBox {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e4e9e;  /* 잔액 강조 느낌*/
+  border: 1px solid #d8e0ef;
+  border-radius: 6px;
+  display: inline-block;      /* 한 줄 차지하게 */
+  margin-bottom: 18px;
+  padding: 6px 10px;
+}
+
+/*모바일 반응형*/
+@media (max-width: 768px) {
+  /* 섹션 여백 축소 */
+  .section {
+    padding: 20px 12px;
+    margin-bottom: 30px;
+  }
+
+  /* 제목 크기 줄이기 */
+  h1 {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+
+  /* Step bar 세로로 나열 */
+  .step-bar {
+    flex-direction: column;
+    border-radius: 8px;
+  }
+  .step-bar li {
+    border-right: none;
+    border-bottom: 1px solid #dfe6f2;
+    padding: 10px;
+    font-size: 13px;
+  }
+  .step-bar li:last-child {
+    border-bottom: none;
+  }
+
+  /* 카드 폭 100% */
+  .form-card {
+    border-radius: 8px;
+  }
+
+  /* 카드 헤더 */
+  .form-card__head {
+    font-size: 16px;
+    padding: 12px;
+  }
+
+  /* 본문 영역 여백 줄이기 */
+  .form-card__body {
+    padding: 16px 12px;
+  }
+
+  /* 입력창 100% */
+  .form-card__body select,
+  .form-card__body input {
+    max-width: 100%;   /* 모바일에서는 가득 */
+    height: 40px;
+    font-size: 14px;
+  }
+
+  /* 버튼 */
+  .form-card__foot {
+    padding: 12px;
+  }
+  button#saveBtn {
+    width: 100%;         /* 버튼도 가로 100% */
+    font-size: 15px;
+    padding: 12px 0;
+  }
+}
+
+

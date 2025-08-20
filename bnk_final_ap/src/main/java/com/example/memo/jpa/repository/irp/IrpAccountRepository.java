@@ -12,4 +12,6 @@ public interface IrpAccountRepository extends JpaRepository<IrpAccount, String>{
 
     /** (선택) 사용자ID로 대표 IRP 계좌 찾기 */
     Optional<IrpAccount> findByUser_UserId(Long userId);
+
+    Optional<IrpAccount> findTopByUserUserIdAndStatusNot(Long userId, String status);
 }
