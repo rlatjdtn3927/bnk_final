@@ -36,7 +36,7 @@ public class LoginCheckFilter implements Filter {
 
         // 2) 세션에서 로그인 체크
         HttpSession session = httpReq.getSession(false);
-        if (session == null || session.getAttribute("user") == null) {
+        if (session == null || session.getAttribute("LOGIN_USER_ID") == null) {
             // 회사 전용 경로 요청 시 → /company/login 으로
             if (requestURI.startsWith("/company")) {
                 httpRes.sendRedirect("/company/login");

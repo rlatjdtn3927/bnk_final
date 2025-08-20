@@ -4,31 +4,106 @@
   <meta charset="UTF-8">
   <title>투자성향 분석 결과</title>
   <style>
-    body { font-family: "Noto Sans KR", sans-serif; text-align: center; margin-top: 50px; }
-    h2 { font-size: 24px; margin-bottom: 20px; }
-    p { font-size: 18px; }
-    .desc { font-size: 16px; color: #555; margin-top: 10px; }
-    .link { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #4f46e5; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; }
-    .link:hover { background: #3730a3; }
+    body { 
+      font-family: "Noto Sans KR", sans-serif; 
+      text-align: center; 
+      margin-top: 50px; 
+      background: #fff5f5; /* 전체 배경을 부드러운 톤 */
+    }
+    h2 { 
+      font-size: 26px; 
+      margin-bottom: 20px; 
+      color: #b11217; /* 진한 포인트 컬러 */
+    }
+    p { font-size: 18px; margin: 8px 0; }
+    .desc { 
+      font-size: 16px; 
+      color: #374151; 
+      margin-top: 15px; 
+      line-height: 1.6; 
+    }
+    .card {
+      display: inline-block;
+      background: #fff;
+      padding: 30px 40px;
+      border-radius: 16px;
+      border: 2px solid #ffd6d6; /* 요청 컬러 포인트 */
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      max-width: 520px;
+      width: 90%;
+      transition: transform 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+    }
+    .link {
+      display: inline-block; 
+      margin-top: 25px; 
+      padding: 12px 28px; 
+      background: #ffd6d6; 
+      color: #111; 
+      border-radius: 10px; 
+      text-decoration: none; 
+      font-weight: 600; 
+      transition: all 0.25s;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .link:hover { 
+      background: #ffb6b6; 
+      color: #000; 
+    }
+    .error { 
+      color: #d9534f; 
+      margin-top: 20px; 
+      font-weight: bold; 
+    }
+    hr {
+      margin: 20px 0;
+      border: none;
+      border-top: 2px dashed #ffd6d6;
+    }
   </style>
 </head>
 <body>
-  <h2>📊 투자성향 분석 결과</h2>
+  <div class="card">
+    <h2>📊 투자성향 분석 결과</h2>
 
-  <p>총 점수: <strong th:text="${score}">점수</strong> 점</p>
-  <p>분류된 투자성향: <strong th:text="${type}">성향</strong></p>
+    <!-- 점수 & 성향 -->
+    <p>총 점수: <strong th:text="${score}">0</strong> 점</p>
+    <p>분류된 투자성향: <strong th:text="${type}">-</strong></p>
 
-  <hr/>
+    <hr/>
 
-  <div th:switch="${type}">
-    <div th:case="'공격투자형'"><p class="desc">📈 높은 수익을 추구하며 위험도 감수 가능한 투자자입니다.</p></div>
-    <div th:case="'적극투자형'"><p class="desc">📊 적절한 위험을 감수하면서 수익을 기대하는 유형입니다.</p></div>
-    <div th:case="'위험중립형'"><p class="desc">⚖️ 안정성과 수익을 균형 있게 추구하는 투자자입니다.</p></div>
-    <div th:case="'안정추구형'"><p class="desc">🔒 원금 손실을 최소화하고자 하는 보수적인 성향입니다.</p></div>
-    <div th:case="'안정형'"><p class="desc">🛡 가능한 한 손실 없는 투자를 선호하는 초보 투자자입니다.</p></div>
-    <div th:case="*"><p class="desc">❓ 분석 결과가 존재하지 않습니다.</p></div>
+    <!-- 오류가 없을 때만 성향 설명 표시 -->
+    <div th:if="${error == null}">
+      <div th:switch="${type}">
+        <div th:case="'공격투자형'">
+          <p class="desc">📈 높은 수익을 추구하며 위험도 감수 가능한 투자자입니다.</p>
+        </div>
+        <div th:case="'적극투자형'">
+          <p class="desc">📊 적절한 위험을 감수하면서 수익을 기대하는 유형입니다.</p>
+        </div>
+        <div th:case="'위험중립형'">
+          <p class="desc">⚖️ 안정성과 수익을 균형 있게 추구하는 투자자입니다.</p>
+        </div>
+        <div th:case="'안정추구형'">
+          <p class="desc">🔒 원금 손실을 최소화하고자 하는 보수적인 성향입니다.</p>
+        </div>
+        <div th:case="'안정형'">
+          <p class="desc">🛡 가능한 한 손실 없는 투자를 선호하는 초보 투자자입니다.</p>
+        </div>
+        <div th:case="*">
+          <p class="desc">❓ 분석 결과가 존재하지 않습니다.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 오류 메시지 -->
+    <p class="error" th:if="${error}" th:text="${error}"></p>
+
+    <!-- 다시하기 & 메인 버튼 -->
+    <a class="link" href="/survey-start">다시하기</a>
+    <a class="link" href="/main">메인으로</a>
   </div>
-
-  <a href="/main" class="link">메인 페이지로 돌아가기</a>
 </body>
 </html>

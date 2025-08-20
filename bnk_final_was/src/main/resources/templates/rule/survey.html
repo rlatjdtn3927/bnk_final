@@ -14,16 +14,13 @@
     .wrap { max-width: var(--w); margin: 40px auto; background: var(--card); border-radius: 16px; box-shadow: 0 6px 24px rgba(0,0,0,0.08); padding: 28px; }
     h1 { font-size: 20px; margin: 0 0 8px; }
     .desc { color: var(--muted); margin-bottom: 18px; }
-
     .progress { height: 8px; background: #eef1f5; border-radius: 999px; overflow: hidden; margin: 16px 0 24px; }
     .bar { height: 100%; width: 0%; background: var(--brand); transition: width .25s ease; }
-
     .q-title { font-size: 18px; font-weight: 700; margin: 0 0 14px; }
     .opt { display:block; padding:12px 14px; border:1px solid var(--line); border-radius:12px; margin:8px 0; cursor:pointer; transition:border-color .15s, box-shadow .15s, background .15s; }
     .opt:hover { border-color:#fecaca; box-shadow:0 0 0 4px rgba(215,25,33,.10); background:#fffafa; }
     .opt input { transform: translateY(1px); margin-right:10px; }
     .hint { color: var(--muted); font-size: 13px; margin-top: 4px; }
-
     .nav { display:flex; gap:10px; margin-top:18px; }
     button { padding:12px 16px; border-radius:12px; border:none; cursor:pointer; font-weight:600; }
     .btn { background: var(--brand); color:#fff; }
@@ -31,26 +28,14 @@
     .btn[disabled] { opacity:.5; cursor:not-allowed; }
     .ghost { background:#eef1f5; color:#111827; }
     .ghost:hover { background:#e5e7eb; }
-
     .muted { color: var(--muted); font-size: 12px; margin-top: 10px; }
     .footer { display:flex; justify-content: space-between; align-items:center; gap:10px; margin-top: 16px; }
     .idx { color:#374151; font-size:14px; }
-
     .toast { position: fixed; bottom:18px; left:50%; transform:translateX(-50%); background:#111827; color:#fff; padding:10px 14px; border-radius:10px; opacity:0; transition:opacity .25s; }
     .toast.show { opacity:1; }
     .toast[aria-live] { visibility:hidden; }
     .toast.show[aria-live] { visibility:visible; }
-
     .summary { background:#f9fafb; padding:14px; border-radius:12px; border:1px solid var(--line); margin-top:8px; font-size:14px; }
-
-    /* 완료 화면 버튼 */
-    .actions { display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
-    .action-btn { display:inline-block; padding:12px 16px; border-radius:12px; border:1px solid; background:#fff; font-weight:600; text-decoration:none; cursor:pointer; transition:background .15s, color .15s, border-color .15s; }
-    .action-primary { color: var(--brand); border-color: var(--brand); }
-    .action-primary:hover { background:#fff5f5; }
-    .action-secondary { color:#374151; border-color:#9ca3af; }
-    .action-secondary:hover { background:#f3f4f6; }
-
     @media (max-width: 760px){ .wrap{ margin:16px; padding:18px; border-radius:12px; } }
   </style>
 </head>
@@ -58,11 +43,8 @@
   <div class="wrap">
     <h1>퇴직연금 투자성향 설문</h1>
     <div class="desc">한 문항씩 답하면 자동으로 다음으로 진행돼요. 체크박스 문항은 <b>다음</b> 버튼을 눌러주세요.</div>
-
     <div class="progress"><div id="bar" class="bar"></div></div>
-
     <div id="stage"><!-- 동적 렌더링 영역 --></div>
-
     <div class="footer">
       <div class="idx" id="idx"></div>
       <div class="nav">
@@ -72,63 +54,92 @@
     </div>
     <div class="muted">진행 중 데이터는 브라우저에 임시 저장됩니다.</div>
   </div>
-
   <div id="toast" class="toast" role="status" aria-live="polite">저장됨</div>
 
   <script>
     // --- 설문 정의 ---
     const QUESTIONS = [
-      { id: 'q1',  type: 'radio', title: '1. 향후 수입원 전망은 어떻게 예상하십니까?', options: [
-        { label: '향후 증가 예상', value: '5' }, { label: '향후 감소 예상', value: '3' }, { label: '일정 수입 없음', value: '0' },
+      { id:"q1", type:"radio", title:"수입원 전망 (5점)", options:[
+        {label:"향후 증가 예상 (5점)",value:"5"},
+        {label:"향후 감소 예상 (3점)",value:"3"},
+        {label:"일정수입 없음 (0점)",value:"0"}
       ]},
-      { id: 'q2',  type: 'radio', title: '2. 총 자산 대비 투자상품 금액', options: [
-        { label: '1억 원 이상', value: '5' }, { label: '5천만~1억 미만', value: '4' }, { label: '3천만~5천만 미만', value: '3' }, { label: '3천만 미만', value: '1' },
+      { id:"q2", type:"radio", title:"총 자산 대비 투자상품 금액 (5점)", options:[
+        {label:"1억 원 이상 (5점)",value:"5"},
+        {label:"5천만 원~1억 원 미만 (4점)",value:"4"},
+        {label:"3천만 원~5천만 원 미만 (3점)",value:"3"},
+        {label:"3천만 원 미만 (1점)",value:"1"}
       ]},
-      { id: 'q3',  type: 'radio', title: '3. 총 자산 중 투자상품 비중', options: [
-        { label: '30% 이상', value: '5' }, { label: '20% 이상', value: '4' }, { label: '10% 이상', value: '3' }, { label: '10% 미만', value: '1' },
+      { id:"q3", type:"radio", title:"총 자산 중 투자상품 비중 (5점)", options:[
+        {label:"30% 이상 (5점)",value:"5"},
+        {label:"20% 이상 (4점)",value:"4"},
+        {label:"10% 이상 (3점)",value:"3"},
+        {label:"10% 미만 (1점)",value:"1"}
       ]},
-      { id: 'q4',  type: 'radio', title: '4. 금융투자상품에 대한 지식 수준', options: [
-        { label: '거의 알지 못함', value: '1' }, { label: '일정 부분 이해', value: '3' }, { label: '구조 및 위험 깊이 이해', value: '5' }, { label: '파생상품까지 이해', value: '10' },
+      { id:"q4", type:"radio", title:"금융투자상품에 대한 지식 수준 (10점)", options:[
+        {label:"거의 알지 못함 (1점)",value:"1"},
+        {label:"일정 부분 이해 (3점)",value:"3"},
+        {label:"구조 및 위험 깊이 이해 (5점)",value:"5"},
+        {label:"파생상품까지 이해 (10점)",value:"10"}
       ]},
-      { id: 'q5',  type: 'radio', title: '5. 투자원금 손실 가능 수준', options: [
-        { label: '원금 보전 필요', value: '0' }, { label: '10% 미만 손실 감수', value: '3' }, { label: '20% 미만 손실 감수', value: '5' }, { label: '20% 이상 손실 감수', value: '10' },
+      { id:"q5", type:"radio", title:"투자원금에 손실이 발생할 경우 감수할 수 있는 수준", options:[
+        {label:"투자원금은 반드시 보전되어야 한다 (0점)",value:"0"},
+        {label:"원금 기준 10% 미만 손실 감수 (3점)",value:"3"},
+        {label:"원금 기준 20% 미만 손실 감수 (5점)",value:"5"},
+        {label:"기대이익 초과면 20% 이상 전액 손실 감수 (10점)",value:"10"}
       ]},
-      { id: 'q6',  type: 'radio', title: '6. 손실 감수 수준', options: [
-        { label: '원금보장 선호', value: '0' }, { label: '10% 손실 감수 가능', value: '3' }, { label: '20% 손실 감수 가능', value: '5' }, { label: '20% 이상 손실 감수 가능', value: '10' },
+      { id:"q6", type:"radio", title:"손실 감수 수준 (10점)", options:[
+        {label:"원금보장 선호 (0점)",value:"0"},
+        {label:"10% 손실 감수 가능 (3점)",value:"3"},
+        {label:"20% 손실 감수 가능 (5점)",value:"5"},
+        {label:"20% 이상 손실 감수 가능 (10점)",value:"10"}
       ]},
-      { id: 'q7',  type: 'radio', title: '7. 목표 수익률은?', options: [
-        { label: '연 3% 내외', value: '1' }, { label: '연 6% 내외', value: '3' }, { label: '연 10% 내외', value: '5' }, { label: '연 10% 이상', value: '10' },
+      { id:"q7", type:"radio", title:"목표 투자 수익 기대 수준", options:[
+        {label:"연 3% 내외 (1점)",value:"1"},
+        {label:"연 6% 내외 (3점)",value:"3"},
+        {label:"연 10% 내외 (5점)",value:"5"},
+        {label:"연 10% 이상 (10점)",value:"10"}
       ]},
-      { id: 'q8',  type: 'radio', title: '8. 투자예정 기간', options: [
-        { label: '6개월 미만', value: '1' }, { label: '6개월~1년 미만', value: '2' }, { label: '1년~2년 미만', value: '3' }, { label: '2년~3년 미만', value: '4' }, { label: '3년 이상', value: '5' },
+      { id:"q8", type:"radio", title:"투자예정 기간", options:[
+        {label:"6개월 미만 (1점)",value:"1"},
+        {label:"6개월~1년 미만 (2점)",value:"2"},
+        {label:"1년~2년 미만 (3점)",value:"3"},
+        {label:"2년~3년 미만 (4점)",value:"4"},
+        {label:"3년 이상 (5점)",value:"5"}
       ]},
-      { id: 'q9',  type: 'checkbox', title: '9. 투자경험이 있는 상품 (복수선택)', hint: '각 항목당 2점', options: [
-        { label: '예적금, 국채, MMF, CMA', value: '2' },
-        { label: '금융채, 채권형펀드, 원금보장형 ELS', value: '2' },
-        { label: '중간등급 회사채, 혼합형 펀드', value: '2' },
-        { label: '주식, 고위험 펀드', value: '2' },
-        { label: '파생상품, 신용거래 등', value: '2' },
+      { id:"q9", type:"checkbox", title:"투자 경험 있는 상품 (중복선택 가능)", options:[
+        {label:"예적금·국채·지방채·MMF·CMA (각 2점)",value:"2"},
+        {label:"금융채·우량채·채권형 펀드·원금보장형 ELF (각 2점)",value:"2"},
+        {label:"중위등급 회사채·혼합형 펀드 (각 2점)",value:"2"},
+        {label:"주식·원금비보장 ELF·주식형 펀드 (각 2점)",value:"2"},
+        {label:"선물옵션·파생상품형 펀드·신용거래 (각 2점)",value:"2"}
       ]},
-      { id: 'q10', type: 'radio', title: '10. 투자경험 기간', options: [
-        { label: '3년 이상', value: '5' }, { label: '1~3년', value: '4' }, { label: '1년 미만', value: '2' }, { label: '없음', value: '0' },
+      { id:"q10", type:"radio", title:"투자 경험 기간", options:[
+        {label:"3년 이상 (5점)",value:"5"},
+        {label:"1~3년 미만 (4점)",value:"4"},
+        {label:"1년 미만 (2점)",value:"2"},
+        {label:"없음 (0점)",value:"0"}
       ]},
-      { id: 'q11', type: 'radio', title: '11. 파생상품 관련 경험', options: [
-        { label: '3년 이상', value: '10' }, { label: '1~3년', value: '7' }, { label: '1년 미만', value: '4' }, { label: '없음', value: '0' },
+      { id:"q11", type:"radio", title:"파생상품·원금비보장펀드 경험", options:[
+        {label:"3년 이상 (10점)",value:"10"},
+        {label:"1~3년 미만 (7점)",value:"7"},
+        {label:"1년 미만 (4점)",value:"4"},
+        {label:"없음 (0점)",value:"0"}
       ]},
-      { id: 'q12', type: 'radio', title: '12. 향후 디폴트 운용 방법을 자동 설정하시겠습니까?', options: [
-        { label: '네, 추천 포트폴리오로 설정', value: 'yes' },
-        { label: '아니요, 직접 지정하겠습니다', value: 'no' },
+      { id:"q12", type:"radio", title:"디폴트옵션 설정 여부 (점수 미반영)", options:[
+        {label:"예, 추천 포트폴리오 설정",value:"0"},
+        {label:"아니요, 별도 지정",value:"0"}
       ]},
-      { id: 'q13', type: 'static', title: '13. (필독) 고지문',
-        html: `※ 본 설문은 퇴직연금 자산 운용에 참고하기 위한 자료로서, 상품 선택 및 결과에 대한 최종 책임은 가입자 본인에게 있습니다.`
-      },
+      { id:"q13", type:"static", title:"[정식 보고서·문서용 고지문]", html:`
+        ※ 본 설문은 퇴직연금 자산 운용에 참고하기 위한 자료로서,<br>
+        투자 성향에 따른 권유가 이루어지더라도 상품 선택 및 결과에 대한 최종 책임은 가입자 본인에게 있으며,<br>
+        운용성과에 따라 손실이 발생할 수 있습니다.
+      `}
     ];
 
-    // --- 상태 ---
     const STORAGE_KEY = 'retire_survey_state_v1';
     let state = loadState() || { index: 0, answers: {} };
 
-    // --- 유틸 ---
     function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
     function loadState(){ try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch(e){ return null; } }
     function showToast(msg='저장됨'){
@@ -136,157 +147,94 @@
       t.textContent=msg; t.classList.add('show');
       setTimeout(()=>t.classList.remove('show'), 1200);
     }
-    function getCookie(name){ const m = document.cookie.match('(^|;)\\s*'+name+'\\s*=\\s*([^;]+)'); return m ? m.pop() : ''; }
 
     function render(){
       const q = QUESTIONS[state.index];
       const total = QUESTIONS.length;
       document.getElementById('bar').style.width = Math.round((state.index/(total-1))*100) + '%';
       document.getElementById('idx').textContent = `${Math.min(state.index+1,total)} / ${total}`;
-
       const stage = document.getElementById('stage');
       if(!q){ stage.innerHTML = '<p>문항을 찾을 수 없습니다.</p>'; return; }
-
-      // 버튼 상태
       const prevBtn = document.getElementById('prev');
       const nextBtn = document.getElementById('next');
       prevBtn.disabled = state.index === 0;
       nextBtn.style.display = (q.type === 'checkbox' || q.type === 'static') ? 'inline-block' : 'none';
       nextBtn.textContent = (state.index === total-1) ? '제출' : '다음';
-
-      // 문항 렌더링
       if(q.type === 'static'){
-        stage.innerHTML = `
-          <div class="q">
-            <div class="q-title">${q.title}</div>
-            <div class="summary">${q.html}</div>
-          </div>`;
+        stage.innerHTML = `<div class="q"><div class="q-title">${q.title}</div><div class="summary">${q.html}</div></div>`;
         return;
       }
-
       if(q.type === 'radio' || q.type === 'checkbox'){
         const saved = state.answers[q.id] ?? (q.type==='checkbox' ? [] : null);
-        const optsHtml = q.options.map((opt, i) => {
-          const id = `${q.id}_${i}`;
-          const checked = (q.type==='radio') ? (saved === opt.value) : (Array.isArray(saved) && saved.includes(opt.value));
-          return `
-            <label class="opt" for="${id}">
-              <input id="${id}" name="${q.id}" type="${q.type==='radio'?'radio':'checkbox'}" value="${opt.value}" ${checked?'checked':''} />
-              ${opt.label}
-            </label>`;
+        const optsHtml = q.options.map((opt,i)=>{
+          const id=`${q.id}_${i}`;
+          const checked=(q.type==='radio')?(saved===opt.value):(Array.isArray(saved)&&saved.includes(opt.value));
+          return `<label class="opt" for="${id}"><input id="${id}" name="${q.id}" type="${q.type==='radio'?'radio':'checkbox'}" value="${opt.value}" ${checked?'checked':''}/> ${opt.label}</label>`;
         }).join('');
-        const hint = q.hint ? `<div class="hint">${q.hint}</div>` : '';
-        stage.innerHTML = `
-          <div class="q">
-            <div class="q-title">${q.title}</div>
-            ${optsHtml}
-            ${hint}
-          </div>`;
-
-        // 이벤트 바인딩
-        const inputs = stage.querySelectorAll('input');
-        inputs.forEach(inp => {
-          inp.addEventListener('change', () => {
-            if(q.type === 'radio'){
-              state.answers[q.id] = inp.value;
-              saveState(); showToast('저장됨');
-              goNext();
-            } else {
-              const values = Array.from(stage.querySelectorAll('input:checked')).map(i => i.value);
-              state.answers[q.id] = values;
-              saveState(); showToast('저장됨');
-              nextBtn.disabled = values.length === 0;
-            }
+        const hint=q.hint?`<div class="hint">${q.hint}</div>`:'';
+        stage.innerHTML=`<div class="q"><div class="q-title">${q.title}</div>${optsHtml}${hint}</div>`;
+        const inputs=stage.querySelectorAll('input');
+        inputs.forEach(inp=>{
+          inp.addEventListener('change',()=>{
+            if(q.type==='radio'){ state.answers[q.id]=inp.value; saveState(); showToast('저장됨'); goNext();}
+            else{ const values=Array.from(stage.querySelectorAll('input:checked')).map(i=>i.value); state.answers[q.id]=values; saveState(); showToast('저장됨'); nextBtn.disabled=values.length===0;}
           });
         });
-
-        if(q.type === 'checkbox'){
-          const values = Array.isArray(saved) ? saved : [];
-          nextBtn.disabled = values.length === 0;
-        }
+        if(q.type==='checkbox'){ const values=Array.isArray(saved)?saved:[]; nextBtn.disabled=values.length===0;}
       }
     }
 
-    function goPrev(){ if(state.index > 0){ state.index--; saveState(); render(); } }
-    function goNext(){
-      const isLast = state.index === (QUESTIONS.length - 1);
-      if(isLast){ submitAll(); return; }
-      state.index++; saveState(); render();
-    }
+    function goPrev(){ if(state.index>0){ state.index--; saveState(); render(); } }
+    function goNext(){ const isLast=state.index===(QUESTIONS.length-1); if(isLast){ submitAll(); return; } state.index++; saveState(); render(); }
 
     async function submitAll(){
-      const payload = {
-        surveyCode: 'RETIRE-2025-01',
-        answers: QUESTIONS.filter(q => q.type !== 'static').map(q => {
-          const ans = state.answers[q.id];
-          if (q.type === 'checkbox') {
-            return { id: q.id, values: Array.isArray(ans) ? ans : [] };
-          } else {
-            return { id: q.id, value: ans ?? null };
-          }
-        }),
-        meta: {
-          userAgent: navigator.userAgent,
-          submittedAt: new Date().toISOString()
-        }
-      };
+    	  const payload = {
+    	    surveyCode: 'RETIRE-2025-01',
+    	    answers: QUESTIONS.filter(q => q.type !== 'static').map(q => {
+    	      const ans = state.answers[q.id];
+    	      if (q.type === 'checkbox') {
+    	        return { id: q.id, values: Array.isArray(ans) ? ans : [] };
+    	      } else {
+    	        return { id: q.id, value: ans ?? null };
+    	      }
+    	    }),
+    	    meta: { userAgent: navigator.userAgent, submittedAt: new Date().toISOString() }
+    	  };
 
-      try{
-        const res = await fetch('/survey-api/submit', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-XSRF-TOKEN': getCookie('XSRF-TOKEN')
-          },
-          credentials: 'same-origin',
-          body: JSON.stringify(payload)
-        });
-        if(!res.ok) throw new Error('submit failed');
-        const data = await res.json().catch(()=>({}));
+    	  try {
+    	    const res = await fetch('/survey-submit-view', {
+    	      method: 'POST',
+    	      headers: { 'Content-Type': 'application/json' },
+    	      body: JSON.stringify(payload)
+    	    });
 
-        document.getElementById('stage').innerHTML = `
-          <div class="q">
-            <div class="q-title">제출 완료</div>
-            <div class="summary">
-              설문이 정상 제출되었습니다.<br/>
-              결과: <b>${data.type ?? '분석 대기'}</b><br/>
-              총점: <b>${data.score ?? '-'} 점</b>
-            </div>
-            <div class="actions">
-              <a class="action-btn action-primary" href="/main">메인으로</a>
-              <button id="retry" type="button" class="action-btn action-secondary">다시하기</button>
-            </div>
-          </div>`;
-        document.querySelector('.nav').style.display = 'none';
-        localStorage.removeItem(STORAGE_KEY);
-        showToast('제출 완료');
+    	    if (res.ok) {
+    	      // 서버에서 Redirect(FlashAttribute → /survey-result) 시킴
+    	      // fetch는 리다이렉트를 처리 못하니까 수동으로 이동
+    	      window.location.href = '/survey-result';
+    	    } else {
+    	      alert('제출 실패: ' + res.status);
+    	    }
+    	  } catch (err) {
+    	    alert('제출 중 오류 발생: ' + err.message);
+    	  }
+    	}
 
-        document.getElementById('retry')?.addEventListener('click', () => {
-          state = { index: 0, answers: {} };
-          saveState();
-          document.querySelector('.nav').style.display = 'flex';
-          render();
-        });
-      } catch(e){
-        showToast('제출 오류');
-      }
-    }
 
-    // 버튼 핸들러
+
     document.getElementById('prev').addEventListener('click', goPrev);
-    document.getElementById('next').addEventListener('click', () => {
-      const q = QUESTIONS[state.index];
-      if(q.type === 'checkbox' || q.type === 'static') return goNext();
+    document.getElementById('next').addEventListener('click', ()=>{
+      const q=QUESTIONS[state.index];
+      if(!q) return;
+      if(q.type==='checkbox'||q.type==='static') return goNext();
+    });
+    window.addEventListener('keydown',(e)=>{
+      const q=QUESTIONS[state.index];
+      if(!q) return;
+      if(e.key==='ArrowLeft') goPrev();
+      if(e.key==='ArrowRight'&&(q.type==='checkbox'||q.type==='static')) goNext();
     });
 
-    // 키보드 내비게이션(←, →)
-    window.addEventListener('keydown', (e)=>{
-      const q = QUESTIONS[state.index];
-      if(e.key === 'ArrowLeft') goPrev();
-      if(e.key === 'ArrowRight' && (q.type==='checkbox' || q.type==='static')) goNext();
-    });
-
-    // 처음 렌더링
     render();
   </script>
 </body>
