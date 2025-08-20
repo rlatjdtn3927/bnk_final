@@ -104,9 +104,17 @@ public class TradePageViewController {
     }
 
     @PostMapping("/step3/next")
-    public String step3Next(PassValueDto dto, HttpSession session) {
+    public String step3Next(PassValueDto incoming, HttpSession session) {
+        PassValueDto dto = (PassValueDto) session.getAttribute("PassValueDto");
+        if (dto == null) dto = new PassValueDto();
+
+        if (incoming.getSourceProdIdList() != null) dto.setSourceProdIdList(incoming.getSourceProdIdList());
+        if (incoming.getSourceProdId() != null)     dto.setSourceProdId(incoming.getSourceProdId());
+        if (incoming.getFileUrlList() != null)      dto.setFileUrlList(incoming.getFileUrlList());
+
+        // flow/accountType/accountId 등 공통 필드는 건드리지 않음
         session.setAttribute("PassValueDto", dto);
-        return "redirect:/purchase/trade/step4";  // ★ POST 후 GET 으로 redirect
+        return "redirect:/purchase/trade/step4";
     }
 
     /** Step 4 (서류 확인) */
@@ -120,9 +128,18 @@ public class TradePageViewController {
         return "purchase/trade/step4"; // step4.html
     }
 
+	//    세션 DTO 덮어쓰기 금지 → “머지 저장”으로 유지
+	//    step3/next, step4/next에서 session.setAttribute("PassValueDto", dto)로 통째로 덮어쓰면 flow 같은 공통필드가 사라질 수 있어요.
+	//    아래처럼 세션값을 꺼내서 해당 스텝 필드만 갱신하세요.
     @PostMapping("/step4/next")
-    public String step4Next(PassValueDto dto,HttpSession session) {
-        // 필요 시 세션의 PassValueDto 보강/병합 (여기선 그대로 저장만)
+    public String step4Next(PassValueDto incoming, HttpSession session) {
+        PassValueDto dto = (PassValueDto) session.getAttribute("PassValueDto");
+        if (dto == null) dto = new PassValueDto();
+
+        if (incoming.getTargetProdIdList() != null) dto.setTargetProdIdList(incoming.getTargetProdIdList());
+        if (incoming.getTargetProdId() != null)     dto.setTargetProdId(incoming.getTargetProdId());
+        // 필요 시 동의 결과 등을 받는다면 여기서만 반영
+
         session.setAttribute("PassValueDto", dto);
         return "redirect:/purchase/trade/step5";
     }
