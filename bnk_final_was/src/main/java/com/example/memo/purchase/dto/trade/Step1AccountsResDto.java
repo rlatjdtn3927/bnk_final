@@ -1,11 +1,11 @@
 // WAS - src/main/java/com/example/memo/purchase/dto/Step1AccountsRes.java
-package com.example.memo.purchase.dto;
+package com.example.memo.purchase.dto.trade;
 
 import java.util.List;
 import lombok.*;
 //was Step1 전용 API (계좌목록 조회) 응답 DTO
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
-public class Step1AccountsRes {
+public class Step1AccountsResDto {
     private boolean hasIrp;
     private AccountItem irp;           // IRP 1건(필수)
     private boolean hasDc;

@@ -1,7 +1,7 @@
 // src/main/java/com/example/memo/purchase/controller/management/rest_controller/Step1AccountAPIController.java
 package com.example.memo.purchase.controller.management.rest_controller;
 
-import com.example.memo.purchase.dto.Step1AccountsRes;
+import com.example.memo.purchase.dto.trade.Step1AccountsResDto;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpClientService;
 import com.example.memo.tcp_common.TcpMessage;
@@ -25,7 +25,7 @@ public class Step1AccountAPIController {
     private final ObjectMapper om;
 
     @GetMapping("/step1")
-    public ResponseEntity<Step1AccountsRes> getAccountsForStep1(
+    public ResponseEntity<Step1AccountsResDto> getAccountsForStep1(
             @RequestParam(name = "userId", required = false) Long userIdParam,
             @RequestParam(name = "dcMemberId", required = false) Long dcMemberIdParam,
             HttpSession session) {
@@ -47,11 +47,11 @@ public class Step1AccountAPIController {
 
             // IRP
             boolean hasIrp = data.path("irp").path("exists").asBoolean(false);
-            Step1AccountsRes.AccountItem irpItem = null;
+            Step1AccountsResDto.AccountItem irpItem = null;
             if (hasIrp) {
                 JsonNode irp = data.path("irp").path("account");
                 String irpNo = irp.path("irpAcctNo").asText(null);
-                irpItem = Step1AccountsRes.AccountItem.builder()
+                irpItem = Step1AccountsResDto.AccountItem.builder()
                         .accountId(irpNo)
                         .accountType("IRP")
                         .displayName(mask(irpNo))
@@ -61,11 +61,11 @@ public class Step1AccountAPIController {
 
             // DC
             boolean hasDc = data.path("dc").path("exists").asBoolean(false);
-            List<Step1AccountsRes.AccountItem> dcList = new ArrayList<>();
+            List<Step1AccountsResDto.AccountItem> dcList = new ArrayList<>();
             if (hasDc) {
                 for (JsonNode dc : data.path("dc").path("accounts")) {
                     String no = dc.path("accountNo").asText();
-                    dcList.add(Step1AccountsRes.AccountItem.builder()
+                    dcList.add(Step1AccountsResDto.AccountItem.builder()
                             .accountId(no)
                             .accountType("DC")
                             .displayName(mask(no))
@@ -75,7 +75,7 @@ public class Step1AccountAPIController {
             }
 
             String message = data.path("message").asText(null);
-            Step1AccountsRes body = Step1AccountsRes.builder()
+            Step1AccountsResDto body = Step1AccountsResDto.builder()
                     .hasIrp(hasIrp)
                     .irp(irpItem)
                     .hasDc(hasDc)
@@ -86,7 +86,7 @@ public class Step1AccountAPIController {
             return ResponseEntity.ok(body);
 
         } catch (Exception e) {
-            Step1AccountsRes err = Step1AccountsRes.builder()
+            Step1AccountsResDto err = Step1AccountsResDto.builder()
                     .hasIrp(false).hasDc(false)
                     .message("계좌 조회 오류: " + e.getMessage())
                     .build();

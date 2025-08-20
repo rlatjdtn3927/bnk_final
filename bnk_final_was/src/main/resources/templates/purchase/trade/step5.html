@@ -1,83 +1,118 @@
+<!-- WAS - src/main/resources/templates/purchase/trade/step5.html -->
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8"/>
+  <title>Step 5. 비교·확인</title>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>STEP4. 변경 전/후 미리보기</title>
-  <link th:href="@{/css/purchase.css}" rel="stylesheet"/>
+  <style>
+    :root{--bg:#f5f5f7;--fg:#111827;--muted:#6b7280;--brand:#b30000;--border:#e5e7eb;--primary:#ffd6d6;--primary-600:#ffb3b3}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
+    .container{max-width:1100px;margin:0 auto;padding:16px 16px 40px}
+    .header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#fff;border-bottom:1px solid var(--border)}
+    .brand{font-weight:700;color:var(--brand)} .tabs{display:flex;gap:10px}
+    .tab{padding:8px 12px;border-radius:10px;border:1px solid transparent;text-decoration:none;color:#374151}.tab.active{border-color:var(--border);background:#fff;font-weight:600}
+    h1{font-size:22px;margin:18px 0 8px}
+    .flow-badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;background:#e5f0ff;color:#1e40af;font-size:12px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    @media(max-width:768px){.grid{grid-template-columns:1fr}}
+    .panel{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden}
+    .panel-head{padding:12px 16px;border-bottom:1px solid var(--border);font-weight:700}
+    .panel-body{padding:12px 16px}
+    .card{border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin:10px 0;background:#fff}
+    .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .muted{color:var(--muted);font-size:12px}
+    .badge{font-size:11px;background:#fff2f2;border:1px solid #ffe3e3;padding:2px 8px;border-radius:999px;color:#374151}
+    .cat{font-size:11px;background:#f3f4f6;border:1px solid #e7e7e7;padding:2px 8px;border-radius:999px;color:#374151}
+    .actions{display:flex;gap:10px;margin-top:16px}
+    .btn{appearance:none;border:0;border-radius:12px;padding:10px 16px;cursor:pointer;font-weight:700}
+    .btn-link{background:transparent;text-decoration:underline;color:#374151}
+    .btn-primary{background:var(--primary);color:#111827}.btn-primary:hover{background:var(--primary-600)}
+    .banner{margin:12px 0;padding:10px 12px;border-radius:10px;border:1px solid #fde68a;background:#fffbeb;color:#92400e}
+  </style>
 </head>
 <body>
-	<header class="header">
-		  <div class="brand">BNK 퇴직연금</div>
-		  <nav class="tabs">
-		    <a th:href="@{/purchase/holdings}" class="tab">보유현황</a>
-		    <a th:href="@{/purchase/products}" class="tab">상품관리</a>
-		  </nav>
-	</header>
+<header class="header">
+  <div class="brand">BNK 퇴직연금</div>
+  <nav class="tabs">
+    <a th:href="@{/purchase/holdings}" class="tab">보유현황</a>
+    <a th:href="@{/purchase/products}" class="tab">상품관리</a>
+  </nav>
+</header>
 
-<main class="container">
-  <section class="card">
-    <div class="section-title">STEP4. 변경 전/후 확인</div>
+<div class="container">
+  <h1>Step 5. 비교·확인</h1>
+  <div class="flow-badge" th:text="${session['PassValueDto']?.flow} ?: 'FLOW 미지정'">FLOW</div>
 
-    <input type="hidden" id="flow"        th:value="${flow}">
-    <input type="hidden" id="accountType" th:value="${accountType}">
-    <input type="hidden" id="acountId"    th:value="${acountId}">
-    <input type="hidden" id="items"       th:value="${items}">
-    <input type="hidden" id="docs"        th:value="${docs}">
-    <input type="hidden" id="maturityProductId" th:value="${maturityProductId}">
-    <input type="hidden" id="changeDate"        th:value="${changeDate}">
+  <div id="banner" class="banner" style="display:none"></div>
 
-    <div class="grid grid-2">
-      <div>
-        <div class="badge">변경 전</div>
-        <pre id="beforeBox" style="white-space:pre-wrap"></pre>
-      </div>
-      <div>
-        <div class="badge">변경 후(미리보기)</div>
-        <pre id="afterBox" style="white-space:pre-wrap"></pre>
-      </div>
-    </div>
+  <div class="grid">
+    <section class="panel">
+      <div class="panel-head">변경 전</div>
+      <div class="panel-body" id="beforePanel"><div class="muted">불러오는 중…</div></div>
+    </section>
 
-    <form th:action="@{|/purchase/trade/${flow}/step4/next|}" method="post">
-      <input type="hidden" name="userId" th:value="${userId}">
-      <input type="hidden" name="accountType" th:value="${accountType}">
-      <input type="hidden" name="acountId" th:value="${acountId}">
-      <input type="hidden" name="items" th:value="${items}">
-      <input type="hidden" name="docs" th:value="${docs}">
-      <input type="hidden" name="maturityProductId" th:value="${maturityProductId}">
-      <input type="hidden" name="changeDate" th:value="${changeDate}">
-      <button class="btn primary mt-8" type="submit">다음(비밀번호 입력)</button>
-    </form>
-  </section>
-</main>
+    <section class="panel">
+      <div class="panel-head">변경 후</div>
+      <div class="panel-body" id="afterPanel"><div class="muted">불러오는 중…</div></div>
+    </section>
+  </div>
+
+  <form th:action="@{/purchase/trade/step5/next}" method="post" class="actions">
+    <a th:href="@{/purchase/trade/step4}" class="btn btn-link">이전</a>
+    <button type="submit" class="btn btn-primary">확정하기</button>
+  </form>
+</div>
 
 <script>
-  (async function(){
-    const flow = document.getElementById('flow').value;
-    const accountType = document.getElementById('accountType').value;
-    const acountId    = document.getElementById('acountId').value;
-    const items       = JSON.parse(document.getElementById('items').value);
+(function(){
+  const beforePanel = document.getElementById('beforePanel');
+  const afterPanel  = document.getElementById('afterPanel');
+  const banner      = document.getElementById('banner');
 
-    if(flow === 'MATURITY'){
-      // 간이 표시
-      const pid = document.getElementById('maturityProductId').value;
-      const cd  = document.getElementById('changeDate').value;
-      document.getElementById('beforeBox').textContent =
-        `만기 변경예약 대상 예금: ${pid}\n전환일: ${cd}\n\n(보유 상세/월별 내역은 만기목록 화면을 참고하세요)`;
-      document.getElementById('afterBox').textContent =
-        '전환금액을 아래 비율로 재배분 예정:\n' + JSON.stringify(items, null, 2);
+  function catLabel(pid){ return (pid && pid.startsWith('PG')) ? '원리금보장상품' : '펀드/ETF/TDF'; }
+
+  function renderList(target, items){
+    if (!items || items.length === 0){
+      target.innerHTML = `<div class="muted">표시할 항목이 없습니다.</div>`;
       return;
     }
+    target.innerHTML = items.map(it => `
+      <div class="card">
+        <div class="row">
+          <div>
+            <div><strong>${it.productName || it.productId}</strong> <span class="muted">(${it.productId})</span></div>
+            <div class="muted">${catLabel(it.productId)}</div>
+          </div>
+          <div>
+            ${it.percent != null ? `<span class="badge">${it.percent}%</span>` : ``}
+            <span class="cat">${it.type || ''}</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
 
-    // 일반 PENDING/CHANGE: 미리보기 호출
-    const res = await fetch('/purchase/api/trade/preview', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({accountType, acountId, items})
-    });
-    const json = await res.json();
-    document.getElementById('beforeBox').textContent = JSON.stringify(json.before, null, 2);
-    document.getElementById('afterBox').textContent  = JSON.stringify(json.after,  null, 2);
-  })();
+  async function load(){
+    try{
+      const res = await fetch('/purchase/api/compare/step5');
+      const body = await res.json();
+
+      if (body.message){
+        banner.style.display = 'block';
+        banner.textContent = body.message;
+      }
+
+      renderList(beforePanel, body.before || []);
+      renderList(afterPanel,  body.after  || []);
+    } catch(e){
+      beforePanel.innerHTML = `<div class="muted">오류: ${e}</div>`;
+      afterPanel.innerHTML  = `<div class="muted">오류: ${e}</div>`;
+    }
+  }
+
+  load();
+})();
 </script>
 </body>
 </html>
