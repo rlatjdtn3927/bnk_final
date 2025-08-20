@@ -1,25 +1,15 @@
 // WAS - src/main/java/com/example/memo/purchase/controller/management/rest_controller/Step4DocumentAPIController.java
 package com.example.memo.purchase.controller.management.rest_controller;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.example.memo.purchase.dto.trade.FileUrlDto;
 import com.example.memo.purchase.dto.trade.PassValueDto;
 import com.example.memo.purchase.dto.trade.SourceProductDto;
-import com.example.memo.purchase.dto.trade.Step4DocsResDto;
-
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.*;
 
 @RestController
 @RequestMapping("/purchase/api/documents")
@@ -27,53 +17,63 @@ import lombok.RequiredArgsConstructor;
 public class Step4DocumentAPIController {
 
     @GetMapping("/step4")
-    public ResponseEntity<Step4DocsResDto> getDocsForStep4(HttpSession session) {
+    public ResponseEntity<Map<String,Object>> getDocsForStep4(HttpSession session) {
         PassValueDto dto = (PassValueDto) session.getAttribute("PassValueDto");
         if (dto == null) {
-            return ResponseEntity.ok(Step4DocsResDto.builder()
-                    .message("세션 정보가 없습니다. 처음부터 다시 진행해주세요.")
-                    .build());
+            return ok(Map.of(
+                    "flow", null,
+                    "docs", List.of(),
+                    "ratios", Map.of(),
+                    "message", "세션에 PassValueDto가 없습니다."
+            ));
         }
 
-        final String flow = dto.getFlow();
+        final String flow = (dto.getFlow() == null) ? "" : dto.getFlow().toUpperCase(Locale.ROOT);
+
+        // 1) 선택된 prodId 목록 + RESERVE라면 비율맵
         final List<String> prodIds = new ArrayList<>();
         final Map<String, Integer> ratios = new LinkedHashMap<>();
 
-        if ("RESERVE".equalsIgnoreCase(flow)) {
+        if ("RESERVE".equals(flow)) {
             if (dto.getSourceProdIdList() != null) {
                 for (Map<SourceProductDto, Integer> m : dto.getSourceProdIdList()) {
                     if (m == null) continue;
                     for (Map.Entry<SourceProductDto, Integer> e : m.entrySet()) {
-                        final SourceProductDto sp = e.getKey();
-                        final String pid = sp.getProductId();   // ← DTO에서 꺼냄
+                        SourceProductDto key = e.getKey();
+                        if (key == null || key.getProductId() == null) continue;
+                        final String pid = key.getProductId();
                         if (!ratios.containsKey(pid)) {
-                            ratios.put(pid, e.getValue());
+                            ratios.put(pid, e.getValue() == null ? 0 : e.getValue());
                             prodIds.add(pid);
                         }
                     }
                 }
             }
+        } else {
+            if (dto.getSourceProdId() != null) {
+                prodIds.add(dto.getSourceProdId());
+            }
         }
-        else {
-            final String pid = dto.getSourceProdId();
-            if (pid != null && !pid.isBlank()) prodIds.add(pid);
+
+        // 2) 세션 fileUrlList에서 해당 prodId만 필터
+        final List<FileUrlDto> docs = new ArrayList<>();
+        if (dto.getFileUrlList() != null) {
+            for (FileUrlDto f : dto.getFileUrlList()) {
+                if (f != null && prodIds.contains(f.getProdId())) {
+                    docs.add(f);
+                }
+            }
         }
 
-        // 세션에 들어있는 fileUrlList에서 선택 상품만 필터
-        List<FileUrlDto> all = dto.getFileUrlList() != null ? dto.getFileUrlList() : Collections.emptyList();
-        List<FileUrlDto> filtered = all.stream()
-                .filter(f -> f.getProdId() != null && prodIds.contains(f.getProdId()))
-                .collect(Collectors.toList());
+        return ok(Map.of(
+                "flow", flow,
+                "docs", docs,      // 그대로 배열(JSON)로 내려감
+                "ratios", ratios,  // RESERVE만 의미, 나머지는 빈맵
+                "message", (docs.isEmpty() ? "표시할 문서가 없습니다." : null)
+        ));
+    }
 
-        // (선택) 세션도 최신 상태로 정리해둠
-        dto.setFileUrlList(filtered);
-        session.setAttribute("PassValueDto", dto);
-
-        return ResponseEntity.ok(Step4DocsResDto.builder()
-                .flow(flow)
-                .docs(filtered)
-                .ratios(ratios.isEmpty() ? null : ratios)
-                .message(filtered.isEmpty() ? "선택한 상품의 서류가 없습니다." : null)
-                .build());
+    private ResponseEntity<Map<String,Object>> ok(Map<String,Object> body){
+        return ResponseEntity.ok(body);
     }
 }

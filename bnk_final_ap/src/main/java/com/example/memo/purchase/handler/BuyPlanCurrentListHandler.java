@@ -19,8 +19,7 @@ public class BuyPlanCurrentListHandler implements TcpMessageHandler {
 
     @Override
     public boolean supports(Command command) {
-        // 단일 커맨드 매칭
-        return command == Command.BUY_PLAN_CURRENT_LIST_GET;
+        return command.name().startsWith("BUY_PLAN_");
     }
 
     @Override

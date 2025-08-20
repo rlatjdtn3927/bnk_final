@@ -88,22 +88,7 @@ public class TradePageViewController {
 
         return "purchase/trade/step2_reserve";
     }
-   
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+  
     @PostMapping("/step2/next") //model: flow, 계좌 id, type, 투자성향등급 or 대상 상품 ID
     public String step2Next(PassValueDto dto, Model model) {
     		model.addAttribute("PassValueDto", dto);
@@ -126,35 +111,19 @@ public class TradePageViewController {
 
     /** Step 4 (서류 확인) */
     @GetMapping("/step4")
-    public String step4Page(HttpSession session, Model model) {
+    public String step4Page(HttpSession session) {
         PassValueDto dto = (PassValueDto) session.getAttribute("PassValueDto");
         if (dto == null) {
             return "redirect:/purchase/trade/step3"; // 세션 없으면 다시 step3
         }
-        model.addAttribute("PassValueDto", dto);
+        session.setAttribute("PassValueDto", dto);
         return "purchase/trade/step4"; // step4.html
     }
 
     @PostMapping("/step4/next")
-    public String step4Next(@ModelAttribute PassValueDto incoming, HttpSession session) {
-        PassValueDto base = (PassValueDto) session.getAttribute("PassValueDto");
-        if (base == null) base = new PassValueDto();
-
-        // null 아닌 값만 병합(폼이 빈값일 수 있으므로)
-        if (incoming.getFlow() != null)                base.setFlow(incoming.getFlow());
-        if (incoming.getAccountId() != null)           base.setAccountId(incoming.getAccountId());
-        if (incoming.getAccountType() != null)         base.setAccountType(incoming.getAccountType());
-
-        if (incoming.getRiskGrade() != null)           base.setRiskGrade(incoming.getRiskGrade());
-        if (incoming.getRiskGradeNum() != null)        base.setRiskGradeNum(incoming.getRiskGradeNum());
-        if (incoming.getTargetProdIdList() != null)    base.setTargetProdIdList(incoming.getTargetProdIdList());
-        if (incoming.getTargetProdId() != null)        base.setTargetProdId(incoming.getTargetProdId());
-
-        if (incoming.getSourceProdIdList() != null)    base.setSourceProdIdList(incoming.getSourceProdIdList());
-        if (incoming.getSourceProdId() != null)        base.setSourceProdId(incoming.getSourceProdId());
-        if (incoming.getFileUrlList() != null)         base.setFileUrlList(incoming.getFileUrlList());
-
-        session.setAttribute("PassValueDto", base);
+    public String step4Next(PassValueDto dto,HttpSession session) {
+        // 필요 시 세션의 PassValueDto 보강/병합 (여기선 그대로 저장만)
+        session.setAttribute("PassValueDto", dto);
         return "redirect:/purchase/trade/step5";
     }
 
@@ -162,10 +131,7 @@ public class TradePageViewController {
     @GetMapping("/step5")
     public String step5Page(HttpSession session) {
         PassValueDto dto = (PassValueDto) session.getAttribute("PassValueDto");
-        if (dto == null) {
-            dto = new PassValueDto();
-            session.setAttribute("PassValueDto", dto);
-        }
+        session.setAttribute("PassValueDto", dto);
         return "purchase/trade/step5";
     }
     

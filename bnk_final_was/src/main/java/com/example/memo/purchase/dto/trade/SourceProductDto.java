@@ -11,6 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class SourceProductDto {
-	private String productId;
-    private String productName;
+	private String productId; //상품 식별키
+    private String productName; //PK에 해당하는 상품이름
 }
