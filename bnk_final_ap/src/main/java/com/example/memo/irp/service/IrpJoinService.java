@@ -24,9 +24,11 @@ import com.example.memo.jpa.repository.irp.IrpTaxRepository;
 import com.example.memo.jpa.repository.irp.TestUserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class IrpJoinService {
 
     private final BankAccountService bankAccountService;
@@ -61,6 +63,33 @@ public class IrpJoinService {
                 .build();
         return joinRepository.save(join).getJoinId();
     }
+	
+	//가입목적 - 세액공제
+	@Transactional
+	public void saveTaxPurpose(Long joinId, String qualType, String busiNo) {
+		IrpJoinEntity join = joinRepository.findById(joinId).orElseThrow();
+		IrpTaxPurpose tax = IrpTaxPurpose.builder()
+				.join(join)
+				.irpQualType(qualType)
+				.businessNo(busiNo)
+				.build();
+		taxRepository.save(tax);
+	}
+		
+	//가입목적 - 퇴직금 수령
+	@Transactional
+	public void saveRetirePurpose(Long joinId, LocalDate retireDate, String retireReason, String corpName, Long severAmt, String withholdDoc) {
+		IrpJoinEntity join = joinRepository.findById(joinId).orElseThrow();
+		IrpRetirePurpose retire = IrpRetirePurpose.builder()
+				.join(join)
+				.retireDate(retireDate)
+				.retireReason(retireReason)
+				.corpName(corpName)
+				.severanceAmt(severAmt)
+				.withholdDoc(withholdDoc)
+				.build();
+		retireRepository.save(retire);
+	}
 	
 	//step3: 계약정보 업데이트(부분 저장)
     @Transactional
@@ -98,33 +127,152 @@ public class IrpJoinService {
         // save 생략 가능(영속상태)
         joinRepository.save(join);
     }
+    
+    //step3: 조회
+    @Transactional(readOnly = true)
+    public JoinSummaryResult getContract(Long joinId) { 
+        IrpJoinEntity j = joinRepository.findById(joinId)
+            .orElseThrow(() -> new IllegalArgumentException("가입건 없음: " + joinId));
+
+        return JoinSummaryResult.builder()
+                .joinId(j.getJoinId())
+                .branchOffice(j.getBranchOffice())
+                .annualContribAmt(j.getAnnualContribAmt())
+                .newContribAmt(j.getNewContribAmt())
+                .build();
+    }
 	
-	//가입목적 - 세액공제
-	@Transactional
-	public void saveTaxPurpose(Long joinId, String qualType, String busiNo) {
-		IrpJoinEntity join = joinRepository.findById(joinId).orElseThrow();
-		IrpTaxPurpose tax = IrpTaxPurpose.builder()
-				.join(join)
-				.irpQualType(qualType)
-				.businessNo(busiNo)
-				.build();
-		taxRepository.save(tax);
+	//step4: 가입정보확인
+	@Transactional(readOnly = true)
+	public JoinSummaryResult prepareOpen(Long joinId) {
+		IrpJoinEntity join = joinRepository.findById(joinId)
+		        .orElseThrow(() -> new IllegalArgumentException("가입건 없음: " + joinId));
+
+		return new JoinSummaryResult(
+			join.getJoinId(),
+	        join.getBranchOffice(),
+	        join.getAnnualContribAmt(), // Long
+	        join.getNewContribAmt()     // Long
+	    );
 	}
 	
-	//가입목적 - 퇴직금 수령
+	// ✅ step5 진입 시: 계약번호/계좌번호만 먼저 생성 (비번은 아직 X)
+    @Transactional
+    public AccountContractResult initOpen(Long joinId) {
+    	AccountContractResult.AccountContractResultBuilder b = AccountContractResult.builder().joinId(joinId);
+    	try {
+    		
+    		IrpJoinEntity join = joinRepository.findById(joinId)
+    				.orElseThrow(() -> new IllegalArgumentException("가입건 없음: " + joinId));
+    		
+    		//requireContractReady(join); // step3 완료 등 사전조건 확인
+    		
+    		// 선행조건 체크: 예외 대신 false/코드로 처리
+    		if (!isContractReady(join)) {
+    			// 표식만 반환 (핸들러는 이 값으로 JSON 만들 수 있음)
+    			return b.build(); // contractNo/irpAcctNo 미세팅
+    		}
+    		
+    		// 계약번호 없으면 생성
+    		String contractNo = (join.getContractNo() == null)
+    				? contractNumberGenerator.next()
+    						: join.getContractNo();
+    		join.setContractNo(contractNo);
+    		
+    		// 계좌 없으면 발급(PENDING/INACTIVE), 비번은 아직 null
+    		IrpAccount acct = (join.getIrpAccount() != null) ? join.getIrpAccount() : new IrpAccount();
+    		if (acct.getIrpAcctNo() == null) {
+    			acct.setIrpAcctNo(accountNumberGenerator.next());
+    		}
+    		acct.setUser(join.getUserId());
+    		acct.setContractNo(contractNo);
+    		if (acct.getStatus() == null || "ACTIVE".equals(acct.getStatus())) {
+    			acct.setStatus("PENDING"); // ← 최종 완료 전 상태
+    		}
+    		// ❗ irpPwd는 아직 설정하지 않음 (null 허용 필요)
+    		
+    		irpAccountRepository.save(acct);
+    		
+    		join.setIrpAccount(acct);
+    		joinRepository.save(join);
+    		
+    		return b.irpAcctNo(acct.getIrpAcctNo())
+                    .contractNo(contractNo)
+                    .build();
+    	}catch (Exception e) {
+            // ★ 어떤 예외도 밖으로 던지지 않음: AP는 항상 응답을 만들 수 있다
+            // (로그만 남기고 빈 결과 반환)
+            log.error("initOpen failed: {}", e.getMessage(), e);
+            return b.build();
+        }
+    }
+	
+	//step5(최종완료):비밀번호 설정 + ACTIVE 
 	@Transactional
-	public void saveRetirePurpose(Long joinId, LocalDate retireDate, String retireReason, String corpName, Long severAmt, String withholdDoc) {
-		IrpJoinEntity join = joinRepository.findById(joinId).orElseThrow();
-		IrpRetirePurpose retire = IrpRetirePurpose.builder()
-				.join(join)
-				.retireDate(retireDate)
-				.retireReason(retireReason)
-				.corpName(corpName)
-				.severanceAmt(severAmt)
-				.withholdDoc(withholdDoc)
-				.build();
-		retireRepository.save(retire);
+	public AccountContractResult completeJoinAndOpenIrpAccount(Long joinId, String irpPwd) {
+		// (선택) 동시성 제어: for update 로딩 또는 @Version 사용 권장
+	    IrpJoinEntity join = joinRepository.findById(joinId)
+	        .orElseThrow(() -> new IllegalArgumentException("가입건 없음: " + joinId));
+
+	    //requireContractReady(join); // step3 완료 등 선행조건
+
+	    // 비번 규칙 검사
+	    if (irpPwd == null || !irpPwd.matches("\\d{4}")) {
+	        throw new IllegalArgumentException("IRP 비밀번호는 4자리 숫자여야 합니다.");
+	    }
+
+	    IrpAccount acct = join.getIrpAccount();
+	    if (acct == null) {
+	        // initOpen 안 거치고 바로 complete 호출한 경우
+	        throw new IllegalStateException("INIT_REQUIRED"); // 428 매핑 권장
+	    }
+
+	    // 멱등 처리: 이미 활성화면 그대로 반환
+	    if ("ACTIVE".equals(acct.getStatus())) {
+	        return AccountContractResult.builder()
+	                .joinId(joinId)
+	                .irpAcctNo(acct.getIrpAcctNo())
+	                .contractNo(acct.getContractNo())
+	                .build();
+	    }
+
+	    // PENDING -> ACTIVE 전환
+	    if (!"PENDING".equals(acct.getStatus())) {
+	        // 비정상 상태 보호(정책에 맞게 409/422 등)
+	        throw new IllegalStateException("INVALID_STATE");
+	    }
+
+	    // 운영 환경에서는 반드시 해시/솔트 저장
+	    acct.setIrpPwd(irpPwd);
+	    acct.setStatus("ACTIVE");
+	    irpAccountRepository.save(acct);
+
+	    // (join은 관계만 유지되면 save 생략 가능. 필요 시 save)
+	    joinRepository.save(join);
+
+	    return AccountContractResult.builder()
+	            .joinId(joinId)
+	            .irpAcctNo(acct.getIrpAcctNo())
+	            .contractNo(acct.getContractNo())
+	            .build();
 	}
+	
+	private boolean isContractReady(IrpJoinEntity join) {
+	    try {
+	        requireContractReady(join); // 기존 검증 사용
+	        return true;
+	    } catch (Exception ex) {
+	        return false;
+	    }
+	}
+	
+	private void requireContractReady(IrpJoinEntity join){
+        if (join.getAcctNo()==null) throw new IllegalStateException("출금계좌가 없습니다.");
+        if (join.getAnnualContribAmt()==null) throw new IllegalStateException("연간 납입한도 미설정.");
+        if (join.getNewContribAmt()==null) throw new IllegalStateException("신규 입금액 미설정.");
+        if (join.getBranchOffice()==null) throw new IllegalStateException("관리 영업점 미설정.");
+        // 목적별 필수 정보 존재 여부도 여기서 체크(예: 세액공제면 TaxPurpose 존재 등)
+    }
 	/*
 	//step4: 상품등록(선택)저장
 	@Transactional
@@ -137,71 +285,5 @@ public class IrpJoinService {
         // 영속 상태라 save 생략 가능하지만 명시 저장 권장
         joinRepository.save(join);
     }
-	*/
-	
-	/*step4: 가입정보확인*/
-	@Transactional(readOnly = true)
-	public JoinSummaryResult prepareOpen(Long joinId) {
-		IrpJoinEntity join = joinRepository.findById(joinId)
-		        .orElseThrow(() -> new IllegalArgumentException("가입건 없음: " + joinId));
-
-		return new JoinSummaryResult(
-	        join.getJoinPurpose(),
-	        join.getBranchOffice(),
-	        join.getAnnualContribAmt(), // Long
-	        join.getNewContribAmt()     // Long
-	    );
-	}
-	
-	//완료: step4에서 만든 값을 그대로 사용해서 활성화
-	@Transactional
-	public AccountContractResult completeJoinAndOpenIrpAccount(Long joinId, String irpPwd) {
-	    IrpJoinEntity join = joinRepository.findById(joinId)
-	        .orElseThrow(() -> new IllegalArgumentException("가입건 없음: " + joinId));
-
-	    // 이미 활성화(개설 완료)된 경우 멱등 처리
-	    if (join.getIrpAccount() != null && "ACTIVE".equals(join.getIrpAccount().getStatus())) {
-	        IrpAccount acc = join.getIrpAccount();
-	        return new AccountContractResult(acc.getIrpAcctNo(), acc.getContractNo());
-	    }
-
-	    // 필수값 점검
-	    requireContractReady(join);
-
-	    // 비밀번호 4자리 검증
-	    if (irpPwd == null || !irpPwd.matches("\\d{4}")) {
-	        throw new IllegalArgumentException("IRP 비밀번호는 4자리 숫자여야 합니다.");
-	    }
-	    
-	    // 계약번호 최초 생성
-        String contractNo = (join.getContractNo() == null)
-            ? contractNumberGenerator.next()
-            : join.getContractNo();
-        join.setContractNo(contractNo);
-
-	    // 계좌 최초 생성 + 활성화
-        IrpAccount acct = (join.getIrpAccount() != null) ? join.getIrpAccount() : new IrpAccount();
-        if (acct.getIrpAcctNo() == null) {
-            acct.setIrpAcctNo(accountNumberGenerator.next());
-        }
-        acct.setUser(join.getUserId());
-        acct.setBalance(BigDecimal.ZERO); // 금액 타입 정책에 맞게 유지
-        acct.setContractNo(contractNo);
-        acct.setIrpPwd(irpPwd); // 운영은 해시/솔트 권장
-        acct.setStatus("ACTIVE");
-
-        irpAccountRepository.save(acct);
-        join.setIrpAccount(acct);
-        joinRepository.save(join);
-
-        return new AccountContractResult(acct.getIrpAcctNo(), contractNo);
-	}
-	
-	private void requireContractReady(IrpJoinEntity join){
-        if (join.getAcctNo()==null) throw new IllegalStateException("출금계좌가 없습니다.");
-        if (join.getAnnualContribAmt()==null) throw new IllegalStateException("연간 납입한도 미설정.");
-        if (join.getNewContribAmt()==null) throw new IllegalStateException("신규 입금액 미설정.");
-        if (join.getBranchOffice()==null) throw new IllegalStateException("관리 영업점 미설정.");
-        // 목적별 필수 정보 존재 여부도 여기서 체크(예: 세액공제면 TaxPurpose 존재 등)
-    }
+	 */
 }

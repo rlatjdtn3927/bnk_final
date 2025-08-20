@@ -21,7 +21,7 @@ public class IrpJoinViewController {
 	
 	@GetMapping("/step1-purpose")
 	public String purposePage(Model model) {
-		model.addAttribute("userId", 1L); //테스트용 고정 ID
+		model.addAttribute("userId", 2L); //테스트용 고정 ID
 		return "irp/step1-purpose"; 
 	}
 	

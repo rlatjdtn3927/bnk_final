@@ -44,15 +44,6 @@ public class IrpJoinController {
 		JsonNode node = mapper.createObjectNode().put("joinId", joinId);
 		return sendAndWrap(Command.IRP_JOIN_GET, node, "IRP_JOIN_GET");
 	}
-	/* 수정 -> 생성방식 분리
-	//IRP가입 - 계약정보등록 부분
-	@PostMapping("/join")
-    public Object createJoin(@RequestBody IrpJoinDto dto) {
-        JsonNode node = mapper.convertValue(dto, JsonNode.class);
-        TcpMessage msg = new TcpMessage(Command.IRP_JOIN_SAVE, node);
-        return tcpService.sendMessage(msg); // join_id 반환
-    }
-	*/
 	//step1 - 가입목적 선택
 	@PostMapping("/join/draft")
     public ResponseEntity<?> createDraft(@RequestBody DraftJoinDto dto) {
@@ -107,11 +98,9 @@ public class IrpJoinController {
 	
 	//Step3: 계약정보 업데이트 (연한도/신규/출금계좌/관리영업점)
 	@PutMapping("/join/{joinId}/contract")
-    public ResponseEntity<?> updateContract(
-    		@PathVariable("joinId") Long joinId,
-    		@RequestBody ContractUpdateDto dto,
-    		HttpSession session) {
-		
+    public ResponseEntity<?> updateContract(@PathVariable("joinId") Long joinId, 
+    										@RequestBody ContractUpdateDto dto,
+    										HttpSession session) {
         ObjectNode node = mapper.createObjectNode();
         node.put("joinId", joinId);
         node.put("annualContribAmt", dto.getAnnualContribAmt());
@@ -119,43 +108,59 @@ public class IrpJoinController {
         node.put("acctNo", dto.getAcctNo());
         node.put("acctPwd", dto.getAcctPwd());         // ★ 출금계좌 비번 전달
         node.put("branchOffice", dto.getBranchOffice());
-        ResponseEntity<JsonNode> res = sendAndWrap(Command.IRP_JOIN_UPDATE_CONTRACT, node, "IRP_JOIN_UPDATE_CONTRACT");
         
-        // AP가 정상 처리했을 때만 Step4 진입 허용 플래그 세팅
+        ResponseEntity<JsonNode> res =
+                sendAndWrap(Command.IRP_JOIN_UPDATE_CONTRACT, node, "IRP_JOIN_UPDATE_CONTRACT");
+
+        // ✅ 성공시에만 4단계 진입 허용 플래그 세팅
         if (res.getStatusCode().is2xxSuccessful()) {
             session.setAttribute(contractSavedKey(joinId), Boolean.TRUE);
         }
         return res;
     }
 	
+	//Step3: 조회
+	@GetMapping("/join/{joinId}/contract")
+	public ResponseEntity<?> getContract(@PathVariable("joinId") Long joinId) {
+	    ObjectNode node = mapper.createObjectNode();
+	    node.put("joinId", joinId);
+	    return sendAndWrap(Command.IRP_JOIN_GET_CONTRACT, node, "IRP_JOIN_GET_CONTRACT");
+	}
     
-	/* step4: 상품선택(업데이트) 
-    @PutMapping("/join/{joinId}/product")
-    public ResponseEntity<?> updateProduct(@PathVariable("joinId") Long joinId, @RequestBody ProductMasterDto dto) {
-        ObjectNode node = mapper.createObjectNode();
-        node.put("joinId", joinId);
-        node.put("productId", dto.getProductId());
-        return sendAndWrap(Command.IRP_JOIN_UPDATE_PRODUCT, node, "IRP_JOIN_UPDATE_PRODUCT");
-    }
-    */
     //step4: 가입정보확인 (요약 페이지)
     @GetMapping("/join/{joinId}/infoConfir")
     public ResponseEntity<?> getInfoConfir(@PathVariable("joinId") Long joinId, HttpSession session) {
     	Object flag = session.getAttribute(contractSavedKey(joinId));
         boolean allowed = (flag instanceof Boolean) && ((Boolean) flag);
         if (!allowed) {
-            ObjectNode err = mapper.createObjectNode()
-                .put("error", "PRECONDITION_REQUIRED")
+            ObjectNode body = mapper.createObjectNode()
+                .put("ok", false)                                  // ✅ 일관 스키마
+                .put("code", "PRECONDITION_REQUIRED")
                 .put("message", "계약 정보 저장 후에 요약을 조회할 수 있습니다.");
-            return ResponseEntity.status(HttpStatus.PRECONDITION_REQUIRED).body(err);
+            return ResponseEntity.status(428).body(body);          // 428
         }
 
         ObjectNode node = mapper.createObjectNode().put("joinId", joinId);
-        // ✅ 이름은 그대로 쓰지만, AP에서는 ‘요약만’ 돌려주도록 수정
-        return sendAndWrap(Command.IRP_JOIN_PREPARE_OPEN, node, "IRP_JOIN_PREPARE_OPEN");
+        ResponseEntity<JsonNode> res =
+            sendAndWrap(Command.IRP_JOIN_PREPARE_OPEN, node, "IRP_JOIN_PREPARE_OPEN");
+
+        // (선택) 캐시 방지 헤더
+        return ResponseEntity.status(res.getStatusCode())
+                .headers(h -> {
+                    h.setCacheControl("no-store, no-cache, must-revalidate");
+                    h.add("Pragma", "no-cache");
+                })
+                .body(res.getBody());
+    }
+    
+    // step5 진입 시: 번호만 먼저 생성/조회
+    @PostMapping("/join/{joinId}/init-open")
+    public ResponseEntity<JsonNode> initOpen(@PathVariable("joinId") Long joinId) {
+        ObjectNode node = mapper.createObjectNode().put("joinId", joinId);
+        return sendAndWrap(Command.IRP_JOIN_INIT_OPEN, node, "IRP_JOIN_INIT_OPEN");
     }
 	
-	//step5: 가입완료 → IRP계좌 개설
+	//step5(완료): (기존) 최종 완료: 비번 설정 + ACTIVE
     @PostMapping("/join/{joinId}/complete")
     public ResponseEntity<?> completeJoin(@PathVariable("joinId") Long joinId, 
     									  @RequestBody JoinCompleteDto dto, 
@@ -216,4 +221,13 @@ public class IrpJoinController {
             return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(err);
         }
     }
+    /* step4: 상품선택(업데이트) 
+    @PutMapping("/join/{joinId}/product")
+    public ResponseEntity<?> updateProduct(@PathVariable("joinId") Long joinId, @RequestBody ProductMasterDto dto) {
+        ObjectNode node = mapper.createObjectNode();
+        node.put("joinId", joinId);
+        node.put("productId", dto.getProductId());
+        return sendAndWrap(Command.IRP_JOIN_UPDATE_PRODUCT, node, "IRP_JOIN_UPDATE_PRODUCT");
+    }
+     */
 }

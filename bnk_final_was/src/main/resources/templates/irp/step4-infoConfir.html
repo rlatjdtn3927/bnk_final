@@ -35,37 +35,53 @@
       <p class="check">위의 내용으로 신규 가입 하시겠습니까?</p>
     </div>
   </div>
-  <div class="actions" style="margin-top:16px; display:flex; gap:8px;">
-    <a class="btn" th:href="@{/irp/step3-contract}" role="button">이전</a>
-    <a class="btn primary" th:href="@{/irp/step5-complete(joinId=${joinId})}" role="button">다음</a>
+  <div class="actions" >
+    <a class="btn primary" th:href="@{/irp/join/{joinId}/step5-complete(joinId=${joinId})}" role="button">확인</a>
   </div>
 </div>
 
 <script>
-  async function loadSummary() {
-    try {
-      const res = await fetch(`/api/irp/join/${joinId}/infoConfir`, { method: 'GET' });
+//숫자 포맷터
+const fmt = v => (v ?? '-') === '-' ? '-' : Number(v).toLocaleString();
 
-      if (res.status === 428) { // PRECONDITION_REQUIRED
-        const err = await res.json().catch(() => ({}));
-        alert(err.message || '계약 정보 저장 후에 요약을 조회할 수 있습니다.');
-        location.href = '/irp/step3-contract';
-        return;
-      }
-      if (!res.ok) throw new Error('요약 조회 실패');
-
-      const data = await res.json();
-      // ✅ 계약/계좌번호는 내려오지 않음
-      document.getElementById('joinPurpose').textContent     = data.joinPurpose ?? '-';
-      document.getElementById('branchOffice').textContent    = data.branchOffice ?? '-';
-      document.getElementById('annualContribAmt').textContent= data.annualContribAmt ?? '-';
-      document.getElementById('newContribAmt').textContent   = data.newContribAmt ?? '-';
-    } catch (e) {
-      console.error(e);
-      alert('요약 정보 로딩 중 오류가 발생했습니다.');
-    }
+async function loadSummary() {
+  if (!joinId || joinId === 0) {
+    alert('joinId가 없습니다.');
+    return;
   }
-  document.addEventListener('DOMContentLoaded', loadSummary);
+
+  try {
+    const res = await fetch(`/irp/join/${joinId}/infoConfir`, { method: 'GET' });
+
+    // 선행조건 미충족 → 3단계로
+    if (res.status === 428) {
+      const err = await res.json().catch(() => ({}));
+      alert(err.message || '계약 정보 저장 후에 요약을 조회할 수 있습니다.');
+      location.href = `/irp/step3-contract?joinId=${encodeURIComponent(joinId)}`;
+      return;
+    }
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || '요약 조회 실패');
+    }
+
+    const data = await res.json();
+
+    // 화면 반영
+    document.getElementById('annualContribAmt').textContent = fmt(data.annualContribAmt);
+    document.getElementById('newContribAmt').textContent    = fmt(data.newContribAmt);
+    document.getElementById('branchOffice').textContent     = data.branchOffice ?? '-';
+
+  } catch (e) {
+    console.error(e);
+    alert('요약 정보 로딩 중 오류가 발생했습니다.');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadSummary();
+});
 </script>
 
 </body>
