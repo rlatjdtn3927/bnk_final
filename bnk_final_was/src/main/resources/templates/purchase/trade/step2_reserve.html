@@ -1,4 +1,4 @@
-<!-- templates/purchase/trade/step2.html (모달 더보기 페이지네이션 + 모바일 반응형 + 펀드위험도 색상 + 검증 강화 + 현금성자산 탭 활성화 + 동적 섹션 타이틀 + 기간 라벨 보정 + step3 전달값 구성) -->
+<!-- templates/purchase/trade/step2.html (모달 더보기 페이지네이션 + 모바일 반응형 + 펀드위험도 색상 + 검증 강화 + 현금성자산 탭 활성화 + 동적 섹션 타이틀 + 기간 라벨 보정 + step3 전달값 구성 + '초기상태 동일시 다음 잠금') -->
 <th:block xmlns:th="http://www.thymeleaf.org" th:fragment="css">
 <head>
   <meta charset="UTF-8" />
@@ -253,7 +253,9 @@
 	  let lastDocsByProd = new Map(); // prodId -> [FileUrlDto]
 	  const pageMeta = { deposit:null, fund:null, etf:null, tdf:null, cash:null };
 	  let initialTargetProdIdList = []; // 최초 렌더 당시 보유상품의 productId 보관
-	
+	  // ✅ 추가: 최초 렌더링 스냅샷(보유목록+비율)
+	  let initialSnapshot = null;
+
 	  // 서버 period 코드 → 한글 표기
 	  const PERIOD_CODE_MAP = { '1개월':'1개월','3개월':'3개월','6개월':'6개월','1년':'1년' };
 	
@@ -266,6 +268,10 @@
 	    hydrateHiddenForm(model);
 	    await loadUserInfo(model);
 	    await bootstrapSelectedFromServer();
+
+	    // ✅ 최초 렌더링 기준 스냅샷 저장 (보유목록 + 비율)
+	    initialSnapshot = snapshotSelection();
+
 	    renderSelected();
 	
 	    document.getElementById('addProductBtn')?.addEventListener('click', openProductModal);
@@ -722,6 +728,21 @@
 	    }
 	    updateTotal();
 	  }
+
+	  // === 변경 감지 유틸 ===
+	  function snapshotSelection() {
+	    const arr = [];
+	    for (const [pid, obj] of selectedMap.entries()) {
+	      const ratioInt = Math.max(0, Math.round(Number(obj.ratio) || 0));
+	      arr.push(`${pid}:${ratioInt}`);
+	    }
+	    arr.sort();              // 순서 무시하고 비교
+	    return arr.join('|');    // 문자열로 고정화
+	  }
+	  function isUnchangedSinceInit() {
+	    if (initialSnapshot == null) return false;
+	    return snapshotSelection() === initialSnapshot;
+	  }
 	
 	  function updateTotal(){
 	    const inputs = Array.from(document.querySelectorAll('.ratio-input'));
@@ -764,6 +785,13 @@
 	      disable = false;
 	      msg = '합계가 100%입니다';
 	      cls += ' ok';
+
+	      // ✅ 최초 렌더링 상태와 완전히 동일하면 잠금
+	      if (isUnchangedSinceInit()) {
+	        disable = true;
+	        msg = '변경된 내용이 없습니다';
+	        cls = 'help warn';
+	      }
 	    }
 	
 	    help.textContent = msg;
