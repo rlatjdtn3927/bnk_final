@@ -1,4 +1,4 @@
-package com.example.memo.purchase.dto.util;
+package com.example.memo.purchase.dto.trade;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,6 +11,7 @@ import lombok.Setter;
 public class UserInfoDto {
 	String accountType;
 	String userName;
-	String accountNumber;
+	String accountId;
 	String riskGrade;
+	Integer riskGradeNum;
 }

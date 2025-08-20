@@ -4,6 +4,8 @@ package com.example.memo.jpa.repository.purchase.commodity;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.example.memo.jpa.entity.purchase.commodity.PrincipalGuarantee;
@@ -21,4 +23,6 @@ public interface PrincipalGuaranteeRepository extends JpaRepository<PrincipalGua
 
     /** 코드 부분검색 */
     List<PrincipalGuarantee> findByProductIdContainingIgnoreCase(String q);
+    
+    Page<PrincipalGuarantee> findAll(Pageable pageable);
 }

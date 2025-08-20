@@ -14,6 +14,5 @@ public interface FundDocumentRepository extends JpaRepository<FundDocument, Long
     // (기존) 단건 조회
     List<FundDocument> findByFund_ProductId(String productId);
 
-    // ✅ 배치 조회 (FUND/ETF/TDF 한 번에)
     List<FundDocument> findByFund_ProductIdIn(List<String> productIds);
 }
