@@ -41,43 +41,6 @@ public class TradePageViewController {
 	private final TcpClientService tcpClientService;
     private final ObjectMapper objectMapper;
 	
-	@GetMapping("/dummy")
-	public String dummy() {
-		return "purchase/trade/step1_form";
-	}
-	
-
-    /** step2 화면 진입 (이전 단계에서 넘겨준 모델을 그대로 뷰에 바인딩) */
-    @PostMapping("/step1/after-risk")
-    public String step2After(@ModelAttribute PassValueDto dto, HttpSession session) {
-    	session.setAttribute("PassValueDto", dto);
-    	session.setAttribute("userId", 1L);
-    	session.setAttribute("userName", "김성수");
-        return "purchase/trade/step2_reserve";
-    }
-    
-    @PostMapping("/step2/next")
-    public String step2Next(@RequestParam(required = false, name="flow") String flow, @RequestParam(required = false, name="accountType") String accountType,
-				            @RequestParam(required = false, name="accountId") String accountId, @RequestParam(required = false, name="riskGrade") String riskGrade,
-				            @RequestParam(required = false, name = "targetProdIdList") String targetProdIdListJson,
-				            @RequestParam(required = false, name = "sourceProdIdList") String sourceProdIdListJson,
-				            @RequestParam(required = false, name = "fileUrlList") String fileUrlListJson,
-				            @RequestParam(required = false, name = "sourceProdId") String legacyPairsJson,
-				            HttpSession session) {
-    	System.out.println("FLOW: " + flow);
-    	System.out.println("ACCOUNTYPE: " + accountType);
-    	System.out.println("ACCOUNTID" + accountId);
-    	System.out.println("RISKGRADE" + riskGrade);
-    	System.out.println("TARGETPRODIDLIST: " + targetProdIdListJson);
-    	System.out.println("SOURCEPRODIDLIST: " + sourceProdIdListJson);
-    	System.out.println("FILEURLLIST: " + fileUrlListJson);
-    	System.out.println("sourceProdId: " + legacyPairsJson);
-    	
-    	
-        return "purchase/trade/dummy"; // 상품선택목록 view
-    }
-
-
 	@PostMapping("/step1/next")
     public String step1Next(@RequestParam("accountType") String accountType,
                             @RequestParam("accountId")   String accountId,
@@ -95,7 +58,46 @@ public class TradePageViewController {
             return "purchase/trade/step2_others";     // 보유상품목록
         }
     }
+	
+	/*테스트용 함수*/
+	@GetMapping("/dummy")
+	public String dummy() {
+		return "purchase/trade/step1_form";
+	}
 
+	/*나중에는 투자성향 분석후 오는 로직으로 바꿔야함. 지금은 하드코딩 테스트용*/
+    @PostMapping("/step1/after-risk")
+    public String step2After(@ModelAttribute PassValueDto dto, HttpSession session) {
+    	session.setAttribute("PassValueDto", dto);
+    	session.setAttribute("userId", 1L);
+    	session.setAttribute("userName", "김성수");
+        return "purchase/trade/step2_reserve";
+    }
+    
+    /*step2에서 호출하는 함수 step4나 step5로 분기*/
+    @PostMapping("/step2/next")
+    public String step2Next(@RequestParam(required = false, name = "targetProdIdList") String targetProdIdListJson,
+				            @RequestParam(required = false, name = "sourceProdIdList") String sourceProdIdListJson,
+				            @RequestParam(required = false, name = "fileUrlList") String fileUrlListJson,
+				            @RequestParam(required = false, name = "sourceProdId") String legacyPairsJson,
+				            HttpSession session) {
+    	PassValueDto dto = (PassValueDto) session.getAttribute("PassValueDto");
+    	dto.setSourceProdIdList(sourceProdIdListJson);
+    	dto.setTargetProdIdList(targetProdIdListJson);
+    	dto.setFileUrlList(fileUrlListJson);
+    	session.setAttribute("passValueDto", dto);
+    	
+    	System.out.println("TARGETPRODIDLIST: " + targetProdIdListJson);
+    	System.out.println("SOURCEPRODIDLIST: " + sourceProdIdListJson);
+    	System.out.println("FILEURLLIST: " + fileUrlListJson);
+    	System.out.println("sourceProdId: " + legacyPairsJson);
+    	
+    	if(fileUrlListJson.equals("[]")) {
+    		return "purchase/trade/step5"; // 비교 view
+    	} else {
+    		 return "purchase/trade/step4"; //서류동의 view
+    	}
+    }
  
     //@GetMapping("/step2") purchase/trade/step2_reserve.html로 가는 함수만들기
     //ap에 접속해서 profile_result.type_id를 이용해서 profile_type.type_name을 가지고 오자
@@ -123,21 +125,6 @@ public class TradePageViewController {
         return "purchase/trade/step2_reserve";
     }
   
-    /** Step 3 (상품 선택) */
-    @GetMapping("/step3")
-    public String step3Page(HttpSession session) {
-        PassValueDto dto = (PassValueDto) session.getAttribute("PassValueDto");
-        if (dto == null) dto = new PassValueDto();
-        session.setAttribute("PassValueDto", dto);
-        return "purchase/trade/step3";
-    }
-
-    @PostMapping("/step3/next")
-    public String step3Next(PassValueDto dto, HttpSession session) {
-        session.setAttribute("PassValueDto", dto);
-        return "redirect:/purchase/trade/step4";  // ★ POST 후 GET 으로 redirect
-    }
-
     /** Step 4 (서류 확인) */
     @GetMapping("/step4")
     public String step4Page(HttpSession session) {
