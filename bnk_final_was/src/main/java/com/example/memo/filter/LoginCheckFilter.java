@@ -25,7 +25,7 @@ public class LoginCheckFilter implements Filter {
         "/admin/login",
         
         // 정적 리소스
-        "/css", "/js", "/images", "/webjars", "/static"
+        "/css", "/js", "/images", "/webjars", "/static",
 
         "/purchase",
         "/purchase/trade",

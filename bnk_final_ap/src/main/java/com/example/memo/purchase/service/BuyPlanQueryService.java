@@ -23,7 +23,7 @@ public class BuyPlanQueryService {
     public List<Map<String,Object>> getCurrentPlan(Long userId){
         List<Map<String,Object>> out = new ArrayList<>();
 
-        pgRepo.findByUser_User_idAndIsCurrent(userId, "Y").forEach(p -> {
+        pgRepo.findByUser_UserIdAndIsCurrent(userId, "Y").forEach(p -> {
             Map<String,Object> m = new LinkedHashMap<>();
             m.put("productId",   p.getPg().getProductId());
             m.put("productName", p.getPg().getProductName());
@@ -32,7 +32,7 @@ public class BuyPlanQueryService {
             out.add(m);
         });
 
-        fundRepo.findByUser_User_idAndIsCurrent(userId, "Y").forEach(f -> {
+        fundRepo.findByUser_UserIdAndIsCurrent(userId, "Y").forEach(f -> {
             Map<String,Object> m = new LinkedHashMap<>();
             m.put("productId",   f.getFund().getProductId());
             m.put("productName", f.getFund().getProductName());
