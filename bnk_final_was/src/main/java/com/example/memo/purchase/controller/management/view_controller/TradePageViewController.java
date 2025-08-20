@@ -45,6 +45,7 @@ public class TradePageViewController {
 	public String dummy() {
 		return "purchase/trade/step1_form";
 	}
+	
 
     /** step2 화면 진입 (이전 단계에서 넘겨준 모델을 그대로 뷰에 바인딩) */
     @PostMapping("/step1/after-risk")
@@ -54,18 +55,28 @@ public class TradePageViewController {
     	session.setAttribute("userName", "김성수");
         return "purchase/trade/step2_reserve";
     }
+    
+    @PostMapping("/step2/next")
+    public String step2Next(@RequestParam(required = false, name="flow") String flow, @RequestParam(required = false, name="accountType") String accountType,
+				            @RequestParam(required = false, name="accountId") String accountId, @RequestParam(required = false, name="riskGrade") String riskGrade,
+				            @RequestParam(required = false, name = "targetProdIdList") String targetProdIdListJson,
+				            @RequestParam(required = false, name = "sourceProdIdList") String sourceProdIdListJson,
+				            @RequestParam(required = false, name = "fileUrlList") String fileUrlListJson,
+				            @RequestParam(required = false, name = "sourceProdId") String legacyPairsJson,
+				            HttpSession session) {
+    	System.out.println("FLOW: " + flow);
+    	System.out.println("ACCOUNTYPE: " + accountType);
+    	System.out.println("ACCOUNTID" + accountId);
+    	System.out.println("RISKGRADE" + riskGrade);
+    	System.out.println("TARGETPRODIDLIST: " + targetProdIdListJson);
+    	System.out.println("SOURCEPRODIDLIST: " + sourceProdIdListJson);
+    	System.out.println("FILEURLLIST: " + fileUrlListJson);
+    	System.out.println("sourceProdId: " + legacyPairsJson);
+    	
+    	
+        return "purchase/trade/dummy"; // 상품선택목록 view
+    }
 
-		
-	@GetMapping("/step1")
-	public String step1(@ModelAttribute("PassValueDto") PassValueDto dto, HttpSession session) {
-	    // 세션에 사용자 정보와 flow DTO 저장
-		if(session.getAttribute("userId")==null) {
-			session.setAttribute("userId", 1001L);
-		}
-	    session.setAttribute("PassValueDto", dto);
-
-	    return "purchase/trade/step1"; // 계좌 선택 view
-	}
 
 	@PostMapping("/step1/next")
     public String step1Next(@RequestParam("accountType") String accountType,
@@ -112,11 +123,6 @@ public class TradePageViewController {
         return "purchase/trade/step2_reserve";
     }
   
-    @PostMapping("/step2/next") //model: flow, 계좌 id, type, 투자성향등급 or 대상 상품 ID
-    public String step2Next(PassValueDto dto, Model model) {
-    		model.addAttribute("PassValueDto", dto);
-        return "purchase/trade/step3"; // 상품선택목록 view
-    }
     /** Step 3 (상품 선택) */
     @GetMapping("/step3")
     public String step3Page(HttpSession session) {

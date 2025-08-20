@@ -98,7 +98,5 @@ public enum Command {
 	BUY_PLAN_UPDATE,
 	/*매수예정 상품 등록 관련 명령어*/
 	
-	PROFILE_RESULT_GET, //사용자의 투자성향 가져오기
-	SURVEY_SUBMIT; //투자성향제출
-    
+	PROFILE_RESULT_GET, //사용자의 투자성향 가져오기    
 }

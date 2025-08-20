@@ -1,4 +1,4 @@
-<!-- templates/purchase/trade/step2.html (모달 더보기 페이지네이션 + 모바일 반응형 + 펀드위험도 색상 + 검증 강화 + 현금성자산 탭 활성화 + 동적 섹션 타이틀 + 기간 라벨 보정) -->
+<!-- templates/purchase/trade/step2.html (모달 더보기 페이지네이션 + 모바일 반응형 + 펀드위험도 색상 + 검증 강화 + 현금성자산 탭 활성화 + 동적 섹션 타이틀 + 기간 라벨 보정 + step3 전달값 구성) -->
 <th:block xmlns:th="http://www.thymeleaf.org" th:fragment="css">
 <head>
   <meta charset="UTF-8" />
@@ -197,11 +197,18 @@
 	  </div>
 	
 	  <!-- 다음 단계 제출용 폼 -->
-	  <form id="nextForm" method="post" action="/purchase/trade/step3/next" style="display:none">
+	  <form id="nextForm" method="post" action="/purchase/trade/step2/next" style="display:none">
 	    <input type="hidden" name="flow" id="f_flow" />
 	    <input type="hidden" name="accountType" id="f_accountType" />
 	    <input type="hidden" name="accountId" id="f_accountId" />
 	    <input type="hidden" name="riskGrade" id="f_riskGrade" />
+	
+	    <!-- ✅ Step3에 넘길 3종 세트 -->
+	    <input type="hidden" name="targetProdIdList" id="f_targetProdIdList" />
+	    <input type="hidden" name="sourceProdIdList" id="f_sourceProdIdList" />
+	    <input type="hidden" name="fileUrlList" id="f_fileUrlList" />
+	
+	    <!-- (구버전 호환) 선택 요약 -->
 	    <input type="hidden" name="sourceProdId" id="f_sourceProdId" />
 	  </form>
 	
@@ -245,6 +252,7 @@
 	  const pageState = { deposit:0, fund:0, etf:0, tdf:0, cash:0, size:10 };
 	  let lastDocsByProd = new Map(); // prodId -> [FileUrlDto]
 	  const pageMeta = { deposit:null, fund:null, etf:null, tdf:null, cash:null };
+	  let initialTargetProdIdList = []; // 최초 렌더 당시 보유상품의 productId 보관
 	
 	  // 서버 period 코드 → 한글 표기
 	  const PERIOD_CODE_MAP = { '1개월':'1개월','3개월':'3개월','6개월':'6개월','1년':'1년' };
@@ -253,7 +261,7 @@
 	
 	  async function initStep2() {
 	    const model = readModel();
-	    // 섹션 타이틀: flow에 따라 교체
+	    // 섹션 타이틀: accountType에 따라 교체
 	    applySectionTitle(model.accountType);
 	    hydrateHiddenForm(model);
 	    await loadUserInfo(model);
@@ -362,12 +370,15 @@
 	      if (!res.ok) throw new Error(`retain failed: ${res.status}`);
 	      const data = await res.json();
 	      const list = Array.isArray(data) ? data : (Array.isArray(data?.resultList) ? data.resultList : []);
+	      const firstIds = [];
 	      list.forEach(it => {
 	        const pid = it.productId ?? it.product_id;
 	        if (!pid) return;
 	        const ratioNum = Number(it.retainRatio ?? it.ratio ?? it.allocationPercent ?? 0);
 	        selectedMap.set(pid, { ratio: Number.isFinite(ratioNum) ? ratioNum : 0, meta: it });
+	        firstIds.push(pid);
 	      });
+	      initialTargetProdIdList = firstIds;
 	    } catch (e) { console.error(e); }
 	  }
 	
@@ -394,9 +405,9 @@
 	    if(cat === 'deposit'){
 	      sel.append(new Option('금리순', 'rate', true, true));
 	    }else if(cat === 'fund' || cat === 'etf' || cat === 'tdf'){
-	      // 값은 서버 코드(1M/3M/6M/1Y), 라벨은 한국어
+	      // 값은 서버 코드(1개월/3개월/6개월/1년), 라벨은 한국어
 	      sel.append(new Option('1개월 수익률', '1개월'));
-	      sel.append(new Option('3개월 수익률', '3개월', true, true)); // 기본 3M
+	      sel.append(new Option('3개월 수익률', '3개월', true, true)); // 기본 3개월
 	      sel.append(new Option('6개월 수익률', '6개월'));
 	      sel.append(new Option('1년 수익률', '1년'));
 	    }else if(cat === 'cash'){
@@ -540,7 +551,12 @@
 	      card.innerHTML = `
 	        <div class="prod-mid">
 	          <div style="display:flex;align-items:center;gap:1px;flex-wrap:wrap;margin-bottom:6px">
-	          	<input type="checkbox" class="pick" data-pid="${escapeAttr(pid)}" ${checked} />
+	          	<input type="checkbox" class="pick"
+	          	  data-pid="${escapeAttr(pid)}" ${checked}
+	          	  data-pname="${escapeAttr(name)}"
+	          	  data-cat="${escapeAttr(cat)}"
+	          	  data-risk="${escapeAttr(it.riskGradeText || '')}"
+	          	  data-fundtype="${escapeAttr(it.fundType || '')}"/>
 	            ${guaranteeChip}
 	            ${it.riskGradeText ? `<span class="chip fund-risk">${escapeHtml(it.riskGradeText)}</span>`:''}
 	            ${it.fundType ? `<span class="chip">${escapeHtml(it.fundType)}</span>`:''}
@@ -563,9 +579,13 @@
 	      // 체크박스 동기화
 	      card.querySelector('.pick').addEventListener('change', (e)=>{
 	        const pid = e.target.dataset.pid;
+	        const pname = e.target.dataset.pname || '';
+	        const risk = e.target.dataset.risk || '';
+	        const ftype = e.target.dataset.fundtype || '';
+	        const cat = e.target.dataset.cat || '';
 	        if(e.target.checked){
 	          if(!selectedMap.has(pid)){
-	            selectedMap.set(pid, { ratio:0, meta: buildMetaForSelection(it, cat, model) });
+	            selectedMap.set(pid, { ratio:0, meta: { productName: pname, category: cat === 'deposit' ? '정기예금' : (cat === 'cash' ? '현금성 자산' : (it.category || cat.toUpperCase())), riskGradeText: risk, fundType: ftype } });
 	          }
 	        }else{
 	          selectedMap.delete(pid);
@@ -669,11 +689,11 @@
 	        <div class="retain-head">
 	          <div>
 	          	${it.fundType
-	              ? `<span class="badge noguarantee">원리금비보장</span>`
-	              : `<span class="badge guarantee">${it.category === '현금성 자산' ? '현금성' : '원리금보장'}</span>`
+	              ? `<span class=\"badge noguarantee\">원리금비보장</span>`
+	              : `<span class=\"badge guarantee\">${it.category === '현금성 자산' ? '현금성' : '원리금보장'}</span>`
 	            }
-	            ${it.riskGradeText ? `<span class="badge fund-risk">${escapeHtml(it.riskGradeText)}</span>` : ``}
-	            ${it.fundType ? `<span class="badge">${escapeHtml(it.fundType)}</span>` : ``}
+	            ${it.riskGradeText ? `<span class=\"badge fund-risk\">${escapeHtml(it.riskGradeText)}</span>` : ``}
+	            ${it.fundType ? `<span class=\"badge\">${escapeHtml(it.fundType)}</span>` : ``}
 	          </div>
 	          <button class="remove" title="삭제" aria-label="삭제">&times;</button>
 	        </div>
@@ -768,11 +788,45 @@
 	      return;
 	    }
 	
-	    const list = [];
-	    for(const [pid, obj] of selectedMap.entries()){
-	      list.push(`${pid}:${Number(obj.ratio)||0}`);
+	    // ===== 1) targetProdIdList: 최초 보유상품 IDs 그대로 전달 =====
+	    const targetProdIdList = Array.from(new Set(initialTargetProdIdList || []));
+	    document.getElementById('f_targetProdIdList').value = JSON.stringify(targetProdIdList);
+	
+	    // ===== 2) sourceProdIdList: 현재 화면의 모든(현금성 제외) 상품 {product, ratio} =====
+	    const sourceProdIdList = [];
+	    const simplePairs = []; // (구버전 호환) ["pid:ratio"]
+	    for (const [pid, obj] of selectedMap.entries()) {
+	      const meta = obj.meta || {};
+	      const isCash = pid === 'CASH_HOLD' || (meta.category === '현금성 자산');
+	      if (isCash) continue; // 현금성 제외
+	      const productName = meta.productName || '';
+	      const ratioInt = Math.max(0, Math.round(Number(obj.ratio) || 0));
+	      sourceProdIdList.push({ product: { productId: String(pid), productName: String(productName) }, ratio: ratioInt });
+	      simplePairs.push(`${pid}:${ratioInt}`);
 	    }
-	    document.getElementById('f_sourceProdId').value = JSON.stringify(list);
+	    document.getElementById('f_sourceProdIdList').value = JSON.stringify(sourceProdIdList);
+	    document.getElementById('f_sourceProdId').value = JSON.stringify(simplePairs);
+	
+	    // ===== 3) fileUrlList: 위 sourceProdIdList에 포함된 상품들의 문서 =====
+	    const needIds = new Set(sourceProdIdList.map(x => x.product.productId));
+	    const fileUrlList = [];
+	    const dedup = new Set();
+	    needIds.forEach(pid => {
+	      const docs = (lastDocsByProd && lastDocsByProd.get(pid)) || [];
+	      (docs || []).forEach(d => {
+	        const rec = {
+	          prodId: d.prodId || d.productId || pid,
+	          prodName: d.prodName || '',
+	          docType: d.docType || '',
+	          fileUrl: d.fileUrl || ''
+	        };
+	        const key = `${rec.prodId}|${rec.docType}|${rec.fileUrl}`;
+	        if (!dedup.has(key)) { dedup.add(key); fileUrlList.push(rec); }
+	      });
+	    });
+	    document.getElementById('f_fileUrlList').value = JSON.stringify(fileUrlList);
+	
+	    // ===== 제출 =====
 	    document.getElementById('nextForm').submit();
 	  }
 	
@@ -780,7 +834,12 @@
 	    document.querySelectorAll('#modalBody .pick:checked').forEach(chk=>{
 	      const pid = chk.dataset.pid;
 	      if(!selectedMap.has(pid)){
-	        selectedMap.set(pid, { ratio:0, meta: { productName:'', category:'상품', riskGradeText:'' } });
+	        const pname = chk.dataset.pname || '';
+	        const risk = chk.dataset.risk || '';
+	        const ftype = chk.dataset.fundtype || '';
+	        const cat = chk.dataset.cat || '';
+	        const categoryLabel = cat === 'deposit' ? '정기예금' : (cat === 'cash' ? '현금성 자산' : cat.toUpperCase());
+	        selectedMap.set(pid, { ratio:0, meta: { productName: pname, category: categoryLabel, riskGradeText: risk, fundType: ftype } });
 	      }
 	    });
 	    renderSelected();
@@ -814,9 +873,7 @@
 	    if (lvl) el.classList.add(`risk-${lvl}`);
 	  }
 	
-	  /* === NEW: 펀드 위험도(초저~초고) 텍스트 → 클래스 매핑 ===
-	     허용 예: "초저위험", "저위험", "중위험", "고위험", "초고위험"
-	             괄호 설명 포함 텍스트도 인식: "고위험 (다소 높은 위험)" 등 */
+	  /* === NEW: 펀드 위험도(초저~초고) 텍스트 → 클래스 매핑 === */
 	  function fundRiskLevel(label) {
 	    const s = String(label || '').replace(/[()\s]/g, '');
 	    if (!s) return null;
@@ -836,7 +893,7 @@
 	  }
 	
 	  // ===== 유틸 =====
-	  function escapeHtml(str){ if(!str) return ''; return String(str).replace(/[&<>"']/g, (m)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+	  function escapeHtml(str){ if(!str) return ''; return String(str).replace(/[&<>"']/g, (m)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;' }[m])); }
 	  function escapeAttr(str){ return escapeHtml(str).replace(/"/g,'&quot;'); }
 	  function toPct(v){
 	    const n = Number(v);

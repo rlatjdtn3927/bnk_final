@@ -7,12 +7,11 @@ import org.springframework.stereotype.Service;
 
 import com.example.memo.jpa.entity.purchase.trade.BuyPlanFund;
 import com.example.memo.jpa.entity.purchase.trade.BuyPlanPG;
-import com.example.memo.jpa.entity.user.User;
+import com.example.memo.jpa.entity.user.UserEntity;
 import com.example.memo.jpa.repository.purchase.trade.BuyPlanFundRepository;
 import com.example.memo.jpa.repository.purchase.trade.BuyPlanPGRepository;
 import com.example.memo.purchase.dto.trade.CurrentRetainDto;
 import com.example.memo.purchase.dto.trade.RetainRequestDto;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -31,8 +30,8 @@ public class BuyPlanService {
 	public List<CurrentRetainDto> getCurrentRetain(JsonNode data) {
 		try {
 			RetainRequestDto dto = mapper.treeToValue(data, RetainRequestDto.class);
-			User ref = new User();
-			ref.setUser_id(dto.getUserId());
+			UserEntity ref = new UserEntity();
+			ref.setUserId(dto.getUserId());
 			List<BuyPlanFund> fundList = buyPlanFundRepo.findByUserAndIsCurrent(ref, "Y");
 			List<BuyPlanPG> PGList = buyPlanPGRepo.findByUserAndIsCurrent(ref, "Y");
 			
