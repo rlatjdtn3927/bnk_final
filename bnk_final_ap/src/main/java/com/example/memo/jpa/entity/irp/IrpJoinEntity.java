@@ -2,6 +2,8 @@ package com.example.memo.jpa.entity.irp;
 
 import java.time.LocalDate;
 
+import com.example.memo.jpa.entity.user.UserEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -32,8 +34,8 @@ public class IrpJoinEntity {
 	private Long joinId;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "user_id", nullable = false)
-	private TestUserEntity userId;
+	@JoinColumn(name = "user_id", nullable = false)	// FK(user_account.user_id)
+	private UserEntity user;
 	
 	//가입목적
     @Column(name="join_purpose", nullable=false, length=20)

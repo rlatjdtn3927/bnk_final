@@ -38,7 +38,7 @@ public class AccountBalanceHandler implements TcpMessageHandler{
                     String acctPwd = data.hasNonNull("acctPwd") ? data.get("acctPwd").asText() : null;
 
                     // joinId → userId
-                    Long userId = irpJoinService.findByIdOrThrow(joinId).getUserId().getUserId();
+                    Long userId = irpJoinService.findByIdOrThrow(joinId).getUser().getUserId();
 
                     // 필요 시 엄격 검증 (비번까지 확인하려면 주석 해제)
                     // bankAccountService.verifyOrThrow(acctNo, userId, acctPwd);
@@ -67,7 +67,7 @@ public class AccountBalanceHandler implements TcpMessageHandler{
             case ACCOUNT_GET_NUMBER: {  // ← 추가
                 try {
                     Long joinId = requireLong(data, "joinId");
-                    Long userId = irpJoinService.findByIdOrThrow(joinId).getUserId().getUserId();
+                    Long userId = irpJoinService.findByIdOrThrow(joinId).getUser().getUserId();
 
                     String acctNo = bankAccountService.getUserAccounts(userId).getAcctNo();
 

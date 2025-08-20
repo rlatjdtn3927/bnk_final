@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
 @Controller
@@ -20,7 +21,8 @@ public class IrpJoinViewController {
 	}
 	
 	@GetMapping("/step1-purpose")
-	public String purposePage(Model model) {
+	public String purposePage(Model model, HttpSession session) {
+		session.setAttribute("userId", 2L); //테스트
 		model.addAttribute("userId", 2L); //테스트용 고정 ID
 		return "irp/step1-purpose"; 
 	}
