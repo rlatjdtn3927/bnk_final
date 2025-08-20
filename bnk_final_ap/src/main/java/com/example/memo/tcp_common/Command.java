@@ -36,7 +36,9 @@ public enum Command {
     UPLOAD_FAMILY_DOC,
     PRESIGN_FAMILY_DOC,  // 추가: presigned GET URL 생성
     LIST_REVIEW_DOCS,    // (선택) review 폴더 리스트
-    SPOUSE_LINK_APPLY, 
+    SPOUSE_LINK_APPLY, // 연동 요청
+    ADMIN_SPOUSE_LINK_LIST,    // 대기 목록 조회
+    ADMIN_SPOUSE_LINK_DECIDE,   // 승인/반려 결정
     
     /*IRP가입관련*/
     IRP_JOIN_CREATE_DRAFT,      // step1: 초안 생성

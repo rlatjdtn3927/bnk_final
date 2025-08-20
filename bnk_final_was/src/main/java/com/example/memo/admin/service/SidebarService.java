@@ -32,6 +32,7 @@ public class SidebarService {
         name.put("customers",  "고객 관리");
         name.put("review",     "리뷰 관리");
         name.put("account",    "계좌 개설 관리");
+        name.put("couple-irp", "부부IRP 관리");
     }
     
 
@@ -55,6 +56,7 @@ public class SidebarService {
         register("account", "account-open", "계좌 개설", "admin/pages/account/open-account", true);
         register("account", "account-close", "계좌 해지", "admin/pages/account/open-close", false);
 
+        register("couple-irp", "couple-irp", "부부 IRP 관리", "admin/pages/couple/couple-irp", true);
     }
     
     /**
@@ -126,7 +128,7 @@ public class SidebarService {
      * 원하는 순서: 대시보드 → 통계 → 상품 관리 → 고객 관리 → 리뷰 관리 → 계좌 개설 관리
      */
     public List<HeaderCategory> getHeaderCategories() {
-        List<String> order = List.of("dashboard", "stat", "commodity", "customers", "review", "account");
+        List<String> order = List.of("dashboard", "stat", "commodity", "customers", "review", "account", "couple-irp");
 
         return order.stream()
                 // 존재하고 기본 페이지가 정의된 카테고리만

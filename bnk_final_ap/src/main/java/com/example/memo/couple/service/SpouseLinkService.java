@@ -1,5 +1,8 @@
 package com.example.memo.couple.service;
 
+import static com.example.memo.couple.ocr.OcrTextUtil.normalizeBirth;
+import static com.example.memo.couple.ocr.OcrTextUtil.normalizeNameForCompare;
+
 import java.time.LocalDate;
 import java.util.Base64;
 
@@ -17,14 +20,14 @@ import com.example.memo.jpa.repository.couple.IrpSpouseLinkRepository;
 import com.example.memo.jpa.repository.couple.LinkAdminReviewRepository;
 import com.example.memo.jpa.repository.user.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
-import static com.example.memo.couple.ocr.OcrTextUtil.*;
-
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SpouseLinkService {
@@ -159,6 +162,95 @@ public class SpouseLinkService {
             out.put("reviewReason", failReason);
         }
 
+        return out;
+    }
+    
+    public ArrayNode adminListPending(int urlTtlMinutes) {
+        log.info(">>>> [START] 관리자 검토 대기 목록 조회를 시작합니다.");
+
+        var links = linkRepo.findByLinkStatusOrderByAppliedAtDesc(LinkStatus.PENDING_ADMIN);
+        log.info(">>>> [DB RESULT] irp_spouse_link 테이블에서 PENDING_ADMIN 상태인 데이터를 {}건 찾았습니다.", links.size());
+
+        if (links.isEmpty()) {
+            log.warn(">>>> [END] 조회된 데이터가 없어 빈 목록을 반환합니다. DB에 PENDING_ADMIN 상태의 데이터가 있는지, 있다면 COMMIT이 되었는지 확인해주세요.");
+            return om.createArrayNode();
+        }
+
+        ArrayNode arr = om.createArrayNode();
+        for (IrpSpouseLink l : links) {
+            ObjectNode o = om.createObjectNode();
+            o.put("linkId", l.getId());
+            o.put("applicantUserId", l.getApplicantUserId());
+            o.put("status", l.getLinkStatus().name());
+            o.put("appliedAt", l.getAppliedAt() != null ? l.getAppliedAt().toString() : null);
+
+            reviewRepo.findTopByLinkIdOrderByIdDesc(l.getId()).ifPresent(rv -> {
+                o.put("reviewReason", rv.getReason());
+                o.put("requestedAt", rv.getRequestedAt() != null ? rv.getRequestedAt().toString() : null);
+            });
+
+            // 증빙 파일 URL 생성 (개별 예외 처리 강화)
+            if (l.getS3ObjectKey() != null && !l.getS3ObjectKey().isBlank()) {
+                try {
+                    String url = s3Service.presignedGetUrl(
+                            l.getS3ObjectKey(), java.time.Duration.ofMinutes(urlTtlMinutes));
+                    o.put("proofUrl", url);
+                    log.info(">>>> linkId={}의 증빙 파일 URL 생성 성공 (Key: {})", l.getId(), l.getS3ObjectKey());
+                } catch (Exception e) {
+                    log.error(">>>> [S3 ERROR] linkId={}의 증빙 파일 URL 생성 중 S3 오류 발생! (Key: {}). AWS 자격 증명(Credentials) 설정을 확인해주세요.", l.getId(), l.getS3ObjectKey(), e);
+                    o.put("proofUrl", "#"); // 에러가 나도 링크는 '#'로 표시
+                    o.put("s3Error", e.getMessage()); // 프론트에서 확인할 수 있도록 에러 메시지 추가
+                }
+            } else {
+                o.putNull("proofUrl");
+            }
+            arr.add(o);
+        }
+        log.info(">>>> [END] 최종 {}건의 데이터를 JSON으로 변환하여 반환합니다.", arr.size());
+        return arr;
+    }
+
+    @Transactional
+    public ObjectNode adminDecide(long linkId, String action, String reason) {
+        if (action == null || !(action.equalsIgnoreCase("APPROVE") || action.equalsIgnoreCase("REJECT"))) {
+            throw new IllegalArgumentException("action은 APPROVE 또는 REJECT 이어야 합니다.");
+        }
+
+        IrpSpouseLink link = linkRepo.findById(linkId)
+                .orElseThrow(() -> new IllegalArgumentException("연동 신청이 존재하지 않습니다."));
+
+        LinkAdminReview rv = reviewRepo.findTopByLinkIdOrderByIdDesc(linkId)
+                .orElseThrow(() -> new IllegalStateException("검토 요청 내역이 없습니다."));
+
+        if (rv.getReviewStatus() != ReviewStatus.PENDING) {
+            throw new IllegalStateException("이미 심사 완료된 건입니다.");
+        }
+
+        if (action.equalsIgnoreCase("APPROVE")) {
+            link.setLinkStatus(LinkStatus.PENDING_SPOUSE); // 배우자 수락 대기
+            linkRepo.save(link);
+
+            rv.setReviewStatus(ReviewStatus.APPROVED);
+            rv.setCompletedAt(LocalDate.now());
+            if (reason != null) rv.setAdminMemo(reason);
+            reviewRepo.save(rv);
+        } else { // REJECT
+            link.setLinkStatus(LinkStatus.REJECTED_ADMIN);
+            linkRepo.save(link);
+
+            rv.setReviewStatus(ReviewStatus.REJECTED);
+            rv.setCompletedAt(LocalDate.now());
+            rv.setReason((reason != null && !reason.isBlank()) ? reason : "관리자 반려");
+            rv.setAdminMemo(reason);
+            reviewRepo.save(rv);
+        }
+
+        ObjectNode out = om.createObjectNode();
+        out.put("linkId", link.getId());
+        out.put("status", link.getLinkStatus().name());
+        out.put("reviewStatus", rv.getReviewStatus().name());
+        out.put("completedAt", rv.getCompletedAt() != null ? rv.getCompletedAt().toString() : null);
+        out.put("reason", rv.getReason());
         return out;
     }
 

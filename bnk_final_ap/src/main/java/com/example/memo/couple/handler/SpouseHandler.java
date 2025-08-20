@@ -21,7 +21,7 @@ public class SpouseHandler implements TcpMessageHandler {
     @Override
     public boolean supports(Command command) {
         // SUBSCRIBER_* 스타일과 동일: 접두어 매칭
-        return command.name().startsWith("SPOUSE_");
+        return command.name().startsWith("SPOUSE_LINK_");
     }
 
     @Override

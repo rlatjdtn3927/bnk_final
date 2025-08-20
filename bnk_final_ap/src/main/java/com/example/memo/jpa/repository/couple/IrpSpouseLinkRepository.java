@@ -1,5 +1,6 @@
 package com.example.memo.jpa.repository.couple;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.example.memo.jpa.entity.couple.IrpSpouseLink;
+import com.example.memo.jpa.entity.couple.LinkStatus;
 
 import jakarta.persistence.LockModeType;
 
@@ -35,4 +37,7 @@ public interface IrpSpouseLinkRepository extends JpaRepository<IrpSpouseLink, Lo
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT l FROM IrpSpouseLink l WHERE l.id = :id")
     Optional<IrpSpouseLink> findByIdForUpdate(@Param("id") Long id);
+    
+    List<IrpSpouseLink> findByLinkStatusOrderByAppliedAtDesc(LinkStatus status);
+
 }

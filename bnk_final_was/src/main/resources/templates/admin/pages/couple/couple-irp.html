@@ -1,0 +1,101 @@
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="css">
+  <style id="page-css" hx-swap-oob="true">
+    /* 페이지 전용 스타일 */
+    table { width:100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border:1px solid #ccc; padding:6px; text-align:center; }
+    .btn { padding:4px 8px; cursor:pointer; }
+    .approve { background:#4caf50; color:white; }
+    .reject { background:#f44336; color:white; }
+    .mut { color:#777; font-size:0.9em; }
+  </style>
+</th:block>
+
+
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="content">
+  <!-- 페이지 본문 -->
+  <h2>부부IRP 관리</h2>
+
+  <div style="margin-bottom:10px">
+    <button id="reload" class="btn">새로고침</button>
+    <span id="msg" class="mut"></span>
+  </div>
+
+  <table id="tbl">
+    <thead>
+      <tr>
+        <th>linkId</th>
+        <th>신청자</th>
+        <th>상태</th>
+        <th>요청일</th>
+        <th>사유</th>
+        <th>증빙</th>
+        <th>승인/반려</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const tbody = document.querySelector('#tbl tbody');
+    const msg = document.getElementById('msg');
+    const reloadBtn = document.getElementById('reload');
+
+    async function load() {
+      try {
+        msg.textContent = '목록 불러오는 중…';
+        const res = await fetch('/link-admin/pending', { headers: {'Accept':'application/json'}});
+        const json = await res.json();
+        
+        if (!json || json.success === false) {
+        	  const reason = json ? json.message : '응답 없음';
+        	  throw new Error(reason); // 에러를 발생시켜 catch 블록으로 보냄
+        }
+        
+        tbody.innerHTML = '';
+        const rows = (json && json.data) || [];
+        for (const it of rows) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${it.linkId}</td>
+            <td>${it.applicantUserId ?? '-'}</td>
+            <td>${it.status}</td>
+            <td>${it.requestedAt ?? it.appliedAt ?? '-'}</td>
+            <td>${it.reviewReason ?? '-'}</td>
+            <td>${it.proofUrl ? `<a href="${it.proofUrl}" target="_blank">미리보기</a>` : '-'}</td>
+            <td>
+              <input type="text" placeholder="메모/사유" id="memo-${it.linkId}" style="width:120px">
+              <button class="btn approve" onclick="decide(${it.linkId}, 'APPROVE')">승인</button>
+              <button class="btn reject" onclick="decide(${it.linkId}, 'REJECT')">반려</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        }
+        msg.textContent = `대기 ${rows.length}건`;
+      } catch (e) {
+        msg.textContent = '불러오기 실패: ' + e.message;
+      }
+    }
+
+    async function decide(linkId, action) {
+      try {
+        const memo = document.getElementById(`memo-${linkId}`).value;
+        const res = await fetch('/link-admin/decide', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json','Accept':'application/json'},
+          body: JSON.stringify({ linkId, action, reason: memo })
+        });
+        const json = await res.json();
+        if (json.success === false) {
+          alert('실패: ' + (json.message || 'ERROR')); return;
+        }
+        alert(`${action} 처리 완료`);
+        load();
+      } catch (e) {
+        alert('요청 실패: ' + e.message);
+      }
+    }
+
+    reloadBtn.onclick = load;
+    load();
+  </script>
+</th:block>
