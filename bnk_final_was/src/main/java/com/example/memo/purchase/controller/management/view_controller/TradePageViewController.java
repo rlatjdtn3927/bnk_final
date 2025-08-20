@@ -1,19 +1,9 @@
 // src/main/java/com/example/memo/purchase/controller/TradePageController.java
 package com.example.memo.purchase.controller.management.view_controller;
 
-import lombok.RequiredArgsConstructor;
-
+import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import com.example.memo.purchase.dto.trade.PassValueDto;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,25 +28,61 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TradePageViewController {
 	
-	private final TcpClientService tcpClientService;
-    private final ObjectMapper objectMapper;
+	private final TcpClientService tcp;
+    private final ObjectMapper om;
 	
-	@PostMapping("/step1/next")
+    /** step1 페이지: (필요 시) IRP/DC 목록을 세션에 저장해서 화면에서 session.*로 조회 */
+    /** step1: IRP/DC 조회 결과를 전부 세션에 저장해서 화면에서 ${session.*}로 사용 */
+    @GetMapping("/step1")
+    public String step1(HttpSession session) {
+        Long userId = (Long) session.getAttribute("LOGIN_USER_ID");
+        if(userId == null) {
+        	return "redirect:/login-view/main";
+        }
+
+        JsonNode req = om.createObjectNode().put("userId", userId);
+
+        // IRP 1건
+        JsonNode irpRes = tcp.sendMessage(new TcpMessage(Command.ACCOUNT_GET_IRP_BY_USER, req));
+        String irpAcctNo = (irpRes != null && irpRes.hasNonNull("irpAcctNo"))
+                ? irpRes.get("irpAcctNo").asText() : null;
+
+        // DC N건
+        JsonNode dcRes = tcp.sendMessage(new TcpMessage(Command.ACCOUNT_GET_DC_LIST_BY_USER, req));
+        List<String> dcAccounts = new ArrayList<>();
+        if (dcRes != null && dcRes.has("dcAccounts") && dcRes.get("dcAccounts").isArray()) {
+            for (JsonNode n : dcRes.get("dcAccounts")) {
+                if (n != null && !n.isNull()) dcAccounts.add(n.asText());
+            }
+        }
+
+        session.setAttribute("irpAcctNo", irpAcctNo);
+        session.setAttribute("dcAccounts", dcAccounts);
+        session.setAttribute("hasIrp", irpAcctNo != null);
+        session.setAttribute("hasDc", !dcAccounts.isEmpty());
+
+        return "purchase/trade/step1";
+    }
+
+    /** 네가 요구한 형식 그대로: 세션의 "PassValueDto"만 사용 */
+    @PostMapping("/step1/next")
     public String step1Next(@RequestParam("accountType") String accountType,
                             @RequestParam("accountId")   String accountId,
                             HttpSession session) {
 
         PassValueDto dto = (PassValueDto) session.getAttribute("PassValueDto");
-        if (dto == null) dto = new PassValueDto();
-        dto.setAccountType(accountType);
-        dto.setAccountId(accountId);
+        if (dto == null) dto = new PassValueDto(); // 방어
+        dto.setAccountType(accountType); // IRP | DC
+        dto.setAccountId(accountId);     // irp_acct_no | account_no
         session.setAttribute("PassValueDto", dto);
 
-        if ("RESERVE".equalsIgnoreCase(dto.getFlow())) {
-            return "redirect:/survey-view";           // 투자성향 분석
-        } else {
-            return "purchase/trade/step2_others";     // 보유상품목록
-        }
+        return "redirect:/survey-view";   // 투자성향분석 화면(타 팀 구현)
+    }
+
+    /** step2 진입 (세션만 사용; 뷰에서 ${session.PassValueDto.*}로 표시) */
+    @GetMapping("/step2/after-risk")
+    public String step2AfterRisk(HttpSession session) {
+        return "purchase/trade/step2";
     }
 	
 	/*테스트용 함수*/
@@ -106,11 +132,11 @@ public class TradePageViewController {
         try {
             Long userId = 1001L; // 테스트용 하드코딩
 
-            ObjectNode req = objectMapper.createObjectNode()
+            ObjectNode req = om.createObjectNode()
                                          .put("userId", userId);
 
             TcpMessage msg = new TcpMessage(Command.PROFILE_RESULT_GET, req);
-            JsonNode response = tcpClientService.sendMessage(msg);
+            JsonNode response = tcp.sendMessage(msg);
 
             JsonNode data = response.path("data");
             if (data.has("data")) data = data.get("data");

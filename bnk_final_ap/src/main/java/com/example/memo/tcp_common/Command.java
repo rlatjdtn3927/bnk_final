@@ -101,5 +101,12 @@ public enum Command {
 	BUY_PLAN_UPDATE,
 	/*매수예정 상품 등록 관련 명령어*/
 	
-	PROFILE_RESULT_GET, //사용자의 투자성향 가져오기    
+	PROFILE_RESULT_GET, //사용자의 투자성향 가져오기   
+	
+	 // 계좌 조회(신규)
+    ACCOUNT_GET_IRP_BY_USER,       // userId -> IRP 계좌 1건
+    ACCOUNT_GET_DC_LIST_BY_USER,   // userId -> DC 계좌 N건
+
+    // 최신 투자성향(신규) : profile_history ↔ profile_type
+    PROFILE_GET_LATEST_TYPE_BY_USER
 }
