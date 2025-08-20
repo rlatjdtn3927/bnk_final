@@ -48,6 +48,18 @@ public class SpouseHandler implements TcpMessageHandler {
                     );
                     return res;
                 }
+                case SPOUSE_LINK_DECIDE: {
+                    Long linkId = data.path("linkId").asLong();
+                    Long spouseUserId = data.path("spouseUserId").asLong();
+                    String action = data.path("action").asText();
+
+                    ObjectNode res = spouseLinkService.decideBySpouse(linkId, spouseUserId, action);
+                    // 서비스 결과를 바로 반환하지 않고, 표준 응답 형식으로 감싸줍니다.
+                    return objectMapper.createObjectNode()
+                            .put("success", true)
+                            .put("code", "OK")
+                            .set("data", res);
+                }
                 default:
                     return "알 수 없는 명령: " + command.name();
             }

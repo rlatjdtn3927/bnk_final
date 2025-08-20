@@ -1,5 +1,6 @@
 package com.example.memo.jpa.repository.user;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,5 +13,6 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     Optional<UserEntity> findByEmail(String email);
     
     Optional<UserEntity> findByRrn(String rrnEnc);
-
+    
+    Optional<UserEntity> findByNameAndBirthDate(String name, LocalDate birthDate);
 }

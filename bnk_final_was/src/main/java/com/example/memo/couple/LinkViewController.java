@@ -19,10 +19,31 @@ public class LinkViewController {
         model.addAttribute("sessionUserId", user);
         return "couple/apply";  // templates/link/apply.html
     }
+    
+    /**
+     * 배우자 연동 수락/거절 페이지
+     * 알림 메시지를 클릭하면 이 주소로 이동
+     */
+    @GetMapping("/pending")
+    public String spouseLinkPendingPage(HttpSession session, Model model) {
+        // 이 페이지에 필요한 정보(예: 누가 신청했는지)를
+        // AP 서버에서 조회하여 Model에 담아 전달하는 로직이 추가될 수 있습니다.
+        Object user = session.getAttribute("user");
+        model.addAttribute("sessionUserId", user);
+        return "couple/pending"; // templates/couple/pending.html
+    }
+    
+    /**
+     * 전체 알림 목록 페이지
+     */
+    @GetMapping("/notifications")
+    public String allNotificationsPage() {
+        return "couple/notifications"; // templates/couple/notifications.html
+    }
 
-    /** (선택) 간단 메인 이동용 */
+
     @GetMapping("/main")
     public String main() {
-        return "couple/main"; // 필요 없으면 제거하거나 apply로 redirect
+        return "couple/main";
     }
 }

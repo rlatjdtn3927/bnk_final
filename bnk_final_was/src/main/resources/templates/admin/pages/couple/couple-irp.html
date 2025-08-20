@@ -1,101 +1,171 @@
 <th:block xmlns:th="http://www.thymeleaf.org" th:fragment="css">
   <style id="page-css" hx-swap-oob="true">
     /* 페이지 전용 스타일 */
-    table { width:100%; border-collapse: collapse; margin-top: 1rem; }
-    th, td { border:1px solid #ccc; padding:6px; text-align:center; }
-    .btn { padding:4px 8px; cursor:pointer; }
-    .approve { background:#4caf50; color:white; }
-    .reject { background:#f44336; color:white; }
+    table { width:100%; border-collapse: collapse; margin-top: 1rem; table-layout: fixed; }
+    th, td { border:1px solid #ccc; padding: 8px 6px; text-align:center; word-break: break-all; }
+    .btn { padding:4px 8px; cursor:pointer; border: none; border-radius: 4px; color: white; margin: 0 2px; }
+    .approve { background:#4caf50; }
+    .reject { background:#f44336; }
+    .btn:disabled { background: #ccc; cursor: not-allowed; }
     .mut { color:#777; font-size:0.9em; }
+    tr.removing { opacity: 0; transition: opacity 0.5s ease-out; }
+    .loader { font-style: italic; color: #888; }
+    #toast-container { position: fixed; top: 20px; right: 20px; z-index: 1000; }
+    .toast { padding: 15px 20px; background: #333; color: white; border-radius: 5px; margin-bottom: 10px; opacity: 0; transition: all 0.5s; transform: translateX(100%); }
+    .toast.show { opacity: 1; transform: translateX(0); }
   </style>
 </th:block>
 
 
 <th:block xmlns:th="http://www.thymeleaf.org" th:fragment="content">
-  <!-- 페이지 본문 -->
   <h2>부부IRP 관리</h2>
 
   <div style="margin-bottom:10px">
-    <button id="reload" class="btn">새로고침</button>
+    <button id="reload" class="btn approve">새로고침</button>
     <span id="msg" class="mut"></span>
   </div>
 
   <table id="tbl">
+    <colgroup>
+        <col style="width: 8%;">
+        <col style="width: 10%;">
+        <col style="width: 15%;">
+        <col style="width: 15%;">
+        <col style="width: 20%;">
+        <col style="width: 8%;">
+        <col style="width: 24%;">
+    </colgroup>
     <thead>
       <tr>
-        <th>linkId</th>
-        <th>신청자</th>
+        <th>ID</th>
+        <th>신청자ID</th>
         <th>상태</th>
         <th>요청일</th>
         <th>사유</th>
         <th>증빙</th>
-        <th>승인/반려</th>
-      </tr>
+        <th>반려 처리</th> </tr>
     </thead>
-    <tbody></tbody>
+    <tbody id="review-tbody"></tbody>
   </table>
+  
+  <div id="toast-container"></div>
 
   <script>
-    const tbody = document.querySelector('#tbl tbody');
-    const msg = document.getElementById('msg');
-    const reloadBtn = document.getElementById('reload');
+    document.addEventListener('DOMContentLoaded', () => {
+        const tbody = document.getElementById('review-tbody');
+        const msg = document.getElementById('msg');
+        const reloadBtn = document.getElementById('reload');
+        const toastContainer = document.getElementById('toast-container');
 
-    async function load() {
-      try {
-        msg.textContent = '목록 불러오는 중…';
-        const res = await fetch('/link-admin/pending', { headers: {'Accept':'application/json'}});
-        const json = await res.json();
-        
-        if (!json || json.success === false) {
-        	  const reason = json ? json.message : '응답 없음';
-        	  throw new Error(reason); // 에러를 발생시켜 catch 블록으로 보냄
+        // 여러 함수에서 공통으로 사용할 토스트 메시지 함수
+        function showToast(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            if (isError) toast.style.backgroundColor = '#f44336';
+            toastContainer.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        }
+
+        // 1. 목록 로딩 함수
+        async function load() {
+            tbody.innerHTML = `<tr><td colspan="7" class="loader">목록을 불러오는 중...</td></tr>`;
+            try {
+                const res = await fetch('/link-admin/pending');
+                const json = await res.json();
+                if (!json.success) throw new Error(json.message || '서버 오류');
+                renderTable(json.data || []);
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="7" style="color:red;">불러오기 실패: ${e.message}</td></tr>`;
+            }
         }
         
-        tbody.innerHTML = '';
-        const rows = (json && json.data) || [];
-        for (const it of rows) {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${it.linkId}</td>
-            <td>${it.applicantUserId ?? '-'}</td>
-            <td>${it.status}</td>
-            <td>${it.requestedAt ?? it.appliedAt ?? '-'}</td>
-            <td>${it.reviewReason ?? '-'}</td>
-            <td>${it.proofUrl ? `<a href="${it.proofUrl}" target="_blank">미리보기</a>` : '-'}</td>
-            <td>
-              <input type="text" placeholder="메모/사유" id="memo-${it.linkId}" style="width:120px">
-              <button class="btn approve" onclick="decide(${it.linkId}, 'APPROVE')">승인</button>
-              <button class="btn reject" onclick="decide(${it.linkId}, 'REJECT')">반려</button>
-            </td>
-          `;
-          tbody.appendChild(tr);
+        // 2. 테이블 렌더링 함수
+        function renderTable(rows) {
+            tbody.innerHTML = '';
+            if (rows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7">검토 대기 중인 항목이 없습니다.</td></tr>`;
+            } else {
+                rows.forEach(it => {
+                    const tr = document.createElement('tr');
+                    tr.dataset.linkId = it.linkId;
+                    // ▼▼▼ [수정] '승인' 버튼 제거 ▼▼▼
+                    tr.innerHTML = `
+                        <td>${it.linkId}</td>
+                        <td>${it.applicantUserId ?? '-'}</td>
+                        <td>${it.status}</td>
+                        <td>${it.requestedAt ?? it.appliedAt ?? '-'}</td>
+                        <td>${it.reviewReason ?? '-'}</td>
+                        <td>${it.proofUrl ? `<a href="${it.proofUrl}" target="_blank">보기</a>` : '-'}</td>
+                        <td>
+                            <input type="text" placeholder="반려 사유 입력" class="memo-input" style="width:120px">
+                            <button class="btn reject" data-action="REJECT">반려</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+            msg.textContent = `대기 ${rows.length}건`;
         }
-        msg.textContent = `대기 ${rows.length}건`;
-      } catch (e) {
-        msg.textContent = '불러오기 실패: ' + e.message;
-      }
-    }
 
-    async function decide(linkId, action) {
-      try {
-        const memo = document.getElementById(`memo-${linkId}`).value;
-        const res = await fetch('/link-admin/decide', {
-          method: 'POST',
-          headers: {'Content-Type':'application/json','Accept':'application/json'},
-          body: JSON.stringify({ linkId, action, reason: memo })
+        // 3. 반려 처리 함수 (이벤트 위임 사용)
+        tbody.addEventListener('click', async (event) => {
+            const target = event.target;
+            // '반려' 버튼이 아니면 아무것도 하지 않음
+            if (target.tagName !== 'BUTTON' || target.dataset.action !== 'REJECT') return;
+
+            const action = target.dataset.action;
+            const tr = target.closest('tr');
+            const linkId = tr.dataset.linkId;
+            const memo = tr.querySelector('.memo-input').value;
+
+            if (memo.trim() === '') {
+                alert('반려 사유를 입력해주세요.');
+                return;
+            }
+            
+            // 처리 중 버튼 비활성화
+            target.disabled = true;
+            const originalText = target.textContent;
+            target.textContent = '처리중...';
+
+            try {
+                const res = await fetch('/link-admin/decide', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ linkId: Number(linkId), action, reason: memo })
+                });
+                const json = await res.json();
+                if (!json.success) throw new Error(json.message || '처리 실패');
+                
+                showToast(`${linkId}번 요청을 반려 처리했습니다.`);
+                
+                // 성공 시, 행을 부드럽게 제거
+                tr.classList.add('removing');
+                tr.addEventListener('transitionend', () => {
+                    tr.remove();
+                    const remainingCount = tbody.getElementsByTagName('tr').length;
+                    msg.textContent = `대기 ${remainingCount}건`;
+                    if(remainingCount === 0) {
+                        tbody.innerHTML = `<tr><td colspan="7">검토 대기 중인 항목이 없습니다.</td></tr>`;
+                    }
+                });
+
+            } catch (e) {
+                showToast(`처리 실패: ${e.message}`, true);
+                // 실패 시, 버튼 다시 활성화
+                target.disabled = false;
+                target.textContent = originalText;
+            }
         });
-        const json = await res.json();
-        if (json.success === false) {
-          alert('실패: ' + (json.message || 'ERROR')); return;
-        }
-        alert(`${action} 처리 완료`);
-        load();
-      } catch (e) {
-        alert('요청 실패: ' + e.message);
-      }
-    }
 
-    reloadBtn.onclick = load;
-    load();
+        // --- 초기화 ---
+        reloadBtn.addEventListener('click', load);
+        load(); // 페이지 첫 로드
+    });
   </script>
 </th:block>

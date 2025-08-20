@@ -138,4 +138,25 @@ public class SpouseLinkController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
         }
     }
+    
+    
+    
+    /**
+     * 배우자가 연동 요청을 수락/거절하는 API
+     */
+    @PostMapping("/spouse/decide")
+    public ResponseEntity<?> decideBySpouse(@RequestBody JsonNode payload, HttpSession session) {
+        Long userId = (Long) session.getAttribute("user");
+        if (userId == null) {
+            return ResponseEntity.status(401).build(); // 비로그인 사용자는 401 Unauthorized
+        }
+
+        // AP로 보낼 payload에 세션의 사용자 ID(배우자 ID)를 추가
+        ((ObjectNode) payload).put("spouseUserId", userId);
+
+        TcpMessage message = new TcpMessage(Command.SPOUSE_LINK_DECIDE, payload);
+        JsonNode apResponse = tcpClientService.sendMessage(message);
+
+        return ResponseEntity.ok(apResponse);
+    }
 }

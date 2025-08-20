@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>연동 요청 수락</title>
+</head>
+<body>
+    <h2>부부 IRP 연동 요청</h2>
+    <p th:if="${sessionUserId != null}">
+        로그인된 사용자 ID: <span th:text="${sessionUserId}"></span>
+    </p>
+    <p><strong>[신청자]</strong> 님으로부터 부부 IRP 연동 요청이 도착했습니다.</p>
+    <p>요청을 수락하시겠습니까?</p>
+
+    <div>
+        <button id="accept-btn">수락</button>
+        <button id="reject-btn">거절</button>
+    </div>
+    <div id="result-message" style="margin-top: 15px; font-weight: bold;"></div>
+    <div style="margin-top: 20px;"><a href="/link-view/main">메인으로 돌아가기</a></div>
+
+    <script>
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const linkId = urlParams.get('linkId');
+
+        const acceptBtn = document.getElementById('accept-btn');
+        const rejectBtn = document.getElementById('reject-btn');
+        const resultDiv = document.getElementById('result-message');
+        
+        // linkId가 없을 경우 버튼 비활성화
+        if (!linkId) {
+            resultDiv.textContent = "잘못된 접근입니다. 처리할 연동 요청 정보가 없습니다.";
+            acceptBtn.disabled = true;
+            rejectBtn.disabled = true;
+        } else {
+            acceptBtn.addEventListener('click', () => handleDecision('ACCEPT'));
+            rejectBtn.addEventListener('click', () => handleDecision('REJECT'));
+        }
+
+        async function handleDecision(action) {
+            resultDiv.textContent = '처리 중...';
+            try {
+                const response = await fetch('/link/spouse/decide', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ linkId: Number(linkId), action: action })
+                });
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    const actionText = action === 'ACCEPT' ? '수락' : '거절';
+                    alert(`연동을 ${actionText}했습니다.`);
+                    window.location.href = '/link-view/main';
+                } else {
+                    resultDiv.style.color = 'red';
+                    resultDiv.textContent = `오류: ${result.message || '알 수 없는 오류'}`;
+                }
+            } catch (error) {
+                resultDiv.style.color = 'red';
+                resultDiv.textContent = '요청에 실패했습니다: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

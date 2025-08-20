@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>전체 알림</title>
+    <style>
+        ul { list-style: none; padding-left: 0; max-width: 600px; }
+        li { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; transition: background-color 0.2s; }
+        li:hover { background-color: #f5f5f5; }
+
+        li.read {
+            color: #888;
+            background-color: #fafafa;
+        }
+        li.read:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <h2>전체 알림 목록</h2>
+    <ul id="notification-list"></ul>
+    <div style="margin-top: 20px;"><a href="/link-view/main">메인으로 돌아가기</a></div>
+
+    <script>
+        const listUl = document.getElementById('notification-list');
+
+        async function fetchAllNotifications() {
+            // '모든 알림'을 가져오는 새 API를 호출
+            const response = await fetch('/api/notifications/all');
+            const result = await response.json();
+            
+            listUl.innerHTML = ''; // 목록 초기화
+
+            if (result.success && result.data.length > 0) {
+                result.data.forEach(noti => {
+                    const li = document.createElement('li');
+                    
+                    // isRead 상태에 따라 'read' 클래스를 추가
+                    if (noti.isRead) {
+                        li.classList.add('read');
+                    }
+                    
+                    li.textContent = `[${new Date(noti.createdAt).toLocaleString()}] ${noti.message}`;
+                    li.dataset.id = noti.id;
+                    li.dataset.url = noti.linkUrl;
+                    li.dataset.linkId = noti.linkId; // linkId도 data 속성으로 저장
+                    
+                    // 아직 안 읽은 알림에만 클릭 이벤트 추가
+                    if (!noti.isRead) {
+                        li.addEventListener('click', () => markAsRead(li, noti.id, noti.linkUrl, noti.linkId));
+                    }
+
+                    listUl.appendChild(li);
+                });
+            } else {
+                listUl.innerHTML = '<li>표시할 알림이 없습니다.</li>';
+            }
+        }
+
+        async function markAsRead(listItem, notificationId, linkUrl, linkId) {
+            // 이미 처리 중인 클릭 방지
+            if(listItem.classList.contains('read')) return;
+
+            try {
+                await fetch(`/api/notifications/${notificationId}/read`, { method: 'POST' });
+                
+                // 페이지를 이동하기 전에 먼저 시각적으로 '읽음' 처리
+                listItem.classList.add('read');
+                // 클릭 이벤트도 제거해서 중복 요청 방지
+                listItem.replaceWith(listItem.cloneNode(true));
+
+                if (linkUrl && linkId) {
+                    const destinationUrl = `${linkUrl}?linkId=${linkId}`;
+                    window.location.href = destinationUrl;
+                }
+            } catch(error) {
+                console.error("Mark as read failed:", error);
+            }
+        }
+
+        fetchAllNotifications();
+    </script>
+</body>
+</html>
