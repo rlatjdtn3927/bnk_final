@@ -2,6 +2,7 @@ package com.example.memo.jpa.entity.company;
 
 import java.time.LocalDateTime;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -39,6 +40,9 @@ public class DcDepositHistory {
     @JoinColumn(name = "destination_account_id")
     private DcAccount destinationAccount;
 
+    @Column(name = "paid_amount", nullable = false)
     private Long paidAmount;
+    
+    @Column(name = "paid_at", nullable = false)
     private LocalDateTime paidAt;
 }

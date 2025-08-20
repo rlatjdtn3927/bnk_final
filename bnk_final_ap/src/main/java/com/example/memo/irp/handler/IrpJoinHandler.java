@@ -9,6 +9,7 @@ import com.example.memo.irp.service.IrpJoinService;
 import com.example.memo.jpa.entity.irp.IrpJoinEntity;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpMessageHandler;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -33,6 +34,7 @@ public class IrpJoinHandler implements TcpMessageHandler {
 			case IRP_JOIN_GET: {
 			    Long joinId = data.get("joinId").asLong();
 			    IrpJoinEntity j = joinService.findByIdOrThrow(joinId); // 서비스에 간단히 추가
+			    
 			    ObjectNode res = mapper.createObjectNode();
 			    res.put("joinId", j.getJoinId());
 			    res.put("joinPurpose", j.getJoinPurpose());
@@ -51,11 +53,7 @@ public class IrpJoinHandler implements TcpMessageHandler {
 			case IRP_JOIN_TAX_PURPOSE: {
 				Long joinId = requireLong(data, "joinId");
 			    String qualType = requireText(data, "irpQualType"); // "근로자"/"자영업자"
-				/*
-				Long joinId = data.get("joinId").asLong();
-				String qualType = data.get("irpQualType").asText();
-				String busiNo = data.get("businessNo").asText();
-				*/
+				
 				// 2) 옵션 파라미터(없으면 null로)
 			    String busiNo = null;
 			    JsonNode bn = data.get("businessNo");
@@ -68,6 +66,7 @@ public class IrpJoinHandler implements TcpMessageHandler {
 				joinService.saveTaxPurpose(joinId, qualType, busiNo);
 				ObjectNode res = mapper.createObjectNode();
 				 res.put("result", "OK");
+				 res.put("joinId", joinId);
 				return res;
 			}
 			case IRP_JOIN_RETIRED_PURPOSE: {
@@ -88,22 +87,38 @@ public class IrpJoinHandler implements TcpMessageHandler {
                 return res;
             }
 			case IRP_JOIN_UPDATE_CONTRACT: {	// step3-2: 계약정보 업데이트
-                Long joinId = data.get("joinId").asLong();
-                Long annualAmt = data.path("annualContribAmt").asLong(0);
-                Long newAmt    = data.path("newContribAmt").asLong(0);
-                String acctNo  = data.get("acctNo").asText();
-                String acctPwd = data.get("acctPwd").asText();
-                String branch  = data.path("branchOffice").asText();
-                joinService.updateContract(joinId, annualAmt, newAmt, acctNo, acctPwd, branch);
-                ObjectNode res = mapper.createObjectNode().put("result", "OK");
-                return res;
+				try {
+					Long joinId = data.get("joinId").asLong();
+					Long annualAmt = data.path("annualContribAmt").asLong(0);
+					Long newAmt    = data.path("newContribAmt").asLong(0);
+					String acctNo  = data.get("acctNo").asText();
+					String acctPwd = data.get("acctPwd").asText();
+					String branch  = data.path("branchOffice").asText();
+					
+					joinService.updateContract(joinId, annualAmt, newAmt, acctNo, acctPwd, branch);
+					ObjectNode res = mapper.createObjectNode();
+					res.put("result", "OK");
+					res.put("joinId", joinId);
+					res.put("updated", 1);
+					return res;
+					
+				} catch(IllegalArgumentException | SecurityException e) {
+					// 비밀번호 불일치/잔액부족 등 비즈니스 실패 (다음 페이지로 넘어가면 안 됨)
+			        ObjectNode err = mapper.createObjectNode();
+			        err.put("ok", false);
+			        err.put("error", e.getMessage() == null ? "요청이 거부되었습니다." : e.getMessage());
+			        return err;
+				}
+                
+                
             }
+			/*
 			case IRP_JOIN_UPDATE_PRODUCT: {		// step4: 상품 저장
                 Long joinId = data.get("joinId").asLong();
                 String productId = data.get("productId").asText();
                 joinService.updateJoinProduct(joinId, productId);
                 return mapper.createObjectNode().put("result", "OK");
-            }
+            }*/
 			case IRP_JOIN_COMPLETE: { // 가입완료 → IRP계좌 생성
                 Long joinId = data.get("joinId").asLong();
                 String irpPwd = data.get("irpPwd").asText();

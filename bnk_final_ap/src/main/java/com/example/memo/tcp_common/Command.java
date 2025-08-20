@@ -38,12 +38,14 @@ public enum Command {
     /*IRP가입관련*/
     IRP_JOIN_CREATE_DRAFT,      // step1: 초안 생성
     IRP_JOIN_UPDATE_CONTRACT,   // step3-2: 계약정보 업데이트
-    IRP_JOIN_UPDATE_PRODUCT,    // step4: 상품 저장
+    //IRP_JOIN_UPDATE_PRODUCT,    // step4: 상품 저장
     IRP_JOIN_SAVE,
     IRP_JOIN_GET,
     IRP_JOIN_TAX_PURPOSE, 
     IRP_JOIN_RETIRED_PURPOSE, 
-    IRP_JOIN_COMPLETE,		// 계좌개설/완료
+    IRP_JOIN_COMPLETE,			// 계좌개설/완료
+    ACCOUNT_GET_BALANCE,			// 출금계좌 잔액조회
+    ACCOUNT_GET_NUMBER,
     
     // ===== 보유현황 탭 =====
     SUMMARY_GET,              // SummaryHandler: 총 평가액/수익률/입금합/당일입금/운용수익 요약 조회
@@ -79,15 +81,22 @@ public enum Command {
     // ===== 디폴트옵션 =====
     DO_UPSERT,                // DefaultOptionHandler: 디폴트옵션 등록/변경
     DO_HISTORY,               // DefaultOptionHandler: 디폴트옵션 변경 이력
-    
-    
+    ACCOUNT_OVERVIEW_GET, // ✅ Step1 계좌목록
+    BUY_PLAN_CURRENT_LIST_GET, //매수예정상품의 경우 변경 전 내역 보여주기
     /*관리자 크롤링 데이터 관련 명령어*/
     ADMIN_CRAWL_GRANT_FILE_DOWNLOAD,
     ADMIN_CRAWL_CHECK_FILE_TASK,
     ADMIN_CRAWL_CHECK_UPDATE,
+    /*관리자 크롤링 데이터 관련 명령어*/
 	
 	USER_LOGIN, //사용자 로그인
 	USER_REGISTER,// 회원가입
-	SURVEY_SUBMIT; //투자성향제출
-    
+	SURVEY_SUBMIT, //투자성향제출
+	
+	/*매수예정 상품 등록 관련 명령어*/
+	BUY_PLAN_CURRENT,
+	BUY_PLAN_UPDATE,
+	/*매수예정 상품 등록 관련 명령어*/
+	
+	PROFILE_RESULT_GET, //사용자의 투자성향 가져오기    
 }

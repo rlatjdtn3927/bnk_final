@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>IRP가입하기 - 계약등록(IRP계좌 개설정보)</title>
+<link rel="stylesheet" th:href="@{/css/step3-contract.css}" />
+</head>
+<body>
+<script th:inline="javascript">
+  const joinId = /*[[${joinId}]]*/ 0;
+</script>
+
+  <div class="section">
+    <h1>개인IRP가입하기</h1>
+
+    <!-- 진행 단계 바: 현재 단계 active 조정 -->
+    <ul class="step-bar">
+      <li>01. 개인IRP신규가입</li>
+      <li>02. 계약서동의</li>
+      <li class="active">03. 가입정보입력</li>
+      <li>04. 포트폴리오 설정</li>
+      <li>05. 상품가입완료</li>
+    </ul>
+
+    <!-- 카드 -->
+    <div class="form-card">
+      <div class="form-card__head">
+        IRP계좌 개설 정보
+      </div>
+
+      <div class="form-card__body">
+      	
+        <!-- 출금계좌번호 -->
+        <div class="field">
+          <label for="acctNo">출금계좌번호</label>
+          <div style="display:flex; gap:8px; align-items:center;">
+    		<input id="acctNo" class="input" type="text" inputmode="numeric"
+	           placeholder="예: 12345678901234" />
+    		<button type="button" id="btnBalance">잔액조회</button>
+          </div>
+          <div id="balanceBox" style="display:none;"></div>
+		</div>
+		
+        <!-- 출금계좌 비밀번호 -->
+        <div class="field">
+	      <label for="acctPwd">출금계좌 비밀번호</label>
+	      <input id="acctPwd" class="input" type="password" inputmode="numeric"
+	             placeholder="숫자(예: 1234)"/>
+      	</div>
+      
+        <!-- 연 납입 한도 금액 -->
+        <div class="field">
+          <label for="annualContribAmt">연 납입 한도 금액(원)</label>
+          <input id="annualContribAmt" class="input" type="text" inputmode="numeric"
+                 placeholder="예: 18,000,000" />
+      	</div>
+
+        <!-- 신규 입금 금액 -->
+        <div class="field">
+          <label for="newContribAmt">신규 입금 금액(원)</label>
+          <input id="newContribAmt" class="input" type="text" inputmode="numeric"
+                 placeholder="예: 1,000,000" />
+      	</div>
+
+        <!-- 관리영업점 -->
+        <div class="field">
+          <label for="branchOffice">관리영업점</label>
+          <input id="branchOffice" class="input" type="text" placeholder="예: 부산본점" />
+      	</div>
+      </div>
+
+      <div class="form-card__foot">
+        <button id="saveBtn">다음</button>
+      </div>
+    </div>
+  </div>
+  
+  
+  <script>
+  //---------- 유틸 ----------
+  const onlyDigits = (s) => (s || '').replace(/[^0-9]/g, '');
+  const toComma = (s) => {
+    const d = onlyDigits(s);
+    return d ? d.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '';
+  };
+  const toNumber = (s) => Number(onlyDigits(s) || '0');
+
+  // 계좌번호: 숫자만
+  const acctNoEl = document.getElementById('acctNo');
+  acctNoEl.addEventListener('input', () => {
+    const pos = acctNoEl.selectionStart;
+    const before = acctNoEl.value;
+    acctNoEl.value = onlyDigits(acctNoEl.value);
+    const diff = acctNoEl.value.length - before.length;
+    acctNoEl.setSelectionRange(Math.max(0, pos + diff), Math.max(0, pos + diff));
+  });
+
+  // 비밀번호: 숫자만
+  const acctPwdEl = document.getElementById('acctPwd');
+  acctPwdEl.addEventListener('input', () => {
+    acctPwdEl.value = onlyDigits(acctPwdEl.value);
+  });
+
+  // 금액 입력: 실시간 쉼표 포맷
+  ['annualContribAmt', 'newContribAmt'].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('input', () => {
+      const pos = el.selectionStart;
+      const before = el.value;
+      el.value = toComma(el.value);
+      const diff = el.value.length - before.length;
+      el.setSelectionRange(Math.max(0, pos + diff), Math.max(0, pos + diff));
+    });
+  });
+  
+  //---------- HTTP ----------
+  async function postJson(url, body) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const text = await res.text();
+    return text ? JSON.parse(text) : {};
+  }
+
+  async function putJson(url, body) {
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const text = await res.text();
+    return text ? JSON.parse(text) : {};
+  }
+  
+  //페이지 로드시 출금계좌번호 자동 세팅
+  (async function preloadAcctNo() {
+    try {
+      const data = await postJson(`/irp/join/${joinId}/account/no`, {});
+      if (data && data.acctNo) {
+        const el = document.getElementById('acctNo');
+        el.value = data.acctNo;
+        el.readOnly = true;   // 입력 차단
+        // el.classList.add('readonly'); // (선택) 스타일 주고 싶으면
+      }
+    } catch (e) {
+      console.error('계좌번호 자동 세팅 실패', e);
+      // 실패 시 사용자가 직접 입력할 수 있게 그대로 둠(폴백)
+    }
+  })();
+  
+  //---------- 잔액조회 ----------
+  document.getElementById('btnBalance').addEventListener('click', async () => {
+	const acctNo = document.getElementById('acctNo').value.trim(); // 하이픈 포함 그대로 보냄
+    const acctPwd = document.getElementById('acctPwd').value.trim(); // 옵션
+    const balanceBox = document.getElementById('balanceBox');
+
+    if (!acctNo) { alert('출금계좌번호를 입력하세요.'); return; }
+
+    try {
+      // WAS → AP: /irp/join/{joinId}/account/balance
+      const data = await postJson(`/irp/join/${joinId}/account/balance`, { acctNo, acctPwd });
+      balanceBox.style.display = 'block';
+      if (typeof data.balance === 'number') {
+        balanceBox.textContent = `잔액: ${toComma(String(data.balance))} 원`;
+      } else {
+        balanceBox.textContent = '잔액을 조회할 수 없습니다.';
+      }
+    } catch (e) {
+      console.error(e);
+      balanceBox.style.display = 'block';
+      balanceBox.textContent = '잔액 조회 중 오류가 발생했습니다.';
+    }
+  });
+
+  // ---------- 저장 ----------
+  document.getElementById('saveBtn').addEventListener('click', async () => {
+    const payload = {
+      annualContribAmt: toNumber(document.getElementById('annualContribAmt').value),
+      newContribAmt:    toNumber(document.getElementById('newContribAmt').value),
+      acctNo:           onlyDigits(document.getElementById('acctNo').value),
+      acctPwd:          document.getElementById('acctPwd').value.trim(),
+      branchOffice:     document.getElementById('branchOffice').value.trim()
+    };
+
+    try {
+      await putJson(`/irp/join/${joinId}/contract`, payload);
+      alert('계약 정보가 저장되었습니다.');
+      location.href = `/irp/join/${joinId}/step4-infoConfir`;
+    } catch (e) {
+      console.error(e);
+      alert('저장 중 오류가 발생했습니다.');
+    }
+  });
+  </script>
+</body>
+</html>

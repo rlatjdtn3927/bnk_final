@@ -32,13 +32,13 @@ public class IrpRetirePurpose {
     @Column(name="retire_date", nullable=false)
     private LocalDate retireDate;
 
-    @Column(name="retire_reason")
+    @Column(name="retire_reason", nullable=false)
     private String retireReason;
 
-    @Column(name="corp_name", length=100)
+    @Column(name="corp_name", length=100, nullable=false)
     private String corpName;
 
-    @Column(name="severance_amt")
+    @Column(name="severance_amt", nullable=false)
     private Long severanceAmt;
 
     @Column(name="withhold_doc")

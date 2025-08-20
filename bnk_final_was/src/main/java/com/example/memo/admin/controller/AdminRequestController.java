@@ -130,8 +130,8 @@ public class AdminRequestController {
     }
     
     private Long getApproverIdFromSession(HttpSession session) {
-        BankEmployeeLoginDto loginEmployee = (BankEmployeeLoginDto) session.getAttribute("loginEmployee");
-        return (loginEmployee != null) ? loginEmployee.getId() : null;
+        BankEmployeeLoginDto BankEmployee = (BankEmployeeLoginDto) session.getAttribute("BankEmployee");
+        return (BankEmployee != null) ? BankEmployee.getId() : null;
     }
     
     /*아래로 상품 크롤링 데이터 관련 매핑 함수들*/

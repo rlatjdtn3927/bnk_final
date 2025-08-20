@@ -7,8 +7,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.example.memo.auth.dto.UserLoginResultDTO;
-import com.example.memo.auth.entity.UserEntity;
-import com.example.memo.auth.repository.UserRepository;
+import com.example.memo.jpa.entity.user.UserEntity;
+import com.example.memo.jpa.repository.user.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 

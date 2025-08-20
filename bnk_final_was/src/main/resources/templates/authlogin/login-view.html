@@ -173,7 +173,7 @@
         const res = await fetch("/login-api/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          credentials: "same-origin",
+          credentials: "include",
           body: JSON.stringify({ username, password }),
           signal: controller.signal
         });

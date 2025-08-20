@@ -1,8 +1,10 @@
 package com.example.memo.jpa.entity.purchase.commodity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,8 +13,11 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.example.memo.jpa.entity.BaseEntity;
+import com.example.memo.jpa.entity.purchase.analysis.CumulativePerformance;
 
 /* 1) 펀드 기본정보 – fund_master */
 @Entity
@@ -56,6 +61,9 @@ public class FundMaster extends BaseEntity{
     
     @Column(name = "status", length = 20)
     private String status;  //"INSERTED", "UPDATED"
+    
+    @OneToMany(mappedBy = "fund", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CumulativePerformance> cumulativePerformances = new ArrayList<>();
 }
 
 //fundMasterRepository.deleteById("abc");

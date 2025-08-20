@@ -1,18 +1,31 @@
-// src/main/java/com/example/memo/purchase/service/ProductService.java
 package com.example.memo.purchase.service;
 
 import java.util.*;
-import java.util.stream.Collectors;
-
 import org.springframework.stereotype.Service;
 
+import com.example.memo.jpa.entity.purchase.analysis.CumulativePerformance;
+import com.example.memo.jpa.entity.purchase.analysis.FundDocument;
+import com.example.memo.jpa.entity.purchase.analysis.PrincipalDocument;
 import com.example.memo.jpa.entity.purchase.commodity.FundMaster;
 import com.example.memo.jpa.entity.purchase.commodity.PrincipalGuarantee;
+import com.example.memo.jpa.repository.purchase.analysis.FundDocumentRepository;
+import com.example.memo.jpa.repository.purchase.analysis.PrincipalDocumentRepository;
 import com.example.memo.jpa.repository.purchase.commodity.FundMasterRepository;
 import com.example.memo.jpa.repository.purchase.commodity.PrincipalGuaranteeRepository;
+import com.example.memo.purchase.dto.trade.FileUrlDto;
+import com.example.memo.purchase.dto.trade.FundCumulativeDto;
+import com.example.memo.purchase.dto.trade.ProductRequestDto;
+import com.example.memo.purchase.dto.trade.ProductResponseDto;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
+
+import jakarta.transaction.Transactional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,93 +40,100 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProductService {
 
-    private final ObjectMapper om;
+    private final ObjectMapper mapper;
     private final FundMasterRepository fundRepo;
     private final PrincipalGuaranteeRepository principalRepo;
+    private final FundDocumentRepository fundDocumentRepo;
+    private final PrincipalDocumentRepository principalDocumentRepo;
 
+    @Transactional
     public JsonNode searchProducts(JsonNode req) {
-        final String category = req.path("category").asText("").trim().toUpperCase(Locale.ROOT);
-        final String qRaw     = Optional.ofNullable(req.path("q").asText(null)).orElse("").trim();
+        JsonNode response = null;
+        try {
+            ProductRequestDto requestDto = mapper.treeToValue(req, ProductRequestDto.class);
+            final String category = requestDto.getCategory();
+            final String sortedBy = requestDto.getSortedBy();
+            
+            System.out.println("ap: " + requestDto.toString() + ".............................");
+            if ("pg".equals(category)) {
+            	Sort sort = Sort.by(sortedBy).descending(); // 엔티티 필드명과 매핑된 컬럼기준 내림차순 정렬
+                Pageable pageable = PageRequest.of(
+                    requestDto.getPage(),   // 요청 페이지 번호
+                    requestDto.getSize(),  // 페이지 크기
+                    sort
+                );
 
-        ArrayNode out = om.createArrayNode();
+                Page<PrincipalGuarantee> pageResult = principalRepo.findAll(pageable);
+                List<String> productIdList = pageResult.getContent().stream().map(e -> e.getProductId()).toList();
+                
+                List<PrincipalDocument> docList = principalDocumentRepo.findByPrincipal_ProductIdIn(productIdList);
+                List<FileUrlDto> urlResult = docList.stream()
+                	    .map(e -> {
+                	        PrincipalGuarantee principal = e.getPrincipal();
+                	        return FileUrlDto.builder()
+                	                .docType(e.getDocType())
+                	                .fileUrl(e.getFileUrl())
+                	                .prodId(principal.getProductId())
+                	                .prodName(principal.getBankName() + " " + principal.getProductName() + " " + principal.getMaturityYears())
+                	                .build();
+                	    })
+                	    .toList();
+                
+                response = mapper.valueToTree(new ProductResponseDto<PrincipalGuarantee>(pageResult,urlResult));  
+            } else {
+            	final Integer riskGradeNum = requestDto.getRiskGradeNum();
+            	final String periodCode = requestDto.getPeriodCode();
+                Pageable pageable = PageRequest.of(
+                        requestDto.getPage(),   // 요청 페이지 번호
+                        requestDto.getSize()  // 페이지 크기
+                );
 
-        switch (category) {
-            case "FUND":
-            case "ETF":
-            case "TDF": {
-                // ★ 오직 fund_master.category 로만 구분
-                List<FundMaster> list;
-                if (qRaw.isEmpty()) {
-                    list = fundRepo.findByCategoryIgnoreCase(category);
-                } else {
-                    // 이름/코드 결과를 병합하여 productId 기준 중복 제거
-                    List<FundMaster> byName = fundRepo
-                            .findByCategoryIgnoreCaseAndProductNameContainingIgnoreCase(category, qRaw);
-                    List<FundMaster> byId = fundRepo
-                            .findByCategoryIgnoreCaseAndProductIdContainingIgnoreCase(category, qRaw);
-                    list = mergeByIdAndSortByName(byName, byId);
-                }
+                Page<FundMaster> pageResult =
+                	    fundRepo.findByCategoryAndRiskGradeNumAndPeriodCodeOrderByFundReturnDesc(
+                	        category, riskGradeNum, periodCode, pageable);
+                
+                System.out.println("FundMaster page result size: " + pageResult.getContent().size());
+            	Page<FundCumulativeDto> dtoPage = pageResult.map(fund -> {
+            	    CumulativePerformance latest = fund.getCumulativePerformances().stream()
+            	        .filter(cp -> periodCode.equals(cp.getPeriodCode()))
+            	        .max(Comparator.comparing(CumulativePerformance::getReferenceDate))
+            	        .orElse(null);
 
-                for (FundMaster f : list) {
-                    out.add(om.createObjectNode()
-                            .put("productId",   f.getProductId())
-                            .put("productName", f.getProductName())
-                            .put("category",    category));
-                }
-                break;
+            	    return FundCumulativeDto.builder()
+            	        .productId(fund.getProductId())
+            	        .productName(fund.getProductName())
+            	        .riskGradeNum(fund.getRiskGradeNum())
+            	        .riskGradeText(fund.getRiskGradeText())
+            	        .fundType(fund.getFundType())
+            	        .inceptionDate(fund.getInceptionDate())
+            	        .managementCompany(fund.getManagementCompany())
+            	        .totalExpenseRatio(fund.getTotalExpenseRatio())
+            	        .category(fund.getCategory())
+            	        .periodCode(latest != null ? latest.getPeriodCode() : null)
+            	        .fundReturn(latest != null ? latest.getFundReturn() : null)
+            	        .build();
+            	});
+            	
+            	System.out.println("FundCumulativeDto page result size: " + dtoPage.getContent().size());
+                List<String> productIdList = pageResult.getContent().stream().map(e -> e.getProductId()).toList();
+                List<FundDocument> docList = fundDocumentRepo.findByFund_ProductIdIn(productIdList);
+                List<FileUrlDto> urlResult = docList.stream()
+                	    .map(e -> {
+                	        FundMaster fund = e.getFund();
+                	        return FileUrlDto.builder()
+                	                .docType(e.getDocType())
+                	                .fileUrl(e.getFileUrl())
+                	                .prodId(fund.getProductId())
+                	                .prodName(fund.getProductName())
+                	                .build();
+                	    })
+                	    .toList();
+                response = mapper.valueToTree(new ProductResponseDto<FundCumulativeDto>(dtoPage,urlResult));  
             }
 
-            case "PRINCIPAL": {
-                List<PrincipalGuarantee> list;
-                if (qRaw.isEmpty()) {
-                    // 기존 searchByQ(q="")가 전체 조회였으므로 동일 동작 보장
-                    list = principalRepo.findAll();
-                } else {
-                    List<PrincipalGuarantee> byName = principalRepo.findByProductNameContainingIgnoreCase(qRaw);
-                    List<PrincipalGuarantee> byId   = principalRepo.findByProductIdContainingIgnoreCase(qRaw);
-                    list = mergeByIdAndSortByNamePG(byName, byId);
-                }
-
-                for (PrincipalGuarantee p : list) {
-                    out.add(om.createObjectNode()
-                            .put("productId",   p.getProductId())
-                            .put("productName", p.getProductName())
-                            .put("category",    "PRINCIPAL"));
-                }
-                break;
-            }
-
-            case "CASH":
-                // 현금성은 별도 카탈로그 없음 → 화면에서 '현금성 추가' 버튼 로직으로 처리
-                break;
-
-            default:
-                // 알 수 없는 카테고리 → 빈 배열
-                break;
+        } catch (JsonProcessingException | IllegalArgumentException e) {
+            e.printStackTrace();
         }
-        return out;
-    }
-
-    /** FundMaster 리스트 두 개를 productId 기준으로 병합 + 이름순 정렬 */
-    private static List<FundMaster> mergeByIdAndSortByName(List<FundMaster> a, List<FundMaster> b) {
-        Map<String, FundMaster> merged = new LinkedHashMap<>();
-        if (a != null) a.forEach(f -> merged.putIfAbsent(f.getProductId(), f));
-        if (b != null) b.forEach(f -> merged.putIfAbsent(f.getProductId(), f));
-        return merged.values().stream()
-                .sorted(Comparator.comparing(FundMaster::getProductName,
-                        Comparator.nullsLast(String::compareToIgnoreCase)))
-                .collect(Collectors.toList());
-    }
-
-    /** PrincipalGuarantee 리스트 두 개를 productId 기준으로 병합 + 이름순 정렬 */
-    private static List<PrincipalGuarantee> mergeByIdAndSortByNamePG(
-            List<PrincipalGuarantee> a, List<PrincipalGuarantee> b) {
-        Map<String, PrincipalGuarantee> merged = new LinkedHashMap<>();
-        if (a != null) a.forEach(p -> merged.putIfAbsent(p.getProductId(), p));
-        if (b != null) b.forEach(p -> merged.putIfAbsent(p.getProductId(), p));
-        return merged.values().stream()
-                .sorted(Comparator.comparing(PrincipalGuarantee::getProductName,
-                        Comparator.nullsLast(String::compareToIgnoreCase)))
-                .collect(Collectors.toList());
+        return response;
     }
 }

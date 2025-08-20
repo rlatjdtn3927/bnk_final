@@ -95,6 +95,7 @@ public class DcContributionService {
                 .build();
 
         long totalAmount = 0L;
+     // 기존 코드 일부
         for (JsonNode n : itemNodes) {
             String ssn   = text(n, "ssn");
             long amount  = parseLong(text(n, "amount"));
@@ -103,9 +104,23 @@ public class DcContributionService {
             totalAmount += money;
 
             DcMember member = null;
-            if (!ssn.isBlank()) {
-                String enc = cryptoService.encrypt(ssn);
-                member = dcMemberRepo.findByRrn(enc).orElse(null);
+            if (ssn != null && !ssn.isBlank()) {
+
+                // ① 숫자 13자리로 정규화
+                String d13 = normalizeDigits13(ssn);
+
+                if (d13 != null && !d13.isBlank()) {
+                    // ② 표준(하이픈 없음) 암호문으로 1차 조회
+                    String encStd = cryptoService.encrypt(d13);
+                    member = dcMemberRepo.findByRrn(encStd).orElse(null);
+
+                    // ③ 레거시(하이픈 포함 저장)까지 커버하려면 듀얼 조회
+                    if (member == null) {
+                        String legacy = d13.substring(0, 6) + "-" + d13.substring(6);
+                        String encLegacy = cryptoService.encrypt(legacy);
+                        member = dcMemberRepo.findByRrn(encLegacy).orElse(null);
+                    }
+                }
             }
 
             DcContributionItem item = DcContributionItem.builder()
@@ -114,6 +129,7 @@ public class DcContributionService {
                     .build();
             batch.addItem(item);
         }
+
 
         batch.setTotalRecords(batch.getItems().size());
         batch.setTotalAmount(totalAmount);
@@ -162,12 +178,12 @@ public class DcContributionService {
                     errorMessage = "해당 회사 소속 회원이 아닙니다.";
                 }
 
-                // (DC-deposit-01) DC 계좌 보유/활성 검증
+                // DC 계좌 보유/활성 검증
                 if (errorMessage == null && !accountActiveMap.getOrDefault(m.getId(), false)) {
                     errorMessage = "DC 계좌가 없거나 비활성 상태입니다.";
                 }
 
-                // (DC-deposit-02) 재직 상태 검증
+                // 재직 상태 검증
                 if (errorMessage == null) {
                     String status = statusMap.getOrDefault(m.getId(), "UNKNOWN");
                     if (!("재직".equals(status) || "ACTIVE".equalsIgnoreCase(status))) {
@@ -175,27 +191,30 @@ public class DcContributionService {
                     }
                 }
 
-                // 납입금액 "최소금액" 검증 (연간임금총액 1/12 이상)
+             // 월 최소 납입금액 = floor(annualSalary / 144)
                 if (errorMessage == null) {
                     long annualSalary = annualSalaryMap.getOrDefault(m.getId(), 0L);
                     if (annualSalary <= 0) {
                         errorMessage = "연간임금총액(annualSalary)이 설정되지 않았습니다.";
                     } else {
-                        // 최소금액: 연봉/12 (정수 나눗셈의 올림 효과를 위해 +11)
-                        long minimumAmount = (annualSalary + 11) / 12;
+                        long monthlyMin = annualSalary / 144; // 내림
                         long amount = Optional.ofNullable(it.getAmount()).orElse(0L);
 
-                        if (amount < minimumAmount) { // 납입금액이 최소금액보다 적은지 검사
-                            errorMessage = "최소 납입금액 미만입니다. (최소: " + String.format("%,d", minimumAmount) + "원)";
+                        if (amount < monthlyMin) {
+                            errorMessage = "월 최소 납입금액 미만입니다. (최소: " 
+                                         + String.format("%,d", monthlyMin) + "원)";
                         }
                     }
                 }
-                
+
                 // 금액 > 0 검증
                 if (errorMessage == null && (it.getAmount() == null || it.getAmount() <= 0)) {
                     errorMessage = "납입금액은 0보다 커야 합니다.";
                 }
             }
+
+        
+
 
 
             // 검증 결과에 따라 상태 설정
@@ -489,4 +508,15 @@ public class DcContributionService {
         if (s.isEmpty() || "-".equals(s)) return 0L;
         try { return Long.parseLong(s); } catch (NumberFormatException e) { return 0L; }
     }
+    
+    // 유틸: 서비스 내부 private 메서드로 추가
+    private String normalizeDigits13(String rrnRaw) {
+        if (rrnRaw == null) return null;
+        String d = rrnRaw.replaceAll("[^0-9]", "").trim();
+        if (!d.isEmpty() && d.length() != 13) {
+            throw new IllegalArgumentException("잘못된 주민등록번호 형식: " + rrnRaw);
+        }
+        return d;
+    }
+
 }

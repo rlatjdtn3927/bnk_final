@@ -21,11 +21,19 @@ public class BankAccountService {
 	public BankAccount getUserAccounts(Long userId){
 		return bankRepository.findByUserId(userId).orElseThrow();
 	}
-	
+	/*
 	@Transactional(readOnly = true)
     public BigDecimal getAccountBalance(String acctNo) {
         BankAccount acct = bankRepository.findById(acctNo).orElseThrow();
         return acct.getBalance();
+    }
+	*/
+	// 보안 검증 + 잔액 조회 (엔티티로)
+    @Transactional(readOnly = true)
+    public BigDecimal getBalanceForUser(String acctNo, Long userId) {
+        return bankRepository.findByAcctNoAndUserId(acctNo, userId)
+                .map(BankAccount::getBalance)
+                .orElseThrow(() -> new IllegalArgumentException("계좌를 찾을 수 없습니다."));
     }
 	
 	/** 출금계좌 비밀번호 검증: 계좌가 로그인(또는 join의) 사용자 소유인지 + 비번 일치 확인 */
