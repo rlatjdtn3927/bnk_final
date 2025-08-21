@@ -1,9 +1,12 @@
 package com.example.memo.rule.repository;
 
 import java.util.List;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 import com.example.memo.rule.entity.ProfileHistory;
 
 public interface ProfileHistoryRepository extends JpaRepository<ProfileHistory, Long> {
@@ -16,7 +19,7 @@ public interface ProfileHistoryRepository extends JpaRepository<ProfileHistory, 
            where h.userId = :userId
            order by h.analyzedAt desc
            """)
-    List<Object[]> findLatestTypeNameAndIdByUserId(Long userId, Pageable pageable);
+    List<Object[]> findLatestTypeNameAndIdByUserId(@Param("userId")Long userId, Pageable pageable);
 
     /* analyzedAt이 없다면 증가형 PK 역정렬 대안
     @Query("""

@@ -16,5 +16,4 @@ import lombok.Setter;
 public class TcpMessage {
     private Command command;
     private JsonNode data;
-    
 }

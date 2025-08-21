@@ -121,5 +121,11 @@ public enum Command {
     ACCOUNT_GET_DC_LIST_BY_USER,   // userId -> DC 계좌 N건
 
     // 최신 투자성향(신규) : profile_history ↔ profile_type
-    PROFILE_GET_LATEST_TYPE_BY_USER
+    PROFILE_GET_LATEST_TYPE_BY_USER,
+    
+    
+	/*****************************보유상품 변경 관련 명령어*****************************/
+	CHANGE_UPDATE_PRODUCT, //매수 상품, 매도 상품 거래원장반영 + fund_holdings 수정
+	CHANGE_GET_HOLDINGS, //fund_holdings + 원리금보장상품 원장 조회
+	/*****************************보유상품 변경 관련 명령어*****************************/
 }
