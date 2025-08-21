@@ -5,7 +5,7 @@ import java.util.Map;
 
 import org.springframework.stereotype.Component;
 
-import com.example.memo.purchase.reserve.dto.response.CurrentRetainDto;
+import com.example.memo.purchase.common.dto.CurrentRetainDto;
 import com.example.memo.purchase.reserve.service.BuyPlanService;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpMessageHandler;

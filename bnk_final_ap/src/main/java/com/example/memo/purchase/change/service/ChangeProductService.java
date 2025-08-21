@@ -11,7 +11,7 @@ import com.example.memo.jpa.entity.ledger.PrincipalLedger;
 import com.example.memo.jpa.entity.purchase.commodity.FundMaster;
 import com.example.memo.jpa.repository.ledger.FundHoldingsRepository;
 import com.example.memo.jpa.repository.ledger.PrincipalLedgerRepository;
-import com.example.memo.purchase.change.dto.request.RetainHoldingsDto;
+import com.example.memo.purchase.change.dto.request.RequestRetainHoldingsDto;
 import com.example.memo.purchase.change.dto.response.FundHoldingsDto;
 import com.example.memo.purchase.change.dto.response.PrincipalLedgerDto;
 import com.example.memo.purchase.change.dto.response.ResponseAccountHoldingsDto;
@@ -33,7 +33,7 @@ public class ChangeProductService {
 	@Transactional
 	public ResponseAccountHoldingsDto getHoldings(JsonNode data) {
 		try {
-			RetainHoldingsDto dto = mapper.treeToValue(data, RetainHoldingsDto.class);
+			RequestRetainHoldingsDto dto = mapper.treeToValue(data, RequestRetainHoldingsDto.class);
 			String accountType = dto.getAccountType();
 			String accountId = dto.getAccountId();
 			List<FundHoldings> fundHoldingsList = null;

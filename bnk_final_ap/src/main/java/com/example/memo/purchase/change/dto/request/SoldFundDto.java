@@ -1,4 +1,5 @@
 package com.example.memo.purchase.change.dto.request;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import lombok.AllArgsConstructor;
@@ -13,7 +14,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class RetainHoldingsDto {
-	private String accountType;
-	private String accountId;
+public class SoldFundDto {
+	private String prodId;
+	private Integer ratio;
 }

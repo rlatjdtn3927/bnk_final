@@ -1,4 +1,4 @@
-package com.example.memo.purchase.reserve.dto.response;
+package com.example.memo.purchase.common.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

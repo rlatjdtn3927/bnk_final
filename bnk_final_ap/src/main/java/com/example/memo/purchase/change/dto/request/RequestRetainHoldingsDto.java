@@ -1,10 +1,4 @@
-package com.example.memo.purchase.reserve.dto.response;
-
-import java.util.List;
-
-import org.springframework.data.domain.Page;
-
-import com.example.memo.purchase.common.dto.FileUrlDto;
+package com.example.memo.purchase.change.dto.request;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import lombok.AllArgsConstructor;
@@ -19,7 +13,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ProductResponseDto<T> {
-	private Page<T> resultList;
-	private List<FileUrlDto> fileUrlList;
+public class RequestRetainHoldingsDto {
+	private String accountType;
+	private String accountId;
 }
