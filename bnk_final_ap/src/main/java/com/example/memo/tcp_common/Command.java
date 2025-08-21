@@ -86,6 +86,7 @@ public enum Command {
     DO_HISTORY,               // DefaultOptionHandler: 디폴트옵션 변경 이력
     ACCOUNT_OVERVIEW_GET, // ✅ Step1 계좌목록
     BUY_PLAN_CURRENT_LIST_GET, //매수예정상품의 경우 변경 전 내역 보여주기
+    
     /*관리자 크롤링 데이터 관련 명령어*/
     ADMIN_CRAWL_GRANT_FILE_DOWNLOAD,
     ADMIN_CRAWL_CHECK_FILE_TASK,
@@ -109,4 +110,11 @@ public enum Command {
 
     // 최신 투자성향(신규) : profile_history ↔ profile_type
     PROFILE_GET_LATEST_TYPE_BY_USER
+	
+	
+	/*****************************보유상품 변경 관련 명령어*****************************/
+	CHANGE_UPDATE_PRODUCT, //매수 상품, 매도 상품 거래원장반영 + fund_holdings 수정
+	CHANGE_GET_HOLDINGS, //fund_holdings + 원리금보장상품 원장 조회
+	/*****************************보유상품 변경 관련 명령어*****************************/
+	
 }
