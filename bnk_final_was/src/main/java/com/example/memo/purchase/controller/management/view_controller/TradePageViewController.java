@@ -36,8 +36,13 @@ public class TradePageViewController {
     @GetMapping("/step1")
     public String step1(HttpSession session) {
         Long userId = (Long) session.getAttribute("LOGIN_USER_ID");
-        if(userId == null) {
-        	return "redirect:/login-view/main";
+        if (userId == null) {
+            return "redirect:/login-view/main";
+        }
+
+        // ★ 없으면 새로 만들어 세션에 넣어둠 (방어)
+        if (session.getAttribute("ReserveValueDto") == null) {
+            session.setAttribute("ReserveValueDto", new ReserveValueDto());
         }
 
         JsonNode req = om.createObjectNode().put("userId", userId);
@@ -60,6 +65,7 @@ public class TradePageViewController {
         session.setAttribute("dcAccounts", dcAccounts);
         session.setAttribute("hasIrp", irpAcctNo != null);
         session.setAttribute("hasDc", !dcAccounts.isEmpty());
+
         return "purchase/trade/step1";
     }
 
@@ -69,11 +75,14 @@ public class TradePageViewController {
                             @RequestParam("accountId")   String accountId,
                             HttpSession session) {
 
+        // ★ 세션에서 DTO를 꺼내고, 없으면 생성(방어)
         ReserveValueDto dto = (ReserveValueDto) session.getAttribute("ReserveValueDto");
+        if (dto == null) dto = new ReserveValueDto();
+
         dto.setAccountType(accountType); // IRP | DC
         dto.setAccountId(accountId);     // irp_acct_no | account_no
         session.setAttribute("ReserveValueDto", dto);
-        
+
         return "redirect:/survey-view";   // 투자성향분석 화면(타 팀 구현)
     }
 
