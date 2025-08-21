@@ -7,28 +7,29 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.memo.irp.dto.AccountContractResult;
+import com.example.memo.irp.dto.InitOpenResponse;
 import com.example.memo.irp.dto.JoinSummaryResult;
-import com.example.memo.irp.util.AccountNumberGenerator;
-import com.example.memo.irp.util.ContractNumberGenerator;
+//import com.example.memo.irp.util.AccountNumberGenerator;
+//import com.example.memo.irp.util.ContractNumberGenerator;
 import com.example.memo.jpa.entity.irp.BankAccount;
 import com.example.memo.jpa.entity.irp.IrpAccount;
 import com.example.memo.jpa.entity.irp.IrpJoinEntity;
 import com.example.memo.jpa.entity.irp.IrpRetirePurpose;
 import com.example.memo.jpa.entity.irp.IrpTaxPurpose;
-import com.example.memo.jpa.entity.irp.TestUserEntity;
+import com.example.memo.jpa.entity.user.UserEntity;
 import com.example.memo.jpa.repository.irp.BankAccountRepository;
 import com.example.memo.jpa.repository.irp.IrpAccountRepository;
 import com.example.memo.jpa.repository.irp.IrpJoinRepository;
 import com.example.memo.jpa.repository.irp.IrpRetireRepository;
 import com.example.memo.jpa.repository.irp.IrpTaxRepository;
-import com.example.memo.jpa.repository.irp.TestUserRepository;
+import com.example.memo.jpa.repository.user.UserRepository;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class IrpJoinService {
 
     private final BankAccountService bankAccountService;
@@ -38,10 +39,10 @@ public class IrpJoinService {
 	private final IrpRetireRepository retireRepository;
 	private final IrpAccountRepository irpAccountRepository;
     private final BankAccountRepository bankRepository;
-    private final TestUserRepository userRepository;
+    private final UserRepository userRepository;
     
-    private final AccountNumberGenerator accountNumberGenerator; // 커스텀 유틸
-    private final ContractNumberGenerator contractNumberGenerator;
+//    private final AccountNumberGenerator accountNumberGenerator; // 커스텀 유틸
+//    private final ContractNumberGenerator contractNumberGenerator;
 	
     @Transactional
     public IrpJoinEntity findByIdOrThrow(Long joinId) {
@@ -56,9 +57,9 @@ public class IrpJoinService {
 	//step1 : 가입목적 선택(userId, joinPurpose만 저장)
 	@Transactional
     public Long createDraft(Long userId, String joinPurpose) {
-        TestUserEntity user = userRepository.findById(userId).orElseThrow();
+        UserEntity user = userRepository.findById(userId).orElseThrow();
         IrpJoinEntity join = IrpJoinEntity.builder()
-                .userId(user)
+                .user(user)
                 .joinPurpose(joinPurpose)
                 .build();
         return joinRepository.save(join).getJoinId();
@@ -98,7 +99,7 @@ public class IrpJoinService {
         IrpJoinEntity join = joinRepository.findById(joinId).orElseThrow();
         
         //1) 계좌 비번 검증 (계좌 소유자 = join.userId)
-        Long userId = join.getUserId().getUserId();
+        Long userId = join.getUser().getUserId();
         bankAccountService.verifyOrThrow(acctNo, userId, acctPwd);	// 비밀번호 틀리면 즉시 예외 → 저장 차단
         
         //2) 계좌 엔티티 로드 (userId로 출금계좌 찾기)
@@ -156,61 +157,61 @@ public class IrpJoinService {
 	    );
 	}
 	
-	// ✅ step5 진입 시: 계약번호/계좌번호만 먼저 생성 (비번은 아직 X)
+	// 오라클 EM만 사용 (프로젝트에 oracleEmf가 있으면 unitName 지정, 없으면 기본 @PersistenceContext만)
+    @PersistenceContext(unitName = "oracleEmf")
+    private EntityManager em;
+
+    /** 오라클에서 계약번호: IRP + YYYYMMDD + 5자리 */
+    private String nextContractNo() {
+        Object v = em.createNativeQuery(
+            "SELECT 'IRP' || TO_CHAR(SYSDATE,'YYYYMMDD') || LPAD(IRP_CONTRACT_NO_SEQ.NEXTVAL, 5, '0') FROM DUAL"
+        ).getSingleResult();
+        return v.toString();
+    }
+
+    /** 오라클에서 계좌번호: YYYYMMDD + 5자리 */
+    private String nextIrpAcctNo() {
+        Object v = em.createNativeQuery(
+            "SELECT TO_CHAR(SYSDATE,'YYYYMMDD') || LPAD(IRP_ACCT_NO_SEQ.NEXTVAL, 5, '0') FROM DUAL"
+        ).getSingleResult();
+        return v.toString();
+    }
+	
+	// step5: 계약번호/계좌번호만 먼저 생성 (비번은 아직 X)
     @Transactional
-    public AccountContractResult initOpen(Long joinId) {
-    	AccountContractResult.AccountContractResultBuilder b = AccountContractResult.builder().joinId(joinId);
-    	try {
-    		
-    		IrpJoinEntity join = joinRepository.findById(joinId)
-    				.orElseThrow(() -> new IllegalArgumentException("가입건 없음: " + joinId));
-    		
-    		//requireContractReady(join); // step3 완료 등 사전조건 확인
-    		
-    		// 선행조건 체크: 예외 대신 false/코드로 처리
-    		if (!isContractReady(join)) {
-    			// 표식만 반환 (핸들러는 이 값으로 JSON 만들 수 있음)
-    			return b.build(); // contractNo/irpAcctNo 미세팅
-    		}
-    		
-    		// 계약번호 없으면 생성
-    		String contractNo = (join.getContractNo() == null)
-    				? contractNumberGenerator.next()
-    						: join.getContractNo();
-    		join.setContractNo(contractNo);
-    		
-    		// 계좌 없으면 발급(PENDING/INACTIVE), 비번은 아직 null
-    		IrpAccount acct = (join.getIrpAccount() != null) ? join.getIrpAccount() : new IrpAccount();
-    		if (acct.getIrpAcctNo() == null) {
-    			acct.setIrpAcctNo(accountNumberGenerator.next());
-    		}
-    		acct.setUser(join.getUserId());
-    		acct.setContractNo(contractNo);
-    		if (acct.getStatus() == null || "ACTIVE".equals(acct.getStatus())) {
-    			acct.setStatus("PENDING"); // ← 최종 완료 전 상태
-    		}
-    		// ❗ irpPwd는 아직 설정하지 않음 (null 허용 필요)
-    		
-    		irpAccountRepository.save(acct);
-    		
-    		join.setIrpAccount(acct);
-    		joinRepository.save(join);
-    		
-    		return b.irpAcctNo(acct.getIrpAcctNo())
-                    .contractNo(contractNo)
-                    .build();
-    	}catch (Exception e) {
-            // ★ 어떤 예외도 밖으로 던지지 않음: AP는 항상 응답을 만들 수 있다
-            // (로그만 남기고 빈 결과 반환)
-            log.error("initOpen failed: {}", e.getMessage(), e);
-            return b.build();
+    public InitOpenResponse initOpen(Long joinId) {
+    	IrpJoinEntity join = joinRepository.findById(joinId)
+    	        .orElseThrow(() -> new IllegalArgumentException("가입건 없음: " + joinId));
+    	
+    	// 계약번호 없으면 새로 생성
+    	if (join.getContractNo() == null || join.getContractNo().isBlank()) {
+            join.setContractNo(nextContractNo());      // 오라클 시퀀스 호출
         }
+        
+        // 계좌 없으면 새로 생성
+    	IrpAccount acct = (join.getIrpAccount() != null) ? join.getIrpAccount() : new IrpAccount();
+        if (acct.getIrpAcctNo() == null || acct.getIrpAcctNo().isBlank()) {
+            acct.setIrpAcctNo(nextIrpAcctNo());        // 오라클 시퀀스 호출
+        }
+        acct.setUser(join.getUser());
+        acct.setContractNo(join.getContractNo());
+        if (acct.getStatus() == null) {
+            acct.setStatus("PENDING");
+        }
+        
+        acct = irpAccountRepository.save(acct);
+        
+        join.setIrpAccount(acct);
+        
+        joinRepository.save(join);
+        em.flush();
+        
+        return new InitOpenResponse(join.getContractNo(), acct.getIrpAcctNo());
     }
 	
 	//step5(최종완료):비밀번호 설정 + ACTIVE 
 	@Transactional
 	public AccountContractResult completeJoinAndOpenIrpAccount(Long joinId, String irpPwd) {
-		// (선택) 동시성 제어: for update 로딩 또는 @Version 사용 권장
 	    IrpJoinEntity join = joinRepository.findById(joinId)
 	        .orElseThrow(() -> new IllegalArgumentException("가입건 없음: " + joinId));
 
@@ -222,10 +223,7 @@ public class IrpJoinService {
 	    }
 
 	    IrpAccount acct = join.getIrpAccount();
-	    if (acct == null) {
-	        // initOpen 안 거치고 바로 complete 호출한 경우
-	        throw new IllegalStateException("INIT_REQUIRED"); // 428 매핑 권장
-	    }
+	    if (acct == null) throw new IllegalStateException("INIT_REQUIRED");
 
 	    // 멱등 처리: 이미 활성화면 그대로 반환
 	    if ("ACTIVE".equals(acct.getStatus())) {
@@ -238,16 +236,22 @@ public class IrpJoinService {
 
 	    // PENDING -> ACTIVE 전환
 	    if (!"PENDING".equals(acct.getStatus())) {
-	        // 비정상 상태 보호(정책에 맞게 409/422 등)
 	        throw new IllegalStateException("INVALID_STATE");
 	    }
+	    
+	    // 여기서 신규 납입금액을 IRP 계좌에 ‘한 번만’ 반영
+	    Long newAmt = join.getNewContribAmt();                 // step3에서 저장해둔 금액
+	    if (newAmt != null && newAmt > 0) {
+	        BigDecimal add = BigDecimal.valueOf(newAmt);
+	        if (acct.getBalance() == null) acct.setBalance(BigDecimal.ZERO);
+	        acct.setBalance(acct.getBalance().add(add));
+	    }
 
-	    // 운영 환경에서는 반드시 해시/솔트 저장
+	    // 비번 설정 + 활성화
 	    acct.setIrpPwd(irpPwd);
 	    acct.setStatus("ACTIVE");
 	    irpAccountRepository.save(acct);
 
-	    // (join은 관계만 유지되면 save 생략 가능. 필요 시 save)
 	    joinRepository.save(join);
 
 	    return AccountContractResult.builder()

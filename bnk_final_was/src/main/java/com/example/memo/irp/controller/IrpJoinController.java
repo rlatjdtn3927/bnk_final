@@ -46,11 +46,18 @@ public class IrpJoinController {
 	}
 	//step1 - 가입목적 선택
 	@PostMapping("/join/draft")
-    public ResponseEntity<?> createDraft(@RequestBody DraftJoinDto dto) {
+    public ResponseEntity<?> createDraft(@RequestBody DraftJoinDto dto, HttpSession session) {
 		System.out.println("dto: " + dto);
+		
+		Long userId = (Long) session.getAttribute("userId"); // 로그인 시 저장된 userId
+	    if (userId == null) {
+	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+	    }
+		
 		ObjectNode node = mapper.createObjectNode()
-                .put("userId", dto.getUserId())
+                .put("userId", userId)
                 .put("joinPurpose", dto.getJoinPurpose());
+		
         return sendAndWrap(Command.IRP_JOIN_CREATE_DRAFT, node, "IRP_JOIN_CREATE_DRAFT");
 	}
 	

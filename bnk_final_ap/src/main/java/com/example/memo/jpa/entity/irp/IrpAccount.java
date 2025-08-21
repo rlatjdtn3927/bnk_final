@@ -2,6 +2,8 @@ package com.example.memo.jpa.entity.irp;
 
 import java.math.BigDecimal;
 
+import com.example.memo.jpa.entity.user.UserEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -29,7 +31,7 @@ public class IrpAccount {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable=false)
-    private TestUserEntity user;
+    private UserEntity user;
 
     @Column(precision = 18, scale = 0)
     private BigDecimal balance;

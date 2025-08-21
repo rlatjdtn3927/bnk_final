@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import org.springframework.stereotype.Component;
 
 import com.example.memo.irp.dto.AccountContractResult;
+import com.example.memo.irp.dto.InitOpenResponse;
 import com.example.memo.irp.dto.JoinSummaryResult;
 import com.example.memo.irp.service.IrpJoinService;
 import com.example.memo.jpa.entity.irp.IrpJoinEntity;
@@ -147,29 +148,58 @@ public class IrpJoinHandler implements TcpMessageHandler {
 		        return res;
 			}
 			case IRP_JOIN_INIT_OPEN: { // Step5 진입: 계약/계좌 번호만 사전 생성
-			    Long joinId = data.get("joinId").asLong();
-			    AccountContractResult r = joinService.initOpen(joinId);
+				try {
+			        Long joinId = requireLong(data, "joinId");
 
-			    ObjectNode res = mapper.createObjectNode();
-			    res.put("ok", true);
-			    res.put("joinId", r.getJoinId());
-			    res.put("irpAcctNo", r.getIrpAcctNo());
-			    res.put("contractNo", r.getContractNo());
-			    return res;
+			        // 서비스가 계약/계좌번호를 생성하고 DTO로 반환
+			        InitOpenResponse r = joinService.initOpen(joinId);
+
+			        ObjectNode res = mapper.createObjectNode();
+			        res.put("ok", true);
+			        res.put("joinId", joinId);
+			        res.put("irpAcctNo", r.getIrpAcctNo());        // DTO의 계좌번호
+			        res.put("contractNo", r.getContractNo());   // DTO의 계약번호
+			        return res;
+
+			    } catch (IllegalArgumentException | IllegalStateException e) {
+			        ObjectNode err = mapper.createObjectNode();
+			        err.put("ok", false);
+			        err.put("error", e.getMessage() == null ? "BAD_REQUEST" : e.getMessage());
+			        return err;
+			    } catch (Exception e) {
+			        ObjectNode err = mapper.createObjectNode();
+			        err.put("ok", false);
+			        err.put("error", "AP_INTERNAL_ERROR");
+			        return err;
+			    }
 			}
 			
 			case IRP_JOIN_COMPLETE: { // Step5: (기존) 최종 완료: 비번 설정 + ACTIVE
-				Long joinId = data.get("joinId").asLong();
-		        String irpPwd = data.path("irpPwd").asText(); // 4자리 숫자
+				try {
+			        Long joinId = requireLong(data, "joinId");
+			        String irpPwd = data.path("irpPwd").asText(); // 4자리 숫자
 
-		        AccountContractResult result = joinService.completeJoinAndOpenIrpAccount(joinId, irpPwd);
-                
-                ObjectNode res = mapper.createObjectNode();
-                res.put("ok", true);
-                res.put("joinId", joinId);
-                res.put("irpAcctNo", result.getIrpAcctNo());
-                res.put("contractNo", result.getContractNo());
-                return res;
+			        AccountContractResult result =
+			                joinService.completeJoinAndOpenIrpAccount(joinId, irpPwd);
+
+			        ObjectNode res = mapper.createObjectNode();
+			        res.put("ok", true);
+			        res.put("joinId", joinId);
+			        res.put("irpAcctNo", result.getIrpAcctNo());
+			        res.put("contractNo", result.getContractNo());
+			        return res;
+
+			    } catch (IllegalArgumentException | IllegalStateException e) {
+			        ObjectNode err = mapper.createObjectNode();
+			        err.put("ok", false);
+			        err.put("error", e.getMessage() == null ? "BAD_REQUEST" : e.getMessage());
+			        return err;
+			    } catch (Exception e) {
+			        ObjectNode err = mapper.createObjectNode();
+			        err.put("ok", false);
+			        err.put("error", "AP_INTERNAL_ERROR");
+			        return err;
+			    }
             }
 			/*
 			case IRP_JOIN_UPDATE_PRODUCT: {		// step4: 상품 저장

@@ -164,4 +164,102 @@ h1{
     font-size:15px;
     padding:12px 0;
   }
+} 
+
+/* 모달 전체 배경 */
+.modal::backdrop {
+  background: rgba(0, 0, 0, 0.4); /* 어두운 반투명 배경 */
+}
+
+/* 모달 박스 */
+.modal {
+  border: none;
+  border-radius: 12px;
+  padding: 0;
+  width: 480px;         /* ✅ section보다 작게 */
+  max-width: 90%;       /* 작은 화면에서는 줄어듦 */
+  margin: auto;         /* 화면 정중앙 배치 */
+}
+
+/* 모달 내부 구조 */
+.modal__inner {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;           /* 가로 배치 */
+  align-items: center;     /* 세로 가운데 정렬 */
+  gap: 20px;               /* 아이콘과 텍스트 간격 */
+  flex-wrap: wrap;
+}
+
+
+/* 아이콘 (SVG나 IMG) */
+.modal__icon-svg,
+.modal__icon {
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0; /* 아이콘 크기 고정 */
+  font-size: 40px; /* 🎉 같은 이모지 쓰는 경우 */
+  margin-bottom: 0;
+}
+
+/* 텍스트 영역 */
+.modal__text, .modal__content {
+  flex: 1;
+  text-align: left; /* 왼쪽 정렬 */
+}
+
+.modal__text h3,
+.modal__title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #1b3a6b;
+  white-space: nowrap;   /* 줄바꿈 방지 */
+}
+
+.modal__text p,
+.modal__desc {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.4;
+  margin-bottom: 16px;
+}
+
+
+.modal__foot {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.modal__foot .btn-primary {
+  background: #b22222;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* 반응형 적용 */
+@media (max-width: 768px) {
+  .modal__text h3 {
+    font-size: 17px;     
+    /* white-space: normal;  작은 화면에서는 줄바꿈 허용 */
+  }
+
+  .modal__text p {
+    font-size: 13px;
+  }
+
+  .modal__inner {
+    flex-direction: column; /* 아이콘 위, 텍스트 아래로 정렬 */
+    align-items: center;
+    text-align: center;
+  }
+
+  .modal__icon-svg,
+  .modal__icon {
+    margin-bottom: 8px;
+  }
 }
