@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.example.memo.purchase.trade_common.dto.PassValueDto;
+import com.example.memo.purchase.trade_common.dto.ReserveValueDto;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpClientService;
 import com.example.memo.tcp_common.TcpMessage;
@@ -45,8 +45,8 @@ public class TradePageViewController {
                             @RequestParam("accountId")   String accountId,
                             HttpSession session) {
 
-        PassValueDto dto = (PassValueDto) session.getAttribute("PassValueDto");
-        if (dto == null) dto = new PassValueDto();
+        ReserveValueDto dto = (ReserveValueDto) session.getAttribute("PassValueDto");
+        if (dto == null) dto = new ReserveValueDto();
         dto.setAccountType(accountType);
         dto.setAccountId(accountId);
         session.setAttribute("PassValueDto", dto);
@@ -66,7 +66,7 @@ public class TradePageViewController {
 
 	/*나중에는 투자성향 분석후 오는 로직으로 바꿔야함. 지금은 하드코딩 테스트용*/
     @PostMapping("/step1/after-risk")
-    public String step2After(@ModelAttribute PassValueDto dto, HttpSession session) {
+    public String step2After(@ModelAttribute ReserveValueDto dto, HttpSession session) {
     	session.setAttribute("PassValueDto", dto);
     	session.setAttribute("userId", 1L);
     	session.setAttribute("userName", "김성수");
@@ -80,7 +80,7 @@ public class TradePageViewController {
 				            @RequestParam(required = false, name = "fileUrlList") String fileUrlListJson,
 				            @RequestParam(required = false, name = "sourceProdId") String legacyPairsJson,
 				            HttpSession session) {
-    	PassValueDto dto = (PassValueDto) session.getAttribute("PassValueDto");
+    	ReserveValueDto dto = (ReserveValueDto) session.getAttribute("PassValueDto");
     	dto.setSourceProdIdList(sourceProdIdListJson);
     	dto.setTargetProdIdList(targetProdIdListJson);
     	dto.setFileUrlList(fileUrlListJson);
@@ -127,7 +127,7 @@ public class TradePageViewController {
     /** Step 4 (서류 확인) */
     @GetMapping("/step4")
     public String step4Page(HttpSession session) {
-        PassValueDto dto = (PassValueDto) session.getAttribute("PassValueDto");
+        ReserveValueDto dto = (ReserveValueDto) session.getAttribute("PassValueDto");
         if (dto == null) {
             return "redirect:/purchase/trade/step3"; // 세션 없으면 다시 step3
         }
@@ -136,7 +136,7 @@ public class TradePageViewController {
     }
 
     @PostMapping("/step4/next")
-    public String step4Next(PassValueDto dto,HttpSession session) {
+    public String step4Next(ReserveValueDto dto,HttpSession session) {
         // 필요 시 세션의 PassValueDto 보강/병합 (여기선 그대로 저장만)
         session.setAttribute("PassValueDto", dto);
         return "redirect:/purchase/trade/step5";
@@ -145,7 +145,7 @@ public class TradePageViewController {
     /** Step5 화면 진입 (세션만 읽음) */
     @GetMapping("/step5")
     public String step5Page(HttpSession session) {
-        PassValueDto dto = (PassValueDto) session.getAttribute("PassValueDto");
+        ReserveValueDto dto = (ReserveValueDto) session.getAttribute("PassValueDto");
         session.setAttribute("PassValueDto", dto);
         return "purchase/trade/step5";
     }

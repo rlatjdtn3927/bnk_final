@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.memo.purchase.reserve.dto.RetainRequestDto;
 import com.example.memo.purchase.reserve.dto.UserInfoDto;
-import com.example.memo.purchase.trade_common.dto.PassValueDto;
+import com.example.memo.purchase.trade_common.dto.ReserveValueDto;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpClientService;
 import com.example.memo.tcp_common.TcpMessage;
@@ -36,7 +36,7 @@ public class ReserveRetainAPIController {
     /** 상단 사용자/계좌 카드용 데이터 */
 	@PostMapping("/user-info")
 	public ResponseEntity<?> userInfo(HttpSession session) {
-	    PassValueDto dto = (PassValueDto) session.getAttribute("PassValueDto");
+	    ReserveValueDto dto = (ReserveValueDto) session.getAttribute("PassValueDto");
 	    String userName = (String) session.getAttribute("userName");
 
 	    // 세션에 값이 없을 때도 NPE 없이 안전하게
