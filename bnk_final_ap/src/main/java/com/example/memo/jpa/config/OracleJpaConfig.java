@@ -63,7 +63,7 @@ public class OracleJpaConfig {
 
         Properties properties = new Properties();
         properties.setProperty("hibernate.dialect", "org.hibernate.dialect.OracleDialect"); // ✅ Oracle용 Dialect
-        properties.setProperty("hibernate.hbm2ddl.auto", "update");                            // schema 자동 갱신
+        properties.setProperty("hibernate.hbm2ddl.auto", "validate");                            // schema 자동 갱신
         emf.setJpaProperties(properties);
 
         return emf;

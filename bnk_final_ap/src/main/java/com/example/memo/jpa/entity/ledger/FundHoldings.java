@@ -36,7 +36,7 @@ public class FundHoldings extends BaseEntity{
     private IrpAccount irpAccount;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "dc_account_id", referencedColumnName = "accountNo", nullable = false)
+    @JoinColumn(name = "dc_account_id", referencedColumnName = "account_no", nullable = false)
     private DcAccount  dcAccount;
 
     @ManyToOne(fetch = FetchType.LAZY)

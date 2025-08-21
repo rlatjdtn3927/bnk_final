@@ -36,8 +36,8 @@ public class ReserveRetainAPIController {
     /** 상단 사용자/계좌 카드용 데이터 */
 	@PostMapping("/user-info")
 	public ResponseEntity<?> userInfo(HttpSession session) {
-	    ReserveValueDto dto = (ReserveValueDto) session.getAttribute("PassValueDto");
-	    String userName = (String) session.getAttribute("userName");
+	    ReserveValueDto dto = (ReserveValueDto) session.getAttribute("ReserveValueDto");
+	    String userName = (String) session.getAttribute("username");
 
 	    // 세션에 값이 없을 때도 NPE 없이 안전하게
 	    if (dto == null) {
@@ -63,7 +63,7 @@ public class ReserveRetainAPIController {
 	    }
 
 	    dto.setRiskGradeNum(riskGradeNum);
-	    session.setAttribute("PassValueDto", dto);
+	    session.setAttribute("ReserveValueDto", dto);
 
 	    UserInfoDto userInfo = UserInfoDto.builder()
 	        .accountId(dto.getAccountId())
@@ -81,7 +81,7 @@ public class ReserveRetainAPIController {
     public ResponseEntity<?> retainList(HttpSession session) {
     	
     	RetainRequestDto dto = new RetainRequestDto();
-    	dto.setUserId((Long)session.getAttribute("userId"));
+    	dto.setUserId((Long)session.getAttribute("LOGIN_USER_ID"));
     	JsonNode msg = mapper.valueToTree(dto);
     	TcpMessage message = new TcpMessage(Command.BUY_PLAN_CURRENT, msg);
     	JsonNode response = tcpClientService.sendMessage(message);

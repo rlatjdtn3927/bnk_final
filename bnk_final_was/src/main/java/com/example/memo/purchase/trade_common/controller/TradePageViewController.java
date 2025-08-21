@@ -36,15 +36,15 @@ public class TradePageViewController {
     @GetMapping("/step1")
     public String step1(HttpSession session) {
         Long userId = (Long) session.getAttribute("LOGIN_USER_ID");
-        if (userId == null) {
-            return "redirect:/login-view/main";
+        if (userId == null) return "redirect:/login-view/main";
+
+        // flow 방어: 엔트리를 안 거쳤다면 엔트리로
+        ReserveValueDto dto = (ReserveValueDto) session.getAttribute("ReserveValueDto");
+        if (dto == null || dto.getFlow() == null || dto.getFlow().isBlank()) {
+            return "redirect:/purchase/trade";
         }
 
-        // ★ 없으면 새로 만들어 세션에 넣어둠 (방어)
-        if (session.getAttribute("ReserveValueDto") == null) {
-            session.setAttribute("ReserveValueDto", new ReserveValueDto());
-        }
-
+        // AP 호출
         JsonNode req = om.createObjectNode().put("userId", userId);
 
         // IRP 1건
@@ -61,6 +61,7 @@ public class TradePageViewController {
             }
         }
 
+        // 세션 저장 (step1.html에서 ${session.*}로 바로 사용)
         session.setAttribute("irpAcctNo", irpAcctNo);
         session.setAttribute("dcAccounts", dcAccounts);
         session.setAttribute("hasIrp", irpAcctNo != null);
@@ -74,16 +75,23 @@ public class TradePageViewController {
     public String step1Next(@RequestParam("accountType") String accountType,
                             @RequestParam("accountId")   String accountId,
                             HttpSession session) {
+        Long userId = (Long) session.getAttribute("LOGIN_USER_ID");
+        if (userId == null) return "redirect:/login-view/main";
 
-        // ★ 세션에서 DTO를 꺼내고, 없으면 생성(방어)
         ReserveValueDto dto = (ReserveValueDto) session.getAttribute("ReserveValueDto");
-        if (dto == null) dto = new ReserveValueDto();
+
+        // 필수값 방어
+        if (accountType == null || accountType.isBlank() ||
+            accountId == null   || accountId.isBlank()) {
+            // 계좌 미선택 시 다시 step1
+            return "redirect:/purchase/trade/step1";
+        }
 
         dto.setAccountType(accountType); // IRP | DC
         dto.setAccountId(accountId);     // irp_acct_no | account_no
         session.setAttribute("ReserveValueDto", dto);
 
-        return "redirect:/survey-view";   // 투자성향분석 화면(타 팀 구현)
+        return "redirect:/survey-view";  // 투자성향분석
     }
 
     /** step2 진입 (세션만 사용; 뷰에서 ${session.PassValueDto.*}로 표시) */
@@ -103,7 +111,6 @@ public class TradePageViewController {
     public String step2Next(@RequestParam(required = false, name = "targetProdIdList") String targetProdIdListJson,
 				            @RequestParam(required = false, name = "sourceProdIdList") String sourceProdIdListJson,
 				            @RequestParam(required = false, name = "fileUrlList") String fileUrlListJson,
-				            @RequestParam(required = false, name = "sourceProdId") String legacyPairsJson,
 				            HttpSession session) {
     	ReserveValueDto dto = (ReserveValueDto) session.getAttribute("ReserveValueDto");
     	dto.setSourceProdIdList(sourceProdIdListJson);
@@ -114,7 +121,6 @@ public class TradePageViewController {
     	System.out.println("TARGETPRODIDLIST: " + targetProdIdListJson);
     	System.out.println("SOURCEPRODIDLIST: " + sourceProdIdListJson);
     	System.out.println("FILEURLLIST: " + fileUrlListJson);
-    	System.out.println("sourceProdId: " + legacyPairsJson);
     	
     	if(fileUrlListJson.equals("[]")) {
     		return "purchase/trade/step5"; // 비교 view
@@ -132,7 +138,6 @@ public class TradePageViewController {
         if (dto == null) dto = new ReserveValueDto();
 
         if (incoming.getTargetProdIdList() != null) dto.setTargetProdIdList(incoming.getTargetProdIdList());
-        if (incoming.getTargetProdId() != null)     dto.setTargetProdId(incoming.getTargetProdId());
         // 필요 시 동의 결과 등을 받는다면 여기서만 반영
 
         session.setAttribute("ReserveValueDto", dto);
