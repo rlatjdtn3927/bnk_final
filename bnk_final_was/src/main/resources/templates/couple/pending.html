@@ -1,66 +1,82 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title>연동 요청 수락</title>
+  <meta charset="UTF-8"/>
+  <title>부부연동 요청 수락</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <style>
+    :root{--bg:#0b1020;--card:#151b2d;--muted:#9aa4b2;--accent:#5dd0ff;--ok:#2ecc71;--warn:#ffb020;--bad:#ff5c5c}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:#e9eef5;font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,'Noto Sans KR',sans-serif}
+    .wrap{max-width:720px;margin:40px auto;padding:0 16px}
+    .card{background:var(--card);border:1px solid #26324e;border-radius:16px;padding:22px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+    .title{font-size:20px;margin:0 0 4px}
+    .sub{color:var(--muted);font-size:13px;margin:0 0 24px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:12px;border:1px solid #2a3656;background:#0f1526;color:#e9eef5;cursor:pointer}
+    .btn.primary{background:linear-gradient(135deg,#2a9df4,#6dd5ff);border:none;color:#0a0f1e;font-weight:700}
+    .btn.secondary{background-color: #f44336; border-color: #f44336;}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .status{margin-top:16px;padding:14px;border-radius:12px;display:none}
+    .status.bad{display:block;background:rgba(255,92,92,.1);border:1px solid rgba(255,92,92,.35);color:#ffdede}
+  </style>
 </head>
 <body>
-    <h2>부부 IRP 연동 요청</h2>
-    <p th:if="${sessionUserId != null}">
-        로그인된 사용자 ID: <span th:text="${sessionUserId}"></span>
-    </p>
+<div class="wrap">
+  <div class="card">
+    <h1 class="title">부부 IRP 연동 요청</h1>
+    <p class="sub" th:text="'로그인된 사용자: ' + (${sessionUserId} != null ? ${sessionUserId} : '로그인 필요')"></p>
+    
     <p><strong>[신청자]</strong> 님으로부터 부부 IRP 연동 요청이 도착했습니다.</p>
     <p>요청을 수락하시겠습니까?</p>
 
-    <div>
-        <button id="accept-btn">수락</button>
-        <button id="reject-btn">거절</button>
+    <div style="display:flex; gap:10px; margin-top: 24px;">
+        <button id="accept-btn" class="btn primary">수락</button>
+        <button id="reject-btn" class="btn secondary">거절</button>
     </div>
-    <div id="result-message" style="margin-top: 15px; font-weight: bold;"></div>
-    <div style="margin-top: 20px;"><a href="/link-view/main">메인으로 돌아가기</a></div>
+    <div id="result-message" class="status"></div>
+  </div>
+</div>
 
-    <script>
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const linkId = urlParams.get('linkId');
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const linkId = urlParams.get('linkId');
+    const acceptBtn = document.getElementById('accept-btn');
+    const rejectBtn = document.getElementById('reject-btn');
+    const resultDiv = document.getElementById('result-message');
+    
+    if (!linkId) {
+        resultDiv.className = 'status bad';
+        resultDiv.textContent = "잘못된 접근입니다. 처리할 연동 요청 정보가 없습니다.";
+        acceptBtn.disabled = true;
+        rejectBtn.disabled = true;
+    } else {
+        acceptBtn.addEventListener('click', () => handleDecision('ACCEPT'));
+        rejectBtn.addEventListener('click', () => handleDecision('REJECT'));
+    }
 
-        const acceptBtn = document.getElementById('accept-btn');
-        const rejectBtn = document.getElementById('reject-btn');
-        const resultDiv = document.getElementById('result-message');
-        
-        // linkId가 없을 경우 버튼 비활성화
-        if (!linkId) {
-            resultDiv.textContent = "잘못된 접근입니다. 처리할 연동 요청 정보가 없습니다.";
-            acceptBtn.disabled = true;
-            rejectBtn.disabled = true;
-        } else {
-            acceptBtn.addEventListener('click', () => handleDecision('ACCEPT'));
-            rejectBtn.addEventListener('click', () => handleDecision('REJECT'));
+    async function handleDecision(action) {
+        acceptBtn.disabled = true;
+        rejectBtn.disabled = true;
+
+        try {
+            const res = await fetch('/link/spouse/decide', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ linkId: Number(linkId), action: action })
+            });
+            const result = await res.json();
+            if (!res.ok || !result.success) throw new Error(result.message || '처리 실패');
+            
+            alert(action === 'ACCEPT' ? '연동을 수락했습니다.' : '연동을 거절했습니다.');
+            window.location.href = '/link-view/main';
+
+        } catch (error) {
+            resultDiv.className = 'status bad';
+            resultDiv.textContent = '오류: ' + error.message;
+            acceptBtn.disabled = false;
+            rejectBtn.disabled = false;
         }
-
-        async function handleDecision(action) {
-            resultDiv.textContent = '처리 중...';
-            try {
-                const response = await fetch('/link/spouse/decide', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ linkId: Number(linkId), action: action })
-                });
-                const result = await response.json();
-
-                if (response.ok && result.success) {
-                    const actionText = action === 'ACCEPT' ? '수락' : '거절';
-                    alert(`연동을 ${actionText}했습니다.`);
-                    window.location.href = '/link-view/main';
-                } else {
-                    resultDiv.style.color = 'red';
-                    resultDiv.textContent = `오류: ${result.message || '알 수 없는 오류'}`;
-                }
-            } catch (error) {
-                resultDiv.style.color = 'red';
-                resultDiv.textContent = '요청에 실패했습니다: ' + error.message;
-            }
-        }
-    </script>
+    }
+</script>
 </body>
 </html>

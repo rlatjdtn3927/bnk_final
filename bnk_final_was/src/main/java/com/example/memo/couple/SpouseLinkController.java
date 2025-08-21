@@ -31,7 +31,7 @@ public class SpouseLinkController {
 
     /**
      * 부부연동 신청 (WAS → AP)
-     * - form-data: spouseName, spouseBirth(yyyy-MM-dd), file(optional)
+     * - form-data: spouseName, spouseBirth(yyyy-MM-dd), file(optional), existingLinkId(optional)
      * - 세션 키: "user" (Long/Integer/String OK)
      */
     @PostMapping(value = "/apply",
@@ -40,7 +40,8 @@ public class SpouseLinkController {
     public ResponseEntity<?> apply(@RequestParam("spouseName") String spouseName,
                                    @RequestParam("spouseBirth") String spouseBirth,
                                    @RequestPart(name = "file", required = false) MultipartFile file,
-                                   HttpServletRequest request,
+                                   // ▼▼▼ 재시도를 위한 파라미터 추가 ▼▼▼
+                                   @RequestParam(name = "existingLinkId", required = false) Long existingLinkId,
                                    HttpSession session) {
         Map<String, Object> body = new HashMap<>();
         try {
@@ -49,7 +50,6 @@ public class SpouseLinkController {
                 body.put("success", false);
                 body.put("code", "BAD_REQUEST");
                 body.put("message", "배우자 이름/생년월일을 입력하세요.");
-                body.put("data", null);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
             }
 
@@ -59,7 +59,6 @@ public class SpouseLinkController {
                 body.put("success", false);
                 body.put("code", "UNAUTHORIZED");
                 body.put("message", "로그인이 필요합니다.");
-                body.put("data", null);
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
             }
             Long applicantUserId;
@@ -71,7 +70,6 @@ public class SpouseLinkController {
                 body.put("success", false);
                 body.put("code", "SESSION_TYPE_ERROR");
                 body.put("message", "세션 사용자 정보 형식 오류");
-                body.put("data", null);
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
             }
 
@@ -81,11 +79,15 @@ public class SpouseLinkController {
             payload.put("spouseName", spouseName);
             payload.put("spouseBirth", spouseBirth);
 
+            // ▼▼▼ existingLinkId가 있으면 payload에 추가 ▼▼▼
+            if (existingLinkId != null) {
+                payload.put("existingLinkId", existingLinkId);
+            }
+
             if (file != null && !file.isEmpty()) {
                 ObjectNode f = objectMapper.createObjectNode();
                 f.put("filename", file.getOriginalFilename());
                 f.put("contentType", file.getContentType());
-                // 한 줄 프로토콜을 위해 개행 없는 Base64
                 f.put("base64", Base64.getEncoder().encodeToString(file.getBytes()));
                 payload.set("file", f);
             }
@@ -94,39 +96,22 @@ public class SpouseLinkController {
             TcpMessage msg = new TcpMessage(Command.SPOUSE_LINK_APPLY, payload);
             JsonNode apRes = tcpClientService.sendMessage(msg);
 
+            // 4) 응답 처리 (AP 응답이 null이거나 에러인 경우)
             if (apRes == null) {
                 body.put("success", false);
                 body.put("code", "AP_UNREACHABLE");
                 body.put("message", "AP 응답 없음");
-                body.put("data", null);
                 return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(body);
             }
 
-            // AP 표준 에러 처리: {"error": true, "message": "..."}
-            if (apRes.has("error") && apRes.get("error").asBoolean()) {
-                body.put("success", false);
-                body.put("code", "AP_ERROR");
-                body.put("message", apRes.has("message") ? apRes.get("message").asText() : "처리 실패");
-                body.put("data", null);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
-            }
-            
-            if (file != null && !file.isEmpty()) {
-                String ct = file.getContentType();
-                String nm = file.getOriginalFilename();
-                boolean isPdf = (ct != null && ct.toLowerCase().contains("pdf"))
-                             || (nm != null && nm.toLowerCase().endsWith(".pdf"));
-                if (!isPdf) {
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
-                        "success", false, "code", "ONLY_PDF",
-                        "message", "PDF 파일만 업로드할 수 있습니다.", "data", null));
-                }
+            // AP 응답이 에러 형식일 경우 그대로 클라이언트에 전달
+            if (apRes.has("success") && !apRes.get("success").asBoolean()) {
+                return ResponseEntity.badRequest().body(apRes);
             }
 
-            // 4) 성공 응답 그대로 래핑하여 반환
+            // 5) 성공 응답 그대로 래핑하여 반환
             body.put("success", true);
             body.put("code", "OK");
-            body.put("message", "신청 완료");
             body.put("data", apRes); // { linkId, status, nextAction, ... }
             return ResponseEntity.ok(body);
 
@@ -134,11 +119,9 @@ public class SpouseLinkController {
             body.put("success", false);
             body.put("code", "INTERNAL_ERROR");
             body.put("message", "신청 처리 중 오류: " + e.getMessage());
-            body.put("data", null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
         }
     }
-    
     
     
     /**
@@ -159,4 +142,48 @@ public class SpouseLinkController {
 
         return ResponseEntity.ok(apResponse);
     }
+    
+    /**
+     * 사용자가 OCR 3회 실패 후 관리자 검토를 직접 요청하는 API
+     * 
+     */
+    @PostMapping(
+    	    value = "/request-admin-review",
+    	    consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+    	    produces = MediaType.APPLICATION_JSON_VALUE
+    	)
+    	public ResponseEntity<?> requestAdminReview(
+    	        @RequestParam("linkId") Long linkId,
+    	        @RequestParam("spouseName") String spouseName,
+    	        @RequestParam("spouseBirth") String spouseBirth,
+    	        @RequestPart("file") MultipartFile file, // 반드시 첨부
+    	        HttpSession session) {
+
+    	    Long userId = (Long) session.getAttribute("user");
+    	    if (userId == null) {
+    	        return ResponseEntity.status(401).build();
+    	    }
+    	    try {
+    	        var payload = objectMapper.createObjectNode();
+    	        payload.put("linkId", linkId);
+    	        payload.put("spouseName", spouseName);
+    	        payload.put("spouseBirth", spouseBirth);
+
+    	        var f = objectMapper.createObjectNode();
+    	        f.put("filename", file.getOriginalFilename());
+    	        f.put("contentType", file.getContentType());
+    	        f.put("base64", Base64.getEncoder().encodeToString(file.getBytes()));
+    	        payload.set("file", f);
+
+    	        TcpMessage message =
+    	            new TcpMessage(Command.SPOUSE_LINK_REQUEST_ADMIN_REVIEW, payload);
+    	        JsonNode apResponse = tcpClientService.sendMessage(message);
+    	        return ResponseEntity.ok(apResponse);
+    	    } catch (Exception e) {
+    	        var err = objectMapper.createObjectNode();
+    	        err.put("success", false).put("code", "INTERNAL_ERROR")
+    	           .put("message", e.getMessage());
+    	        return ResponseEntity.status(500).body(err);
+    	    }
+    	}
 }

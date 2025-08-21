@@ -40,11 +40,13 @@ public class SpouseHandler implements TcpMessageHandler {
                         contentType = f.path("contentType").asText(null);
                         base64      = f.path("base64").asText(null);
                     }
+                    
+                    Long existingLinkId = data.has("existingLinkId") ? data.get("existingLinkId").asLong() : null;
 
                     // 서비스 호출 → ObjectNode 반환 (그대로 리턴)
                     ObjectNode res = spouseLinkService.apply(
                             applicantUserId, spouseName, spouseBirth,
-                            filename, contentType, base64
+                            filename, contentType, base64, existingLinkId
                     );
                     return res;
                 }
@@ -59,6 +61,26 @@ public class SpouseHandler implements TcpMessageHandler {
                             .put("success", true)
                             .put("code", "OK")
                             .set("data", res);
+                }
+                case SPOUSE_LINK_REQUEST_ADMIN_REVIEW: {
+                    Long linkId = data.path("linkId").asLong();
+                    String spouseName  = data.path("spouseName").asText();
+                    String spouseBirth = data.path("spouseBirth").asText();
+
+                    String filename = null, contentType = null, base64 = null;
+                    JsonNode f = data.get("file");
+                    if (f != null && !f.isNull()) {
+                        filename    = f.path("filename").asText(null);
+                        contentType = f.path("contentType").asText(null);
+                        base64      = f.path("base64").asText(null);
+                    }
+
+                    spouseLinkService.requestAdminReview(linkId, spouseName, spouseBirth, filename, contentType, base64);
+
+                    return objectMapper.createObjectNode()
+                            .put("success", true)
+                            .put("code", "OK")
+                            .put("message", "관리자 검토를 요청했습니다.");
                 }
                 default:
                     return "알 수 없는 명령: " + command.name();

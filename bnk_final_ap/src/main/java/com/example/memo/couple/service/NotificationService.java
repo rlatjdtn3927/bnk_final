@@ -48,11 +48,12 @@ public class NotificationService {
      * @return 생성된 알림 엔티티
      */
     @Transactional
-    public Notification createNotification(Long userId, String message, String linkUrl) {
+    public Notification createNotification(Long userId, String message, String linkUrl, Long linkId) {
         Notification noti = new Notification();
         noti.setUserId(userId);
         noti.setMessage(message);
         noti.setLinkUrl(linkUrl);
+        noti.setLinkId(linkId);
         return notificationRepository.save(noti);
     }
     

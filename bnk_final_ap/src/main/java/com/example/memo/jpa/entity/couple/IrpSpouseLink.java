@@ -35,4 +35,7 @@ public class IrpSpouseLink {
     private LocalDate approvedAt;
     @Column(name="unlinked_at") 
     private LocalDate unlinkedAt;
+    
+    @Column(name="ocr_attempt_count", nullable=false)
+    private int ocrAttemptCount = 1;
 }

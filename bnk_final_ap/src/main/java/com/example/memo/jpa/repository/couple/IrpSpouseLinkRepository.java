@@ -17,27 +17,62 @@ import jakarta.persistence.LockModeType;
 @Repository
 public interface IrpSpouseLinkRepository extends JpaRepository<IrpSpouseLink, Long> {
 
-    // 활성(신청/대기/연동) 상태 중 본인이 관련된 링크가 있는지 체크
+    /* ================= 기존 ================= */
+
+    // (기존 existsActiveForUser* 는 아래 2)로 대체 권장)
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT l FROM IrpSpouseLink l WHERE l.id = :id")
+    Optional<IrpSpouseLink> findByIdForUpdate(@Param("id") Long id);
+
+    List<IrpSpouseLink> findByLinkStatusOrderByAppliedAtDesc(LinkStatus status);
+
+
+    /* ================= 추가/수정 ================= */
+
+    // 1) '열린(open)' 상태 집합
+    //    APPLIED, OCR_FAILED(쓰고 있다면), PENDING_ADMIN, PENDING_SPOUSE 만 포함
+    //    - LINKED(완료), REJECTED_* 등 종결 상태는 제외
+    default List<LinkStatus> openStatuses() {
+        return List.of(
+            LinkStatus.APPLIED,
+            LinkStatus.PENDING_ADMIN,
+            LinkStatus.PENDING_SPOUSE
+            // 필요시 OCR_FAILED 상태 쓰면 여기에 추가
+        );
+    }
+
+    // 2) 신청자 기준, 열린 상태의 '최신 1건' (id desc)
+    @Query("""
+        select l from IrpSpouseLink l
+        where l.applicantUserId = :applicantUserId
+          and l.linkStatus in :statuses
+        order by l.id desc
+    """)
+    List<IrpSpouseLink> findOpenByApplicantOrderByIdDesc(
+            @Param("applicantUserId") Long applicantUserId,
+            @Param("statuses") List<LinkStatus> statuses
+    );
+
+    // 편의 default: Optional로 최신 1건만 리턴
+    default Optional<IrpSpouseLink> findLatestOpenByApplicant(Long applicantUserId) {
+        List<IrpSpouseLink> rows = findOpenByApplicantOrderByIdDesc(applicantUserId, openStatuses());
+        return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0));
+    }
+
+    // 3) '진짜 활성(완료된 연동)' 존재 여부만 체크 (신규 생성 차단 용)
     @Query(
       value = """
         SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
           FROM irp_spouse_link l
-         WHERE l.link_status IN ('APPLIED','PENDING_ADMIN','PENDING_SPOUSE','LINKED')
+         WHERE l.link_status = 'LINKED'
            AND (l.applicant_user_id = :userId OR l.spouse_user_id = :userId)
         """,
       nativeQuery = true
     )
-    int existsActiveForUserNative(@Param("userId") Long userId);
+    int existsLinkedForUserNative(@Param("userId") Long userId);
 
-    default boolean existsActiveForUser(Long userId) {
-        return existsActiveForUserNative(userId) > 0;
+    default boolean existsLinkedForUser(Long userId) {
+        return existsLinkedForUserNative(userId) > 0;
     }
-
-    // 경합 방지용 잠금 조회 (필요 시 사용)
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT l FROM IrpSpouseLink l WHERE l.id = :id")
-    Optional<IrpSpouseLink> findByIdForUpdate(@Param("id") Long id);
-    
-    List<IrpSpouseLink> findByLinkStatusOrderByAppliedAtDesc(LinkStatus status);
-
 }

@@ -37,9 +37,12 @@ public class AdminLinkHandler implements TcpMessageHandler {
                 }
                 case ADMIN_SPOUSE_LINK_DECIDE: {
                     long linkId = data.path("linkId").asLong();
-                    String action = data.path("action").asText(null); // APPROVE | REJECT
+                    String action = data.path("action").asText(null);
                     String reason = data.path("reason").asText(null);
+
+                    // 서비스 호출 시, spouseUserId를 파라미터로 추가
                     ObjectNode d = spouseLinkService.adminDecide(linkId, action, reason);
+                    
                     ObjectNode res = om.createObjectNode();
                     res.put("success", true).put("code", "OK").set("data", d);
                     return res;

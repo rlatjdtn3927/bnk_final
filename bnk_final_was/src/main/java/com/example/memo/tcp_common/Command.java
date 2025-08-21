@@ -44,6 +44,7 @@ public enum Command {
     NOTIFICATION_MARK_AS_READ,
     NOTIFICATION_GET_ALL,
     SPOUSE_LINK_DECIDE,
+    SPOUSE_LINK_REQUEST_ADMIN_REVIEW,
     
     /*IRP가입관련*/
     IRP_JOIN_CREATE_DRAFT,      // step1: 초안 생성
