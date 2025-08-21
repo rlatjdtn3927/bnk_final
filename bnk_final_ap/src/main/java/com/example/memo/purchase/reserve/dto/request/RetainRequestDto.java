@@ -1,8 +1,4 @@
-package com.example.memo.purchase.dto.trade;
-
-import java.util.List;
-
-import org.springframework.data.domain.Page;
+package com.example.memo.purchase.reserve.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -18,7 +14,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ProductResponseDto<T> {
-	private Page<T> resultList;
-	private List<FileUrlDto> fileUrlList;
+public class RetainRequestDto {
+	private String productId;
+	private Long userId;
+	private String AllocationRatio;
 }

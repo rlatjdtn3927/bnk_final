@@ -1,4 +1,4 @@
-package com.example.memo.purchase.dto.trade;
+package com.example.memo.purchase.reserve.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 

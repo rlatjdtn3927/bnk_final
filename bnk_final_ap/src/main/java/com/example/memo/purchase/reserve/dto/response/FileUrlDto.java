@@ -1,4 +1,6 @@
-package com.example.memo.purchase.dto.trade;
+package com.example.memo.purchase.reserve.dto.response;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,6 +14,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class FileUrlDto {
 	private String prodId; //상품 id
     private String prodName;     // 상품 이름

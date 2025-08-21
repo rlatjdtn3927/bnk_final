@@ -24,7 +24,11 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "fund_holding")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class FundHoldings extends BaseEntity{
 
     @Id
@@ -32,11 +36,11 @@ public class FundHoldings extends BaseEntity{
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "irp_account_id", nullable = false)
+    @JoinColumn(name = "irp_account_no")
     private IrpAccount irpAccount;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "dc_account_id", referencedColumnName = "accountNo", nullable = false)
+    @JoinColumn(name = "dc_account_id", referencedColumnName = "account_no")
     private DcAccount  dcAccount;
 
     @ManyToOne(fetch = FetchType.LAZY)

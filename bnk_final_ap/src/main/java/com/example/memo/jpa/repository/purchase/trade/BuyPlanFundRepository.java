@@ -10,4 +10,5 @@ import com.example.memo.jpa.entity.user.UserEntity;
 public interface BuyPlanFundRepository extends JpaRepository<BuyPlanFund, Long>{
 	List<BuyPlanFund> findByUserAndIsCurrent(UserEntity user, String isCurrent);
 	List<BuyPlanFund> findByUser_UserIdAndIsCurrent(Long userId, String isCurrent);
+	List<BuyPlanFund> findByFund_ProductIdIn(List<String> prodIdList);
 }

@@ -1,19 +1,15 @@
-package com.example.memo.purchase.reserve.rest_controller;
+package com.example.memo.purchase.change.rest_controller;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.memo.purchase.reserve.dto.RetainRequestDto;
+import com.example.memo.purchase.change.dto.RetainHoldingsDto;
 import com.example.memo.purchase.reserve.dto.UserInfoDto;
 import com.example.memo.purchase.trade_common.dto.ReserveValueDto;
 import com.example.memo.tcp_common.Command;
@@ -24,12 +20,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
-
 @RestController
-@RequestMapping("/retain-api/reserve")
+@RequestMapping("/retain-api/change")
 @RequiredArgsConstructor
-public class ReserveRetainAPIController {
-	
+public class ChangeRetainAPIController {
 	private final TcpClientService tcpClientService;
 	private final ObjectMapper mapper;
 	
@@ -78,82 +72,13 @@ public class ReserveRetainAPIController {
 
     /** 보유/이미 선택된 상품 목록(운용비율 포함) */
 	@PostMapping("/retain")
-    public ResponseEntity<?> retainList(HttpSession session) {
+    public ResponseEntity<?> retainList(@RequestParam String accountType, @RequestParam String accountId) {
     	
-    	RetainRequestDto dto = new RetainRequestDto();
-    	dto.setUserId((Long)session.getAttribute("userId"));
+    	RetainHoldingsDto dto = new RetainHoldingsDto(accountType,accountId);
     	JsonNode msg = mapper.valueToTree(dto);
-    	TcpMessage message = new TcpMessage(Command.BUY_PLAN_CURRENT, msg);
+    	TcpMessage message = new TcpMessage(Command.CHANGE_GET_HOLDINGS, msg);
     	JsonNode response = tcpClientService.sendMessage(message);
-        
+        System.out.println(response.toString()); //여기서 받아온 데이터 형식 확인하십쇼
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
-
-	
 }
-
-
-//@PostMapping("/user-info")
-//public ResponseEntity<?> userInfo() {
-//	Integer riskGradeNum = 0;
-//	switch (riskText) {
-//		case "안정형" : {
-//			riskGradeNum = 2;
-//			break;
-//		}
-//		case "안전추구형": {
-//			riskGradeNum = 3;
-//			break;
-//		}
-//		case "위험중립형": {
-//			riskGradeNum = 4;
-//			break;
-//		}
-//		case "적극투자형": {
-//			riskGradeNum = 5;
-//			break;
-//		}
-//		case "공격투자형" : {
-//			riskGradeNum = 6;
-//			break;
-//		}	
-//	}
-//	UserInfoDto dto = UserInfoDto.builder()
-//			.accountType("IRP")
-//			.accountNumber("1234-1234-1234")
-//			.userName("김성수")
-//			.riskGrade(riskText)
-//			.riskGradeNum(riskGradeNum)
-//			.build();
-//	
-//	return ResponseEntity.status(HttpStatus.OK).body(Map.of("userInfo", dto));
-//}
-
-//@PostMapping("/retain")
-//public ResponseEntity<?> retain() {
-//	List<FundRetainDto> list = new ArrayList<>();
-//	
-//	list.add(FundRetainDto.builder()
-//			.productId("1")
-//			.productName("빨리 끝내고 싶다.")
-//			.category("주식형")
-//			.riskGradeText("매우높다")
-//			.retainRatio(30)
-//			.build());
-//	list.add(FundRetainDto.builder()
-//			.productId("2")
-//			.productName("빨리 끝내고 싶다.")
-//			.category("주식형")
-//			.riskGradeText("매우높다")
-//			.retainRatio(20)
-//			.build());
-//	list.add(FundRetainDto.builder()
-//			.productId("3")
-//			.productName("빨리 끝내고 싶다.")
-//			.category("주식형")
-//			.riskGradeText("매우높다")
-//			.retainRatio(50)
-//			.build());
-//	
-//		return ResponseEntity.status(HttpStatus.OK).body(list);
-//}

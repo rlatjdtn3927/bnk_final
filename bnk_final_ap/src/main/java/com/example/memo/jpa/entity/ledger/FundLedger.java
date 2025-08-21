@@ -8,24 +8,34 @@ import com.example.memo.jpa.entity.irp.IrpAccount;
 import com.example.memo.jpa.entity.purchase.commodity.FundMaster;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Entity
+@Table(name = "fund_ledger")
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class FundLedger {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "irp_account_id", nullable = false)
+    @JoinColumn(name = "irp_account_id")
     private IrpAccount irpAccount;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "dc_account_id", referencedColumnName = "accountNo", nullable = false)
+    @JoinColumn(name = "dc_account_id", referencedColumnName = "account_no")
     private DcAccount  dcAccount;
 
     @ManyToOne(fetch = FetchType.LAZY)

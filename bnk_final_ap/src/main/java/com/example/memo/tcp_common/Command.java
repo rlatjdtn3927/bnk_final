@@ -109,7 +109,7 @@ public enum Command {
     ACCOUNT_GET_DC_LIST_BY_USER,   // userId -> DC 계좌 N건
 
     // 최신 투자성향(신규) : profile_history ↔ profile_type
-    PROFILE_GET_LATEST_TYPE_BY_USER
+    PROFILE_GET_LATEST_TYPE_BY_USER,
 	
 	
 	/*****************************보유상품 변경 관련 명령어*****************************/

@@ -1,4 +1,4 @@
-package com.example.memo.purchase.reserve.rest_controller;
+package com.example.memo.purchase.trade_common.rest_controller;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -1,4 +1,6 @@
-package com.example.memo.purchase.dto.trade;
+package com.example.memo.purchase.reserve.dto.response;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,6 +10,7 @@ import lombok.Setter;
 
 @Getter @Setter
 @Builder @NoArgsConstructor @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CurrentRetainDto {
     private String productId;
     private String productName;

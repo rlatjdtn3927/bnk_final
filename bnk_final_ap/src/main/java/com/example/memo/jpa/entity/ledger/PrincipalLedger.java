@@ -25,11 +25,11 @@ public class PrincipalLedger {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "irp_account_id", nullable = false)
+    @JoinColumn(name = "irp_account_id")
     private IrpAccount irpAccount;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "dc_account_id", referencedColumnName = "accountNo", nullable = false)
+    @JoinColumn(name = "dc_account_id", referencedColumnName = "account_no")
     private DcAccount  dcAccount;
 
     // 원리금 보장상품 (FK)
