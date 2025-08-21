@@ -157,12 +157,12 @@ public class TradePageViewController {
         return "purchase/trade/step5";
     }
     
-    @PostMapping("/step5/next") //model: flow, 계좌 id, type, 투자성향등급 or 대상 상품 ID, 선택 상품 ID or IDs
+    @PostMapping("/step5/next") 
     public String step5Next() {
         return "redirect:/purchase/trade/step6"; // 완료 리다이렉트
     }
     
-    @GetMapping("/step6") //model: flow, 계좌 id, type, 투자성향등급 or 대상 상품 ID, 선택 상품 ID or IDs
+    @GetMapping("/step6") 
     public String step6() {
         return "purchase/trade/step6"; // 완료 view
     }
