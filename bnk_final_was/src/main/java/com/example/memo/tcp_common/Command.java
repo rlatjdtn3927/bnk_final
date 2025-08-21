@@ -33,7 +33,20 @@ public enum Command {
     
 	/* OCR 관련 */
     FAMILY_CERT_OCR,
-
+    UPLOAD_FAMILY_DOC,
+    PRESIGN_FAMILY_DOC,  // 추가: presigned GET URL 생성
+    LIST_REVIEW_DOCS,    // (선택) review 폴더 리스트
+    
+    SPOUSE_LINK_APPLY,
+    ADMIN_SPOUSE_LINK_LIST,    // 대기 목록 조회
+    ADMIN_SPOUSE_LINK_DECIDE,   // 승인/반려 결정
+    NOTIFICATION_GET_UNREAD,
+    NOTIFICATION_MARK_AS_READ,
+    NOTIFICATION_GET_ALL,
+    SPOUSE_LINK_DECIDE,
+    SPOUSE_LINK_REQUEST_ADMIN_REVIEW,
+    SPOUSE_LINK_STATUS,
+    SPOUSE_LINK_GET_DETAILS,
     
     /*IRP가입관련*/
     IRP_JOIN_SAVE,
@@ -110,5 +123,11 @@ public enum Command {
     ACCOUNT_GET_DC_LIST_BY_USER,   // userId -> DC 계좌 N건
 
     // 최신 투자성향(신규) : profile_history ↔ profile_type
-    PROFILE_GET_LATEST_TYPE_BY_USER
+    PROFILE_GET_LATEST_TYPE_BY_USER,
+    
+    
+	/*****************************보유상품 변경 관련 명령어*****************************/
+	CHANGE_UPDATE_PRODUCT, //매수 상품, 매도 상품 거래원장반영 + fund_holdings 수정
+	CHANGE_GET_HOLDINGS, //fund_holdings + 원리금보장상품 원장 조회
+	/*****************************보유상품 변경 관련 명령어*****************************/
 }

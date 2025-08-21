@@ -1,286 +1,175 @@
+<!-- templates/purchase/trade/step4.html -->
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>서류동의</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>서류 동의 - Step 4</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body {
-      font-family: "Noto Sans KR", sans-serif;
-      background: #fff5f5;
-      margin: 0;
-      padding: 24px;
-    }
-    .wrap {
-      max-width: 980px;
-      margin: 0 auto;
-    }
-    h1 {
-      text-align: center;
-      color: #b11217;
-      margin: 8px 0 18px;
-      font-size: 26px;
-    }
-    .notice {
-      background: #fff;
-      border: 2px solid #ffd6d6;
-      border-radius: 12px;
-      padding: 14px 16px;
-      color: #374151;
-      margin-bottom: 16px;
-    }
-    .card {
-      background: #fff;
-      border: 2px solid #ffd6d6;
-      border-radius: 16px;
-      padding: 16px 18px;
-      margin-bottom: 16px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-    }
-    .prod-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 700;
-      font-size: 18px;
-      margin-bottom: 10px;
-      color: #111827;
-    }
-    .badge {
-      display: inline-block;
-      font-size: 12px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: #ffe9e9;
-      color: #b11217;
-      border: 1px solid #ffd6d6;
-    }
-    .doc-row {
-      display: grid;
-      grid-template-columns: 28px 1fr auto;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 8px;
-      border-radius: 10px;
-      border: 1px dashed #ffd6d6;
-      margin-bottom: 8px;
-    }
-    .doc-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    .doc-name {
-      font-weight: 600;
-      color: #111827;
-    }
-    .doc-type {
-      font-size: 12px;
-      color: #6b7280;
-    }
-    .btn {
-      display: inline-block;
-      padding: 10px 18px;
-      border-radius: 10px;
-      background: #ffd6d6;
-      color: #111;
-      text-decoration: none;
-      font-weight: 600;
-      border: 1px solid #ffc1c1;
-      transition: transform .15s ease, background .2s ease;
-    }
-    .btn:hover { background: #ffb6b6; transform: translateY(-1px); }
-    .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
-    .footer-actions {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-top: 20px;
-    }
-    .all-agree {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: #fff;
-      border: 2px solid #ffd6d6;
-      border-radius: 12px;
-      padding: 12px 14px;
-      color: #111827;
-      font-weight: 600;
-    }
-    .error {
-      color: #d9534f;
-      margin-top: 10px;
-      font-weight: 700;
-    }
-    .empty {
-      text-align: center;
-      color: #6b7280;
-      padding: 24px 0;
-      border: 2px dashed #ffd6d6;
-      border-radius: 12px;
-      background: #fff;
-    }
-    form { margin: 0; }
+    .doc-card { border:1px solid #e5e7eb; border-radius:14px; padding:14px; }
+    .doc-title { font-weight:600; }
+    .muted { color:#6b7280; font-size:0.9rem; }
+    .pill { background:#f3f4f6; border-radius:9999px; padding:2px 10px; font-size:12px; }
+    .disabled { opacity:.5; pointer-events:none; }
   </style>
 </head>
-<body>
-  <div class="wrap">
-    <h1>서류 동의</h1>
+<body class="bg-neutral-100 text-neutral-900">
+<div class="max-w-3xl mx-auto p-5">
 
-    <div class="notice">
-      선택하신 상품 관련 **설명서/약관**을 확인하고 동의해 주세요. 모든 문서 동의 후 다음 단계로 진행됩니다.
+  <header class="mb-5">
+    <h1 class="text-2xl font-bold">서류 확인 및 동의</h1>
+    <p class="muted mt-1">아래 문서를 확인하고 동의해 주세요. 모든 문서에 동의해야 다음 단계로 이동할 수 있습니다.</p>
+  </header>
+
+  <!-- 진행 요약 (세션 표시) -->
+  <section class="mb-4">
+    <div class="flex gap-2 items-center text-sm">
+      <span class="pill" th:text="'계좌유형: ' + ${session.ReserveValueDto.accountType}">계좌유형</span>
+      <span class="pill" th:text="'계좌ID: ' + ${session.ReserveValueDto.accountId}">계좌ID</span>
+      <span class="pill" th:if="${session.ReserveValueDto.riskGrade != null}"
+            th:text="'투자성향: ' + ${session.ReserveValueDto.riskGrade}">투자성향</span>
     </div>
+  </section>
 
-    <!-- 세션에 저장된 JSON 문자열을 data-attributes로 전달 -->
-    <div id="data-holder"
-         th:attr="data-files=${session.PassValueDto != null ? session.PassValueDto.fileUrlList : '[]'}">
+  <!-- 문서 리스트 -->
+  <section id="docList" class="space-y-3 mb-6"></section>
+
+  <!-- 하단 컨트롤 -->
+  <section class="bg-white rounded-2xl p-4 shadow-sm mb-4">
+    <label class="inline-flex items-center gap-2 cursor-pointer">
+      <input type="checkbox" id="checkAll" class="w-5 h-5">
+      <span class="font-medium">전체 동의</span>
+      <span id="progress" class="muted">(0/0)</span>
+    </label>
+  </section>
+
+  <!-- 제출 폼: 컨트롤러 이미 존재 -->
+  <form id="consentForm" method="post" action="/purchase/trade/step4/next"
+        class="bg-white rounded-2xl p-4 shadow-sm">
+    <!-- 세션 값 그대로 실어 보냄 -->
+    <input type="hidden" name="targetProdIdList" th:value="${session.ReserveValueDto.targetProdIdList}">
+    <input type="hidden" name="sourceProdIdList" th:value="${session.ReserveValueDto.sourceProdIdList}">
+    <!-- 동의 결과 포함 fileUrlList(JSON) -->
+    <input type="hidden" id="fileUrlListField" name="fileUrlList" th:value="${session.ReserveValueDto.fileUrlList}">
+
+    <div class="flex items-center justify-between">
+      <a href="/purchase/trade/step1/after-risk" class="px-4 py-2 rounded-xl border border-neutral-300">이전으로</a>
+      <button id="nextBtn" type="submit" class="px-5 py-2 rounded-xl bg-blue-600 text-white disabled">
+        다음 (비교로 이동)
+      </button>
     </div>
+  </form>
 
-    <!-- 문서 리스트 렌더 영역 -->
-    <div id="docs-container"></div>
+  <p class="muted text-xs mt-3">* “미리보기”는 새 탭에서 열립니다. 모든 문서에 동의해야 다음 단계로 이동합니다.</p>
+</div>
 
-    <!-- 폼: 모든 동의 체크 시에만 제출 가능 -->
-    <form th:action="@{/purchase/trade/step4/next}" method="post" id="consent-form">
-      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-      <div class="footer-actions">
-        <label class="all-agree">
-          <input type="checkbox" id="check-all"/>
-          전체 동의
-        </label>
-        <div style="display:flex; gap:8px;">
-          <a class="btn" href="/purchase/trade/step5" id="skip-btn" style="display:none;">비교로 이동</a>
-          <button type="submit" class="btn" id="submit-btn" disabled>다음 (상품 비교)</button>
-        </div>
+<!-- ✅ JSON을 안전하게 주입: Thymeleaf가 HTML escape 하지 않도록 utext 사용 -->
+<script id="fileListJson" type="application/json"
+        th:utext="${session.ReserveValueDto.fileUrlList}">[]</script>
+
+<script>
+(function(){
+  const listEl = document.getElementById('docList');
+  const checkAllEl = document.getElementById('checkAll');
+  const nextBtn = document.getElementById('nextBtn');
+  const progressEl = document.getElementById('progress');
+  const fileUrlListField = document.getElementById('fileUrlListField');
+
+  // ✅ JSON 파싱 (Thymeleaf가 그대로 넣어준 JSON을 읽음)
+  let files = [];
+  try {
+    const raw = document.getElementById('fileListJson').textContent || '[]';
+    files = JSON.parse(raw);
+  } catch (e) {
+    console.error('fileUrlList JSON parse error:', e);
+    files = [];
+  }
+
+  // 렌더링
+  if (!files || !files.length) {
+    listEl.innerHTML = `
+      <div class="doc-card bg-white">
+        <div class="doc-title">표시할 문서가 없습니다.</div>
+        <div class="muted">이 화면은 문서가 있을 때만 진입해야 합니다.</div>
       </div>
-      <p class="error" id="error-msg" style="display:none;">모든 문서에 동의해야 다음 단계로 진행할 수 있어요.</p>
-    </form>
-  </div>
+    `;
+    nextBtn.classList.remove('disabled'); // 안전망
+  } else {
+    files.forEach((f, idx) => {
+      const href = (f.fileUrl || '').startsWith('/') ? f.fileUrl : '/' + (f.fileUrl || '');
+      const row = document.createElement('div');
+      row.className = 'doc-card bg-white flex items-start justify-between gap-4';
 
-  <script>
-    (function () {
-      const holder = document.getElementById('data-holder');
-      let raw = holder.dataset.files || '[]';
-
-      // session에 문자열로 들어왔을 때/이미 배열로 그려졌을 때 안전 파싱
-      let files;
-      try {
-        files = typeof raw === 'string' ? JSON.parse(raw) : raw;
-      } catch (e) {
-        files = [];
-      }
-
-      const container = document.getElementById('docs-container');
-      const submitBtn = document.getElementById('submit-btn');
-      const checkAll  = document.getElementById('check-all');
-      const errorMsg  = document.getElementById('error-msg');
-      const skipBtn   = document.getElementById('skip-btn');
-
-      // 빈 리스트면: step5로 바로 갈 수 있도록 스킵 버튼 노출, 안내 표시
-      if (!Array.isArray(files) || files.length === 0) {
-        container.innerHTML = `
-          <div class="empty">
-            동의할 문서가 없습니다. 바로 비교 단계로 이동할 수 있어요.
+      row.innerHTML = `
+        <div class="flex-1">
+          <div class="doc-title">${escapeHtml(f.prodName || '-')}
+            <span class="muted">| ${escapeHtml(f.docType || '')}</span>
           </div>
-        `;
-        submitBtn.style.display = 'none';
-        checkAll.closest('label').style.display = 'none';
-        skipBtn.style.display = 'inline-block';
-        return;
-      }
+          <div class="muted mt-1 break-all">${escapeHtml(f.fileUrl || '')}</div>
+          <div class="mt-2 flex gap-2">
+            <a class="px-3 py-1 rounded-lg border" href="${href}" target="_blank" rel="noopener">미리보기</a>
+            <a class="px-3 py-1 rounded-lg border" href="${href}" download>다운로드</a>
+          </div>
+        </div>
+        <label class="flex items-center gap-2">
+          <input type="checkbox" class="doc-check w-5 h-5">
+          <span class="text-sm">동의</span>
+        </label>
+      `;
+      listEl.appendChild(row);
+    });
+  }
 
-      // 같은 상품(prodId/prodName)끼리 그룹핑
-      const groups = {};
-      for (const f of files) {
-        const key = (f.prodId || '') + '|' + (f.prodName || '');
-        if (!groups[key]) groups[key] = [];
-        groups[key].push(f);
-      }
+  // 진행률 & 버튼 활성화
+  function refreshProgress() {
+    const checks = Array.from(document.querySelectorAll('.doc-check'));
+    const total = checks.length;
+    const checked = checks.filter(c => c.checked).length;
+    progressEl.textContent = `(${checked}/${total})`;
+    if (!total || checked === total) nextBtn.classList.remove('disabled');
+    else nextBtn.classList.add('disabled');
 
-      // 그룹별 카드 렌더
-      container.innerHTML = '';
-      Object.entries(groups).forEach(([key, list]) => {
-        const [prodId, prodName] = key.split('|');
-        const card = document.createElement('div');
-        card.className = 'card';
+    // 동의 여부를 fileUrlList에 반영해 hidden 필드 갱신
+    const enriched = (files || []).map((f, i) => ({...f, consented: !!(document.querySelectorAll('.doc-check')[i]?.checked)}));
+    try {
+      fileUrlListField.value = JSON.stringify(enriched);
+    } catch(e) { /* noop */ }
+  }
 
-        const header = document.createElement('div');
-        header.className = 'prod-title';
-        header.innerHTML = `
-          <span class="badge">상품ID: ${prodId || '-'}</span>
-          <span>${prodName || '-'}</span>
-        `;
-        card.appendChild(header);
+  // 전체동의
+  checkAllEl?.addEventListener('change', () => {
+    document.querySelectorAll('.doc-check').forEach(c => c.checked = checkAllEl.checked);
+    refreshProgress();
+  });
 
-        list.forEach((doc, idx) => {
-          const row = document.createElement('div');
-          row.className = 'doc-row';
+  // 개별 체크
+  listEl.addEventListener('change', (e) => {
+    if (e.target && e.target.classList.contains('doc-check')) {
+      const checks = Array.from(document.querySelectorAll('.doc-check'));
+      checkAllEl.checked = checks.length && checks.every(c => c.checked);
+      refreshProgress();
+    }
+  });
 
-          const cb = document.createElement('input');
-          cb.type = 'checkbox';
-          cb.name = 'agreed';
-          // 서버로 전달할 값(선택적으로 활용 가능)
-          cb.value = `${prodId}|${doc.docType || ''}|${doc.fileUrl || ''}`;
-          cb.className = 'doc-check';
+  // 제출 가드
+  document.getElementById('consentForm').addEventListener('submit', (e) => {
+    if (nextBtn.classList.contains('disabled')) {
+      e.preventDefault();
+      alert('모든 문서에 동의해야 다음 단계로 이동할 수 있습니다.');
+    }
+  });
 
-          const meta = document.createElement('div');
-          meta.className = 'doc-meta';
-          const name = document.createElement('div');
-          name.className = 'doc-name';
-          name.textContent = doc.docType || '문서';
-          const type = document.createElement('div');
-          type.className = 'doc-type';
-          type.textContent = doc.fileUrl || '';
+  // 초기 상태 반영
+  refreshProgress();
 
-          meta.appendChild(name);
-          meta.appendChild(type);
-
-          const a = document.createElement('a');
-          a.className = 'btn';
-          a.href = doc.fileUrl || '#';
-          a.target = '_blank';
-          a.rel = 'noopener';
-          a.textContent = '보기';
-
-          row.appendChild(cb);
-          row.appendChild(meta);
-          row.appendChild(a);
-          card.appendChild(row);
-        });
-
-        container.appendChild(card);
-      });
-
-      // 체크박스 로직
-      const allChecks = Array.from(document.querySelectorAll('.doc-check'));
-      function refreshState() {
-        const allChecked = allChecks.length > 0 && allChecks.every(c => c.checked);
-        submitBtn.disabled = !allChecked;
-        checkAll.checked = allChecked;
-        errorMsg.style.display = allChecked ? 'none' : 'none'; // 기본은 숨김
-      }
-
-      // 전체 동의 토글
-      checkAll.addEventListener('change', (e) => {
-        allChecks.forEach(c => c.checked = e.target.checked);
-        refreshState();
-      });
-
-      // 개별 문서 체크 시 상태 반영
-      allChecks.forEach(c => c.addEventListener('change', refreshState));
-
-      // 제출 시 검증(서버 라운드트립 방지)
-      document.getElementById('consent-form').addEventListener('submit', (e) => {
-        const allChecked = allChecks.length > 0 && allChecks.every(c => c.checked);
-        if (!allChecked) {
-          e.preventDefault();
-          errorMsg.style.display = 'block';
-          errorMsg.textContent = '모든 문서에 동의해야 다음 단계로 진행할 수 있어요.';
-        }
-      });
-
-      refreshState();
-    })();
-  </script>
+  // util
+  function escapeHtml(s){
+    return (s ?? '').toString()
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+})();
+</script>
 </body>
 </html>

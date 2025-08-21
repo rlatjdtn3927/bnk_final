@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>전체 알림</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --bg-color: #f4f7f9;
+            --content-bg-color: #ffffff;
+            --border-color: #dee2e6;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: #e9ecef;
+            color: var(--text-primary);
+            font-family: 'Pretendard', sans-serif;
+        }
+
+        .mobile-container {
+            width: 100%;
+            max-width: 420px;
+            min-height: 100vh;
+            margin: 0 auto;
+            background: var(--bg-color);
+            position: relative;
+            box-shadow: 0 10px 36px rgba(0,0,0,0.06);
+        }
+        
+        .app-header {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: var(--content-bg-color);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .app-header .back-btn {
+            font-size: 24px;
+            text-decoration: none;
+            color: var(--text-primary);
+            padding: 8px;
+        }
+
+        .app-header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+            text-align: center;
+            flex-grow: 1;
+            padding-right: 40px;
+        }
+        
+        .content-area {
+            padding: 0;
+        }
+        
+        ul { list-style: none; padding: 0; margin: 0; }
+        
+        li.notification-item {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background-color 0.2s;
+            background: var(--content-bg-color);
+        }
+
+        li.notification-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        li.notification-item.read {
+            background-color: var(--bg-color);
+            opacity: 0.7;
+        }
+
+        li.notification-item.read:hover {
+            background-color: #e9ecef;
+        }
+
+        .message {
+            font-size: 15px;
+            margin-bottom: 6px;
+            line-height: 1.5;
+        }
+
+        .timestamp {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .no-notifications {
+            text-align: center;
+            padding: 80px 24px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+<div class="mobile-container">
+    <header class="app-header">
+      <a href="/link-view/main" class="back-btn" aria-label="뒤로가기">‹</a>
+      <h1>전체 알림</h1>
+    </header>
+
+    <main class="content-area">
+        <ul id="notification-list">
+            <li class="no-notifications">알림을 불러오는 중...</li>
+        </ul>
+    </main>
+</div>
+
+<script>
+    const listUl = document.getElementById('notification-list');
+
+    async function fetchAllNotifications() {
+        try {
+            const response = await fetch('/api/notifications/all'); 
+            if (!response.ok) throw new Error('알림을 불러오지 못했습니다.');
+
+            // 핸들러가 { success: true, data: [...] } 형태로 응답하므로,
+            // result.data로 실제 알림 배열에 접근합니다.
+            const result = await response.json(); 
+            const notifications = result.data;
+            
+            listUl.innerHTML = ''; 
+            if (result.success && notifications && notifications.length > 0) {
+                notifications.forEach(noti => {
+                    const li = document.createElement('li');
+                    li.classList.add('notification-item');
+                    if (noti.read) { 
+                        li.classList.add('read');
+                    }
+                    
+                    const createdAt = new Date(noti.createdAt).toLocaleString('ko-KR', {
+                        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                    });
+
+                    li.innerHTML = `
+                        <div class="message">${noti.message}</div>
+                        <div class="timestamp">${createdAt}</div>
+                    `;
+                    
+                    if (!noti.read && noti.linkUrl) {
+                        li.addEventListener('click', () => markAsRead(li, noti.id, noti.linkUrl, noti.linkId));
+                    }
+                    listUl.appendChild(li);
+                });
+            } else {
+                listUl.innerHTML = '<li class="no-notifications">알림이 없습니다.</li>';
+            }
+        } catch (error) {
+            console.error(error);
+            listUl.innerHTML = `<li class="no-notifications">${error.message}</li>`;
+        }
+    }
+
+    async function markAsRead(listItem, notificationId, linkUrl, linkId) {
+        if(listItem.classList.contains('read')) {
+            if(linkUrl) window.location.href = `${linkUrl}?linkId=${linkId || ''}`;
+            return;
+        };
+
+        try {
+            await fetch(`/api/notifications/${notificationId}/read`, { method: 'POST' });
+            listItem.classList.add('read');
+            if (linkUrl) {
+                window.location.href = `${linkUrl}?linkId=${linkId || ''}`;
+            }
+        } catch(error) {
+            console.error("Mark as read failed:", error);
+        }
+    }
+
+    fetchAllNotifications();
+</script>
+</body>
+</html>

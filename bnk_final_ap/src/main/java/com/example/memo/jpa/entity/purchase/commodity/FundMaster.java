@@ -8,8 +8,9 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -22,7 +23,8 @@ import com.example.memo.jpa.entity.purchase.analysis.CumulativePerformance;
 /* 1) 펀드 기본정보 – fund_master */
 @Entity
 @Table(name = "fund_master")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

@@ -1,0 +1,330 @@
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="css">
+  <style id="page-css" hx-swap-oob="true">
+body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #f4f7f9;
+            margin: 0;
+            padding: 1.5rem;
+            color: #212529;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn {
+            padding: 8px 14px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #fff;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .btn.primary {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .admin-container {
+            display: flex;
+            gap: 1.5rem;
+            height: calc(100vh - 150px);
+        }
+
+        /* 왼쪽: 요청 목록 패널 */
+        .request-list-panel {
+            flex: 1;
+            min-width: 400px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .request-list-panel table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .request-list-panel th, .request-list-panel td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+            white-space: nowrap;
+        }
+        
+        .request-list-panel thead {
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+        }
+        
+        .request-list-panel th {
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .request-list-panel tbody tr {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .request-list-panel tbody tr:hover {
+            background-color: #f0f5ff;
+        }
+        
+        .request-list-panel tbody tr.selected {
+            background-color: #e2edff;
+            font-weight: 600;
+            color: #0045a5;
+        }
+
+        /* 오른쪽: 상세 정보 및 증빙 뷰어 패널 */
+        .viewer-panel {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            opacity: 0.3;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        
+        .viewer-panel.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .details-block, .pdf-viewer {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .details-block {
+            padding: 1.5rem;
+            display: flex;
+            gap: 1.5rem;
+        }
+        
+        .details-block .info-group {
+            flex: 1;
+        }
+        
+        .details-block h4 {
+            margin: 0 0 1rem;
+            font-size: 16px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 0.75rem;
+            color: #007bff;
+        }
+        
+        .details-block dl { margin: 0; }
+        .details-block dt { font-size: 13px; color: #666; margin-bottom: 4px; }
+        .details-block dd { font-size: 15px; font-weight: 500; margin: 0 0 1rem 0; }
+        
+        .pdf-viewer { flex-grow: 1; }
+        .pdf-viewer iframe { width: 100%; height: 100%; border: none; border-radius: 8px; }
+        
+        .action-buttons { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+        .action-buttons .btn { flex: 1; padding: 10px; color: white; font-weight: 600; }
+        .action-buttons .approve { background: #4caf50; }
+        .action-buttons .reject { background: #f44336; }
+        
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 1000; }
+        .toast { padding: 15px 20px; background: #333; color: white; border-radius: 5px; margin-bottom: 10px; opacity: 0; transition: all 0.5s; transform: translateX(100%); }
+        .toast.show { opacity: 1; transform: translateX(0); }
+  </style>
+</th:block>
+
+
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="content">
+
+        <h2 style="font-weight: 800;">부부IRP 관리자 검토</h2>
+
+    
+    <div class="controls">
+        <button id="reload" class="btn primary">새로고침</button>
+        <span id="msg" style="margin-left:1rem; color:#555;"></span>
+    </div>
+
+    <div class="admin-container">
+        <div class="request-list-panel">
+            <table>
+                <thead><tr><th>ID</th><th>신청자</th><th>요청일</th></tr></thead>
+                <tbody id="review-tbody"></tbody>
+            </table>
+        </div>
+        <div class="viewer-panel" id="viewer-panel">
+            <div class="details-block">
+                <div class="info-group">
+                    <h4>신청자 정보 (DB)</h4>
+                    <dl>
+                        <dt>회원 ID</dt><dd id="detail-applicant-id">-</dd>
+                        <dt>이름</dt><dd id="detail-applicant-name">-</dd>
+                        <dt>생년월일</dt><dd id="detail-applicant-birth">-</dd>
+                    </dl>
+                </div>
+                <div class="info-group">
+                    <h4>배우자 정보 (사용자 입력 vs DB)</h4>
+                    <dl>
+                        <dt>입력된 이름</dt><dd id="detail-spouse-input-name">-</dd>
+                        <dt>입력된 생년월일</dt><dd id="detail-spouse-input-birth">-</dd>
+                        <dt>DB 조회 결과</dt><dd id="detail-spouse-db">-</dd>
+                    </dl>
+                    <div class="action-controls">
+                        <textarea id="memo-input" placeholder="반려 사유 또는 관리자 메모" style="width:100%; min-height:40px; margin-top:1rem; padding: 8px; border-radius: 6px; border: 1px solid #ccc;"></textarea>
+                        <div class="action-buttons">
+                            <button class="btn reject" data-action="REJECT">반려</button>
+                            <button class="btn approve" data-action="APPROVE">승인</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="pdf-viewer">
+                <iframe id="pdf-iframe" title="증빙 서류 뷰어"></iframe>
+            </div>
+        </div>
+    </div>
+  
+    <div id="toast-container"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tbody = document.getElementById('review-tbody');
+            const viewerPanel = document.getElementById('viewer-panel');
+            const msg = document.getElementById('msg');
+            const reloadBtn = document.getElementById('reload');
+            const toastContainer = document.getElementById('toast-container');
+            
+            let currentData = [];
+            let currentLinkId = null;
+
+            function showToast(message, isError = false) {
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.textContent = message;
+                if (isError) toast.style.backgroundColor = '#f44336';
+                toastContainer.appendChild(toast);
+                setTimeout(() => toast.classList.add('show'), 10);
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 500);
+                }, 3000);
+            }
+
+            async function load() {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 40px; color: #888;">목록을 불러오는 중...</td></tr>`;
+                viewerPanel.classList.remove('active');
+                try {
+                    const res = await fetch('/link-admin/pending');
+                    const json = await res.json();
+                    if (!res.ok) throw new Error(json.message || '서버 응답 오류');
+                    
+                    // 백엔드가 { success: true, data: [...] } 형식으로 내려준다고 가정
+                    currentData = json.data || [];
+                    renderTable(currentData);
+                } catch (e) {
+                    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 40px; color:red;">불러오기 실패: ${e.message}</td></tr>`;
+                }
+            }
+            
+            function renderTable(rows) {
+                tbody.innerHTML = '';
+                if (rows.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 40px; color: #888;">검토 대기 중인 항목이 없습니다.</td></tr>`;
+                } else {
+                    rows.forEach(it => {
+                        const tr = document.createElement('tr');
+                        tr.dataset.linkId = it.linkId;
+                        tr.innerHTML = `
+                            <td>${it.linkId}</td>
+                            <td>${it.applicant.name} (ID:${it.applicant.id})</td>
+                            <td>${it.requestedAt}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+                msg.textContent = `대기 ${rows.length}건`;
+            }
+
+            tbody.addEventListener('click', (e) => {
+                const tr = e.target.closest('tr');
+                if (!tr || !tr.dataset.linkId) return;
+                
+                const linkId = tr.dataset.linkId;
+                const selectedData = currentData.find(item => item.linkId == linkId);
+                if (!selectedData) return;
+                
+                tbody.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+                tr.classList.add('selected');
+
+                currentLinkId = linkId;
+                updateViewer(selectedData);
+            });
+
+            function updateViewer(data) {
+                document.getElementById('detail-applicant-id').textContent = data.applicant.id || '-';
+                document.getElementById('detail-applicant-name').textContent = data.applicant.name || '-';
+                document.getElementById('detail-applicant-birth').textContent = data.applicant.birth || '-';
+
+                document.getElementById('detail-spouse-input-name').textContent = data.spouse.userInputName || '-';
+                document.getElementById('detail-spouse-input-birth').textContent = data.spouse.userInputBirth || '-';
+                const spouseDbInfo = data.spouse.dbName ? `${data.spouse.dbName} (${data.spouse.dbBirth}, ID: ${data.spouse.dbId})` : 'DB에 일치하는 사용자 없음';
+                document.getElementById('detail-spouse-db').textContent = spouseDbInfo;
+
+                document.getElementById('pdf-iframe').src = data.proofUrl || '';
+                document.getElementById('memo-input').value = '';
+                viewerPanel.classList.add('active');
+            }
+
+            viewerPanel.addEventListener('click', async (event) => {
+                const target = event.target;
+                if (target.tagName !== 'BUTTON' || !target.dataset.action || !currentLinkId) return;
+
+                const action = target.dataset.action;
+                const memo = document.getElementById('memo-input').value;
+
+                if (action === 'REJECT' && memo.trim() === '') {
+                    alert('반려 사유를 입력해주세요.');
+                    return;
+                }
+                 if (action === 'APPROVE' && !confirm(`${currentLinkId}번 요청을 승인 처리하시겠습니까?`)) {
+                    return;
+                }
+
+                const buttons = viewerPanel.querySelectorAll('.action-buttons button');
+                buttons.forEach(btn => btn.disabled = true);
+                
+                try {
+                    const payload = { linkId: Number(currentLinkId), action, reason: memo };
+                    const res = await fetch('/link-admin/decide', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(payload)
+                    });
+                    const json = await res.json();
+                    if (!res.ok || !json.success) throw new Error(json.message || '처리 실패');
+                    
+                    showToast(`${currentLinkId}번 요청을 ${action === 'APPROVE' ? '승인' : '반려'} 처리했습니다.`);
+                    load(); // 목록 새로고침
+                } catch (e) {
+                    showToast(`처리 실패: ${e.message}`, true);
+                    buttons.forEach(btn => btn.disabled = false);
+                }
+            });
+
+            reloadBtn.addEventListener('click', load);
+            load();
+        });
+    </script>
+</th:block>

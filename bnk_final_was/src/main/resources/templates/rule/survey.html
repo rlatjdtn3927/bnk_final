@@ -44,7 +44,7 @@
     <h1>퇴직연금 투자성향 설문</h1>
     <div class="desc">한 문항씩 답하면 자동으로 다음으로 진행돼요. 체크박스 문항은 <b>다음</b> 버튼을 눌러주세요.</div>
     <div class="progress"><div id="bar" class="bar"></div></div>
-    <div id="stage"><!-- 동적 렌더링 영역 --></div>
+    <div id="stage"></div>
     <div class="footer">
       <div class="idx" id="idx"></div>
       <div class="nav">
@@ -56,7 +56,6 @@
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite">저장됨</div>
 
-  <!-- 모달 -->
   <div id="resultModal" class="modal" style="display:none;">
     <div class="modal-content">
       <p>투자성향분석이 완료되었습니다.</p>
@@ -146,6 +145,10 @@
     ];
 
     const STORAGE_KEY = 'retire_survey_state_v1';
+    
+    // 페이지 로드 시 localStorage 초기화
+    localStorage.removeItem(STORAGE_KEY);
+    
     let state = loadState() || { index: 0, answers: {} };
 
     function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
@@ -227,8 +230,6 @@
     	    alert('제출 중 오류 발생: ' + err.message);
     	  }
     	}
-
-
 
     document.getElementById('prev').addEventListener('click', goPrev);
     document.getElementById('next').addEventListener('click', ()=>{

@@ -46,7 +46,7 @@ public class BuyPlanPG extends BaseEntity{
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "product_id", nullable = false)
-    private PrincipalGuarantee pg;
+    private PrincipalGuarantee principal;
 
     @Column(name = "allocation_percent")
     private Integer allocationPercent;

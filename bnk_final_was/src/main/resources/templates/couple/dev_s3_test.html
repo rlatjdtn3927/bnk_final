@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>S3 테스트</title>
+  <style>
+    body { font-family: system-ui, Arial; max-width: 720px; margin: 40px auto; }
+    .card { padding: 16px; border: 1px solid #ddd; border-radius: 12px; }
+    .row { margin: 8px 0; }
+    .error { color: #b00020; }
+    input[type="number"], input[type="file"] { width: 100%; padding: 8px; }
+    button { padding: 10px 16px; border: 0; border-radius: 8px; background: #2563eb; color: white; cursor: pointer; }
+    a { word-break: break-all; }
+  </style>
+</head>
+<body>
+  <h2>S3 업로드 테스트 (WAS → TCP → AP → S3)</h2>
+
+  <div class="card">
+    <form method="post" action="/dev/s3/upload" enctype="multipart/form-data">
+      <div class="row">
+        <label>Link ID</label>
+        <input type="number" name="linkId" required />
+      </div>
+      <div class="row">
+        <label>파일</label>
+        <input type="file" name="file" required />
+      </div>
+      <button type="submit">업로드</button>
+    </form>
+  </div>
+
+  <div class="row" th:if="${error}">
+    <p class="error" th:text="${error}"></p>
+  </div>
+
+  <div class="card" th:if="${s3Key}">
+    <p><b>S3 Key</b>: <span th:text="${s3Key}"></span></p>
+    <p th:if="${presignedUrl}">
+      <b>Presigned URL</b>: <a th:href="${presignedUrl}" target="_blank" th:text="${presignedUrl}"></a>
+    </p>
+  </div>
+</body>
+</html>

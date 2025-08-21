@@ -1,15 +1,17 @@
 package com.example.memo.purchase.controller.management.more_controller;
 
-import com.example.memo.purchase.dto.trade.ReserveValueDto;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+
+import com.example.memo.purchase.trade_common.dto.ReserveValueDto;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpClientService;
 import com.example.memo.tcp_common.TcpMessage;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 @RequiredArgsConstructor

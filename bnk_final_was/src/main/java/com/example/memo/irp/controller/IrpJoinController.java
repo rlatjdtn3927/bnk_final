@@ -49,7 +49,7 @@ public class IrpJoinController {
     public ResponseEntity<?> createDraft(@RequestBody DraftJoinDto dto, HttpSession session) {
 		System.out.println("dto: " + dto);
 		
-		Long userId = (Long) session.getAttribute("userId"); // 로그인 시 저장된 userId
+		Long userId = (Long) session.getAttribute("user"); // 로그인 시 저장된 userId
 	    if (userId == null) {
 	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 	    }
