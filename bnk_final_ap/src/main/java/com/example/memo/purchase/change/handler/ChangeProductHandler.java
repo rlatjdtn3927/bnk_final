@@ -4,7 +4,7 @@ import java.util.Map;
 
 import org.springframework.stereotype.Component;
 
-import com.example.memo.purchase.change.dto.ResponseAccountHoldingsDto;
+import com.example.memo.purchase.change.dto.response.ResponseAccountHoldingsDto;
 import com.example.memo.purchase.change.service.ChangeProductService;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpMessageHandler;

@@ -1,4 +1,4 @@
-package com.example.memo.purchase.change.dto;
+package com.example.memo.purchase.change.dto.response;
 
 
 import lombok.*;

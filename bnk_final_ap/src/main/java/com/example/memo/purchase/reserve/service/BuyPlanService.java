@@ -49,8 +49,8 @@ public class BuyPlanService {
 							.retainRatio(f.getAllocationPercent())
 							.build()),
 					PGList.stream().map(p -> CurrentRetainDto.builder()
-							.productId(p.getPg().getProductId())
-							.productName(p.getPg().getBankName() + " " + p.getPg().getProductName() + " " + p.getPg().getMaturityYears())
+							.productId(p.getPrincipal().getProductId())
+							.productName(p.getPrincipal().getBankName() + " " + p.getPrincipal().getProductName() + " " + p.getPrincipal().getMaturityYears())
 							.retainRatio(p.getAllocationPercent())
 							.build())
 					).flatMap(s->s).toList();
@@ -96,7 +96,7 @@ public class BuyPlanService {
 				if(prodId.startsWith("PG")) {
 					BuyPlanPG newEntity = BuyPlanPG.builder()
 							.user(UserEntity.builder().userId(userId).build())
-							.pg(PrincipalGuarantee.builder().productId(prodId).build())
+							.principal(PrincipalGuarantee.builder().productId(prodId).build())
 							.allocationPercent(ratio)
 							.isCurrent("Y")
 							.build(); 

@@ -1,5 +1,11 @@
 package com.example.memo.tcp_common;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 /*여기 추가로 정의하세요*/
+
+@JsonFormat(shape = JsonFormat.Shape.STRING)
 public enum Command {
     USER_GET,
     USER_DELETE,
@@ -85,7 +91,6 @@ public enum Command {
     DO_UPSERT,                // DefaultOptionHandler: 디폴트옵션 등록/변경
     DO_HISTORY,               // DefaultOptionHandler: 디폴트옵션 변경 이력
     ACCOUNT_OVERVIEW_GET, // ✅ Step1 계좌목록
-    BUY_PLAN_CURRENT_LIST_GET, //매수예정상품의 경우 변경 전 내역 보여주기
     
     /*관리자 크롤링 데이터 관련 명령어*/
     ADMIN_CRAWL_GRANT_FILE_DOWNLOAD,
