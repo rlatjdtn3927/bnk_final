@@ -16,7 +16,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ReqeustChangeDto {
+public class RequestChangeDto {
 	private String accountType;
 	private String accountId;
 	private List<SoldFundDto> soldProdList;

@@ -46,15 +46,12 @@ public class FundLedger {
     @Column(nullable = false)
     private String tradeType; // 거래유형 (BUY, SELL, SWITCH_OUT 등)
 
-    @Column(nullable = false, precision = 18, scale = 4)
+    @Column(nullable = false, precision = 20, scale = 6)
     private BigDecimal tradeUnits; // 거래 좌수
 
-    @Column(nullable = false, precision = 18, scale = 4)
+    @Column(nullable = false, precision = 20, scale = 6)
     private BigDecimal tradePrice; // 거래 단가 (좌당 가격)
 
-    @Column(nullable = false, precision = 18, scale = 2)
+    @Column(nullable = false, precision = 20, scale = 6)
     private BigDecimal tradeAmount; // 거래금액 (좌수×단가)
-
-    @Column(nullable = false)
-    private LocalDateTime tradeDate; // 거래일시
 }
