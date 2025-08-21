@@ -1,75 +1,126 @@
+<!-- src/main/resources/templates/purchase/trade/step6.html -->
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>STEP5. 비밀번호 입력 & 적용</title>
-  <link th:href="@{/css/purchase.css}" rel="stylesheet"/>
+  <title>STEP6. 완료</title>
+  <style>
+    :root{--bg:#f6f7fb;--fg:#111827;--muted:#6b7280;--border:#e5e7eb;--chip:#f3f4f6;--brand:#b30000}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
+    .container{max-width:900px;margin:0 auto;padding:16px 16px 40px}
+    .header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#fff;border-bottom:1px solid var(--border)}
+    .brand{font-weight:700;color:var(--brand)}
+    h1{font-size:22px;margin:18px 0 10px}
+    .muted{color:var(--muted)}
+    .card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px;margin-top:14px}
+    .row{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border);border-radius:10px;margin:8px 0;padding:10px 12px;background:#fafafa}
+    .name{font-weight:600}
+    .chip{margin-left:8px;background:var(--chip);border:1px solid var(--border);border-radius:999px;padding:2px 8px;font-size:11px;color:#374151}
+    .ratio{font-size:12px;background:#fff2f2;border:1px solid #ffe1e1;border-radius:999px;padding:2px 8px}
+    .banner{margin:12px 0;padding:10px 12px;border-radius:10px;border:1px solid #fde68a;background:#fffbeb;color:#92400e}
+    .btn{appearance:none;border:0;border-radius:12px;padding:10px 14px;cursor:pointer;font-weight:700}
+    .primary{background:#ffd6d6}
+    .primary:hover{background:#ffbfbf}
+    .row-actions{display:flex;gap:10px;margin-top:16px}
+    pre{background:#0b1020;color:#e7e7e7;padding:10px;border-radius:10px;overflow:auto;max-height:260px}
+  </style>
 </head>
 <body>
-	<header class="header">
-		  <div class="brand">BNK 퇴직연금</div>
-		  <nav class="tabs">
-		    <a th:href="@{/purchase/holdings}" class="tab">보유현황</a>
-		    <a th:href="@{/purchase/products}" class="tab">상품관리</a>
-		  </nav>
-	</header>
+<header class="header">
+  <div class="brand">BNK 퇴직연금</div>
+  <nav class="muted">상품관리</nav>
+</header>
 
-<main class="container">
+<div class="container">
+  <h1>STEP6. 완료</h1>
+  <div class="muted" th:text="'FLOW: ' + (${session['ReserveValueDto']?.flow} ?: '-')">FLOW</div>
+
+  <!-- 세션 JSON 원문(escape 없이) -->
+  <script id="json-source" type="application/json"
+          th:utext="${session['ReserveValueDto'] != null ? session['ReserveValueDto'].sourceProdIdList : '[]'}"></script>
+  <script id="json-target" type="application/json"
+          th:utext="${session['ReserveValueDto'] != null ? session['ReserveValueDto'].targetProdIdList : '[]'}"></script>
+
+  <div id="sumBanner" class="banner" style="display:none"></div>
+
   <section class="card">
-    <div class="section-title">STEP5. 비밀번호 입력 & 적용</div>
-
-    <input type="hidden" id="flow"        th:value="${flow}">
-    <input type="hidden" id="accountType" th:value="${accountType}">
-    <input type="hidden" id="acountId"    th:value="${acountId}">
-    <input type="hidden" id="items"       th:value="${items}">
-    <input type="hidden" id="maturityProductId" th:value="${maturityProductId}">
-    <input type="hidden" id="changeDate"        th:value="${changeDate}">
-
-    <div class="row">
-      <input id="acctPwd" type="password" class="input" placeholder="계좌 비밀번호 (IRP만 검증)">
-      <button id="applyBtn" class="btn primary">즉시 적용</button>
+    <div style="font-weight:700;margin-bottom:6px">적용 내역 (RESERVE)</div>
+    <div id="afterList">
+      <div class="muted">표시할 항목이 없습니다.</div>
     </div>
 
-    <span class="badge mt-8" id="applyStatus">대기</span>
-    <pre id="resultBox" class="mt-8" style="white-space:pre-wrap"></pre>
+    <div class="row-actions">
+      <button id="applyBtn" class="btn primary">적용하기</button>
+      <a class="btn" th:href="@{/purchase/holdings}">보유현황으로</a>
+    </div>
 
-    <!-- PRG용 done POST -->
-    <form th:action="@{|/purchase/trade/${flow}/step5/done|}" method="post" id="doneForm"></form>
+    <div style="margin-top:10px" class="muted">AP 응답</div>
+    <pre id="resultBox">{}</pre>
   </section>
-</main>
+</div>
 
 <script>
-  document.getElementById('applyBtn').addEventListener('click', async ()=>{
-    const flow        = document.getElementById('flow').value;
-    const accountType = document.getElementById('accountType').value;
-    const acountId    = document.getElementById('acountId').value;
-    const items       = JSON.parse(document.getElementById('items').value);
-    const acctPwd     = document.getElementById('acctPwd').value;
+(function(){
+  const $ = (id)=>document.getElementById(id);
 
-    let url, payload;
-    if(flow === 'MATURITY'){
-      const productId  = document.getElementById('maturityProductId').value;
-      const changeDate = document.getElementById('changeDate').value;
-      if(!productId || !changeDate){ alert('원본 예금과 전환일을 확인하세요.'); return; }
-      url = '/purchase/api/trade/maturity/apply';
-      payload = { accountType, acountId, productId, changeDate, items };
-    }else{
-      url = '/purchase/api/trade/apply';
-      payload = { accountType, acountId, acctPwd, items };
-      if(accountType==='IRP' && !acctPwd){ alert('IRP는 비밀번호가 필요합니다.'); return; }
-    }
+  function parseDeep(text){
+    try{
+      let v = JSON.parse(text||'[]');
+      if (typeof v === 'string') { try{ v = JSON.parse(v); }catch{} }
+      return v;
+    }catch{return []}
+  }
 
-    document.getElementById('applyStatus').textContent = '진행중...';
+  const source = parseDeep($("json-source").textContent); // [{product:{productId,productName},ratio},...]
+  const afterList = $("afterList");
+  const sumBanner = $("sumBanner");
 
-    const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-    const json = await res.json();
-    document.getElementById('resultBox').textContent = JSON.stringify(json, null, 2);
-    document.getElementById('applyStatus').textContent = '완료';
-
-    // PRG: 완료 페이지
-    setTimeout(()=> document.getElementById('doneForm').submit(), 500);
+  // 렌더 + 합계/현금성자산
+  let sum = 0;
+  const items = [];
+  source.forEach(x=>{
+    const id = x?.product?.productId || x?.prodId;
+    const nm = x?.product?.productName || id;
+    const r  = Number(x?.ratio ?? 0);
+    if (!id) return;
+    sum += isFinite(r) ? r : 0;
+    items.push({id, name:nm, ratio:r, type: id.startsWith("PG") ? "원리금보장" : "펀드/ETF/TDF"});
   });
+  const cash = Math.max(0, 100 - sum);
+  if (cash > 0) items.push({id:"CASH", name:"현금성자산", ratio:cash, type:"현금"});
+
+  if (items.length === 0) {
+    afterList.innerHTML = '<div class="muted">표시할 항목이 없습니다.</div>';
+  } else {
+    afterList.innerHTML = items.map(it => `
+      <div class="row">
+        <div class="name">${it.name}${it.id!=="CASH" ? `<span class="chip">${it.type}</span>` : ""}</div>
+        <div class="ratio">${it.ratio}%</div>
+      </div>
+    `).join("");
+  }
+
+  sumBanner.style.display = 'block';
+  sumBanner.textContent = (sum > 100)
+    ? `설정 비율 합계가 ${sum}% 입니다. 100%를 초과했습니다.`
+    : `설정 비율 합계는 ${sum}% 입니다. ${cash>0 ? '현금성자산으로 ' + cash + '% 자동 보정되었습니다.' : '합계 100%입니다.'}`;
+
+  // 적용 버튼 → AP 호출
+  $("applyBtn").addEventListener("click", async ()=>{
+    try{
+      const res = await fetch('/purchase/api/trade/reserve/apply', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: '{}'   // 세션 기반 처리라 바디 불필요
+      });
+      const json = await res.json();
+      $("resultBox").textContent = JSON.stringify(json, null, 2);
+    }catch(e){
+      $("resultBox").textContent = JSON.stringify({success:false, message:String(e)}, null, 2);
+    }
+  });
+})();
 </script>
 </body>
 </html>
