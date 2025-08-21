@@ -5,20 +5,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.example.memo.purchase.trade_common.dto.ReserveValueDto;
+import com.example.memo.rule.dto.SurveySubmitRes;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpClientService;
 import com.example.memo.tcp_common.TcpMessage;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -97,7 +95,18 @@ public class TradePageViewController {
     /** step2 진입 (세션만 사용; 뷰에서 ${session.PassValueDto.*}로 표시) */
     @GetMapping("/step1/after-risk")
     public String step2AfterRisk(HttpSession session) {
-        return "purchase/trade/step2_reserve";
+        ReserveValueDto dto = (ReserveValueDto) session.getAttribute("ReserveValueDto");
+        if (dto == null) dto = new ReserveValueDto();
+
+        // 설문 컨트롤러가 세션에 넣어둔 결과 읽기 (SurveyResultController에서 session.setAttribute("result", result))
+        SurveySubmitRes result = (SurveySubmitRes) session.getAttribute("result");
+        if (result != null) {
+            dto.setRiskGrade(result.getType()); // 예: "위험중립형"
+            // dto.setRiskGradeNum( ... ) // 점수→등급 숫자 매핑 시
+        }
+
+        session.setAttribute("ReserveValueDto", dto);
+        return "purchase/trade/step2_reserve";  // 바로 뷰
     }
 	
 	/*테스트용 함수*/
