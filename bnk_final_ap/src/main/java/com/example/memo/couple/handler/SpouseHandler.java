@@ -56,7 +56,6 @@ public class SpouseHandler implements TcpMessageHandler {
                     String action = data.path("action").asText();
 
                     ObjectNode res = spouseLinkService.decideBySpouse(linkId, spouseUserId, action);
-                    // 서비스 결과를 바로 반환하지 않고, 표준 응답 형식으로 감싸줍니다.
                     return objectMapper.createObjectNode()
                             .put("success", true)
                             .put("code", "OK")
@@ -81,6 +80,19 @@ public class SpouseHandler implements TcpMessageHandler {
                             .put("success", true)
                             .put("code", "OK")
                             .put("message", "관리자 검토를 요청했습니다.");
+                }
+                case SPOUSE_LINK_STATUS: {
+                    Long userId = data.path("userId").asLong();
+                    ObjectNode d = spouseLinkService.getStatus(userId);
+                    return objectMapper.createObjectNode()
+                            .put("success", true)
+                            .put("code", "OK")
+                            .set("data", d);
+                }
+                case SPOUSE_LINK_GET_DETAILS: {
+                    Long linkId = data.path("linkId").asLong();
+                    ObjectNode details = spouseLinkService.getRequestDetails(linkId);
+                    return details;
                 }
                 default:
                     return "알 수 없는 명령: " + command.name();

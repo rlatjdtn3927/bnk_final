@@ -75,4 +75,17 @@ public interface IrpSpouseLinkRepository extends JpaRepository<IrpSpouseLink, Lo
     default boolean existsLinkedForUser(Long userId) {
         return existsLinkedForUserNative(userId) > 0;
     }
+    
+    // 사용자(신청자 or 배우자) 기준 최신 1건
+    @Query("""
+        select l from IrpSpouseLink l
+         where l.applicantUserId = :userId or l.spouseUserId = :userId
+         order by l.id desc
+    """)
+    List<IrpSpouseLink> findLatestByUser(@Param("userId") Long userId);
+
+    default Optional<IrpSpouseLink> findLatestOneByUser(Long userId) {
+        var rows = findLatestByUser(userId);
+        return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0));
+    }
 }

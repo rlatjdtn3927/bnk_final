@@ -1,57 +1,210 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8"/>
-  <title>부부연동 요청 수락</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <style>
-    :root{--bg:#0b1020;--card:#151b2d;--muted:#9aa4b2;--accent:#5dd0ff;--ok:#2ecc71;--warn:#ffb020;--bad:#ff5c5c}
-    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:#e9eef5;font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,'Noto Sans KR',sans-serif}
-    .wrap{max-width:720px;margin:40px auto;padding:0 16px}
-    .card{background:var(--card);border:1px solid #26324e;border-radius:16px;padding:22px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
-    .title{font-size:20px;margin:0 0 4px}
-    .sub{color:var(--muted);font-size:13px;margin:0 0 24px}
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:12px;border:1px solid #2a3656;background:#0f1526;color:#e9eef5;cursor:pointer}
-    .btn.primary{background:linear-gradient(135deg,#2a9df4,#6dd5ff);border:none;color:#0a0f1e;font-weight:700}
-    .btn.secondary{background-color: #f44336; border-color: #f44336;}
-    .btn:disabled{opacity:.6;cursor:not-allowed}
-    .status{margin-top:16px;padding:14px;border-radius:12px;display:none}
-    .status.bad{display:block;background:rgba(255,92,92,.1);border:1px solid rgba(255,92,92,.35);color:#ffdede}
-  </style>
+    <meta charset="UTF-8"/>
+    <title>부부연동 요청 수락</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --bg-color: #f4f7f9;
+            --content-bg-color: #ffffff;
+            --border-color: #dee2e6;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --ok-color: #28a745;
+            --bad-color: #dc3545;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: #e9ecef;
+            color: var(--text-primary);
+            font-family: 'Pretendard', sans-serif;
+        }
+
+        .mobile-container {
+            width: 100%;
+            max-width: 420px;
+            min-height: 100vh;
+            margin: 0 auto;
+            background: var(--content-bg-color);
+            position: relative;
+            box-shadow: 0 10px 36px rgba(0,0,0,0.06);
+            padding-bottom: 100px; /* 하단 고정 버튼 영역 확보 */
+        }
+        
+        .app-header {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .app-header .back-btn {
+            font-size: 24px;
+            text-decoration: none;
+            color: var(--text-primary);
+            padding: 8px;
+        }
+
+        .app-header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+            text-align: center;
+            flex-grow: 1;
+            padding-right: 40px;
+        }
+
+        .content-area {
+            padding: 40px 24px;
+            text-align: center;
+        }
+        
+        .icon {
+            font-size: 48px;
+            margin-bottom: 24px;
+        }
+
+        .title {
+            font-size: 22px;
+            font-weight: 700;
+            margin: 0 0 12px;
+        }
+        
+        .description {
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+        
+        .benefit-box {
+            background-color: var(--bg-color);
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 14px;
+            text-align: left;
+            line-height: 1.7;
+        }
+
+        .action-footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            max-width: 420px;
+            padding: 16px 24px;
+            background: var(--content-bg-color);
+            border-top: 1px solid var(--border-color);
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.04);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            height: 52px;
+            padding: 0 24px;
+            border-radius: 12px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'Pretendard', sans-serif;
+            cursor: pointer;
+            transition: background-color 0.2s, opacity 0.2s;
+        }
+
+        .btn.primary { background: var(--primary-color); color: white; }
+        .btn.secondary { background: #e9ecef; color: var(--text-secondary); }
+        .btn:disabled { opacity: .6; cursor: not-allowed; }
+
+        .status {
+            margin-top: 24px;
+            padding: 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            display: none;
+        }
+        .status.ok { display: block; background: #e6f9ee; border: 1px solid #a3e9c2; color: #1a6a42; }
+        .status.bad { display: block; background: #fdeeee; border: 1px solid #f7c3c3; color: #8f2b2b; }
+    </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="card">
-    <h1 class="title">부부 IRP 연동 요청</h1>
-    <p class="sub" th:text="'로그인된 사용자: ' + (${sessionUserId} != null ? ${sessionUserId} : '로그인 필요')"></p>
-    
-    <p><strong>[신청자]</strong> 님으로부터 부부 IRP 연동 요청이 도착했습니다.</p>
-    <p>요청을 수락하시겠습니까?</p>
+<div class="mobile-container">
+    <header class="app-header">
+      <a href="/link-view/main" class="back-btn" aria-label="뒤로가기">‹</a>
+      <h1>연동 요청 확인</h1>
+    </header>
 
-    <div style="display:flex; gap:10px; margin-top: 24px;">
-        <button id="accept-btn" class="btn primary">수락</button>
-        <button id="reject-btn" class="btn secondary">거절</button>
-    </div>
-    <div id="result-message" class="status"></div>
-  </div>
+    <main class="content-area">
+        <div class="icon">💌</div>
+        <h2 class="title"><strong id="applicant-name">신청자</strong> 님께서<br>연동을 요청했어요.</h2>
+        <p class="description">
+            부부 IRP 연동을 수락하고<br>더 스마트한 노후 준비를 시작해 보세요.
+        </p>
+
+        <div class="benefit-box">
+            <b>✅ 연동 시 이런 혜택이 있어요</b>
+            <ul style="padding-left: 20px; margin: 8px 0 0; color: var(--text-secondary);">
+                <li>IRP 입금 시 입금액의 0.5% 추가 적립</li>
+                <li>연말정산 세액공제 전략 공동 수립</li>
+            </ul>
+        </div>
+        
+        <div id="result-message" class="status"></div>
+    </main>
+
+    <footer class="action-footer">
+        <button id="reject-btn" class="btn secondary">거절하기</button>
+        <button id="accept-btn" class="btn primary">수락하기</button>
+    </footer>
 </div>
 
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     const linkId = urlParams.get('linkId');
 
+    const applicantNameEl = document.getElementById('applicant-name');
     const acceptBtn = document.getElementById('accept-btn');
     const rejectBtn = document.getElementById('reject-btn');
     const resultDiv = document.getElementById('result-message');
     
-    if (!linkId) {
-        resultDiv.className = 'status bad';
-        resultDiv.textContent = "잘못된 접근입니다. 처리할 연동 요청 정보가 없습니다.";
-        acceptBtn.disabled = true;
-        rejectBtn.disabled = true;
-    } else {
-        acceptBtn.addEventListener('click', () => handleDecision('ACCEPT'));
-        rejectBtn.addEventListener('click', () => handleDecision('REJECT'));
+    // --- 페이지 로드 시 실행 ---
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!linkId) {
+            showError("잘못된 접근입니다. 처리할 연동 요청 정보가 없습니다.");
+        } else {
+            fetchRequestDetails(linkId); // <<-- 함수 호출
+            acceptBtn.addEventListener('click', () => handleDecision('ACCEPT'));
+            rejectBtn.addEventListener('click', () => handleDecision('REJECT'));
+        }
+    });
+
+
+    async function fetchRequestDetails(id) {
+        try {
+            const response = await fetch(`/link/details/${id}`);
+            if (!response.ok) {
+                throw new Error('신청 정보를 불러오는 데 실패했습니다.');
+            }
+            const details = await response.json();
+            
+            // 가져온 이름으로 화면 업데이트
+            applicantNameEl.textContent = details.applicantName;
+
+        } catch (error) {
+            console.error("신청자 정보 조회 실패:", error);
+            applicantNameEl.textContent = '신청자'; // 실패 시 기본값
+            showError(error.message); // 사용자에게도 에러 표시
+        }
     }
 
     async function handleDecision(action) {
@@ -65,17 +218,34 @@
                 body: JSON.stringify({ linkId: Number(linkId), action: action })
             });
             const result = await res.json();
-            if (!res.ok || !result.success) throw new Error(result.message || '처리 실패');
             
-            alert(action === 'ACCEPT' ? '연동을 수락했습니다.' : '연동을 거절했습니다.');
-            window.location.href = '/link-view/main';
+            if (!res.ok || (result.hasOwnProperty('success') && !result.success)) {
+              throw new Error(result.message || '요청 처리에 실패했습니다.');
+            }
+            
+            const message = action === 'ACCEPT' ? '연동을 수락했습니다.' : '연동을 거절했습니다.';
+            showSuccessAndRedirect(message);
 
         } catch (error) {
-            resultDiv.className = 'status bad';
-            resultDiv.textContent = '오류: ' + error.message;
+            showError('오류: ' + error.message);
             acceptBtn.disabled = false;
             rejectBtn.disabled = false;
         }
+    }
+    
+    function showError(message) {
+        resultDiv.className = 'status bad';
+        resultDiv.textContent = message;
+        acceptBtn.disabled = true;
+        rejectBtn.disabled = true;
+    }
+    
+    function showSuccessAndRedirect(message) {
+        resultDiv.className = 'status ok';
+        resultDiv.textContent = message + ' 2초 후 메인 페이지로 이동합니다.';
+        setTimeout(() => {
+            window.location.href = '/link-view/main';
+        }, 2000);
     }
 </script>
 </body>

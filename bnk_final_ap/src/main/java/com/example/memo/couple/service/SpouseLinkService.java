@@ -3,11 +3,15 @@ package com.example.memo.couple.service;
 import static com.example.memo.couple.ocr.OcrTextUtil.normalizeBirth;
 import static com.example.memo.couple.ocr.OcrTextUtil.normalizeNameForCompare;
 
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
+import java.util.Objects;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.memo.couple.ocr.dto.SpouseOcrRequest;
 import com.example.memo.couple.ocr.dto.SpouseOcrResponse;
@@ -15,18 +19,18 @@ import com.example.memo.couple.ocr.service.ClovaSpouseOcrService;
 import com.example.memo.jpa.entity.couple.IrpSpouseLink;
 import com.example.memo.jpa.entity.couple.LinkAdminReview;
 import com.example.memo.jpa.entity.couple.LinkStatus;
-import com.example.memo.jpa.entity.couple.Notification;
 import com.example.memo.jpa.entity.couple.ReviewStatus;
+import com.example.memo.jpa.entity.irp.IrpAccount;
 import com.example.memo.jpa.entity.user.UserEntity;
 import com.example.memo.jpa.repository.couple.IrpSpouseLinkRepository;
 import com.example.memo.jpa.repository.couple.LinkAdminReviewRepository;
 import com.example.memo.jpa.repository.couple.NotificationRepository;
+import com.example.memo.jpa.repository.irp.IrpAccountRepository;
 import com.example.memo.jpa.repository.user.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -45,6 +49,65 @@ public class SpouseLinkService {
     private final NotificationService notificationService;
     private final NotificationRepository notificationRepo;
     private final SseService sseService;
+    private final IrpAccountRepository irpAccountRepo;
+    
+    
+    @Transactional(readOnly = true)
+    public ObjectNode getStatus(Long userId) {
+        ObjectNode out = om.createObjectNode();
+
+        Optional<IrpSpouseLink> opt = linkRepo.findLatestOneByUser(userId);
+
+        if (opt.isEmpty()) {
+            out.put("hasAny", false);
+
+            Optional<IrpAccount> irpOpt = irpAccountRepo.findByUser_UserId(userId);
+            
+            if (irpOpt.isPresent()) {
+                IrpAccount account = irpOpt.get();
+                out.put("hasIrpAccount", true);
+                ObjectNode accountNode = out.putObject("account");
+                accountNode.put("number", account.getIrpAcctNo());
+                // BigDecimal을 보기 좋은 문자열로 포맷팅
+                accountNode.put("balance", NumberFormat.getInstance().format(account.getBalance()) + "원");
+            } else {
+                out.put("hasIrpAccount", false);
+            }
+            return out;
+        }
+
+        // 2. 연동 이력이 있는 경우 (이하 로직은 이전과 동일)
+        IrpSpouseLink link = opt.get();
+        String status = link.getLinkStatus().name();
+        out.put("hasAny", true);
+        out.put("linkId", link.getId());
+        out.put("status", status);
+        out.put("linked", "LINKED".equals(status));
+
+        if (link.getLinkStatus() == LinkStatus.PENDING_SPOUSE) {
+            if (Objects.equals(link.getApplicantUserId(), userId)) {
+                out.put("myRole", "APPLICANT");
+            } else {
+                out.put("myRole", "SPOUSE");
+            }
+        }
+
+        Long spouseUserId = Objects.equals(link.getApplicantUserId(), userId) 
+            ? link.getSpouseUserId() 
+            : link.getApplicantUserId();
+        
+        if (spouseUserId != null) {
+            userRepo.findById(spouseUserId).ifPresent(spouse -> {
+                out.put("spouseUserId", spouse.getUserId());
+                out.put("spouseName", spouse.getName());
+            });
+        }
+        
+        if (link.getApprovedAt() != null) out.put("linkedAt", link.getApprovedAt().toString());
+        if (link.getAppliedAt() != null)  out.put("appliedAt", link.getAppliedAt().toString());
+        
+        return out;
+    }
 
     @Transactional
     public ObjectNode apply(Long applicantUserId,
@@ -210,55 +273,52 @@ public class SpouseLinkService {
      * (배우자 정보 조회 로직 추가)
      */
     public ArrayNode adminListPending(int urlTtlMinutes) {
-        log.info(">>>> [START] 관리자 검토 대기 목록 조회를 시작합니다.");
-
         var links = linkRepo.findByLinkStatusOrderByAppliedAtDesc(LinkStatus.PENDING_ADMIN);
-        log.info(">>>> [DB RESULT] irp_spouse_link 테이블에서 PENDING_ADMIN 상태인 데이터를 {}건 찾았습니다.", links.size());
-
         if (links.isEmpty()) {
-            log.warn(">>>> [END] 조회된 데이터가 없어 빈 목록을 반환합니다.");
             return om.createArrayNode();
         }
 
-        ArrayNode arr = om.createArrayNode();
-        for (IrpSpouseLink l : links) {
-            ObjectNode o = om.createObjectNode();
-            o.put("linkId", l.getId());
-            o.put("applicantUserId", l.getApplicantUserId());
-            o.put("status", l.getLinkStatus().name());
-            o.put("appliedAt", l.getAppliedAt() != null ? l.getAppliedAt().toString() : null);
+        ArrayNode resultList = om.createArrayNode();
+        for (IrpSpouseLink link : links) {
+            ObjectNode item = om.createObjectNode();
+            item.put("linkId", link.getId());
+            item.put("requestedAt", link.getAppliedAt().toString());
 
-            reviewRepo.findTopByLinkIdOrderByIdDesc(l.getId()).ifPresent(rv -> {
-                o.put("reviewReason", rv.getReason());
-                o.put("requestedAt", rv.getRequestedAt() != null ? rv.getRequestedAt().toString() : null);
+            // 1. 신청자 정보 (DB 기준)
+            ObjectNode applicantNode = item.putObject("applicant");
+            userRepo.findById(link.getApplicantUserId()).ifPresent(user -> {
+                applicantNode.put("id", user.getUserId());
+                applicantNode.put("name", user.getName());
+                applicantNode.put("birth", user.getBirthDate().toString());
             });
-            
-            // spouse_user_id가 있다면, 해당 사용자의 정보를 찾아서 함께 내려줌
-            if (l.getSpouseUserId() != null) {
-                userRepo.findById(l.getSpouseUserId()).ifPresent(spouse -> {
-                    o.put("spouseUserId", spouse.getUserId());
-                    o.put("spouseName", spouse.getName());
+
+            // 2. 배우자 정보 (사용자 입력 + DB 조회 결과)
+            ObjectNode spouseNode = item.putObject("spouse");
+            reviewRepo.findTopByLinkIdOrderByIdDesc(link.getId()).ifPresent(review -> {
+                String reason = review.getReason();
+                spouseNode.put("userInputName", parseValue(reason, "이름"));
+                spouseNode.put("userInputBirth", parseValue(reason, "생년월일"));
+            });
+            if (link.getSpouseUserId() != null) {
+                userRepo.findById(link.getSpouseUserId()).ifPresent(user -> {
+                    spouseNode.put("dbId", user.getUserId());
+                    spouseNode.put("dbName", user.getName());
+                    spouseNode.put("dbBirth", user.getBirthDate().toString());
                 });
             }
 
-            // 증빙 파일 URL 생성 (기존 로직과 동일)
-            if (l.getS3ObjectKey() != null && !l.getS3ObjectKey().isBlank()) {
+            // 3. 증빙 서류 URL
+            if (link.getS3ObjectKey() != null) {
                 try {
-                    String url = s3Service.presignedGetUrl(
-                            l.getS3ObjectKey(), java.time.Duration.ofMinutes(urlTtlMinutes));
-                    o.put("proofUrl", url);
+                    String url = s3Service.presignedGetUrl(link.getS3ObjectKey(), java.time.Duration.ofMinutes(urlTtlMinutes));
+                    item.put("proofUrl", url);
                 } catch (Exception e) {
-                    log.error(">>>> [S3 ERROR] linkId={} 증빙 파일 URL 생성 오류!", l.getId(), e);
-                    o.put("proofUrl", "#");
-                    o.put("s3Error", e.getMessage());
+                    item.put("proofUrl", "#");
                 }
-            } else {
-                o.putNull("proofUrl");
             }
-            arr.add(o);
+            resultList.add(item);
         }
-        log.info(">>>> [END] 최종 {}건의 데이터를 JSON으로 변환하여 반환합니다.", arr.size());
-        return arr;
+        return resultList;
     }
 
     /**
@@ -433,7 +493,7 @@ public class SpouseLinkService {
 
         link.setSpouseUserId(spouseUser.getUserId());
 
-        // ✅ 이 시점에서만 S3 업로드
+        // 이 시점에서만 S3 업로드
         byte[] bytes = Base64.getDecoder().decode(base64);
         String key = s3Service.put("family-doc/", filename, bytes);
         link.setS3ObjectKey(key);
@@ -448,6 +508,30 @@ public class SpouseLinkService {
 
         reviewRepo.save(rv);
         linkRepo.save(link);
+    }
+    
+    /**
+     * 특정 연동 요청의 상세 정보(주로 신청자 이름)를 조회
+     * @param linkId 조회할 연동 요청 ID
+     * @return 신청자 정보 등이 담긴 ObjectNode
+     */
+    @Transactional(readOnly = true)
+    public ObjectNode getRequestDetails(Long linkId) {
+        // 1. linkId로 연동 정보 조회
+        IrpSpouseLink link = linkRepo.findById(linkId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 연동 신청입니다. (ID: " + linkId + ")"));
+
+        // 2. 연동 정보에서 신청자 ID를 이용해 사용자 정보 조회
+        UserEntity applicant = userRepo.findById(link.getApplicantUserId())
+                .orElseThrow(() -> new IllegalStateException("신청자 정보를 찾을 수 없습니다."));
+
+        // 3. 프론트엔드에 전달할 JSON 객체 생성
+        ObjectNode details = om.createObjectNode();
+        details.put("applicantUserId", applicant.getUserId());
+        details.put("applicantName", applicant.getName());
+        details.put("appliedAt", link.getAppliedAt().toString());
+
+        return details;
     }
 
 
@@ -475,5 +559,30 @@ public class SpouseLinkService {
         da = da.replaceAll("\\D", "");
         db = db.replaceAll("\\D", "");
         return da.length() == 8 && da.equals(db);
+    }
+    
+    /**
+     * "키1=값1, 키2=값2" 형태의 문자열에서 특정 키에 해당하는 값을 파싱하는 헬퍼 메소드
+     * @param source "사용자 입력 정보: 이름=이배우, 생년월일=1990-11-20" 과 같은 문자열
+     * @param key 찾고자 하는 키 (예: "이름")
+     * @return 찾은 값 (예: "이배우") / 없으면 null
+     */
+    private String parseValue(String source, String key) {
+        if (source == null || key == null || !source.contains(key + "=")) {
+            return null;
+        }
+        try {
+            // "key=" 뒷부분을 가져옴
+            String part = source.split(key + "=")[1];
+            // 콤마(,)가 있다면 그 앞부분까지만, 없다면 전체를 값으로 취급
+            if (part.contains(",")) {
+                return part.split(",")[0].trim();
+            }
+            return part.trim();
+        } catch (Exception e) {
+            // 파싱 중 오류 발생 시 null 반환
+            log.error("Reason 필드 파싱 중 오류 발생: source={}, key={}", source, key, e);
+            return null;
+        }
     }
 }

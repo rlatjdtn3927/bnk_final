@@ -186,4 +186,61 @@ public class SpouseLinkController {
     	        return ResponseEntity.status(500).body(err);
     	    }
     	}
+    
+    @GetMapping("/status")
+    public ResponseEntity<?> getLinkStatus(HttpSession session) {
+        Map<String, Object> body = new HashMap<>();
+        try {
+            Object v = session.getAttribute("user");
+            if (v == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("success", false, "message", "로그인이 필요합니다."));
+            }
+            Long userId = (v instanceof Long) ? (Long) v
+                    : (v instanceof Integer) ? ((Integer) v).longValue()
+                    : Long.valueOf(v.toString());
+
+            ObjectNode payload = objectMapper.createObjectNode().put("userId", userId);
+            TcpMessage msg = new TcpMessage(Command.SPOUSE_LINK_STATUS, payload);
+            JsonNode apRes = tcpClientService.sendMessage(msg);
+
+            // AP 표준 응답 그대로 전달
+            return ResponseEntity.ok(apRes);
+
+        } catch (Exception e) {
+            body.put("success", false);
+            body.put("code", "INTERNAL_ERROR");
+            body.put("message", "상태 조회 중 오류: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+        }
+    }
+
+    /**
+     * 연동 신청 상세 정보 조회 (신청자 이름 등)
+     */
+    @GetMapping("/details/{linkId}")
+    public ResponseEntity<?> getLinkDetails(@PathVariable("linkId") Long linkId) {
+        try {
+            // 1. AP로 보낼 payload 생성
+            ObjectNode payload = objectMapper.createObjectNode();
+            payload.put("linkId", linkId);
+
+            // 2. TCP 메시지 생성 및 전송
+            TcpMessage msg = new TcpMessage(Command.SPOUSE_LINK_GET_DETAILS, payload);
+            JsonNode apResponse = tcpClientService.sendMessage(msg);
+
+            // 3. AP 응답 그대로 반환
+            if (apResponse == null || (apResponse.has("success") && !apResponse.get("success").asBoolean())) {
+                return ResponseEntity.badRequest().body(apResponse);
+            }
+            return ResponseEntity.ok(apResponse);
+
+        } catch (Exception e) {
+            Map<String, Object> errorBody = new HashMap<>();
+            errorBody.put("success", false);
+            errorBody.put("message", "상세 정보 조회 중 오류 발생: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBody);
+        }
+    }
+    
 }
