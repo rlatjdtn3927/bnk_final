@@ -105,7 +105,7 @@ public class LoginRestController {
             body.put("code", "OK");
             body.put("message", "로그인 성공");
             body.put("data", payload);
-            body.put("redirect", "/login-view/main");
+            body.put("redirect", "/");
 
             return ResponseEntity.ok(body);
 
