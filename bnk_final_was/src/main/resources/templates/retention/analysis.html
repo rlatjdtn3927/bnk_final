@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>보유 현황 분석</title>
+<link rel="stylesheet" href="/css/retention.css" />
+</head>
+<body>
+<div class="mobile-container">
+<header class="appbar">
+<button class="icon-btn" aria-label="뒤로가기">←</button>
+<h1 class="appbar__title">보유 현황 분석</h1>
+<span class="appbar__spacer"></span>
+</header>
+
+
+<main class="container">
+<section class="panel">
+<div class="panel__row">
+<label class="label">기간</label>
+<div class="segmented">
+<button class="segmented__btn is-active" disabled>3M</button>
+<button class="segmented__btn" disabled>6M</button>
+<button class="segmented__btn" disabled>12M</button>
+</div>
+</div>
+<div class="panel__row">
+<label class="label">티어</label>
+<div class="pill-select">
+<button class="pill is-active" disabled>전체</button>
+<button class="pill" disabled>Bronze</button>
+<button class="pill" disabled>Silver</button>
+<button class="pill" disabled>Gold</button>
+</div>
+</div>
+</section>
+
+
+<section class="grid-3">
+<article class="card">
+<h3 class="card__title">자산 분포</h3>
+<div class="sk sk-chart"></div>
+</article>
+<article class="card">
+<h3 class="card__title">티어×상품 수익률</h3>
+<div class="sk sk-chart"></div>
+</article>
+<article class="card">
+<h3 class="card__title">월별 평균 수익률</h3>
+<div class="sk sk-chart"></div>
+</article>
+</section>
+</main>
+</div>
+</body>
+</html>

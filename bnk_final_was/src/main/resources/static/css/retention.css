@@ -1,0 +1,86 @@
+@charset "UTF-8";
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+
+:root{
+--bg-color:#FAFAFC; /* 컨테이너 배경 */
+--surface:#FFFFFF; /* 카드/표면 */
+--ink:#1F2937; /* 본문 텍스트 */
+--muted:#6B7280; /* 보조 텍스트 */
+--border:#E7EBF2; /* 경계선 */
+--primary:#D93C3C; /* 포인트 컬러(BNK 톤 참고) */
+--positive:#0A7C3A; /* 양수 색 */
+--negative:#B42318; /* 음수 색 */
+--radius:16px;
+}
+
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg-color);color:var(--ink);font-family:Pretendard,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial,'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',sans-serif}
+
+
+/* 요청한 모바일 컨테이너 사이즈 */
+.mobile-container{width:100%;max-width:420px;min-height:100vh;background:var(--bg-color);position:relative;margin:0 auto;box-shadow:0 10px 36px rgba(0,0,0,.06)}
+
+
+/* 상단 앱바 */
+.appbar{height:56px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:10}
+.appbar__title{font-size:16px;margin:0 auto 0 8px;font-weight:700}
+.appbar__spacer{width:24px}
+.icon-btn{width:32px;height:32px;border:none;background:transparent;font-size:18px;cursor:default}
+
+
+/* 공통 레이아웃 */
+.container{padding:16px}
+.section{margin:8px 0 16px}
+.title{font-size:14px;margin:0 0 4px;color:var(--muted)}
+.title__strong{font-size:18px;font-weight:700;color:var(--ink)}
+
+
+/* 카드 */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin:10px 0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.card__row{display:flex;justify-content:space-between;align-items:center;margin:6px 0}
+.card__title{font-weight:700}
+.card__value{font-size:18px;font-weight:700}
+.card__yield{font-weight:700}
+.card__actions{display:flex;gap:8px;margin-top:8px}
+
+
+/* 배지/버튼 */
+.badge{display:inline-flex;align-items:center;justify-content:center;height:22px;padding:0 8px;border-radius:999px;font-size:12px;color:#fff;background:var(--primary)}
+.btn{height:36px;padding:0 12px;border-radius:10px;border:1px solid var(--border);background:var(--primary);color:#fff;font-weight:700}
+.btn[disabled]{opacity:.5}
+.btn--ghost{background:#fff;color:var(--ink)}
+
+
+/* 테이블(모바일 스택) */
+.table{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--surface)}
+.table__row{display:flex;gap:8px;padding:12px;border-bottom:1px solid var(--border)}
+.table__row:last-child{border-bottom:none}
+.table__cell{flex:1}
+
+
+/* 요약/탭/패널 */
+.summary{display:grid;grid-template-columns:1fr auto auto;gap:8px;margin:8px 0 16px}
+.tabs{display:flex;gap:8px;margin:8px 0}
+.tab{flex:1;height:36px;border:1px solid var(--border);border-radius:10px;background:#fff}
+.tab.is-active{border-color:var(--primary);color:var(--primary);font-weight:700}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin:10px 0}
+.panel__row{display:flex;align-items:center;gap:8px;margin:6px 0}
+.label{min-width:48px;color:var(--muted)}
+
+
+/* 필터/타임라인 */
+.segmented{display:inline-flex;background:#fff;border:1px solid var(--border);border-radius:999px;padding:4px}
+.segmented__btn{border:none;background:transparent;padding:6px 10px;border-radius:999px}
+.segmented__btn.is-active{background:var(--primary);color:#fff}
+.pill-select{display:flex;gap:6px;flex-wrap:wrap}
+.pill{border:1px solid var(--border);background:#fff;border-radius:999px;padding:6px 10px}
+.pill.is-active{border-color:var(--primary);color:var(--primary);font-weight:700}
+.timeline{margin-top:8px}
+.timeline__item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin:10px 0}
+.timeline__date{font-size:12px;color:var(--muted)}
+.timeline__row{display:flex;align-items:center;gap:8px;margin:6px 0}
+.timeline__amount{font-weight:700}
+.timeline__note{color:var(--muted)}
+@media(min-width:400px){.grid-3{grid-template-columns:1fr}}
