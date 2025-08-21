@@ -1,6 +1,6 @@
 package com.example.memo.purchase.controller.management.more_controller;
 
-import com.example.memo.purchase.dto.trade.PassValueDto;
+import com.example.memo.purchase.dto.trade.ReserveValueDto;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpClientService;
 import com.example.memo.tcp_common.TcpMessage;
@@ -33,12 +33,12 @@ public class RiskFlowController {
             typeNo = res.get("typeNo").intValue(); // 현재는 typeId를 넘김
         }
 
-        PassValueDto dto = (PassValueDto) session.getAttribute("PassValueDto");
-        if (dto == null) dto = new PassValueDto(); // 방어
+        ReserveValueDto dto = (ReserveValueDto) session.getAttribute("PassValueDto");
+        if (dto == null) dto = new ReserveValueDto(); // 방어
         dto.setRiskGrade(typeName);
         dto.setRiskGradeNum(typeNo);
         session.setAttribute("PassValueDto", dto);
 
-        return "redirect:/purchase/trade/step2/after-risk";
+        return "redirect:/purchase/trade/step1/after-risk";
     }
 }
