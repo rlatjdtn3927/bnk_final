@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+</head>
+<body>
+    <h2>Step1 Next 호출 테스트</h2>
+
+    <form id="step1Form" method="post" action="/purchase/trade/step1/after-risk">
+        <label for="flow">Flow:</label>
+        <select name="flow" id="flow">
+            <option value="RESERVE">RESERVE</option>
+            <option value="OTHER">OTHER</option>
+        </select>
+        <br/><br/>
+
+        <label for="accountId">계좌 ID:</label>
+        <input type="text" id="accountId" name="accountId" value="123-456-789"/>
+        <br/><br/>
+
+        <label for="accountType">계좌 Type:</label>
+        <input type="text" id="accountType" name="accountType" value="IRP"/>
+		
+		<label for="riskGrade">투자위험등급</label>
+		<select name="riskGrade" id="riskGrade">
+		    <option value="안정형">안정형</option>
+			<option value="안전추구형">안전추구형</option>
+			<option value="위험중립형">위험중립형</option>
+			<option value="적극투자형">적극투자형</option>
+			<option value="공격투자형">공격투자형</option>
+		</select>
+        <br/><br/>
+
+        <input type="submit">POST 호출</input>
+    </form>
+</body> 
+</html>

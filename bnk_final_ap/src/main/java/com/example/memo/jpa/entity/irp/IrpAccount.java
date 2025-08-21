@@ -2,6 +2,8 @@ package com.example.memo.jpa.entity.irp;
 
 import java.math.BigDecimal;
 
+import com.example.memo.jpa.entity.user.UserEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -29,7 +31,7 @@ public class IrpAccount {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable=false)
-    private TestUserEntity user;
+    private UserEntity user;
 
     @Column(precision = 18, scale = 0)
     private BigDecimal balance;
@@ -37,14 +39,13 @@ public class IrpAccount {
     @Column(name = "contract_no", nullable=false, unique=true, length=30)
     private String contractNo;
     
-    @Column(name = "acct_pwd", length = 100, nullable = false)
-    private String irpPwd; //시간이 되면 해시 저장(암호화)
+    @Column(name = "acct_pwd", length = 100)
+    private String irpPwd; 
     
     @Column(length = 20)
     private String status;
     
     @PrePersist void prePersist() {
-        if (status == null) status = "ACTIVE";
         if (balance == null) balance = BigDecimal.ZERO;
     }
 }

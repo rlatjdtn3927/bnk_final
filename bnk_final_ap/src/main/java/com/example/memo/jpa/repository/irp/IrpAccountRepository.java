@@ -3,6 +3,8 @@ package com.example.memo.jpa.repository.irp;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.example.memo.jpa.entity.irp.IrpAccount;
 
@@ -14,4 +16,13 @@ public interface IrpAccountRepository extends JpaRepository<IrpAccount, String>{
     Optional<IrpAccount> findByUser_UserId(Long userId);
 
     Optional<IrpAccount> findTopByUserUserIdAndStatusNot(Long userId, String status);
+
+    // (일반적) IrpAccount.user.userId 관계가 있을 때
+    /** userId로 IRP 계좌번호 1건 조회 */
+    @Query("""
+           select a.irpAcctNo
+           from IrpAccount a
+           where a.user.userId = :userId
+           """)
+    String findIrpAcctNoByUserId(@Param("userId") Long userId);
 }

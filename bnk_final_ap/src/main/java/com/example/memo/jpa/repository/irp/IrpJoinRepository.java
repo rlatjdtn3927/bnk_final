@@ -12,7 +12,7 @@ public interface IrpJoinRepository extends JpaRepository<IrpJoinEntity, Long>{
 	
 	@Query("""
 	        select j from IrpJoinEntity j
-	        left join fetch j.userId u
+	        left join fetch j.user u
 	        left join fetch j.acctNo a
 	        where j.joinId = :joinId
 	""")

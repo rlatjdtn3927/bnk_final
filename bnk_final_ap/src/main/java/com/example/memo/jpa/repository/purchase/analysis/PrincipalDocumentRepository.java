@@ -13,7 +13,6 @@ public interface PrincipalDocumentRepository extends JpaRepository<PrincipalDocu
 
     List<PrincipalDocument> findByPrincipal_ProductId(String productId);
 
-    // ✅ 배치 조회
     List<PrincipalDocument> findByPrincipal_ProductIdIn(List<String> productIds);
 
     // (과거 호환용) status는 Principal(연관객체)에 있으므로 JPQL로 명시

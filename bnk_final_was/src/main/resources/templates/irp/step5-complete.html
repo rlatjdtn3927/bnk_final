@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>IRP가입하기 - 신규가입완료</title>
+<link rel="stylesheet" th:href="@{/css/step5-complete.css}" />
+</head>
+<body>
+<script th:inline="javascript">
+  const joinId = /*[[${joinId}]]*/ 0;
+</script>
+
+<div class="section">
+  <h1>개인IRP가입하기</h1>
+
+  <ul class="step-bar">
+    <li>01. 개인IRP신규가입</li>
+    <li>02. 계약서동의</li>
+    <li>03. 가입정보입력</li>
+    <li>04. 가입정보확인</li>
+    <li class="active">05. 신규가입완료</li>
+  </ul>
+  
+  <div id="resultCard" class="card" style="display:none; margin-top:16px;">
+    <div class="card__head">IRP가입계좌정보</div>
+    <div class="card__body">
+      <table class="kv">
+        <tr><th>IRP 계약번호</th><td id="contractNo">-</td></tr>
+        <tr><th>IRP 계좌번호</th><td id="irpAcctNo">-</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- 신규 계좌비밀번호 입력 -->
+  <div class="card">
+    <div class="card__head">신규 계좌비밀번호 입력</div>
+    <div class="card__body">
+      <div class="field">
+        <label>신규 계좌비밀번호</label>
+        <input id="irpPwd1" class="input" type="password" inputmode="numeric" maxlength="4" placeholder="4자리 숫자" />
+      </div>
+      <div class="field">
+        <label>신규 계좌비밀번호 확인</label>
+        <input id="irpPwd2" class="input" type="password" inputmode="numeric" maxlength="4" placeholder="비밀번호 확인" />
+      </div>
+      <p class="help">※ 4자리 숫자, 두 입력이 동일해야 합니다.</p>
+    </div>
+    <div class="card__foot">
+      <button id="btnComplete">확인</button>
+    </div>
+  </div>
+</div>
+
+<div th:inline="none">
+  <dialog id="completeModal" class="modal">
+    <div class="modal__inner modal__inner--row">
+      
+      <!-- 아이콘: 옵션 A) 프로젝트 이미지 사용 -->
+      <!-- <img src="/images/icons/check-red.svg" alt="" class="modal__icon-img"> -->
+
+      <!-- 아이콘: 옵션 B) 인라인 SVG (경로 걱정 없이 바로 사용 가능) -->
+      <svg class="modal__icon-svg" viewBox="0 0 64 64" aria-hidden="true">
+        <circle cx="32" cy="32" r="27" fill="none" stroke="#b23a1a" stroke-width="6" />
+        <path d="M20 33 L28 41 L45 24" fill="none" stroke="#b23a1a" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+
+      <!-- 텍스트 영역 -->
+      <div class="modal__content">
+        <h3 class="modal__title">개인IRP 가입이 정상적으로 완료되었습니다.</h3>
+        <p class="modal__desc">마감시간 이후에는 신규 취소가 불가하며,가입 취소는 문의 부탁드립니다.</p>
+        
+        <div class="modal__foot">
+          <button id="modalOkBtn" class="btn-primary">확인</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+</div>
+
+<script>
+
+const INDEX_URL = '/';
+
+//유틸
+const is4Digits = v => /^\d{4}$/.test(v);
+
+//네이티브 <dialog> 모달 열기
+function openCompleteModal() {
+  const dlg = document.getElementById('completeModal');
+  if (!dlg) {
+    // 모달 마크업이 없으면 바로 이동 (폴백)
+    window.location.href = INDEX_URL;
+    return;
+  }
+  if (!dlg.open) dlg.showModal();
+}
+
+//모달 OK 버튼 클릭 시 이동
+function wireModalOk() {
+  const ok = document.getElementById('modalOkBtn');
+  if (!ok) return; // 모달이 없다면 무시
+  ok.addEventListener('click', () => {
+    const dlg = document.getElementById('completeModal');
+    if (dlg?.open) dlg.close();
+    window.location.href = INDEX_URL;
+  });
+}
+
+//-------------------- API 호출 --------------------
+//1) 페이지 진입 시: 계약/계좌번호 생성/조회
+async function initOpen() {
+  if (!joinId || joinId === 0) {
+    alert('joinId가 없습니다.');
+    return;
+  }
+  try {
+    const res = await fetch(`/irp/join/${joinId}/init-open`, { method: 'POST' });
+    const data = await res.json().catch(() => ({}));
+    console.log('init-open data:', data); // ★ 추가
+    if (!res.ok || data.ok === false) {
+      alert(data.message || data.error || '번호 생성 중 오류가 발생했습니다.');
+      return;
+    }
+    // 번호 표시
+    document.getElementById('contractNo').textContent = data.contractNo ?? '-';
+    document.getElementById('irpAcctNo').textContent  = data.irpAcctNo ?? '-';
+    document.getElementById('resultCard').style.display = '';
+  } catch (e) {
+    console.error(e);
+    alert('네트워크 오류가 발생했습니다.');
+  }
+}
+
+// 2) 비밀번호 입력 후 최종 완료
+async function completeJoin() {
+  if (!joinId || joinId === 0) {
+    alert('joinId가 없습니다.');
+    return;
+  }
+
+  const p1 = document.getElementById('irpPwd1').value.trim();
+  const p2 = document.getElementById('irpPwd2').value.trim();
+  if (!is4Digits(p1) || !is4Digits(p2) || p1 !== p2) {
+    alert('비밀번호는 숫자 4자리이고, 두 입력이 동일해야 합니다.');
+    document.getElementById('irpPwd1').focus();
+    return;
+  }
+
+  const btn = document.getElementById('btnComplete');
+  btn.disabled = true; // 중복 제출 방지
+  try {
+    const res = await fetch(`/irp/join/${joinId}/complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ irpPwd: p1 })
+    });
+    const data = await res.json().catch(() => ({}));
+
+    if (res.status === 428) { // 엄격 버전에서 init 미선행 시
+      alert(data.message || '번호 생성이 필요합니다. 페이지를 새로고침하세요.');
+      btn.disabled = false;
+      return;
+    }
+    if (!res.ok || data.ok === false) {
+      alert(data.message || data.error || '가입 완료 처리 중 오류가 발생했습니다.');
+      btn.disabled = false;
+      return;
+    }
+
+    // 성공: 입력 비활성화
+    document.getElementById('irpPwd1').disabled = true;
+    document.getElementById('irpPwd2').disabled = true;
+    openCompleteModal();
+
+  } catch (e) {
+    console.error(e);
+    alert('네트워크 오류가 발생했습니다.');
+    btn.disabled = false;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initOpen(); // ✅ 진입 시 번호 생성/표시
+  document.getElementById('btnComplete').addEventListener('click', completeJoin);
+  ['irpPwd1','irpPwd2'].forEach(id =>
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') completeJoin();
+    })
+  );
+  wireModalOk(); // 모달 OK 버튼 → index 이동
+});
+</script>
+</body>
+</html>

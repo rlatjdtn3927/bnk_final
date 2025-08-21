@@ -41,4 +41,13 @@ public interface DcAccountRepository extends JpaRepository<DcAccount, Long> {
 
     // DcAccount.dcMember.id 를 기준으로 조회
     List<DcAccount> findByDcMember_IdAndStatusNot(Long dcMemberId, String statusToExclude);
+    
+    /** userId로 해당 회원의 DC 계좌번호 리스트만 가볍게 조회 */
+    @Query("""
+           select a.accountNo
+           from DcAccount a
+           join a.dcMember m
+           where m.user.userId = :userId
+           """)
+    List<String> findAccountNosByUserId(@Param("userId") Long userId);
 }

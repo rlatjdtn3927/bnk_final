@@ -54,9 +54,12 @@ public enum Command {
     IRP_JOIN_GET,
     IRP_JOIN_TAX_PURPOSE, 
     IRP_JOIN_RETIRED_PURPOSE, 
+    IRP_JOIN_PREPARE_OPEN,
     IRP_JOIN_COMPLETE,			// 계좌개설/완료
     ACCOUNT_GET_BALANCE,			// 출금계좌 잔액조회
     ACCOUNT_GET_NUMBER,
+    IRP_JOIN_GET_CONTRACT,
+    IRP_JOIN_INIT_OPEN,
     
     // ===== 보유현황 탭 =====
     SUMMARY_GET,              // SummaryHandler: 총 평가액/수익률/입금합/당일입금/운용수익 요약 조회
@@ -98,10 +101,23 @@ public enum Command {
     ADMIN_CRAWL_GRANT_FILE_DOWNLOAD,
     ADMIN_CRAWL_CHECK_FILE_TASK,
     ADMIN_CRAWL_CHECK_UPDATE,
+    /*관리자 크롤링 데이터 관련 명령어*/
 	
 	USER_LOGIN, //사용자 로그인
 	USER_REGISTER,// 회원가입
-	PROFILE_RESULT_GET, //사용자의 투자성향 가져오기
-	SURVEY_SUBMIT; //투자성향제출
-    
+	SURVEY_SUBMIT, //투자성향제출
+	
+	/*매수예정 상품 등록 관련 명령어*/
+	BUY_PLAN_CURRENT,
+	BUY_PLAN_UPDATE,
+	/*매수예정 상품 등록 관련 명령어*/
+	
+	PROFILE_RESULT_GET, //사용자의 투자성향 가져오기   
+	
+	 // 계좌 조회(신규)
+    ACCOUNT_GET_IRP_BY_USER,       // userId -> IRP 계좌 1건
+    ACCOUNT_GET_DC_LIST_BY_USER,   // userId -> DC 계좌 N건
+
+    // 최신 투자성향(신규) : profile_history ↔ profile_type
+    PROFILE_GET_LATEST_TYPE_BY_USER
 }

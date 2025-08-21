@@ -1,0 +1,30 @@
+package com.example.memo.rule.repository;
+
+import java.util.List;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import com.example.memo.rule.entity.ProfileHistory;
+
+public interface ProfileHistoryRepository extends JpaRepository<ProfileHistory, Long> {
+
+    /** 최신 1건(analyzedAt DESC)에서 type_name, type_id만 추출 */
+    @Query("""
+           select t.typeName, t.typeId
+           from ProfileHistory h
+           join h.type t
+           where h.userId = :userId
+           order by h.analyzedAt desc
+           """)
+    List<Object[]> findLatestTypeNameAndIdByUserId(Long userId, Pageable pageable);
+
+    /* analyzedAt이 없다면 증가형 PK 역정렬 대안
+    @Query("""
+           select t.typeName, t.typeId
+           from ProfileHistory h join h.type t
+           where h.userId = :userId
+           order by h.historyId desc
+           """)
+    List<Object[]> findLatestTypeNameAndIdByUserIdOrderByPk(Long userId, Pageable pageable);
+    */
+}

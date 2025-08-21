@@ -1,11 +1,18 @@
 package com.example.memo.irp.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
+@Setter
 @AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class AccountContractResult {
-	private final String irpAcctNo;
-	private final String contractNo;
+	private Long joinId;
+	private String irpAcctNo;	// 신규 생성된 IRP 계좌번호
+	private String contractNo;	// 신규 생성된 IRP 계약번호
 }

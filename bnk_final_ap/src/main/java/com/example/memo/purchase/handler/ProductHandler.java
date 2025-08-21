@@ -1,8 +1,12 @@
 // src/main/java/com/example/memo/purchase/handler/ProductHandler.java
 package com.example.memo.purchase.handler;
 
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.stereotype.Component;
 
+import com.example.memo.purchase.dto.commodity.FundMasterDto;
 import com.example.memo.purchase.service.ProductService;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpMessageHandler;
@@ -32,7 +36,6 @@ public class ProductHandler implements TcpMessageHandler {
     public Object handle(Command command, JsonNode data) {
         switch (command) {
             case PRODUCT_SEARCH:
-                // category: FUND | ETF | TDF | PRINCIPAL | CASH, q: 검색어(옵션)
                 return service.searchProducts(data);
             default:
                 return "알 수 없는 PRODUCT 명령: " + command.name();

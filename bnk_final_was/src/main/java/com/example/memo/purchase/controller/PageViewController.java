@@ -7,7 +7,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.example.memo.purchase.dto.trade.PassValueDto;
+import com.example.memo.purchase.dto.trade.ReserveValueDto;
+
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 @RequestMapping("/purchase")
@@ -21,13 +23,21 @@ public class PageViewController {
 
     
     
-    /******** 시작 ***********/	
+ // /purchase/trade
     @GetMapping("/trade")
-    public String tradeEntry(@RequestParam(name = "flow", required = false) String flow, RedirectAttributes rttr) {
-    	PassValueDto dto = new PassValueDto();
-    	dto.setFlow(flow);
-    	rttr.addFlashAttribute("PassValueDto", dto);
+    public String tradeEntry(@RequestParam(name = "flow", required = false) String flow,
+                             HttpSession session) {
+        Long userId = (Long) session.getAttribute("LOGIN_USER_ID");
+        if (userId == null) {
+            return "redirect:/login-view/main";
+        }
+
+        // ★ 세션에서 DTO를 꺼내고 없으면 생성
+        ReserveValueDto dto = (ReserveValueDto) session.getAttribute("ReserveValueDto");
+        if (dto == null) dto = new ReserveValueDto();
+        dto.setFlow(flow);
+
+        session.setAttribute("ReserveValueDto", dto); // ★ 세션에 저장
         return "redirect:/purchase/trade/step1";
     }
-    
 }
