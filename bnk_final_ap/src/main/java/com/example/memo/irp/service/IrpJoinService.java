@@ -261,22 +261,7 @@ public class IrpJoinService {
 	            .build();
 	}
 	
-	private boolean isContractReady(IrpJoinEntity join) {
-	    try {
-	        requireContractReady(join); // 기존 검증 사용
-	        return true;
-	    } catch (Exception ex) {
-	        return false;
-	    }
-	}
 	
-	private void requireContractReady(IrpJoinEntity join){
-        if (join.getAcctNo()==null) throw new IllegalStateException("출금계좌가 없습니다.");
-        if (join.getAnnualContribAmt()==null) throw new IllegalStateException("연간 납입한도 미설정.");
-        if (join.getNewContribAmt()==null) throw new IllegalStateException("신규 입금액 미설정.");
-        if (join.getBranchOffice()==null) throw new IllegalStateException("관리 영업점 미설정.");
-        // 목적별 필수 정보 존재 여부도 여기서 체크(예: 세액공제면 TaxPurpose 존재 등)
-    }
 	/*
 	//step4: 상품등록(선택)저장
 	@Transactional
