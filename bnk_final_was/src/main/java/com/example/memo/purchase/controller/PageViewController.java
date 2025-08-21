@@ -23,18 +23,21 @@ public class PageViewController {
 
     
     
-    /******** 시작 ***********/	
+ // /purchase/trade
     @GetMapping("/trade")
-    public String tradeEntry(@RequestParam(name = "flow", required = false) String flow, RedirectAttributes rttr
-    							,HttpSession session) {
-    	Long userId = (Long) session.getAttribute("LOGIN_USER_ID");
-        if(userId == null) {
-        	return "redirect:/login-view/main";
+    public String tradeEntry(@RequestParam(name = "flow", required = false) String flow,
+                             HttpSession session) {
+        Long userId = (Long) session.getAttribute("LOGIN_USER_ID");
+        if (userId == null) {
+            return "redirect:/login-view/main";
         }
-    	ReserveValueDto dto = new ReserveValueDto();
-    	dto.setFlow(flow);
-    	rttr.addFlashAttribute("ReserveValueDto", dto);
+
+        // ★ 세션에서 DTO를 꺼내고 없으면 생성
+        ReserveValueDto dto = (ReserveValueDto) session.getAttribute("ReserveValueDto");
+        if (dto == null) dto = new ReserveValueDto();
+        dto.setFlow(flow);
+
+        session.setAttribute("ReserveValueDto", dto); // ★ 세션에 저장
         return "redirect:/purchase/trade/step1";
     }
-    
 }
