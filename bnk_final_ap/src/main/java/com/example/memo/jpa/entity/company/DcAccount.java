@@ -38,7 +38,6 @@ public class DcAccount {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "dc_member_id", unique = true)
     private DcMember dcMember;
