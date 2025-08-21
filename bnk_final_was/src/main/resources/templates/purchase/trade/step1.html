@@ -62,9 +62,7 @@
 
   <!-- ✅ 삼항 연산자만 사용 -->
   <div class="flow-badge"
-       th:text="${session.ReserveValueDto != null and session.ReserveValueDto.flow != null} ? session.ReserveValueDto.flow : 'FLOW 미지정'">
-    FLOW
-  </div>
+       th:text="${session.ReserveValueDto?.flow} ?: 'FLOW 미지정'">FLOW 미지정</div>
 
   <p class="subtle mt-4">IRP는 필수이며, DC 계좌가 있으면 선택할 수 있습니다.</p>
 

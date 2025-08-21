@@ -27,16 +27,15 @@ public class PageViewController {
     public String tradeEntry(@RequestParam(name = "flow", required = false) String flow,
                              HttpSession session) {
         Long userId = (Long) session.getAttribute("LOGIN_USER_ID");
-        if (userId == null) {
-            return "redirect:/login-view/main";
-        }
 
-        // ★ 세션에서 DTO를 꺼내고 없으면 생성
+
+        // 세션 DTO 준비
         ReserveValueDto dto = (ReserveValueDto) session.getAttribute("ReserveValueDto");
         if (dto == null) dto = new ReserveValueDto();
         dto.setFlow(flow);
+        session.setAttribute("ReserveValueDto", dto);
 
-        session.setAttribute("ReserveValueDto", dto); // ★ 세션에 저장
+        // ✅ 반드시 step1 로 리다이렉트 (step1 컨트롤러가 AP 호출/세션 세팅)
         return "redirect:/purchase/trade/step1";
     }
 }

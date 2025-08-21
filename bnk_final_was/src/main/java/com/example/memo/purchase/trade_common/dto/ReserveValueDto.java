@@ -20,12 +20,10 @@ public class ReserveValueDto {
    private String riskGrade; // profile_type 유형명
    private Integer riskGradeNum;
    private String targetProdIdList; //상품ID
-   private String targetProdId; // 만기 변경 및 보유 변경 시 선택한 상품ID
    /*Step 2에서 추가*/
    
    /*Step 3에서 추가 : 상품목록*/
    private String sourceProdIdList; // 상품목록에서 선택한 상품ID+상품이름,비율 --> 1.매수예정 등록: 여러개 
-   private String sourceProdId; // 2,3. 만기 및 변경: 1개
    private String fileUrlList;
    /*Step 3에서 추가*/
    

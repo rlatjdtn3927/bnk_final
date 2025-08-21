@@ -1,19 +1,24 @@
 package com.example.memo.rule.controller;
 
-import jakarta.servlet.http.HttpSession;
+import java.util.HashMap;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.SessionAttribute;
 
 import com.example.memo.rule.dto.SurveySubmitReq;
 import com.example.memo.rule.dto.SurveySubmitRes;
+import com.example.memo.tcp_common.AES256Util;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpClientService;
 import com.example.memo.tcp_common.TcpMessage;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -29,55 +34,50 @@ public class SurveyResultController {
     @PostMapping("/survey-submit-view")
     public String submitSurvey(@RequestBody SurveySubmitReq req,
                                @SessionAttribute(value = "LOGIN_USER_ID", required = false) Long userId,
-                               HttpSession session,
-                               RedirectAttributes redirectAttributes) {
-        if (userId == null) {
-            return "redirect:/login-view"; // 로그인 없으면 로그인 페이지로
-        }
-
+                               HttpSession session) {
+        if (userId == null) return "redirect:/login-view";
         try {
-            // 1) userId 메타에 추가
+            if (req.getMeta() == null) req.setMeta(new HashMap<>());
             req.getMeta().put("userId", userId);
 
-            // 2) TCP 메시지 생성
             JsonNode data = objectMapper.valueToTree(req);
             TcpMessage msg = new TcpMessage(Command.SURVEY_SUBMIT, data);
+            JsonNode resp = tcpClientService.sendMessage(msg);
 
-            // 3) AP 서버에 전송 후 응답 수신
-            JsonNode responseNode = tcpClientService.sendMessage(msg);
-
-            if (responseNode == null || responseNode.isNull()) {
+            if (resp == null || resp.isNull()) {
                 session.setAttribute("error", "AP 응답이 없습니다.");
                 return "redirect:/survey-result";
             }
+            System.out.println("[SurveyResultController] AP 응답 원본: " + resp.toPrettyString());
 
-            // === AP 응답 로그 출력 ===
-            System.out.println("[SurveyResultController] AP 응답 원본: " + responseNode.toPrettyString());
-
-            // 4) 응답 구조 파싱
-            JsonNode innerData = responseNode.get("data");
-            if (innerData != null && innerData.has("data")) {
-                innerData = innerData.get("data");
-            }
-
-            if (innerData == null || innerData.isNull()) {
-                session.setAttribute("error", "응답 파싱 실패: data 필드 없음");
+            // 🔧 encData는 resp.data.encData
+            String encData = resp.path("data").path("encData").asText(null);
+            if (encData == null) {
+                session.setAttribute("error", "응답 파싱 실패: encData 없음");
                 return "redirect:/survey-result";
             }
 
-            // 5) SurveySubmitRes 변환
-            SurveySubmitRes result = objectMapper.convertValue(innerData, SurveySubmitRes.class);
+            String plainJson = AES256Util.decrypt(encData);
+            System.out.println("[SurveyResultController] 복호화 평문: " + plainJson);
+            JsonNode plain = objectMapper.readTree(plainJson);
 
-            // 6) 세션에 결과 저장 (Flash 대신)
+            if (!plain.path("success").asBoolean(false)) {
+                session.setAttribute("error", "AP 처리 실패: " + plain.path("message").asText(""));
+                return "redirect:/survey-result";
+            }
+
+            SurveySubmitRes result = objectMapper.convertValue(plain.path("data"), SurveySubmitRes.class);
             session.setAttribute("result", result);
+            session.removeAttribute("error");
+            return "redirect:/survey-result";
 
-            return "redirect:/survey-result"; // ✅ GET으로 리다이렉트
         } catch (Exception e) {
             e.printStackTrace();
             session.setAttribute("error", "설문 처리 오류: " + e.getMessage());
             return "redirect:/survey-result";
         }
     }
+
 
     /**
      * 설문 결과 페이지 (GET)
