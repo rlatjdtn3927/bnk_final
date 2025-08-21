@@ -158,7 +158,7 @@ public class IrpJoinService {
 	}
 	
 	// 오라클 EM만 사용 (프로젝트에 oracleEmf가 있으면 unitName 지정, 없으면 기본 @PersistenceContext만)
-    @PersistenceContext/*(unitName = "oracleEmf")*/
+    @PersistenceContext(unitName = "oracleEmf")
     private EntityManager em;
 
     /** 오라클에서 계약번호: IRP + YYYYMMDD + 5자리 */
@@ -199,9 +199,12 @@ public class IrpJoinService {
             acct.setStatus("PENDING");
         }
         
-        irpAccountRepository.save(acct);
+        acct = irpAccountRepository.save(acct);
+        
         join.setIrpAccount(acct);
+        
         joinRepository.save(join);
+        em.flush();
         
         return new InitOpenResponse(join.getContractNo(), acct.getIrpAcctNo());
     }
