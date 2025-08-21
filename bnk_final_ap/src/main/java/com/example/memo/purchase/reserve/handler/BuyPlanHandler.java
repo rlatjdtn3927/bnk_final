@@ -26,8 +26,8 @@ public class BuyPlanHandler implements TcpMessageHandler{
 
 	@Override
 	public Object handle(Command command, JsonNode data) {
-		switch(command.name()) {
-			case "BUY_PLAN_CURRENT": {
+		switch(command) {
+			case BUY_PLAN_CURRENT: {
 				List<CurrentRetainDto> result = buyPlanService.getCurrentRetain(data);
 				if(result == null) {
 					return Map.of("error", "보유 상품 목록 불러오기 실패.");  /*조회 실패 시에 반환하는 곳*/
@@ -35,7 +35,7 @@ public class BuyPlanHandler implements TcpMessageHandler{
 					return Map.of("resultList", result); /*조회 성공 시에 반환하는 곳*/
 				}	
 			}
-			case "BUY_PLAN_UPDATE" : {
+			case BUY_PLAN_UPDATE : {
 				String resultMsg = buyPlanService.updateBuyPlan(data);
 				return Map.of("result", resultMsg); // 업데이트 결과값 반환
 			}	

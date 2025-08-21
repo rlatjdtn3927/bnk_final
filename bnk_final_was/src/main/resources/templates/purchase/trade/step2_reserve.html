@@ -179,11 +179,11 @@
 	
 	  <!-- 서버 세션 값 -->
 	  <div id="model-data"
-	       th:data-flow="${session.PassValueDto?.flow ?: ''}"
-	       th:data-account-type="${session.PassValueDto?.accountType ?: ''}"
-	       th:data-account-id="${session.PassValueDto?.accountId ?: ''}"
-	       th:data-risk-grade="${session.PassValueDto?.riskGrade ?: ''}"
-	       th:data-risk-grade-num="${session.PassValueDto?.riskGradeNum ?: 0}">
+	       th:data-flow="${session.ReserveValueDto?.flow ?: ''}"
+	       th:data-account-type="${session.ReserveValueDto?.accountType ?: ''}"
+	       th:data-account-id="${session.ReserveValueDto?.accountId ?: ''}"
+	       th:data-risk-grade="${session.ReserveValueDto?.riskGrade ?: ''}"
+	       th:data-risk-grade-num="${session.ReserveValueDto?.riskGradeNum ?: 0}">
 	  </div>
 	
 	  <!-- 하단 버튼 -->
