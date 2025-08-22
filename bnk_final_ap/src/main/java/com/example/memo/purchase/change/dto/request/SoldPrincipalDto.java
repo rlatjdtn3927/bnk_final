@@ -1,8 +1,5 @@
 package com.example.memo.purchase.change.dto.request;
 
-import java.math.BigDecimal;
-import java.util.List;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import lombok.AllArgsConstructor;
@@ -17,7 +14,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class BuyPrincipalDto {
-	String prodId;
-	BigDecimal cost;
+public class SoldPrincipalDto {
+	private String prodId;
+	private Integer ratio;
 }

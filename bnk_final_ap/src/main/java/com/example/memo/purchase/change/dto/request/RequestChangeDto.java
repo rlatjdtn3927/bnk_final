@@ -21,7 +21,7 @@ public class RequestChangeDto {
 	private String accountId;
 	private List<SoldFundDto> soldProdList;
 	private List<BuyFundDto> buyFundList;
-	private List<String> soldPrincipalIdList;
+	private List<SoldPrincipalDto> soldPrincipalIdList;
 	private List<BuyPrincipalDto> buyPrincipalList;
 	
 }
