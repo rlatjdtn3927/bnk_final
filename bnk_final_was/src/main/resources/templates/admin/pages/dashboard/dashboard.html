@@ -71,7 +71,7 @@
 	    const toYm = toYmEl.value;
 	    if (!fromYm || !toYm) return;
 
-	    const res = await fetch(`/admin/dashboard/monthly?fromYm=${fromYm}&toYm=${toYm}`);
+	    const res = await fetch(`/admin/report/monthly?fromYm=${fromYm}&toYm=${toYm}`);
 	    const data = await res.json();
 
 	    // 차트 재생성

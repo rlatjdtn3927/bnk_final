@@ -28,8 +28,8 @@ public class ReportController {
      */
     @GetMapping("/monthly")
     public ResponseEntity<?> getMonthlySubscribers(
-            @RequestParam String fromYm,
-            @RequestParam String toYm) {
+            @RequestParam("fromYm") String fromYm,
+            @RequestParam("toYm") String toYm) {
 
         ObjectNode req = objectMapper.createObjectNode()
                 .put("fromYm", fromYm)
