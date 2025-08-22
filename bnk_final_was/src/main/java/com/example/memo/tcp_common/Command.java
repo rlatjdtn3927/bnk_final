@@ -130,7 +130,7 @@ public enum Command {
     
     
 	/*****************************보유상품 변경 관련 명령어*****************************/
-	CHANGE_UPDATE_PRODUCT, //매수 상품, 매도 상품 거래원장반영 + fund_holdings 수정
+    CHANGE_UPDATE_LEDGER, //매수 상품, 매도 상품 거래원장반영 + fund_holdings 수정
 	CHANGE_GET_HOLDINGS, //fund_holdings + 원리금보장상품 원장 조회
 	/*****************************보유상품 변경 관련 명령어*****************************/
 }

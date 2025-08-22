@@ -18,6 +18,7 @@ import lombok.Setter;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ReserveUpdateRequestDto {
 	private Long userId;
+	private String accountType;
 	private List<String> targetProdIdList;
 	private List<SourceProdRatioDto> sourceProdList;
 }
