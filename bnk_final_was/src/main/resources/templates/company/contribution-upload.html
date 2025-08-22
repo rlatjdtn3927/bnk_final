@@ -2,219 +2,246 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8" />
-  <title>DC 부담금 납입 (엑셀 업로드)</title>
+  <title>DC 부담금 납입 | BNK 퇴직연금</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
 
-  <!-- Tone-aligned Tokens -->
   <style>
-    :root{
-      /* BNK 기업뱅킹 공통 톤 */
-      --pri:#0052cc; --pri-h:#0045ab; --red:#de350b; --green:#00875A;
-      --bd:#dfe1e6; --ink:#172b4d; --mut:#6b778c;
-      --bg:#f4f5f7; --card:#ffffff; --hover:#f0f6ff;
+    @charset "UTF-8";
 
-      --radius:12px; --shadow:0 4px 10px rgba(9,30,66,.12);
+
+    :root {
+      --pri: #c82020;              /* BNK 메인 레드 */
+      --pri-h: #b01b1b;
+      --blue: #0052cc;              /* 파란색 */
+      --ink: #172b4d;               /* 텍스트 색상 */
+      --ink-light: #42526e;
+      --mut: #6b7280;
+      --bg: #f4f5f7;                /* 배경색 */
+      --card: #ffffff;
+      --line: #dfe1e6;              /* 라인 색상 */
+      --line-light: #e9ebf0;
+      --ok: #00875a;
+      --err: #de350b;
+      --shadow-sm: 0 1px 1px rgba(0,0,0,.1);
+      --shadow-sticky: 0 -2px 8px rgba(9, 30, 66, .1);
+      --sticky-h: 72px;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; padding:32px 20px;
-      background:var(--bg); color:var(--ink);
-      font-family:Pretendard, system-ui, -apple-system, Segoe UI, Arial, sans-serif;
+
+    *{box-sizing: border-box}
+    html, body {height: 100%}
+    body {
+      margin: 0;
+      background: var(--bg); color: var(--ink);
+      font-family: Pretendard, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     }
-    .wrap{max-width:1080px;margin:0 auto}
-    .page-title{display:flex;align-items:flex-end;gap:12px;margin:0 0 12px}
-    .page-title h1{margin:0;font-size:24px;font-weight:800}
-    .page-sub{color:var(--mut);font-size:14px}
-    .hr{height:1px;background:var(--bd);margin:18px 0 22px;border:0}
+    
+    .wrap {
+      max-width: 100%; margin: 0 auto;
+      padding-bottom: calc(var(--sticky-h) + 24px);
+    }
+    .page-head {
+      background: var(--card); padding: 24px 32px;
+      border-bottom: 1px solid var(--line);
+    }
+    .page-head h1 {margin: 0 0 8px; font-size: 24px; font-weight: 700;}
+    .page-head .desc {margin: 0; color: var(--ink-light); font-size: 15px;}
+    
+    .card {
+      background: var(--card); padding: 24px 32px;
+      margin-bottom: 10px; border-bottom: 1px solid var(--line);
+    }
+    .card:last-of-type { border-bottom: none; }
+    .card-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px; padding-bottom: 16px;
+      border-bottom: 1px solid var(--line-light);
+    }
+    .card-head h2 { margin: 0; font-size: 17px; font-weight: 600; color: var(--blue); }
+    
+    /* 콘텐츠 영역 그리드 */
+    .content-grid {
+      display: grid; grid-template-columns: 1fr 380px; gap: 24px;
+    }
+    @media (max-width: 1024px) { .content-grid { grid-template-columns: 1fr; } }
 
     /* Stepper */
-    .stepper{display:flex;gap:16px;align-items:center;margin-bottom:18px}
-    .step{display:flex;align-items:center;gap:10px}
-    .dot{width:28px;height:28px;border-radius:50%;
-         border:2px solid var(--bd); color:var(--mut);
-         display:grid;place-items:center;font-weight:700;background:#fff}
+    .stepper{display:flex;gap:12px;align-items:center;padding:16px 0}
+    .step{display:flex;align-items:center;gap:8px}
+    .dot{
+      width:24px;height:24px;border-radius:50%;
+      border:2px solid var(--line); color:var(--mut); font-size: 13px;
+      display:grid;place-items:center;font-weight:600;background:#fff
+    }
     .step.is-active .dot{border-color:var(--pri);color:#fff;background:var(--pri)}
-    .step.is-done .dot{border-color:var(--green);background:#e3fcef;color:#01694b}
-    .label{font-size:13px;color:var(--mut)}
-    .bar{flex:1;height:2px;background:var(--bd)}
+    .step.is-done .dot{border-color:var(--ok);color:var(--ok);background:#e3fcef}
+    .step .label{font-size:15px;color:var(--mut);font-weight:500;}
+    .step.is-active .label {color:var(--pri);font-weight:700;}
+    .step.is-done .label {color:var(--ok);}
+    .bar{flex:1;height:2px;background:var(--line)}
 
-    /* Layout */
-    .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
-    @media (max-width: 960px){.grid{grid-template-columns:1fr}}
-
-    .card{
-      background:var(--card); border:1px solid var(--bd);
-      border-radius:var(--radius); box-shadow:var(--shadow);
+    /* Form Elements */
+    .field-group { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .field+.field{margin-top:24px}
+    .field label{display:block;font-weight:600;margin-bottom:8px;font-size:15px;}
+    .input {
+      width:100%;padding: 9px 12px;border:1px solid var(--line);
+      border-radius:4px;background:#fff;font-size:14px;
+      transition: all .2s;
     }
-    .card .hd{padding:18px 18px 0}
-    .card .bd{padding:18px}
-    .card .ft{padding:16px 18px;border-top:1px solid var(--bd);background:#fafbfc;border-radius:0 0 var(--radius) var(--radius)}
+    .input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-light); outline: none; }
+    .hint{font-size:13px;color:var(--mut);margin-top:8px}
 
-    /* Form */
-    .field+.field{margin-top:16px}
-    .field label{display:block;font-weight:700;margin-bottom:8px}
-    .input{
-      width:100%;padding:10px 12px;border:1px solid var(--bd);
-      border-radius:10px;background:#fff;font-size:14px
+    /* 버튼 & 칩 */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 8px 14px; border-radius: 4px; border: 1px solid var(--line);
+      font-weight: 500; cursor: pointer; text-decoration: none; font-size: 14px;
     }
+    .btn-primary {background: var(--pri); color: #fff; border-color: var(--pri);}
+    .btn-primary:hover {background: var(--pri-h); border-color: var(--pri-h);}
+    .btn-ghost {background:var(--bg); color:var(--ink-light); border-color:var(--line);}
+    .btn-ghost:hover {background:#e9ebf0;}
+    .btn:disabled {opacity: .6; cursor: not-allowed; background: #fafafa !important; color: #aaa !important; border-color: var(--line) !important;}
 
-    /* Download + Chips */
-    .row{display:flex;gap:10px;flex-wrap:wrap}
-    .btn{
-      display:inline-flex;align-items:center;justify-content:center;gap:8px;
-      border:1px solid var(--bd); background:#fff; border-radius:10px;
-      padding:10px 12px; font-weight:700; cursor:pointer; text-decoration:none;
-    }
-    .btn:hover{background:#f7f8fa}
-    .btn[disabled]{opacity:.6;cursor:not-allowed}
-    .btn-primary{
-      border:0; background:var(--pri); color:#fff;
-    }
-    .btn-primary:hover{background:var(--pri-h)}
-    .btn-ghost{background:#fff;border:1px dashed var(--bd)}
-
-    .chip{
-      display:inline-flex;align-items:center;gap:6px;
-      font-size:12px;border-radius:999px;padding:6px 10px;border:1px solid var(--bd);color:var(--mut)
+    .chip {
+      display: inline-flex; align-items: center; gap: 8px; background: #fff; border: 1px solid var(--line);
+      border-radius: 4px; padding: 6px 10px; font-weight: 500; font-size: 13px;
     }
 
-    /* Upload */
-    .drop{
-      border:2px dashed var(--bd); border-radius:12px; background:#fafbfc;
-      padding:24px; text-align:center; cursor:pointer; transition:.2s;
+    /* 드롭존 */
+    .dropzone {
+      border: 1px solid var(--line); border-radius: 6px; background: #fafbfc;
+      padding: 32px; text-align: center; position: relative; outline: none;
     }
-    .drop:hover{background:var(--hover); border-color:#b8c6e0}
-    .drop p{margin:6px 0;color:var(--mut)}
-    .file-name{margin-top:8px;font-weight:700}
-    .hint{font-size:12px;color:var(--mut);margin-top:8px}
+    .dropzone.is-hover {background: #f0f6ff; border-color: var(--blue);}
+    .dropzone:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+    .dropzone input[type=file] {position: absolute; inset: 0; opacity: 0; cursor: pointer;}
+    .dz-inner {pointer-events: none}
+    .dz-icon {font-size: 28px; margin-bottom: 8px; color: var(--blue);}
+    .dz-title {font-size: 16px; font-weight: 600; color: var(--ink);}
+    .dz-sub {color: var(--mut); font-size: 13px; margin-top: 4px;}
+    .file-name{margin-top:12px; font-weight:600; color:var(--blue); font-size: 14px;}
 
-    /* Progress / Alert */
-    .progress{height:8px;background:#e9edf5;border-radius:999px;overflow:hidden}
-    .progress>span{display:block;height:100%;width:0;background:var(--pri);transition:width .25s}
-    .alert{
-      padding:10px 12px;border:1px solid #ffe58f;background:#fffbe6;color:#7a5a00;border-radius:10px;font-size:13px
+    /* 알림 & 진행률 */
+    .note{margin-top:12px;color:var(--mut);font-size:14px;padding:12px;background:#fafbfc;border-radius:4px}
+    .note-error{background:#fffbe6;color:#b77300;border:1px solid #ffd88a;}
+    .progress-wrap {margin-top:12px;}
+    .progress{height:6px;background:#e9edf5;border-radius:999px;overflow:hidden}
+    .progress>span{display:block;height:100%;width:0;background:var(--pri);transition:width .4s ease}
+    
+    .sticky-bar {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+      height: var(--sticky-h); display: flex; align-items: center; justify-content: space-between;
+      background: rgba(255, 255, 255, .8); backdrop-filter: blur(8px);
+      border-top: 1px solid var(--line); box-shadow: var(--shadow-sticky);
+      padding: 0 32px;
     }
-    .alert-error{border-color:#ffccc7;background:#fff2f0;color:#a8071a}
-
-    /* Result Placeholder (kept for tone consistency) */
-    .placeholder{border:1px dashed var(--bd);border-radius:10px;padding:14px;color:var(--mut);font-size:14px;background:#fcfcfd}
+    .sticky-bar .left { display: flex; align-items: center; gap: 12px; }
+    .sticky-bar .right { display: flex; align-items: center; gap: 12px; }
+    .sticky-bar .alert-text { font-size: 14px; color: var(--mut); font-weight: 500; }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <!-- Title -->
-    <div class="page-title">
+    <header class="page-head">
       <h1>DC 부담금 납입 (엑셀 업로드)</h1>
-      <span class="chip" aria-label="지원 형식">지원: .xlsx / .xls</span>
-    </div>
-    <p class="page-sub">납입예정일을 선택하고, 가이드에 맞춘 엑셀을 업로드한 뒤 검증을 진행하세요.</p>
-    <div class="hr"></div>
+      <p class="desc">납입예정일을 선택하고, 가이드에 맞춘 엑셀을 업로드한 뒤 검증을 진행하세요.</p>
+    </header>
 
-    <!-- Stepper (통일된 패턴) -->
-    <div class="stepper" aria-label="진행 단계">
-      <div class="step is-active"><div class="dot" aria-hidden="true">1</div><div class="label">정보입력</div></div>
-      <div class="bar" aria-hidden="true"></div>
-      <div class="step"><div class="dot" aria-hidden="true">2</div><div class="label">검증</div></div>
-      <div class="bar" aria-hidden="true"></div>
-      <div class="step"><div class="dot" aria-hidden="true">3</div><div class="label">결과확인</div></div>
-    </div>
+    <section class="card">
+      <div class="stepper" aria-label="진행 단계">
+        <div class="step is-active"><div class="dot" aria-hidden="true">1</div><div class="label">정보입력</div></div>
+        <div class="bar" aria-hidden="true"></div>
+        <div class="step"><div class="dot" aria-hidden="true">2</div><div class="label">검증</div></div>
+        <div class="bar" aria-hidden="true"></div>
+        <div class="step"><div class="dot" aria-hidden="true">3</div><div class="label">결과확인</div></div>
+      </div>
+    </section>
 
-    <!-- Content -->
-    <div class="grid">
-      <!-- Left: Main form -->
-      <section class="card" aria-labelledby="form-title">
-        <div class="hd">
-          <h2 id="form-title" style="margin:0;font-size:18px;font-weight:800;">업로드 정보</h2>
-        </div>
-        <div class="bd">
+    <section class="card">
+      <div class="content-grid">
+        <main>
+          <div class="card-head">
+            <h2>업로드 정보</h2>
+          </div>
           <form id="upload-form" enctype="multipart/form-data" autocomplete="off">
-            <!-- 납입예정일 -->
-            <div class="field">
-              <label for="payment-date">납입예정일</label>
-              <input class="input" type="date" id="payment-date" required />
-              <p class="hint">정책상 과거일 선택을 제한합니다. 필요 시 서버 정책으로 재검증됩니다.</p>
-            </div>
-
-            <!-- 양식 다운로드 -->
-            <div class="field">
-              <label>엑셀 양식</label>
-              <div class="row">
-                <a class="btn" href="/assets/template/dc_contribution_template.xlsx" download>
+            <div class="field-group">
+              <div class="field">
+                <label for="payment-date">납입예정일</label>
+                <input class="input" type="date" id="payment-date" required />
+                <p class="hint">미래 날짜만 선택 가능합니다.</p>
+              </div>
+              <div class="field">
+                <label>엑셀 양식 다운로드</label>
+                 <a class="btn" href="/assets/template/dc_contribution_template.xlsx" download>
                   양식 다운로드
                 </a>
-                <span class="chip" title="데이터 시작 행 안내">헤더 설명 후 <strong>3행부터</strong> 데이터 시작</span>
-                <span class="chip">최대 10만 행 권장</span>
               </div>
             </div>
 
-            <!-- 파일 업로드 -->
             <div class="field">
               <label for="excel-file">납입 명세 파일</label>
-
-              <div id="upload-box" class="drop" role="button" tabindex="0" aria-controls="excel-file" aria-describedby="upload-hint">
-                <p><strong>파일을 드래그</strong>하거나 <strong>클릭</strong>하여 선택하세요.</p>
-                <p id="upload-hint">허용 확장자: .xlsx, .xls</p>
-                <div id="chosen" class="file-name" style="display:none;"></div>
+              <div id="upload-box" class="dropzone" role="button" tabindex="0">
+                <div class="dz-inner">
+                  <div class="dz-icon">📁</div>
+                  <div class="dz-title">파일을 드래그하거나 클릭하여 선택하세요.</div>
+                  <div class="dz-sub">허용 확장자: .xlsx, .xls / 최대 10만 행 권장</div>
+                  <div id="chosen" class="file-name" style="display:none;"></div>
+                </div>
+                <input type="file" id="excel-file" name="file" accept=".xlsx,.xls" style="display:none" required />
               </div>
-
-              <input type="file" id="excel-file" name="file" accept=".xlsx,.xls" style="display:none" required />
               <p class="hint">파일명에 특수문자(예: #, ?, &) 사용을 지양해주세요.</p>
             </div>
           </form>
-        </div>
-        <div class="ft">
-          <div class="row" style="justify-content:space-between;gap:12px">
-            <div class="alert" style="flex:1 1 auto">
-              업로드 시 즉시 검증이 시작됩니다. 대용량 파일은 수 초 소요될 수 있습니다.
-            </div>
-            <div class="row" style="gap:8px">
-              <button type="button" id="reset-btn" class="btn btn-ghost">초기화</button>
-              <button type="button" id="submit-btn" class="btn btn-primary" disabled>업로드 및 검증하기</button>
-            </div>
-          </div>
-          <div id="progress-wrap" style="margin-top:12px;display:none">
-            <div class="progress" aria-label="업로드 진행률"><span id="bar"></span></div>
-          </div>
-          <div id="error-wrap" style="margin-top:12px;display:none">
-            <div class="alert alert-error" id="error-box">오류가 발생했습니다.</div>
-          </div>
-        </div>
-      </section>
+        </main>
 
-      <!-- Right: Guide / Notes (tone-matched side panel) -->
-      <aside class="card" aria-labelledby="guide-title">
-        <div class="hd">
-          <h2 id="guide-title" style="margin:0;font-size:16px;font-weight:800">업로드 가이드</h2>
-        </div>
-        <div class="bd">
-          <ol style="margin:0;padding-left:18px;line-height:1.6">
-            <li><strong>양식 다운로드</strong>로 기본 헤더를 유지합니다.</li>
-            <li>헤더 설명(1~2행) 뒤 <strong>3행부터</strong> 데이터를 입력합니다.</li>
-            <li>필수 열 누락, 금액/날짜 형식 오류는 즉시 <strong>검증 실패</strong>로 표시됩니다.</li>
-            <li>동일 회원/월 중복 레코드는 <strong>자동 집계/병합</strong>되지 않습니다.</li>
+        <aside>
+          <div class="card-head">
+            <h2>업로드 가이드</h2>
+          </div>
+          <ol style="margin:0;padding-left:18px;line-height:1.7;font-size:14px;color:var(--ink-light)">
+            <li><strong>양식 다운로드</strong>로 기본 형식을 유지합니다.</li>
+            <li>헤더(1~2행)를 제외하고 **3행부터** 데이터를 입력합니다.</li>
+            <li>필수 값 누락, 형식 오류는 검증 실패 처리됩니다.</li>
+            <li>동일 회원/월 중복 데이터는 병합되지 않습니다.</li>
           </ol>
-          <div class="hr" style="margin:16px 0"></div>
-          <div style="display:grid;gap:8px">
-            <div class="chip" title="권장 포맷">날짜: YYYY-MM-DD</div>
-            <div class="chip" title="통화 단위">금액: 원(정수)</div>
-            <div class="chip" title="성능">권장 용량: ≤ 10MB</div>
+          <hr style="border:0;border-top:1px solid var(--line-light); margin: 20px 0;">
+          <div style="display:flex; flex-wrap:wrap; gap:8px;">
+            <span class="chip">날짜: YYYY-MM-DD</span>
+            <span class="chip">금액: 원(정수)</span>
+            <span class="chip">용량: ≤ 10MB</span>
           </div>
-
-          <div class="hr" style="margin:16px 0"></div>
-          <div class="placeholder">
-            업로드가 완료되면 자동으로 <strong>검증 결과 화면</strong>으로 이동합니다.<br/>
-            결과 화면에서 성공/실패 사유와 재업로드 지침을 확인할 수 있습니다.
+           <div class="note" style="margin-top: 20px;">
+            업로드가 완료되면 자동으로 **검증 결과 화면**으로 이동합니다.
           </div>
-        </div>
-      </aside>
-    </div>
+        </aside>
+      </div>
+    </section>
   </div>
 
-  <!-- Script -->
+  <footer class="sticky-bar">
+    <div class="left">
+      <span id="alert-text" class="alert-text">
+        업로드 시 즉시 검증이 시작되며, 대용량 파일은 수 초가 소요될 수 있습니다.
+      </span>
+      <div id="error-wrap" style="display:none">
+        <div class="note note-error" id="error-box"></div>
+      </div>
+      <div id="progress-wrap" class="progress-wrap" style="display:none; width: 200px;">
+        <div class="progress"><span id="bar"></span></div>
+      </div>
+    </div>
+    <div class="right">
+      <button type="button" id="reset-btn" class="btn btn-ghost">초기화</button>
+      <button type="button" id="submit-btn" class="btn btn-primary" disabled>업로드 및 검증하기</button>
+    </div>
+  </footer>
+
   <script>
     (function(){
       const today = new Date();
+      today.setDate(today.getDate() + 1); // 내일부터 선택 가능하도록
       const yyyy = today.getFullYear();
       const mm = String(today.getMonth()+1).padStart(2,'0');
       const dd = String(today.getDate()).padStart(2,'0');
@@ -233,24 +260,24 @@
       const bar = document.getElementById('bar');
       const errorWrap = document.getElementById('error-wrap');
       const errorBox = document.getElementById('error-box');
+      const alertText = document.getElementById('alert-text');
 
-      // Policy: 기본값 오늘, 과거일 제한
       paymentInput.value = isoToday;
       paymentInput.min = isoToday;
 
       function setError(msg){
         errorBox.textContent = msg;
         errorWrap.style.display = 'block';
+        alertText.style.display = 'none';
       }
       function clearError(){
         errorWrap.style.display = 'none';
+        alertText.style.display = 'block';
         errorBox.textContent = '';
       }
 
       function updateSubmitState(){
-        const hasDate = !!paymentInput.value;
-        const hasFile = !!fileInput.files.length;
-        submitBtn.disabled = !(hasDate && hasFile);
+        submitBtn.disabled = !(paymentInput.value && fileInput.files.length);
       }
 
       function setChosenName(){
@@ -263,38 +290,36 @@
         }
       }
 
-      // Drag & Drop accessibility
+      // Drag & Drop
       ['dragenter','dragover','dragleave','drop'].forEach(evt=>{
         drop.addEventListener(evt,e=>{e.preventDefault();e.stopPropagation();});
+        drop.classList.remove('is-hover');
       });
+      ['dragenter','dragover'].forEach(evt=>{
+        drop.addEventListener(evt, ()=>drop.classList.add('is-hover'));
+      });
+      drop.addEventListener('dragleave', ()=>drop.classList.remove('is-hover'));
       drop.addEventListener('click', ()=> fileInput.click());
-      drop.addEventListener('keydown', (e)=>{
-        if(e.key==='Enter' || e.key===' '){ e.preventDefault(); fileInput.click(); }
-      });
+      drop.addEventListener('keydown', (e)=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); fileInput.click(); }});
       drop.addEventListener('drop', (e)=>{
         if(e.dataTransfer.files && e.dataTransfer.files.length){
-          const f = e.dataTransfer.files[0];
-          if(!/\.xlsx$|\.xls$/i.test(f.name)){
-            setError('허용되지 않은 파일 형식입니다. .xlsx 또는 .xls 파일을 업로드하세요.');
-            return;
-          }
-          clearError();
           fileInput.files = e.dataTransfer.files;
-          setChosenName();
-          updateSubmitState();
+          handleFileChange();
         }
       });
 
-      fileInput.addEventListener('change', ()=>{
+      function handleFileChange() {
         clearError();
         const f = fileInput.files[0];
-        if(f && !/\.xlsx$|\.xls$/i.test(f.name)){
-          setError('허용되지 않은 파일 형식입니다. .xlsx 또는 .xls 파일을 업로드하세요.');
-          fileInput.value = '';
+        if (f && !/\.(xlsx|xls)$/i.test(f.name)) {
+          setError('허용되지 않은 파일 형식입니다.');
+          fileInput.value = ''; // 선택된 파일 초기화
         }
         setChosenName();
         updateSubmitState();
-      });
+      }
+
+      fileInput.addEventListener('change', handleFileChange);
       paymentInput.addEventListener('input', updateSubmitState);
 
       // Reset
@@ -306,46 +331,50 @@
         clearError();
         progressWrap.style.display = 'none';
         bar.style.width = '0%';
+        submitBtn.disabled = false;
+        submitBtn.textContent = '업로드 및 검증하기';
       });
 
-      // Submit (with progress simulation for UX)
+      // Submit
       async function submitWithProgress(){
         clearError();
-        if(!fileInput.files.length){ setError('파일을 선택하세요.'); return; }
-        if(!paymentInput.value){ setError('납입예정일을 선택하세요.'); return; }
+        if(!form.checkValidity()){
+          setError('입력 값을 확인해주세요.');
+          return;
+        }
 
         submitBtn.disabled = true;
-        submitBtn.textContent = '업로드 및 검증 진행 중...';
+        submitBtn.textContent = '검증 진행 중...';
+        progressWrap.style.display = 'block';
+        bar.style.width = '0%';
 
-        const formData = new FormData();
-        formData.append('file', fileInput.files[0]);
+        const formData = new FormData(form);
         formData.append('paymentDate', paymentInput.value);
 
-        // 진짜 네트워크 업로드 진행률을 추적하려면 XHR 사용이 필요하지만,
-        // 여기서는 통일된 UX를 위해 가벼운 진행률 표시를 제공합니다.
-        progressWrap.style.display = 'block';
-        bar.style.width = '18%';
+        // Progress Simulation
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += Math.random() * 10;
+          if (progress > 90) progress = 90;
+          bar.style.width = progress + '%';
+        }, 300);
 
         try{
-          // 실제 업로드
           const res = await fetch('/company/dc/contribution/upload', { method:'POST', body: formData });
-          bar.style.width = '62%';
+          
+          clearInterval(interval);
+          bar.style.width = '100%';
 
           const data = await res.json().catch(()=> ({}));
-          bar.style.width = '88%';
 
-          if(!res.ok){
-            throw new Error(data.message || '업로드 실패');
-          }
-          if(!data.batchId){
-            throw new Error('응답에 batchId가 없습니다.');
-          }
+          if(!res.ok){ throw new Error(data.message || '업로드 실패'); }
+          if(!data.batchId){ throw new Error('응답에 batchId가 없습니다.'); }
 
-          bar.style.width = '100%';
           // 결과 페이지로 이동
           location.href = `/company/dc/contribution/result-page?batchId=${data.batchId}`;
         }catch(err){
-          setError(`오류가 발생했습니다: ${err.message}`);
+          clearInterval(interval);
+          setError(`오류: ${err.message}`);
           submitBtn.disabled = false;
           submitBtn.textContent = '업로드 및 검증하기';
           progressWrap.style.display = 'none';
@@ -354,10 +383,8 @@
       }
 
       submitBtn.addEventListener('click', submitWithProgress);
-      // Enter 제출 방지(파일 선택시 폼 submit되는 브라우저 기본 행동 회피)
       form.addEventListener('submit', e => e.preventDefault());
-
-      // 초기 상태
+      
       updateSubmitState();
     })();
   </script>

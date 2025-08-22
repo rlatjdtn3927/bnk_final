@@ -84,7 +84,7 @@ public class AccountBalanceHandler implements TcpMessageHandler{
                 }
             }
             default:
-                return "알 수 없는 명령: " + command.name();
+                return "알 수 없는 명령 ㅇㄹㅇㄹㄴ: " + command.name();
         }
     }
 

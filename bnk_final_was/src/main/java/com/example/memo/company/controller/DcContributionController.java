@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.memo.company.dto.CompanyLoginResponseDto;
-import com.example.memo.company.dto.ContributionBatchValidateRequest;
 import com.example.memo.company.dto.ContributionItemDto;
 import com.example.memo.company.dto.ExecuteItemsRequest;
 import com.example.memo.company.utils.ExcelParser;
@@ -95,16 +95,17 @@ public class DcContributionController {
         }
     }
 
-    @PostMapping("/validate")
-    public ResponseEntity<?> validateContributionBatch(@RequestBody ContributionBatchValidateRequest payload) {
-        if (payload == null || payload.getBatchId() == null) {
+    @GetMapping("/result/{batchId}") 
+    public ResponseEntity<?> getValidationResult(@PathVariable("batchId") Long batchId) {
+        if (batchId == null) {
             return ResponseEntity.badRequest().body(Map.of("message","batchId가 필요합니다."));
         }
-        ObjectNode data = objectMapper.createObjectNode().put("batchId", payload.getBatchId());
+        ObjectNode data = objectMapper.createObjectNode().put("batchId", batchId);
         TcpMessage msg = new TcpMessage(Command.CONTRIBUTION_BATCH_VALIDATE, data);
         return ResponseEntity.ok(tcpService.sendMessage(msg));
     }
     
+    // 부담금 납입 예정 등록
     @PostMapping("/confirm")
     public ResponseEntity<?> confirm(@RequestParam("batchId") Long batchId, HttpSession session) {
         CompanyLoginResponseDto login = (CompanyLoginResponseDto) session.getAttribute("loginManager");
@@ -118,32 +119,7 @@ public class DcContributionController {
         return ResponseEntity.ok(tcpService.sendMessage(msg));
     }
     
-    @GetMapping("/plan-list")
-    public ResponseEntity<?> planList(
-    	    @RequestParam(name = "fromDate", required = false) String fromDate,
-    	    @RequestParam(name = "toDate",   required = false) String toDate,
-    	    @RequestParam(name = "status",   required = false) String status,
-    	    @RequestParam(name = "keyword",  required = false) String keyword,
-    	    @RequestParam(name = "page",     defaultValue = "0") int page,
-    	    @RequestParam(name = "size",     defaultValue = "20") int size,
-            HttpSession session) {
-
-        CompanyLoginResponseDto login = (CompanyLoginResponseDto) session.getAttribute("loginManager");
-        if (login == null) return ResponseEntity.status(401).body(Map.of("message","로그인이 필요합니다."));
-
-        ObjectNode data = objectMapper.createObjectNode();
-        data.put("companyId", login.getCompanyId());
-        if (fromDate != null && !fromDate.isBlank()) data.put("fromDate", fromDate);
-        if (toDate   != null && !toDate.isBlank())   data.put("toDate", toDate);
-        if (status   != null && !status.isBlank())   data.put("status", status);
-        if (keyword  != null && !keyword.isBlank())  data.put("keyword", keyword);
-        data.put("page", page);
-        data.put("size", size);
-
-        TcpMessage msg = new TcpMessage(Command.CONTRIBUTION_BATCH_LIST, data);
-        return ResponseEntity.ok(tcpService.sendMessage(msg));
-    }
-    
+    // 계좌 가져옴
     @GetMapping("/source-accounts")
     public ResponseEntity<?> sourceAccounts(HttpSession session) {
         CompanyLoginResponseDto login = (CompanyLoginResponseDto) session.getAttribute("loginManager");
@@ -193,7 +169,7 @@ public class DcContributionController {
     }
     
     /**
-     * [신규] 선택된 항목들 실제 입금 실행 요청
+     * 선택된 항목들 실제 입금 실행 요청
      */
     @PostMapping("/execute-items")
     public ResponseEntity<?> executeItems(@RequestBody ExecuteItemsRequest payload, HttpSession session) {

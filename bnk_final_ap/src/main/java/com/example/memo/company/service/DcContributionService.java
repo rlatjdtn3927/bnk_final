@@ -149,7 +149,6 @@ public class DcContributionService {
                 .map(DcMember::getId)
                 .collect(Collectors.toSet());
 
-        // 필요한 데이터만 미리 조회 (잔고 조회 제거)
         Map<Long, Boolean> accountActiveMap = new HashMap<>();
         accountRepo.findByMemberIds(memberIds).forEach(a -> {
             if (a.getDcMember() != null) {
@@ -177,53 +176,37 @@ public class DcContributionService {
                 if (!Objects.equals(m.getCompanyId(), batch.getCompany().getId())) {
                     errorMessage = "해당 회사 소속 회원이 아닙니다.";
                 }
-
-                // DC 계좌 보유/활성 검증
                 if (errorMessage == null && !accountActiveMap.getOrDefault(m.getId(), false)) {
                     errorMessage = "DC 계좌가 없거나 비활성 상태입니다.";
                 }
-
-                // 재직 상태 검증
                 if (errorMessage == null) {
                     String status = statusMap.getOrDefault(m.getId(), "UNKNOWN");
                     if (!("재직".equals(status) || "ACTIVE".equalsIgnoreCase(status))) {
                         errorMessage = "납입 대상 상태가 아닙니다(현재상태: " + status + ").";
                     }
                 }
-
-             // 월 최소 납입금액 = floor(annualSalary / 144)
                 if (errorMessage == null) {
                     long annualSalary = annualSalaryMap.getOrDefault(m.getId(), 0L);
                     if (annualSalary <= 0) {
                         errorMessage = "연간임금총액(annualSalary)이 설정되지 않았습니다.";
                     } else {
-                        long monthlyMin = annualSalary / 144; // 내림
+                        long monthlyMin = annualSalary / 144;
                         long amount = Optional.ofNullable(it.getAmount()).orElse(0L);
-
                         if (amount < monthlyMin) {
-                            errorMessage = "월 최소 납입금액 미만입니다. (최소: " 
-                                         + String.format("%,d", monthlyMin) + "원)";
+                            errorMessage = "월 최소 납입금액 미만입니다. (최소: " + String.format("%,d", monthlyMin) + "원)";
                         }
                     }
                 }
-
-                // 금액 > 0 검증
                 if (errorMessage == null && (it.getAmount() == null || it.getAmount() <= 0)) {
                     errorMessage = "납입금액은 0보다 커야 합니다.";
                 }
             }
 
-        
-
-
-
-            // 검증 결과에 따라 상태 설정
             boolean isSuccess = (errorMessage == null);
             if (isSuccess) {
                 ok++;
                 okSum += Optional.ofNullable(it.getAmount()).orElse(0L);
                 it.setValidationStatus(DcContributionItem.ValidationStatus.SUCCESS);
-                it.setPaymentStatus(DcContributionItem.PaymentStatus.PENDING); 
             } else {
                 err++;
                 it.setValidationStatus(DcContributionItem.ValidationStatus.FAIL);
@@ -231,7 +214,6 @@ public class DcContributionService {
             it.setErrorMessage(errorMessage);
 
             itemDtos.add(ContribValidationItemDto.builder()
-                    // ... (이하 동일)
                     .itemId(it.getId())
                     .amount(it.getAmount() == null ? 0L : it.getAmount())
                     .validationStatus(isSuccess ? "OK" : "FAIL")
@@ -239,7 +221,6 @@ public class DcContributionService {
                     .dcMember(lite)
                     .build());
         }
-
 
         batch.setOkCount(ok);
         batch.setErrorCount(err);
@@ -256,6 +237,7 @@ public class DcContributionService {
                 .items(itemDtos)
                 .build();
     }
+
     
     @Transactional
     public Map<String, Object> confirmBatch(Long batchId, Long companyId) {
@@ -276,17 +258,27 @@ public class DcContributionService {
             throw new IllegalStateException("오류 건이 존재하여 확정할 수 없습니다.");
         }
 
-        // 확정
+        // 성공 항목만 입금대기로 전환
+        int pendingCount = 0;
+        for (DcContributionItem it : batch.getItems()) {
+            if (it.getValidationStatus() == DcContributionItem.ValidationStatus.SUCCESS) {
+                it.setPaymentStatus(DcContributionItem.PaymentStatus.PENDING);
+                pendingCount++;
+            }
+        }
+
+        // 배치 확정
         batch.setStatus(DcContributionBatch.BatchStatus.CONFIRMED);
 
-        // 응답 요약
         Map<String, Object> resp = new LinkedHashMap<>();
         resp.put("batchId", batch.getId());
         resp.put("status", batch.getStatus().name());
         resp.put("okCount", Optional.ofNullable(batch.getOkCount()).orElse(0));
+        resp.put("pendingCount", pendingCount);
         resp.put("totalAmount", Optional.ofNullable(batch.getTotalAmount()).orElse(0L));
         return resp;
     }
+
     
     @Transactional(readOnly = true)
     public ContribPlanListResponse listBatches(Long companyId, LocalDate from, LocalDate to,
@@ -328,7 +320,7 @@ public class DcContributionService {
     @Transactional(readOnly = true)
     public Page<PayableItemDto> listPayableItems(Long companyId, LocalDate from, LocalDate to, String paymentStatus, Pageable pageable) {
 
-        // [추가] 1. 컨트롤러에서 어떤 문자열을 받았는지 확인
+        // 1. 컨트롤러에서 어떤 문자열을 받았는지 확인
     	System.out.println("SERVICE_LOG_1: Controller에서 받은 paymentStatus 문자열: '" + paymentStatus + "'");
 
         List<DcContributionItem.PaymentStatus> statusesToSearch;
@@ -344,7 +336,7 @@ public class DcContributionService {
             );
         }
         
-        // [추가] 2. Repository로 어떤 Enum 리스트를 보낼 것인지 확인
+        // 2. Repository로 어떤 Enum 리스트를 보낼 것인지 확인
     	System.out.println("SERVICE_LOG_2: Repository로 보낼 statusesToSearch 리스트: {}" +  statusesToSearch);
         return itemRepo.findPayableItemsWithStatus(
                 companyId,

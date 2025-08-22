@@ -19,7 +19,7 @@ public class AccountHandler implements TcpMessageHandler {
 
     @Override
     public boolean supports(Command command) {
-        return command == Command.ACCOUNT_GET_DETAILS;
+        return command == Command.DC_ACCOUNT_GET_DETAILS;
     }
 
     @Override

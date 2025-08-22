@@ -24,7 +24,7 @@ public class AccountController {
     @GetMapping("/details/{memberId}")
     public ResponseEntity<?> getAccountDetails(@PathVariable("memberId") Long memberId) {
         ObjectNode data = objectMapper.createObjectNode().put("memberId", memberId);
-        TcpMessage msg = new TcpMessage(Command.ACCOUNT_GET_DETAILS, data);
+        TcpMessage msg = new TcpMessage(Command.DC_ACCOUNT_GET_DETAILS, data);
         Object response = tcpService.sendMessage(msg);
         return ResponseEntity.ok(response);
     }

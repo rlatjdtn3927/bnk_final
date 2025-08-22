@@ -6,6 +6,28 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
   <link th:href="@{/css/company-subscriber.css}" rel="stylesheet" />
+
+  <style>
+    .notification {
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+      padding: 12px 20px; border-radius: 8px; color: #fff; font-size: 14px; z-index: 1000;
+      opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s, top 0.3s;
+    }
+    .notification.is-show { opacity: 1; visibility: visible; top: 40px; }
+    .notification.is-error { background-color: #d32f2f; }
+    .notification.is-success { background-color: #2e7d32; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .tr-error td { background-color: #fff5f5; }
+    .tr-dup td { border-left: 2px solid #ffb822; }
+    .with-tip { position: relative; cursor: help; }
+    .with-tip .tip {
+      position: absolute; left: 50%; bottom: 100%; transform: translateX(-50%);
+      margin-bottom: 8px; padding: 8px 12px; background: #333; color: #fff;
+      border-radius: 4px; font-size: 12px; white-space: nowrap;
+      visibility: hidden; opacity: 0; transition: all 0.2s;
+    }
+    .with-tip:hover .tip { visibility: visible; opacity: 1; }
+  </style>
 </head>
 <body class="bnk-body">
 
@@ -15,7 +37,6 @@
       <p class="desc">엑셀 파일을 업로드하여 가입자 명부를 검증하고, 이상이 없으면 등록을 실행합니다.</p>
     </header>
 
-    <!-- 업로드 영역 -->
     <section class="card">
       <div class="card-head">
         <h2>파일 업로드</h2>
@@ -24,16 +45,14 @@
           <button type="button" class="btn btn-ghost" id="clearBtn">초기화</button>
         </div>
       </div>
-
       <div id="dropzone" class="dropzone" tabindex="0" aria-label="엑셀 파일 드래그 또는 클릭하여 선택">
         <div class="dz-inner">
           <div class="dz-icon">⬆</div>
           <div class="dz-title">파일을 이곳에 끌어놓거나 클릭하여 선택</div>
           <div class="dz-sub">지원 형식: .xlsx / 최대 20MB</div>
-          <input type="file" id="excelFile" accept=".xlsx" />
+          <input type="file" id="excelFile" accept=".xlsx" hidden />
         </div>
       </div>
-
       <div class="upload-bar">
         <div class="file-pill" id="filePill" hidden>
           <span id="fileName">선택된 파일 없음</span>
@@ -43,47 +62,34 @@
           <button type="button" class="btn btn-primary" id="validateBtn">업로드 및 검증</button>
         </div>
       </div>
-
       <div class="note" id="noUploadMsg">엑셀을 업로드하면 표 하단에 검증 결과가 표시됩니다.</div>
     </section>
 
-    <!-- 결과 영역 -->
     <section class="card" id="resultSection" hidden>
       <div class="card-head">
         <h2>검증 결과</h2>
       </div>
-
       <div class="summary">
         <span class="chip total"><i></i>전체 <b id="totalCnt">0</b></span>
         <span class="chip ok"><i></i>정상 <b id="normalCnt">0</b></span>
         <span class="chip dup"><i></i>중복 <b id="duplicateCnt">0</b></span>
         <span class="chip err"><i></i>오류 <b id="errorCnt">0</b></span>
       </div>
-
-	  <div class="table-outer">
-	    <div class="table-scroll">
-	      <table class="tbl" id="resultTable">
-	        <thead>
-	          <tr>
-	            <th>이름</th>
-	            <th>주민번호</th>
-	            <th>입사일</th>
-	            <th>기산일</th>
-	            <th>연간임금총액</th>
-	            <th>구분</th>
-	            <th>이메일</th>
-	            <th>휴대폰</th>
-	            <th>상태</th>
-	            <th>가입일</th>
-	          </tr>
-	        </thead>
-	        <tbody></tbody>
-	      </table>
+	    <div class="table-outer">
+	      <div class="table-scroll">
+	        <table class="tbl" id="resultTable">
+	          <thead>
+	            <tr>
+	              <th>이름</th> <th>주민번호</th> <th>입사일</th> <th>기산일</th> <th>연간임금총액</th>
+	              <th>구분</th> <th>이메일</th> <th>휴대폰</th> <th>상태</th> <th>가입일</th>
+	            </tr>
+	          </thead>
+	          <tbody></tbody>
+	        </table>
+	      </div>
 	    </div>
-	  </div>
-	</section>
+	  </section>
 
-    <!-- 하단 고정 액션 -->
     <div class="sticky-bar">
       <div class="left">
         <small class="muted">정상 데이터만 등록됩니다. (중복/오류 행 제외)</small>
@@ -94,15 +100,16 @@
     </div>
   </main>
 
-  <!-- 로딩 -->
   <div class="spinner-mask" id="spinner" hidden>
     <div class="spinner"></div>
   </div>
 
+  <div id="notification" class="notification"></div>
+
   <script>
     // 상태
-    let validatedData = [];   // 서버에서 받은 검증 결과
     let selectedFile = null;
+    let validatedData = []; // 원래 코드와 동일하게, 검증 결과를 저장할 배열
 
     // 엘리먼트
     const excelInput = document.getElementById('excelFile');
@@ -116,179 +123,197 @@
     const resultSec  = document.getElementById('resultSection');
     const spinner    = document.getElementById('spinner');
     const clearBtn   = document.getElementById('clearBtn');
+    const notification = document.getElementById('notification');
 
-    // 파일 표시/제거
-    function showSelectedFile(file){
+    // --- 유틸리티 함수 ---
+
+    function showNotification(message, type = 'error') {
+      notification.textContent = message;
+      notification.className = `notification is-${type}`;
+      notification.classList.add('is-show');
+      setTimeout(() => notification.classList.remove('is-show'), 3000);
+    }
+
+    function setLoading(isLoading) {
+      spinner.hidden = !isLoading;
+      validateBtn.disabled = isLoading;
+      if (!isLoading) {
+        const normalCnt = parseInt(document.getElementById('normalCnt').textContent, 10);
+        registerBtn.disabled = normalCnt === 0;
+      } else {
+        registerBtn.disabled = true;
+      }
+    }
+
+    // --- UI 제어 함수 ---
+
+    function showSelectedFile(file) {
       selectedFile = file;
-      if (file){
+      if (file) {
         filePill.hidden = false;
         fileNameEl.textContent = file.name;
+        validateBtn.disabled = false;
       } else {
         filePill.hidden = true;
         fileNameEl.textContent = '선택된 파일 없음';
         excelInput.value = '';
+        validateBtn.disabled = true;
       }
     }
-    removeFile.addEventListener('click', ()=>showSelectedFile(null));
-    clearBtn.addEventListener('click', ()=>{ showSelectedFile(null); resetResults(); });
 
-    // 드래그&드롭
-    ;['dragenter','dragover'].forEach(evt =>
-      dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.add('is-hover'); })
-    );
-    ;['dragleave','drop'].forEach(evt =>
-      dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.remove('is-hover'); })
-    );
-    dropzone.addEventListener('drop', e=>{
-      const file = e.dataTransfer.files?.[0];
-      if (file) { showSelectedFile(file); }
-    });
-    dropzone.addEventListener('click', ()=> excelInput.click());
-    dropzone.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); excelInput.click(); }});
-
-    excelInput.addEventListener('change', ()=>{
-      const file = excelInput.files?.[0];
-      showSelectedFile(file || null);
-    });
-
-    function setLoading(on){
-      spinner.hidden = !on;
-      validateBtn.disabled = on;
-      registerBtn.disabled = on || registerBtn.dataset.ready !== '1';
-    }
-
-    function resetResults(){
+    function resetResults() {
       validatedData = [];
       resultSec.hidden = true;
       noUploadMsg.hidden = false;
-      setSummary(0,0,0,0);
-      const tbody = document.querySelector('#resultTable tbody');
-      tbody.innerHTML = '';
-      registerBtn.dataset.ready = '0';
+      setSummary(0, 0, 0, 0);
+      document.querySelector('#resultTable tbody').innerHTML = '';
       registerBtn.disabled = true;
     }
 
-    function setSummary(total, ok, dup, err){
+    function resetAll() {
+      showSelectedFile(null);
+      resetResults();
+    }
+    
+    function setSummary(total, ok, dup, err) {
       document.getElementById('totalCnt').textContent = total;
       document.getElementById('normalCnt').textContent = ok;
       document.getElementById('duplicateCnt').textContent = dup;
       document.getElementById('errorCnt').textContent = err;
     }
 
-    // 검증
-    validateBtn.addEventListener('click', async ()=>{
-      if (!selectedFile){ alert('엑셀 파일을 선택하세요.'); return; }
-      if (!/\.xlsx$/i.test(selectedFile.name)){ alert('지원 형식은 .xlsx 입니다.'); return; }
-
-      setLoading(true);
-      try{
-        const fd = new FormData();
-        fd.append('file', selectedFile);
-
-        const res = await fetch('/company/subscriber/excel-upload', { method:'POST', body: fd });
-        if (!res.ok){
-          const text = await res.text();
-          throw new Error(text || '서버 오류');
-        }
-        const data = await res.json();
-        validatedData = data;
-
-        // 표 갱신
-        applyValidationResult(data);
-        resultSec.hidden = false;
-        noUploadMsg.hidden = true;
-      }catch(err){
-        alert('업로드 및 검증 실패: ' + err.message);
-      }finally{
-        setLoading(false);
-      }
-    });
-
-    function applyValidationResult(results){
+    function applyValidationResult(results) {
       const tbody = document.querySelector('#resultTable tbody');
       tbody.innerHTML = '';
 
-      let ok=0, dup=0, err=0;
+      let ok = 0, dup = 0, err = 0;
 
-      results.forEach(r=>{
+      const createCell = (text) => {
+        const td = document.createElement('td');
+        td.textContent = text;
+        return td;
+      };
+
+      results.forEach(r => {
         const s = r.subscriber || {};
         const tr = document.createElement('tr');
 
         if (!r.valid) tr.classList.add('tr-error');
-        if (r.errors?.some(e=>e.includes('중복'))) tr.classList.add('tr-dup');
-
+        if (r.errors?.some(e => e.includes('중복'))) tr.classList.add('tr-dup');
+        
         const nameCell = document.createElement('td');
-        if (!r.valid && r.errors?.length){
+        if (!r.valid && r.errors?.length) {
           nameCell.className = 'with-tip';
           nameCell.innerHTML = `${s.name || ''}<span class="tip">${r.errors.join('<br/>')}</span>`;
-        }else{
+        } else {
           nameCell.textContent = s.name || '';
         }
         tr.appendChild(nameCell);
-
-        tr.innerHTML += `
-          <td>${s.ssn||''}</td>
-          <td>${s.entryDate||''}</td>
-          <td>${s.baseDate||''}</td>
-          <td>${s.annualSalary ? Number(s.annualSalary).toLocaleString() : ''}</td>
-          <td>${s.employmentType||''}</td>
-          <td>${s.email||''}</td>
-          <td>${s.phone||''}</td>
-          <td>${s.status||''}</td>
-          <td>${s.joinDate||''}</td>
-        `;
-
-        // 위에서 nameCell append 했으니 첫 칸 중복 방지
-        const cells = tr.querySelectorAll('td');
-        if (cells.length>10){ tr.removeChild(cells[1]); }
-
+        
+        tr.appendChild(createCell(s.ssn || ''));
+        tr.appendChild(createCell(s.entryDate || ''));
+        tr.appendChild(createCell(s.baseDate || ''));
+        tr.appendChild(createCell(s.annualSalary ? Number(s.annualSalary).toLocaleString() : ''));
+        tr.appendChild(createCell(s.employmentType || ''));
+        tr.appendChild(createCell(s.email || ''));
+        tr.appendChild(createCell(s.phone || ''));
+        tr.appendChild(createCell(s.status || ''));
+        tr.appendChild(createCell(s.joinDate || ''));
         tbody.appendChild(tr);
 
         if (r.valid) ok++;
-        else if (r.errors?.some(e=>e.includes('중복'))) dup++;
+        else if (r.errors?.some(e => e.includes('중복'))) dup++;
         else err++;
       });
 
       setSummary(results.length, ok, dup, err);
-
-      // 정상만 있고 오류/중복 없을 때만 등록 가능
-      const ready = ok>0 && err===0 && dup===0 ? '1' : '0';
-      registerBtn.dataset.ready = ready;
-      // registerBtn.disabled = ready!=='1';
+      registerBtn.disabled = ok === 0;
+      resultSec.hidden = false;
+      noUploadMsg.hidden = true;
     }
 
-    // 등록
-    registerBtn.addEventListener('click', async ()=>{
-      const validSubscribers = validatedData.filter(r=>r.valid).map(r=>r.subscriber);
-      if (validSubscribers.length===0){ alert('등록할 정상 데이터가 없습니다.'); return; }
-      if (!confirm(`총 ${validSubscribers.length}건을 등록하시겠습니까?`)) return;
+    // --- 이벤트 리스너 ---
+
+    removeFile.addEventListener('click', () => showSelectedFile(null));
+    clearBtn.addEventListener('click', resetAll);
+
+    ['dragenter', 'dragover'].forEach(evt => dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.add('is-hover'); }));
+    ['dragleave', 'drop'].forEach(evt => dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.remove('is-hover'); }));
+    
+    dropzone.addEventListener('drop', e => {
+      const file = e.dataTransfer.files?.[0];
+      if (file) { resetResults(); showSelectedFile(file); }
+    });
+    dropzone.addEventListener('click', () => excelInput.click());
+    dropzone.addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); excelInput.click(); }});
+
+    excelInput.addEventListener('change', () => {
+      const file = excelInput.files?.[0];
+      resetResults();
+      showSelectedFile(file || null);
+    });
+
+    // [API] 업로드 및 검증
+    validateBtn.addEventListener('click', async () => {
+      if (!selectedFile) { showNotification('엑셀 파일을 선택하세요.'); return; }
+      if (!/\.xlsx$/i.test(selectedFile.name)) { showNotification('지원 형식은 .xlsx 입니다.'); return; }
 
       setLoading(true);
-      try{
-        const res = await fetch('/company/subscriber/register', {
-          method:'POST',
-          headers:{ 'Content-Type':'application/json' },
-          body: JSON.stringify(validSubscribers)
-        });
-        if (!res.ok){
+      try {
+        const fd = new FormData();
+        fd.append('file', selectedFile);
+
+        const res = await fetch('/company/subscriber/excel-upload', { method: 'POST', body: fd });
+        if (!res.ok) {
           const text = await res.text();
-          throw new Error(text || '등록 실패');
+          throw new Error(text || '서버 오류');
         }
-        const out = await res.json();
-        alert(`총 ${out.total}건 중 ${out.success}건 등록 성공`);
         
-        // window.location.reload();
-        showSelectedFile(null);
+        const data = await res.json();
+        validatedData = data; // 검증 결과를 상태 변수에 저장
+        applyValidationResult(validatedData);
+
+      } catch (err) {
+        showNotification('업로드 및 검증 실패: ' + err.message);
         resetResults();
-      }catch(err){
-        alert('데이터 등록 실패: ' + err.message);
-      }finally{
+      } finally {
         setLoading(false);
       }
     });
 
-    // 초기화
-    resetResults();
+    // [API] 등록
+    registerBtn.addEventListener('click', async () => {
+      const validSubscribers = validatedData.filter(r => r.valid).map(r => r.subscriber);
+      
+      if (validSubscribers.length === 0) { showNotification('등록할 정상 데이터가 없습니다.'); return; }
+      if (!confirm(`정상 데이터 ${validSubscribers.length}건을 등록하시겠습니까?`)) return;
+
+      setLoading(true);
+      try {
+        const res = await fetch('/company/subscriber/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(validSubscribers) // 필터링된 정상 데이터 전송
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || '등록 실패');
+        }
+
+        const out = await res.json();
+        showNotification(`총 ${out.success}건 등록 성공`, 'success');
+        resetAll();
+
+      } catch (err) {
+        showNotification('데이터 등록 실패: ' + err.message);
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    // --- 초기화 실행 ---
+    resetAll();
   </script>
 </body>
 </html>
