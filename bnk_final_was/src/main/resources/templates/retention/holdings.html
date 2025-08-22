@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>퇴직연금 · 보유현황</title>
+
+<!-- Pretendard -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css"/>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+<style>
+:root{
+  --ink:#1f2937; --muted:#6b7280; --border:#e5e7eb; --bg:#fafafc; --card:#fff;
+  --accent:#e84a4a; --good:#0f766e; --bad:#b91c1c; --chip:#f8f9fb;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Pretendard,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:16px}
+.header{display:flex;align-items:center;gap:8px}
+.header h1{font-size:20px;margin:0}
+.nav{display:flex;gap:16px;margin-top:8px;border-bottom:1px solid var(--border)}
+.nav a{padding:10px 2px;color:#9ca3af;text-decoration:none;display:inline-block}
+.nav a.active{color:var(--ink);border-bottom:2px solid var(--ink);font-weight:600}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.section-title{font-size:16px;margin:18px 0 8px}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.badge{font-size:12px;border:1px solid var(--border);padding:2px 8px;border-radius:999px;color:var(--muted);background:var(--chip)}
+.btn{border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:999px;padding:8px 12px;font-weight:600;cursor:pointer}
+.btn.ghost{background:#fff;color:var(--accent)}
+.btn.sm{padding:6px 10px;font-size:12px;border-radius:12px}
+.pill{display:inline-flex;gap:8px;background:var(--chip);border:1px solid var(--border);border-radius:999px;padding:6px}
+.pill button{border:0;background:transparent;padding:6px 10px;border-radius:999px;cursor:pointer;color:#6b7280;font-weight:600}
+.pill button.active{background:#111827;color:#fff}
+.key{font-size:12px;color:var(--muted)}
+.big{font-size:28px;font-weight:800;letter-spacing:-.5px}
+.grid{display:grid;gap:12px}
+.grid.cols-2{grid-template-columns:1fr 1fr}
+@media (max-width:680px){.grid.cols-2{grid-template-columns:1fr}}
+
+.table{width:100%;border-collapse:collapse;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#fff}
+.table th,.table td{padding:10px;border-bottom:1px solid var(--border);text-align:right}
+.table th:first-child,.table td:first-child{text-align:left}
+.table thead th{background:#f8fafc;color:#374151;font-size:13px}
+.empty{padding:18px 10px;color:var(--muted);text-align:center}
+
+.kpis{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px}
+.kpi{flex:1 1 180px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px}
+.kpi .ttl{font-size:12px;color:var(--muted)}
+.kpi .val{font-size:20px;margin-top:4px}
+.kpi .val.positive{color:var(--good)}
+.kpi .val.negative{color:var(--bad)}
+
+.info-chip{background:#f3f4f6;border:1px dashed #e5e7eb;border-radius:12px;padding:12px;color:#374151}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:#374151;margin-top:8px}
+.legend .dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle}
+</style>
+</head>
+<body>
+  <div class="wrap" 
+       id="accountRoot"
+       data-irp=""   <!-- 서버가 알면 여기에 IRP 계좌번호를 꽂아주세요 -->
+       data-dc="">   <!-- 서버가 알면 여기에 DC 계좌번호를 꽂아주세요 -->
+
+    <div class="header">
+      <button onclick="history.back()" class="btn ghost sm" aria-label="뒤로가기">←</button>
+      <h1>퇴직연금</h1>
+    </div>
+
+    <nav class="nav" aria-label="상단 탭">
+      <a class="active" href="javascript:void(0)">보유현황</a>
+      <a href="javascript:void(0)">상품관리</a>
+      <a href="javascript:void(0)">연금받기</a>
+      <a href="javascript:void(0)">교육받기</a>
+    </nav>
+
+    <!-- 계좌 헤더 -->
+    <section class="card" style="margin-top:12px">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div>
+          <div class="key">개인IRP / DC 선택</div>
+          <div class="pill" role="tablist" aria-label="계좌유형 선택">
+            <button id="tab-irp" class="active" role="tab" aria-selected="true">IRP</button>
+            <button id="tab-dc" role="tab" aria-selected="false">DC</button>
+          </div>
+          <div class="key" style="margin-top:6px" id="accMeta">-</div>
+        </div>
+        <button id="btnViewHoldings" class="btn ghost sm">보유상품보기</button>
+      </div>
+    </section>
+
+    <!-- 총 평가액 / 최근수익률 -->
+    <section class="card" style="margin-top:12px">
+      <div class="row" style="justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="key">총 평가액 <span id="asOf" class="key"></span></div>
+          <div class="big" id="totalVal">- 원</div>
+        </div>
+        <div style="text-align:right">
+          <div class="key">최근 1년 수익률</div>
+          <div class="big" id="yearReturn" style="color:#ef4444">0%</div>
+        </div>
+      </div>
+      <div class="kpis">
+        <div class="kpi">
+          <div class="ttl">납입금액</div>
+          <div class="val" id="paidAmt">- 원</div>
+        </div>
+        <div class="kpi">
+          <div class="ttl">당일 납입금액</div>
+          <div class="val" id="todayPaid">- 원</div>
+        </div>
+        <div class="kpi">
+          <div class="ttl">운용수익금액</div>
+          <div class="val" id="pnlAmt">- 원</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 수익률 상세: 누적수익률 / 자산비율 -->
+    <section class="card" style="margin-top:12px">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div class="key">수익률 상세</div>
+        <div class="pill" role="tablist" aria-label="통계 보기">
+          <button id="tab-cum" class="active" role="tab" aria-selected="true">누적수익률</button>
+          <button id="tab-alloc" role="tab" aria-selected="false">자산비율</button>
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <canvas id="chartCum" height="220" role="img" aria-label="누적수익률 차트"></canvas>
+        <canvas id="chartAlloc" height="220" style="display:none" role="img" aria-label="자산비율 차트"></canvas>
+      </div>
+      <div class="legend" id="allocLegend" style="display:none"></div>
+    </section>
+
+    <!-- 보유상품보기 -->
+    <section class="card" style="margin-top:12px">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div class="section-title" style="margin:0">보유상품보기</div>
+        <div class="actions">
+          <button class="btn ghost sm" id="btnExplain">상품설명</button>
+          <button class="btn ghost sm" id="btnOps">운용현황</button>
+        </div>
+      </div>
+
+      <h3 class="section-title">원리금 보장</h3>
+      <table class="table" id="tblPrincipal">
+        <thead>
+          <tr><th>상품ID</th><th>계약원금</th><th>금리(%)</th><th>만기</th><th>누적이자</th><th>상태</th></tr>
+        </thead>
+        <tbody><tr><td class="empty" colspan="6">데이터 없음</td></tr></tbody>
+      </table>
+
+      <h3 class="section-title">펀드/ETF/TDF</h3>
+      <table class="table" id="tblFund">
+        <thead>
+          <tr><th>상품명</th><th>보유좌수</th><th>평균단가</th><th>평가액</th><th>손익</th><th>수익률(%)</th></tr>
+        </thead>
+        <tbody><tr><td class="empty" colspan="6">데이터 없음</td></tr></tbody>
+      </table>
+    </section>
+
+    <!-- 올해 납입현황 카드 -->
+    <section class="card" style="margin-top:12px">
+      <div class="info-chip">
+        <div class="key">올해납입현황(개인부담금)</div>
+        <div style="font-weight:700;margin:6px 0">현재 <span id="limitLeft">-</span>을 납입할 수 있어요!</div>
+        <div class="key">납입한도를 추가로 늘려 ISA만기/주택차액 등 별도 입금도 가능해요.</div>
+      </div>
+      <div style="margin-top:10px">
+        <canvas id="chartLimit" height="180" role="img" aria-label="납입한도 차트"></canvas>
+      </div>
+      <div class="actions" style="margin-top:8px">
+        <button class="btn">입금하기</button>
+        <button class="btn ghost">자동입금</button>
+        <button class="btn ghost">한도변경</button>
+      </div>
+    </section>
+
+    <!-- 상태 -->
+    <section id="status" class="card" style="margin-top:12px;display:none"></section>
+  </div>
+
+<script>
+const $ = s => document.querySelector(s);
+const el = id => document.getElementById(id);
+const money = n => (isFinite(n)? Number(n).toLocaleString('ko-KR') : '-') + ' 원';
+const num = v => v==null ? 0 : (typeof v==='number'? v : Number(v)||0);
+const pct = v => isFinite(v) ? Number(v).toLocaleString('ko-KR',{maximumFractionDigits:2})+'%' : '-';
+
+let state = {
+  type: 'IRP',         // 현재 탭
+  id: null,            // 현재 계좌번호
+  ids: { IRP:null, DC:null }, // 양쪽 계좌번호(있으면 자동사용)
+  principals: [],
+  funds: []
+};
+
+function setStatus(msg, ok=true){
+  const s = el('status');
+  s.style.display = 'block';
+  s.textContent = msg;
+  s.style.borderColor = ok ? '#10b981' : '#ef4444';
+}
+
+// 세션 기본 계좌
+async function fetchUserInfo(){
+  const r = await fetch('/retain-api/change/user-info');
+  if(!r.ok) throw new Error('user-info 실패');
+  return r.json();
+}
+
+// 보유내역
+async function fetchHoldings(type, id){
+  const url = `/retain-api/change/retain?accountType=${encodeURIComponent(type)}&accountId=${encodeURIComponent(id)}`;
+  const r = await fetch(url);
+  if(!r.ok) throw new Error('retain 실패');
+  return r.json();
+}
+
+// 상단 메타 표시
+function paintHeader(){
+  const title = state.type === 'IRP' ? '개인IRP' : 'DC';
+  el('accMeta').textContent = `${title} · ${state.id || '-'}`;
+  $('#tab-irp').classList.toggle('active', state.type==='IRP');
+  $('#tab-dc').classList.toggle('active', state.type==='DC');
+}
+
+// 표 렌더
+function renderTables(principals, funds){
+  const pBody = $('#tblPrincipal tbody');
+  const fBody = $('#tblFund tbody');
+
+  if(!principals.length){
+    pBody.innerHTML = `<tr><td class="empty" colspan="6">데이터 없음</td></tr>`;
+  }else{
+    pBody.innerHTML = principals.map(v=>`
+      <tr>
+        <td><span class="badge">${v.principalId ?? '-'}</span></td>
+        <td>${money(num(v.contractAmount))}</td>
+        <td>${pct(num(v.interestRate))}</td>
+        <td>${v.maturityDate ?? '-'}</td>
+        <td>${money(num(v.interestAccrued))}</td>
+        <td>${v.status ?? '-'}</td>
+      </tr>
+    `).join('');
+  }
+
+  if(!funds.length){
+    fBody.innerHTML = `<tr><td class="empty" colspan="6">데이터 없음</td></tr>`;
+  }else{
+    fBody.innerHTML = funds.map(v=>`
+      <tr>
+        <td>${v.productName ?? '-'}</td>
+        <td>${num(v.units).toLocaleString('ko-KR')}</td>
+        <td>${num(v.avgPrice).toLocaleString('ko-KR')}</td>
+        <td>${money(num(v.valuationAmount))}</td>
+        <td>${money(num(v.profitLoss))}</td>
+        <td>${num(v.returnRate).toLocaleString('ko-KR',{maximumFractionDigits:2})}%</td>
+      </tr>
+    `).join('');
+  }
+}
+
+// KPI/요약
+function renderKpis(principals, funds){
+  const principalSum = principals.reduce((s,x)=> s+num(x.contractAmount),0);
+  const interestSum  = principals.reduce((s,x)=> s+num(x.interestAccrued),0);
+  const pVal         = principalSum + interestSum;
+
+  const fVal         = funds.reduce((s,x)=> s+num(x.valuationAmount),0);
+  const fAcq         = funds.reduce((s,x)=> s+num(x.acquisitionAmount),0);
+  const totalVal     = pVal + fVal;
+  const totalP       = principalSum + fAcq;
+  const totalPnL     = totalVal - totalP;
+
+  el('totalVal').textContent = money(totalVal);
+  el('paidAmt').textContent  = money(totalP);
+  el('pnlAmt').textContent   = money(totalPnL);
+  el('todayPaid').textContent= money(0); // 추후 연결 지표
+  el('yearReturn').textContent = (totalP>0? ((totalVal-totalP)/totalP*100).toFixed(2):0) + '%';
+  el('yearReturn').style.color = totalPnL>=0 ? '#0f766e' : '#b91c1c';
+  el('asOf').textContent = '· 오늘 기준';
+}
+
+// 차트들
+let chartCum, chartAlloc, chartLimit;
+
+function renderCumChart(series){
+  const ctx = el('chartCum').getContext('2d');
+  chartCum && chartCum.destroy();
+  // series가 없으면 평평한 0선 렌더
+  const labels = series?.labels ?? ['-6M','-5M','-4M','-3M','-2M','-1M','Today'];
+  const data   = series?.values ?? [0,0,0,0,0,0,0];
+
+  chartCum = new Chart(ctx,{
+    type:'line',
+    data:{ labels, datasets:[{ label:'나', data, fill:false, tension:.3 }]},
+    options:{
+      responsive:true,
+      plugins:{ legend:{display:false} },
+      scales:{ y:{ ticks:{ callback:(v)=>v+'%' } } }
+    }
+  });
+}
+
+function renderAllocChart(principals, funds){
+  // 자산군 집계: 원리금보장 + 펀드 category
+  const alloc = new Map(); // label -> amount
+  const add = (k, v)=> alloc.set(k, (alloc.get(k)||0)+v);
+
+  const pAmt = principals.reduce((s,x)=> s+num(x.contractAmount)+num(x.interestAccrued),0);
+  if(pAmt>0) add('원리금보장', pAmt);
+
+  funds.forEach(f=>{
+    const k = f.category || f.fundType || '기타';
+    add(k, num(f.valuationAmount));
+  });
+
+  const labels = Array.from(alloc.keys());
+  const values = Array.from(alloc.values());
+  const ctx = el('chartAlloc').getContext('2d');
+  chartAlloc && chartAlloc.destroy();
+
+  chartAlloc = new Chart(ctx,{
+    type:'doughnut',
+    data:{ labels, datasets:[{ data: values }]},
+    options:{ responsive:true, plugins:{ legend:{display:false} } }
+  });
+
+  // 범례
+  const legend = el('allocLegend');
+  legend.style.display = 'flex';
+  legend.innerHTML = labels.map((lab,i)=>`<span><span class="dot" style="background:${chartAlloc.data.datasets[0].backgroundColor?.[i]||'#999'}"></span>${lab}</span>`).join('');
+}
+
+function renderLimitChart(current=1000, lastSet=1500, total=1800, taxLimit=900){
+  const ctx = el('chartLimit').getContext('2d');
+  chartLimit && chartLimit.destroy();
+
+  chartLimit = new Chart(ctx,{
+    type:'bar',
+    data:{ 
+      labels:['내계좌입금액','전금융기관설정납입한도','총납입한도'],
+      datasets:[{ data:[current, lastSet, total] }]
+    },
+    options:{
+      indexAxis:'y',
+      plugins:{ legend:{display:false} },
+      scales:{
+        x:{ suggestedMax: total, ticks:{ callback:(v)=>v+' 만원' }},
+        y:{ }
+      }
+    }
+  });
+  el('limitLeft').textContent = (total-current).toLocaleString('ko-KR')+'만원';
+}
+
+// 누적수익률/자산비율 토글
+function wireStatsTabs(){
+  el('tab-cum').addEventListener('click',()=>{
+    el('tab-cum').classList.add('active');
+    el('tab-alloc').classList.remove('active');
+    el('chartCum').style.display='';
+    el('chartAlloc').style.display='none';
+    el('allocLegend').style.display='none';
+  });
+  el('tab-alloc').addEventListener('click',()=>{
+    el('tab-alloc').classList.add('active');
+    el('tab-cum').classList.remove('active');
+    el('chartCum').style.display='none';
+    el('chartAlloc').style.display='';
+    el('allocLegend').style.display='';
+  });
+}
+
+// IRP/DC 탭 전환
+async function switchAccount(type){
+  const id = state.ids[type];
+  if(!id){
+    setStatus(`${type} 계좌가 없습니다.`, false);
+    return;
+  }
+  state.type = type;
+  state.id = id;
+  paintHeader();
+  await loadHoldings();
+}
+
+async function loadHoldings(){
+  try{
+    setStatus('조회 중...', true);
+    const res = await fetchHoldings(state.type, state.id);
+    if(!(res && res.ok)) throw new Error(res?.error || '보유현황 응답 오류');
+
+    state.principals = res.principalLedgers || [];
+    state.funds      = res.fundHoldings || [];
+
+    renderTables(state.principals, state.funds);
+    renderKpis(state.principals, state.funds);
+
+    // 차트: 누적수익률(데이터 없으면 0선), 자산비율
+    renderCumChart(null);
+    renderAllocChart(state.principals, state.funds);
+
+    // 납입한도 데모 수치(추후 실제 값 연동 시 교체)
+    renderLimitChart(1000,1500,1800,900);
+
+    setStatus('조회 완료', true);
+  }catch(e){
+    renderTables([],[]);
+    renderKpis([],[]);
+    renderCumChart(null);
+    setStatus(e.message || '오류가 발생했습니다.', false);
+  }
+}
+
+async function bootstrap(){
+  wireStatsTabs();
+
+  // 서버가 미리 data-irp / data-dc를 준 경우 우선 사용
+  const root = el('accountRoot');
+  const irpFromDom = root.dataset.irp || '';
+  const dcFromDom  = root.dataset.dc  || '';
+
+  try{
+    const u = await fetchUserInfo(); // { ok, userInfo{ accountType, accountId, userName, ... } }
+    if(!(u && u.ok && u.userInfo)) throw new Error('세션 사용자 정보 없음');
+
+    const info = u.userInfo;
+    // 기본 탭/계좌
+    state.type = (info.accountType||'IRP').toUpperCase();
+    state.ids[state.type] = info.accountId || null;
+
+    // DOM 데이터로 상대 계좌까지 채워두면 토글 가능
+    if(irpFromDom) state.ids.IRP = irpFromDom;
+    if(dcFromDom)  state.ids.DC  = dcFromDom;
+
+    // 현재 id 없으면 DOM 값 시도
+    if(!state.ids[state.type]){
+      if(state.type==='IRP' && irpFromDom) state.ids.IRP = irpFromDom;
+      if(state.type==='DC'  && dcFromDom)  state.ids.DC  = dcFromDom;
+    }
+    state.id = state.ids[state.type];
+
+    // 탭 활성화
+    $('#tab-irp').addEventListener('click', ()=>switchAccount('IRP'));
+    $('#tab-dc').addEventListener('click', ()=>switchAccount('DC'));
+
+    paintHeader();
+
+    if(!state.id){
+      setStatus('세션에 계좌번호가 없습니다.', false);
+      renderCumChart(null);
+      return;
+    }
+    await loadHoldings();
+
+  }catch(e){
+    setStatus(e.message || '초기화 실패', false);
+    renderCumChart(null);
+  }
+
+  // 버튼 더미 액션(연결 시 교체)
+  el('btnViewHoldings').addEventListener('click', ()=> {
+    window.scrollTo({ top: document.body.scrollHeight, behavior:'smooth' });
+  });
+  el('btnExplain').addEventListener('click', ()=> alert('상품설명 화면으로 이동(연결 예정)'));
+  el('btnOps').addEventListener('click', ()=> alert('운용현황 화면으로 이동(연결 예정)'));
+}
+
+document.addEventListener('DOMContentLoaded', bootstrap);
+</script>
+</body>
+</html>

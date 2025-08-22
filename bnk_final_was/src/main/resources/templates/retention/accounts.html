@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>보유 계좌</title>
+<link rel="stylesheet" href="/css/retention.css" />
+</head>
+<body>
+<div class="mobile-container">
+<header class="appbar">
+<button class="icon-btn" aria-label="뒤로가기">←</button>
+<h1 class="appbar__title">보유 계좌</h1>
+<span class="appbar__spacer"></span>
+</header>
+
+
+<main class="container">
+<section class="section">
+<h2 class="title">총 평가액 <span class="title__strong sk sk-text" style="width:120px;">&nbsp;</span></h2>
+</section>
+
+
+<section class="list" id="accountList">
+<!-- 스켈레톤 카드 3개 (데이터 연동 전 표시용) -->
+<article class="card">
+<div class="card__row">
+<div class="card__title sk sk-text" style="width:60%">&nbsp;</div>
+<span class="badge sk" style="width:52px">&nbsp;</span>
+</div>
+<div class="card__row">
+<div class="card__value sk sk-text" style="width:120px">&nbsp;</div>
+<div class="card__yield sk sk-text" style="width:44px">&nbsp;</div>
+</div>
+<div class="card__actions">
+<button class="btn btn--ghost" disabled>포트폴리오</button>
+<button class="btn" disabled>거래내역</button>
+</div>
+</article>
+
+
+<article class="card">
+<div class="card__row">
+<div class="card__title sk sk-text" style="width:70%">&nbsp;</div>
+<span class="badge sk" style="width:56px">&nbsp;</span>
+</div>
+<div class="card__row">
+<div class="card__value sk sk-text" style="width:100px">&nbsp;</div>
+<div class="card__yield sk sk-text" style="width:44px">&nbsp;</div>
+</div>
+<div class="card__actions">
+<button class="btn btn--ghost" disabled>포트폴리오</button>
+<button class="btn" disabled>거래내역</button>
+</div>
+</article>
+
+
+<article class="card">
+<div class="card__row">
+<div class="card__title sk sk-text" style="width:55%">&nbsp;</div>
+<span class="badge sk" style="width:50px">&nbsp;</span>
+</div>
+<div class="card__row">
+<div class="card__value sk sk-text" style="width:140px">&nbsp;</div>
+<div class="card__yield sk sk-text" style="width:44px">&nbsp;</div>
+</div>
+<div class="card__actions">
+<button class="btn btn--ghost" disabled>포트폴리오</button>
+<button class="btn" disabled>거래내역</button>
+</div>
+</article>
+</section>
+
+
+<!-- 빈 상태 예시 (데이터 없을 때 이 블록만 남겨두면 됨) -->
+<section class="empty" hidden>
+<div class="empty__icon">📄</div>
+<h3 class="empty__title">등록된 IRP 계좌가 없습니다.</h3>
+<p class="empty__text">IRP를 개설하고 자산을 시작해 보세요.</p>
+<div class="empty__actions">
+<a class="btn" href="/retention/empty">IRP 개설</a>
+<a class="btn btn--ghost" href="#">상품 둘러보기</a>
+</div>
+</section>
+</main>
+</div>
+</body>
+</html>

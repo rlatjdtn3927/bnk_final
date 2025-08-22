@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>거래내역</title>
+<link rel="stylesheet" href="/css/retention.css" />
+</head>
+<body>
+<div class="mobile-container">
+<header class="appbar">
+<button class="icon-btn" aria-label="뒤로가기">←</button>
+<h1 class="appbar__title">거래내역</h1>
+<span class="appbar__spacer"></span>
+</header>
+
+
+<main class="container">
+<!-- 필터 바 (비활성 상태) -->
+<section class="filters">
+<div class="segmented">
+<button class="segmented__btn is-active" disabled>1개월</button>
+<button class="segmented__btn" disabled>3개월</button>
+<button class="segmented__btn" disabled>6개월</button>
+</div>
+<div class="pill-select">
+<button class="pill is-active" disabled>전체</button>
+<button class="pill" disabled>입금</button>
+<button class="pill" disabled>출금</button>
+<button class="pill" disabled>매수</button>
+<button class="pill" disabled>매도</button>
+</div>
+</section>
+
+
+<!-- 리스트 (스켈레톤) -->
+<section class="timeline">
+<div class="timeline__item">
+<div class="timeline__date sk sk-text" style="width:90px">&nbsp;</div>
+<div class="timeline__row">
+<span class="badge sk" style="width:40px">&nbsp;</span>
+<div class="timeline__amount sk sk-text" style="width:110px">&nbsp;</div>
+</div>
+<div class="timeline__note sk sk-text" style="width:60%">&nbsp;</div>
+</div>
+<div class="timeline__item">
+<div class="timeline__date sk sk-text" style="width:90px">&nbsp;</div>
+<div class="timeline__row">
+<span class="badge sk" style="width:40px">&nbsp;</span>
+<div class="timeline__amount sk sk-text" style="width:100px">&nbsp;</div>
+</div>
+<div class="timeline__note sk sk-text" style="width:55%">&nbsp;</div>
+</div>
+</section>
+
+
+<!-- 분배 내역 모달 자리 -->
+<dialog class="modal" id="allocModal">
+<div class="modal__card">
+<h3 class="modal__title">입금 분배 내역</h3>
+<div class="modal__content sk sk-text" style="height:120px"></div>
+<div class="modal__actions">
+<button class="btn" onclick="this.closest('dialog').close()">닫기</button>
+</div>
+</div>
+</dialog>
+</main>
+</div>
+</body>
+</html>

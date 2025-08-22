@@ -31,6 +31,9 @@ public enum Command {
     CONTRIBUTION_PAYABLE_ITEM_LIST,
     CONTRIBUTION_EXECUTE_ITEMS, // 선택 항목 입금 실행;
     
+    RETAIN_GET_ACCOUNTS, // 보유현황 - 계좌 목록 불러옴 
+    
+    
 	/* OCR 관련 */
     FAMILY_CERT_OCR,
     UPLOAD_FAMILY_DOC,
