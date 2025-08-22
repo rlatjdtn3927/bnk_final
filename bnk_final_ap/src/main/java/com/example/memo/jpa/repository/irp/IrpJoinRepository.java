@@ -23,11 +23,11 @@ public interface IrpJoinRepository extends JpaRepository<IrpJoinEntity, Long>{
 	// Oracle: YYYY-MM 로 묶어서 월별 집계
     @Query(
       value = """
-        SELECT TO_CHAR(created_at, 'YYYY-MM') AS ym, COUNT(*) AS cnt
+        SELECT TO_CHAR(reg_date, 'YYYY-MM') AS ym, COUNT(*) AS cnt
           FROM irp_join
-         WHERE created_at >= TO_DATE(:fromYm || '-01','YYYY-MM-DD')
-           AND created_at <  ADD_MONTHS(TO_DATE(:toYm || '-01','YYYY-MM-DD'), 1)
-         GROUP BY TO_CHAR(created_at, 'YYYY-MM')
+         WHERE reg_date >= TO_DATE(:fromYm || '-01','YYYY-MM-DD')
+           AND reg_date <  ADD_MONTHS(TO_DATE(:toYm || '-01','YYYY-MM-DD'), 1)
+         GROUP BY TO_CHAR(reg_date, 'YYYY-MM')
          ORDER BY ym
       """,
       nativeQuery = true
