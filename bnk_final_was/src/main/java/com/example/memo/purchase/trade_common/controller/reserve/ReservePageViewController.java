@@ -89,6 +89,7 @@ public class ReservePageViewController {
 		dto.setAccountId(accountId); // irp_acct_no | account_no
 		
 		session.setAttribute("accountType", accountType);
+		session.setAttribute("accountId", accountId);
 		
 		session.setAttribute("ReserveValueDto", dto);
 

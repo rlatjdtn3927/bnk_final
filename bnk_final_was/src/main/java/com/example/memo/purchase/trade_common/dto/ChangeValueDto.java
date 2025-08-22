@@ -1,5 +1,11 @@
 package com.example.memo.purchase.trade_common.dto;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.example.memo.purchase.change.dto.SellLineDto;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,4 +26,10 @@ public class ChangeValueDto {
 	   /*Step 2에서 추가 : 보유상품 목록*/
 	   private String riskGrade; // profile_type 유형명
 	   private Integer riskGradeNum;
+	   
+	   /* ▼ 추가: 매도선택 상태 */
+	    @Builder.Default
+	    private List<SellLineDto> sellLines = new ArrayList<>();  // 선택된 매도항목
+	    @Builder.Default
+	    private BigDecimal sellTotalAmount = BigDecimal.ZERO;     // 합계 매도금액(원)
 }

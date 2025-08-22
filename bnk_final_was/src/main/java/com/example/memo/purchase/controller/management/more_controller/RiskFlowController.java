@@ -39,12 +39,13 @@ public class RiskFlowController {
         ReserveValueDto reserveDto = (ReserveValueDto) session.getAttribute("ReserveValueDto");
         ChangeValueDto changeDto   = (ChangeValueDto) session.getAttribute("ChangeValueDto");
 
-        if (reserveDto != null) {
+        if (reserveDto != null && "RESERVE".equalsIgnoreCase(reserveDto.getFlow())) {
             reserveDto.setRiskGrade(typeName);
             reserveDto.setRiskGradeNum(typeNo);
             session.setAttribute("ReserveValueDto", reserveDto);
             return "redirect:/purchase/trade/reserve/step1/after-risk";
-        } else if (changeDto != null) {
+        } 
+        else if (changeDto != null && "CHANGE".equalsIgnoreCase(changeDto.getFlow())) {
             changeDto.setRiskGrade(typeName);
             changeDto.setRiskGradeNum(typeNo);
             session.setAttribute("ChangeValueDto", changeDto);

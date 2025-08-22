@@ -90,6 +90,7 @@ public class ChangePageViewController {
 	}
 
 	/** step2 진입 (세션만 사용; 뷰에서 ${session.PassValueDto.*}로 표시) */
+	//투자성향 분석 후 보유상품 목록 보여줌
 	@GetMapping("/step1/after-risk")
 	public String step2AfterRisk(HttpSession session) {
 		ChangeValueDto dto = (ChangeValueDto) session.getAttribute("ChangeValueDto");
@@ -107,8 +108,22 @@ public class ChangePageViewController {
 		session.setAttribute("ChangeValueDto", dto);
 		return "purchase/trade/change/step2_change"; // 바로 뷰
 	}
-	@PostMapping("/step2_change/next")
-	public String step2_changeNext() {
-		return "";
-	}
+	
+	/** Step2 → 매도할 상품 선택 화면 */
+    @PostMapping("/step2_change/next")
+    public String step2ChangeNext() {
+        return "purchase/trade/change/step2_soldList"; // 👉 매도상품 선택
+    }
+
+    /** Step2 → 매수비율 추가 화면 */
+    @PostMapping("/step2_soldList/next")
+    public String step2SoldListNext() {
+        return "purchase/trade/change/step2_changeAddRatio"; // 👉 비율 추가
+    }
+
+    /** 매수비율 추가 화면 뷰 단독 접근 */
+    @GetMapping("/step2_changeAddRatio")
+    public String changeAddRatioView() {
+        return "purchase/trade/change/step2_changeAddRatio";
+    }
 }
