@@ -2,11 +2,12 @@ package com.example.memo.purchase.change.service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.stereotype.Service;
-
+import com.example.memo.admin.service.FileDownloadService;
 import com.example.memo.jpa.entity.company.DcAccount;
 import com.example.memo.jpa.entity.irp.IrpAccount;
 import com.example.memo.jpa.entity.ledger.FundHoldings;
@@ -29,7 +30,6 @@ import com.example.memo.purchase.change.dto.request.SoldPrincipalDto;
 import com.example.memo.purchase.change.dto.response.FundHoldingsDto;
 import com.example.memo.purchase.change.dto.response.PrincipalLedgerDto;
 import com.example.memo.purchase.change.dto.response.ResponseAccountHoldingsDto;
-import com.example.memo.purchase.reserve.dto.request.ReserveUpdateRequestDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,6 +40,8 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class ChangeProductService {
+
+    private final FileDownloadService fileDownloadService;
 	
 	static final int SCALE_CAL = 12;
 	static final int SCALE_SAVE = 6;
@@ -66,9 +68,8 @@ public class ChangeProductService {
 			List<FundHoldings> fundHoldingsList = null;
 			List<PrincipalLedger> principalHoldingList = null;
 			if("DC".equals(accountType)) {
-				DcAccount proxy = DcAccount.builder().accountNo(accountId).build();
-				fundHoldingsList = fundHoldingsRepository.findByDcAccount(proxy);
-				principalHoldingList = principalLedgerRepository.findByDcAccount(proxy);
+				fundHoldingsList = fundHoldingsRepository.findByDcAccount_AccountNo(accountId);
+				principalHoldingList = principalLedgerRepository.findByDcAccount_AccountNo(accountId);
 			} else { //irp
 				IrpAccount proxy = IrpAccount.builder().irpAcctNo(accountId).build();
 				fundHoldingsList = fundHoldingsRepository.findByIrpAccount(proxy);
@@ -115,7 +116,6 @@ public class ChangeProductService {
 			    	            .maturityDate(e.getMaturityDate())
 			    	            .interestAccrued(e.getInterestAccrued())
 			    	            .status(e.getStatus())
-			    	            .lastUpdated(e.getLastUpdated())
 
 			    	            .build();
 			    	    })
@@ -144,7 +144,7 @@ public class ChangeProductService {
 			List<BuyPrincipalDto> buyPrincipalList = dto.getBuyPrincipalList();
 			
 			List<FundHoldings>  fundHolding = "DC".equals(accountType)
-				    ? fundHoldingsRepository.findByDcAccount(DcAccount.builder().accountNo(accountId).build())
+				    ? fundHoldingsRepository.findByDcAccount_AccountNo(accountId)
 				    : fundHoldingsRepository.findByIrpAccount(IrpAccount.builder().irpAcctNo(accountId).build());
 				
 			if(soldProdList != null) { //거래원장에 매도로 기록 + 집계 테이블 매도 업데이트
@@ -298,11 +298,56 @@ public class ChangeProductService {
 			}
 			
 			List<PrincipalLedger> principalHolding = "DC".equals(accountType)
-				    ? principalLedgerRepository.findByDcAccount(DcAccount.builder().accountNo(accountId).build())
+				    ? principalLedgerRepository.findByDcAccount_AccountNo(accountId)
 				    : principalLedgerRepository.findByIrpAccount(IrpAccount.builder().irpAcctNo(accountId).build());
 			
-			if(soldPrincipalIdList != null) {
-
+			if(soldPrincipalIdList != null) { //원리금 보장 상품 매도의 경우
+				
+			    for(SoldPrincipalDto soldDto : soldPrincipalIdList) {
+			    	Long prodId = soldDto.getId();
+			    	Integer ratio = soldDto.getRatio();
+			        PrincipalLedger targetEntity = principalHolding.stream()
+			    			.filter(f -> f.getId().equals(prodId))
+			    			.findFirst().orElse(null);
+			        if(targetEntity == null) return "해당 계좌에 보유상품 목록이 존재하지 않습니다!";
+			        
+			        BigDecimal contractAmount = targetEntity.getContractAmount();
+			        BigDecimal tradeAmount = contractAmount.multiply(BigDecimal.valueOf(ratio))
+			        		.divide(BigDecimal.valueOf(100), SCALE_CAL, RMDN);
+			        BigDecimal remainAmount = contractAmount.subtract(tradeAmount); // 매도 후 남은 원금
+			        
+			        targetEntity.setContractAmount(remainAmount.setScale(SCALE_SAVE, RMUP));
+			        
+			        if(remainAmount.signum() == 0) {
+			        	targetEntity.setStatus("TERMINATED");
+			        	principalLedgerRepository.save(targetEntity);
+			        	continue;
+			        }
+			        
+			        LocalDate startDate = targetEntity.getStartDate();
+			        LocalDate today = LocalDate.now();
+			        
+			        BigDecimal daysBetween = new BigDecimal(ChronoUnit.DAYS.between(startDate, today));
+			        BigDecimal interestRate = targetEntity.getInterestRate();
+			        BigDecimal proRatedIr = daysBetween.divide(BigDecimal.valueOf(365), SCALE_CAL, RMUP).multiply(interestRate);
+			        // 중간 일할 이자율 계산 원래는 해지 이자율로 계산해야 되나 간단히 구현
+			        
+			        if("DC".equals(accountType)) {
+			        	DcAccount dcAccount = dcAccountRepository.findByAccountNo(accountId);
+			        	Long balance = dcAccount.getBalance();
+			        	Long newBalance = balance + proRatedIr.longValue();
+			        	dcAccount.setBalance(newBalance);
+			        	dcAccountRepository.save(dcAccount); //일할 이자율 정산
+			        } else {
+			        	IrpAccount irpAccount = irpAccountRepository.findByIrpAcctNo(accountId).orElse(null);
+			        	BigDecimal balance = irpAccount.getBalance();
+			        	BigDecimal newBalance = balance.add(proRatedIr).setScale(SCALE_SAVE, RMUP);
+			        	irpAccount.setBalance(newBalance);
+			        	irpAccountRepository.save(irpAccount); //일할 이자율 정산
+			        }
+			        
+			        principalLedgerRepository.save(targetEntity);
+			    }
 			}
 			if(buyPrincipalList != null) {
 				

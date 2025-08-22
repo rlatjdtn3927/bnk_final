@@ -14,7 +14,7 @@ public interface FundHoldingsRepository extends JpaRepository<FundHoldings, Long
 
     List<FundHoldings> findByIrpAccount(IrpAccount irpAccount);
 
-    List<FundHoldings> findByDcAccount(DcAccount dcAccount);
+    List<FundHoldings> findByDcAccount_AccountNo(String accountNo);
 
     List<FundHoldings> findByFund(FundMaster fund);
 

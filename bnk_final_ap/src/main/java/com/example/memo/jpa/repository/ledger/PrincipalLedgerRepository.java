@@ -15,6 +15,8 @@ public interface PrincipalLedgerRepository extends JpaRepository<PrincipalLedger
     List<PrincipalLedger> findByIrpAccount(IrpAccount irpAccount);
 
     List<PrincipalLedger> findByDcAccount(DcAccount dcAccount);
+    
+    List<PrincipalLedger> findByDcAccount_AccountNo(String accountNo);
 
     List<PrincipalLedger> findByPrincipal(PrincipalGuarantee principal);
 

@@ -15,6 +15,6 @@ import lombok.Setter;
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SoldPrincipalDto {
-	private String prodId;
+	private Long id;
 	private Integer ratio;
 }
