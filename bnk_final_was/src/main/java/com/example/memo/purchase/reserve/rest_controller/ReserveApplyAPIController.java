@@ -97,6 +97,7 @@ public class ReserveApplyAPIController {
             // 6) AP payload 구성
             ObjectNode payload = om.createObjectNode();
             payload.put("userId", userId);
+            payload.put("accountType", v.getAccountType()); // IRP or DC
 
             ArrayNode targetArr = om.createArrayNode();
             for (String id : targetIds) targetArr.add(id);
