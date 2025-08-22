@@ -143,12 +143,8 @@ public class TradePageViewController {
 	//    아래처럼 세션값을 꺼내서 해당 스텝 필드만 갱신하세요.
     @PostMapping("/step4/next")
     public String step4Next(ReserveValueDto incoming, HttpSession session) {
+        // 동의 여부 등 추가 필드가 있다면 여기서 병합
         ReserveValueDto dto = (ReserveValueDto) session.getAttribute("ReserveValueDto");
-        if (dto == null) dto = new ReserveValueDto();
-
-        if (incoming.getTargetProdIdList() != null) dto.setTargetProdIdList(incoming.getTargetProdIdList());
-        // 필요 시 동의 결과 등을 받는다면 여기서만 반영
-
         session.setAttribute("ReserveValueDto", dto);
         return "redirect:/purchase/trade/step5";
     }
@@ -161,12 +157,12 @@ public class TradePageViewController {
         return "purchase/trade/step5";
     }
     
-    @PostMapping("/step5/next") //model: flow, 계좌 id, type, 투자성향등급 or 대상 상품 ID, 선택 상품 ID or IDs
+    @PostMapping("/step5/next") 
     public String step5Next() {
-        return "redirect:purchase/trade/step6"; // 완료 리다이렉트
+        return "redirect:/purchase/trade/step6"; // 완료 리다이렉트
     }
     
-    @GetMapping("/step6") //model: flow, 계좌 id, type, 투자성향등급 or 대상 상품 ID, 선택 상품 ID or IDs
+    @GetMapping("/step6") 
     public String step6() {
         return "purchase/trade/step6"; // 완료 view
     }

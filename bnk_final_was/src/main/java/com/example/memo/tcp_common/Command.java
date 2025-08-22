@@ -49,19 +49,21 @@ public enum Command {
     SPOUSE_LINK_GET_DETAILS,
     
     /*IRP가입관련*/
-    IRP_JOIN_CREATE_DRAFT,      // step1: 초안 생성
-    IRP_JOIN_UPDATE_CONTRACT,   // step3-2: 계약정보 업데이트
-    //IRP_JOIN_UPDATE_PRODUCT,    // step4: 상품 저장
     IRP_JOIN_SAVE,
     IRP_JOIN_GET,
-    IRP_JOIN_TAX_PURPOSE, 
-    IRP_JOIN_RETIRED_PURPOSE, 
-    IRP_JOIN_PREPARE_OPEN,
-    IRP_JOIN_COMPLETE,			// 계좌개설/완료
-    ACCOUNT_GET_BALANCE,
+    IRP_JOIN_CREATE_DRAFT,      // step1: 가입목적 선택 생성
+    IRP_JOIN_TAX_PURPOSE, 		// step1: 세액공제용 입력
+    IRP_JOIN_RETIRED_PURPOSE, 	// step1: 퇴직금 수령용 입력
+    IRP_JOIN_UPDATE_CONTRACT,   // step3: 계약정보 업데이트
+    IRP_JOIN_GET_CONTRACT,		// 계약정보 조회용
+    IRP_JOIN_PREPARE_OPEN,		// step4: 요약 조회
+    IRP_JOIN_INIT_OPEN,			// step5: 계좌/계약정보 생성
+    IRP_JOIN_COMPLETE,			// step5: 비밀번호 + 계좌개설 완료
+    ACCOUNT_GET_BALANCE,		// 출금계좌 잔액조회
     ACCOUNT_GET_NUMBER,
-    IRP_JOIN_GET_CONTRACT,
-    IRP_JOIN_INIT_OPEN,
+    
+    /*가입자 리포트*/
+    REPORT_MONTHLY_SUBSCRIBERS,
     
     // ===== 보유현황 탭 =====
     SUMMARY_GET,              // SummaryHandler: 총 평가액/수익률/입금합/당일입금/운용수익 요약 조회

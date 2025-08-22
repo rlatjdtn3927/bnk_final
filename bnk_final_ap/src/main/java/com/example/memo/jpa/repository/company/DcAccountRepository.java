@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.example.memo.admin.projection.MonthlyCountView;
 import com.example.memo.jpa.entity.company.DcAccount;
 import com.example.memo.jpa.entity.company.DcMember;
 
@@ -50,4 +51,18 @@ public interface DcAccountRepository extends JpaRepository<DcAccount, Long> {
            where m.user.userId = :userId
            """)
     List<String> findAccountNosByUserId(@Param("userId") Long userId);
+    
+    /*======== 관리자 통계 ========*/
+    @Query(value = """
+            SELECT TO_CHAR(created_at, 'YYYY-MM') AS ym, COUNT(*) AS cnt
+              FROM dc_account
+             WHERE created_at >= TO_DATE(:fromYm || '-01','YYYY-MM-DD')
+               AND created_at <  ADD_MONTHS(TO_DATE(:toYm || '-01','YYYY-MM-DD'), 1)
+            -- 상태별로 ‘실제 가입(개설완료)’만 집계하려면 아래 주석 해제
+            --   AND status = 'ACTIVE'
+             GROUP BY TO_CHAR(created_at, 'YYYY-MM')
+             ORDER BY ym
+        """, nativeQuery = true)
+        List<MonthlyCountView> countMonthlyByCreatedAt(@Param("fromYm") String fromYm,
+                                                       @Param("toYm") String toYm);
 }

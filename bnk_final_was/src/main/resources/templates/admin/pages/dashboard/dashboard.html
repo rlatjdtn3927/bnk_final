@@ -7,8 +7,113 @@
 
 <!-- 페이지 본문 프래그먼트 -->
 <th:block xmlns:th="http://www.thymeleaf.org" th:fragment="content">
-  <section>
-    <h2>메인 대시보드</h2>
-    <p>여기에 본문 내용을 작성하세요.</p>
-  </section>
+<div class="section">
+  <div class="card">
+    <div class="card__head">
+      <div>
+        월별 가입자 수 <span class="muted">(IRP + DC)</span>
+      </div>
+      <div class="tools">
+        <label>기간</label>
+        <input id="fromYm" type="month" />
+        <span>~</span>
+        <input id="toYm" type="month" />
+        <button id="btnReload">조회</button>
+        <button id="btnLine" class="active">Line</button>
+        <button id="btnBar">Bar</button>
+      </div>
+    </div>
+    <div class="card__body">
+      <canvas id="monthlyChart" height="110"></canvas>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  (function() {
+	  // 기본 기간: 최근 8개월 (오늘 포함)
+	  const to = new Date();
+	  const from = new Date(to.getFullYear(), to.getMonth() - 7, 1);
+
+	  const fmtYm = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0');
+
+	  const fromYmEl = document.getElementById('fromYm');
+	  const toYmEl = document.getElementById('toYm');
+	  fromYmEl.value = fmtYm(from);
+	  toYmEl.value = fmtYm(to);
+
+	  const ctx = document.getElementById('monthlyChart').getContext('2d');
+	  let currentType = 'line';
+	  let chart;
+
+	  function datasetsFor(type, data) {
+	    return [
+	      {
+	        label: 'IRP',
+	        data: data.irp,
+	        borderWidth: 2,
+	        tension: type === 'line' ? 0.3 : 0,
+	        fill: false
+	      },
+	      {
+	        label: 'DC',
+	        data: data.dc,
+	        borderWidth: 2,
+	        tension: type === 'line' ? 0.3 : 0,
+	        fill: false
+	      }
+	    ];
+	  }
+
+	  async function loadAndRender() {
+	    const fromYm = fromYmEl.value;
+	    const toYm = toYmEl.value;
+	    if (!fromYm || !toYm) return;
+
+	    const res = await fetch(`/admin/dashboard/monthly?fromYm=${fromYm}&toYm=${toYm}`);
+	    const data = await res.json();
+
+	    // 차트 재생성
+	    if (chart) chart.destroy();
+	    chart = new Chart(ctx, {
+	      type: currentType,
+	      data: {
+	        labels: data.labels,
+	        datasets: datasetsFor(currentType, data)
+	      },
+	      options: {
+	        responsive: true,
+	        plugins: {
+	          legend: { position: 'top' },
+	          tooltip: { mode: 'index', intersect: false }
+	        },
+	        interaction: { mode: 'nearest', axis: 'x', intersect: false },
+	        scales: {
+	          y: { beginAtZero: true, ticks: { precision: 0 } }
+	        }
+	      }
+	    });
+	  }
+
+	  document.getElementById('btnReload').addEventListener('click', loadAndRender);
+	  document.getElementById('btnLine').addEventListener('click', () => {
+	    if (currentType === 'line') return;
+	    currentType = 'line';
+	    document.getElementById('btnLine').classList.add('active');
+	    document.getElementById('btnBar').classList.remove('active');
+	    loadAndRender();
+	  });
+	  document.getElementById('btnBar').addEventListener('click', () => {
+	    if (currentType === 'bar') return;
+	    currentType = 'bar';
+	    document.getElementById('btnBar').classList.add('active');
+	    document.getElementById('btnLine').classList.remove('active');
+	    loadAndRender();
+	  });
+
+	  // 첫 렌더
+	  loadAndRender();
+	})();
+</script>
 </th:block>
