@@ -7,6 +7,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class RetentionViewController {
+	
+    @GetMapping("/retain/holdings")
+    public String holdingsPage() {
+        return "retention/holdings";
+    }
 
     /** 보유 계좌 리스트 (retention-01) */
     @GetMapping("/retention/accounts")
