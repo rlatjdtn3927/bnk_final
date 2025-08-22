@@ -15,7 +15,7 @@ import com.example.memo.jpa.repository.purchase.commodity.FundMasterRepository;
 import com.example.memo.jpa.repository.purchase.commodity.PrincipalGuaranteeRepository;
 import com.example.memo.purchase.common.dto.FileUrlDto;
 import com.example.memo.purchase.common.dto.FundCumulativeDto;
-import com.example.memo.purchase.reserve.dto.request.ProductRequestDto;
+import com.example.memo.purchase.common.dto.ProductRequestDto;
 import com.example.memo.purchase.reserve.dto.response.ProductResponseDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;

@@ -15,7 +15,7 @@ import lombok.Setter;
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RetainRequestDto {
-	private String productId;
 	private Long userId;
-	private String AllocationRatio;
+	private String accountType;
+
 }

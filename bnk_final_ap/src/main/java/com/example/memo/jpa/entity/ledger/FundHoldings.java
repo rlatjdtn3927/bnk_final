@@ -50,7 +50,7 @@ public class FundHoldings extends BaseEntity{
     /**
      * 보유 좌수 (누적 매수 좌수 – 매도 좌수) --> 0이 되면 해당 행 삭제
      */
-    @Column(nullable = false, precision = 18, scale = 4)
+    @Column(nullable = false, precision = 20, scale = 6)
     private BigDecimal units;
 
     /**
@@ -58,7 +58,7 @@ public class FundHoldings extends BaseEntity{
      * = (Σ 매수금액) ÷ (Σ 매수좌수)
      * 단, 매도 시에는 변동 없음
      */
-    @Column(precision = 18, scale = 4)
+    @Column(precision = 20, scale = 6)
     private BigDecimal avgPrice;
 
     /**
@@ -66,21 +66,21 @@ public class FundHoldings extends BaseEntity{
      * = avgPrice × units
      * 또는 = 기존 매수원금 + 신규매입금액 – (평균단가 × 매도좌수)
      */
-    @Column(precision = 18, scale = 2)
+    @Column(precision = 20, scale = 6)
     private BigDecimal acquisitionAmount;
 
     /**
      * 평가액
      * = units × 현재 기준가(NAV)
      */
-    @Column(precision = 18, scale = 2)
+    @Column(precision = 20, scale = 6)
     private BigDecimal valuationAmount;
 
     /**
      * 평가손익
      * = valuationAmount – acquisitionAmount
      */
-    @Column(precision = 18, scale = 2)
+    @Column(precision = 20, scale = 6)
     private BigDecimal profitLoss;
 
     /**

@@ -111,10 +111,10 @@ public class BuyPlanService {
 					buyPlanFundRepo.save(newEntity);
 				}
 			}
+			return "매수상품 예정 등록이 완료되었습니다.";
 		} catch (Exception e) {
 			e.printStackTrace();
 			return "매수 상품 예정 업데이트 중 오류 발생";
 		}
-		return "매수 상품 예정 업데이트 완료";
 	}
 }
