@@ -19,5 +19,4 @@ public interface FundLedgerRepository extends JpaRepository<FundLedger, Long> {
 
     List<FundLedger> findByFund(FundMaster fund);
 
-    List<FundLedger> findByTradeDateBetween(LocalDateTime start, LocalDateTime end);
 }
