@@ -50,4 +50,6 @@ public interface DcAccountRepository extends JpaRepository<DcAccount, Long> {
            where m.user.userId = :userId
            """)
     List<String> findAccountNosByUserId(@Param("userId") Long userId);
+    
+    DcAccount findByAccountNo(String accountNo); 
 }
