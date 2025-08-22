@@ -186,15 +186,15 @@ public class ChangeProductService {
 					
 					if("DC".equals(accountType)) {
 						DcAccount dcAccount = dcAccountRepository.findByAccountNo(accountId);
-						BigDecimal oldBalance = dcAccount.getBalance();
-						dcAccount.setBalance(oldBalance.add(profit).setScale(SCALE_SAVE, RMUP));
+						Long oldBalance = dcAccount.getBalance();
+						dcAccount.setBalance(oldBalance + profit.longValue());
 						dcAccountRepository.save(dcAccount); // 수익 계좌 입금
 						fundLedger.setDcAccount(DcAccount.builder().accountNo(accountId).build());
 					} 
 					else {
 						IrpAccount irpAccount = irpAccountRepository.findByIrpAcctNo(accountId).orElse(null);
 						BigDecimal oldBalance = irpAccount.getBalance();
-						irpAccount .setBalance(oldBalance.add(profit).setScale(SCALE_SAVE, RMUP));
+						irpAccount .setBalance(oldBalance.add(profit));
 						irpAccountRepository.save(irpAccount); // 수익 계좌 입금
 						fundLedger.setIrpAccount(IrpAccount.builder().irpAcctNo(accountId).build());
 					} 
