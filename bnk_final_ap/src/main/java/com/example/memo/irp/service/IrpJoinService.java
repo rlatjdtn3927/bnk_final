@@ -2,6 +2,8 @@ package com.example.memo.irp.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,8 +43,6 @@ public class IrpJoinService {
     private final BankAccountRepository bankRepository;
     private final UserRepository userRepository;
     
-//    private final AccountNumberGenerator accountNumberGenerator; // 커스텀 유틸
-//    private final ContractNumberGenerator contractNumberGenerator;
 	
     @Transactional
     public IrpJoinEntity findByIdOrThrow(Long joinId) {
@@ -54,13 +54,39 @@ public class IrpJoinService {
 		return joinRepository.save(irpJoinEntity);
 	}
 	
+	// 가입 가능 여부 : ACTIVE만 차단
+	@Transactional(readOnly = true)
+	public boolean hasActiveIrp(Long userId) {
+	    return irpAccountRepository.existsByUser_UserIdAndStatus(userId, "ACTIVE");
+	}
+	
 	//step1 : 가입목적 선택(userId, joinPurpose만 저장)
 	@Transactional
     public Long createDraft(Long userId, String joinPurpose) {
         UserEntity user = userRepository.findById(userId).orElseThrow();
+        
+        // 1) 이미 진행중인 DRAFT/PENDING이 있으면 그걸 바로 재사용 (joinId 변하지 않음)
+        Optional<IrpJoinEntity> existing = joinRepository
+                .findTopByUser_UserIdAndStatusInOrderByRegDateDesc(
+                    userId, List.of("DRAFT", "PENDING"));
+        
+        if (existing.isPresent()) {
+            IrpJoinEntity j = existing.get();
+            // 목적이 바뀌었다면 진행중 편집으로 간주해 업데이트(선택)
+            if (joinPurpose != null && !joinPurpose.isBlank() &&
+                !joinPurpose.equals(j.getJoinPurpose())) {
+                j.setJoinPurpose(joinPurpose);
+                joinRepository.save(j);
+            }
+            return j.getJoinId(); // ★ 기존 joinId 그대로 반환
+        }
+        
+        // 2) 없으면 새로 생성 (DRAFT)
         IrpJoinEntity join = IrpJoinEntity.builder()
                 .user(user)
                 .joinPurpose(joinPurpose)
+                .status("DRAFT")
+                .newAmtApplied(false)
                 .build();
         return joinRepository.save(join).getJoinId();
     }
@@ -98,34 +124,25 @@ public class IrpJoinService {
                                String acctNo, String acctPwd, String branchOffice) {
         IrpJoinEntity join = joinRepository.findById(joinId).orElseThrow();
         
-        //1) 계좌 비번 검증 (계좌 소유자 = join.userId)
+        // 계좌 소유자/비번 검증까지만(돈은 아직 움직이지 않음)
         Long userId = join.getUser().getUserId();
         bankAccountService.verifyOrThrow(acctNo, userId, acctPwd);	// 비밀번호 틀리면 즉시 예외 → 저장 차단
         
-        //2) 계좌 엔티티 로드 (userId로 출금계좌 찾기)
-        BankAccount acct = bankRepository.findById(acctNo).orElseThrow();
-        
-        //3) 값 검증(선택)
+        // 값 검증(선택)
         if (annualAmt != null && annualAmt < 0) 
         	throw new IllegalArgumentException("annualContribAmt 음수 불가");
         if (newAmt != null && newAmt < 0) 
         	throw new IllegalArgumentException("newContribAmt 음수 불가");
         
-        BigDecimal balance = acct.getBalance(); // 현재 잔액 (BigDecimal)
-        BigDecimal newAmtBd = BigDecimal.valueOf(newAmt);//신규 입금 금액 (Long → BigDecimal)
-        
-        //4) 신규 입금 금액만큼 계좌 잔액 차감
-        if (balance.compareTo(newAmtBd) < 0) {
-            throw new IllegalStateException("계좌 잔액 부족");
-        }
-        // 잔액차감
-        acct.setBalance(balance.subtract(newAmtBd));
+        // 계좌 엔티티 로드 (userId로 출금계좌 찾기)
+        BankAccount acct = bankRepository.findById(acctNo).orElseThrow();
         
         join.setAnnualContribAmt(annualAmt);
         join.setNewContribAmt(newAmt);
         join.setAcctNo(acct);
         join.setBranchOffice(branchOffice);
-        // save 생략 가능(영속상태)
+        
+        // 상태는 계속 DRAFT
         joinRepository.save(join);
     }
     
@@ -183,28 +200,42 @@ public class IrpJoinService {
     	IrpJoinEntity join = joinRepository.findById(joinId)
     	        .orElseThrow(() -> new IllegalArgumentException("가입건 없음: " + joinId));
     	
-    	// 계약번호 없으면 새로 생성
+    	// 1) 계약번호 없으면 새로 생성
     	if (join.getContractNo() == null || join.getContractNo().isBlank()) {
             join.setContractNo(nextContractNo());      // 오라클 시퀀스 호출
         }
-        
-        // 계좌 없으면 새로 생성
-    	IrpAccount acct = (join.getIrpAccount() != null) ? join.getIrpAccount() : new IrpAccount();
-        if (acct.getIrpAcctNo() == null || acct.getIrpAcctNo().isBlank()) {
-            acct.setIrpAcctNo(nextIrpAcctNo());        // 오라클 시퀀스 호출
+    	
+    	// 2) 사용자 기존 IRP 계좌 먼저 조회(멱등)
+        IrpAccount acct = irpAccountRepository.findByUser_UserId(join.getUser().getUserId())
+        		.orElse(null);
+        // 3)
+        if (acct == null) {
+            // 새 계좌 생성 시도
+            acct = IrpAccount.builder()
+                    .irpAcctNo(nextIrpAcctNo())
+                    .user(join.getUser())
+                    .contractNo(join.getContractNo())
+                    .status("PENDING")
+                    .build();
+            try {
+                acct = irpAccountRepository.saveAndFlush(acct);
+            } catch (Exception dup) {
+                // 동시성으로 유니크 위반 등 발생 시 재조회로 멱등 보장
+                acct = irpAccountRepository.findByUser_UserId(join.getUser().getUserId())
+                        .orElseThrow();
+            }
+        } else {
+            // 기존 계좌가 있으면 계약번호 동기화만 (필요 시)
+            if (acct.getContractNo() == null) {
+                acct.setContractNo(join.getContractNo());
+                irpAccountRepository.save(acct);
+            }
         }
-        acct.setUser(join.getUser());
-        acct.setContractNo(join.getContractNo());
-        if (acct.getStatus() == null) {
-            acct.setStatus("PENDING");
-        }
-        
-        acct = irpAccountRepository.save(acct);
         
         join.setIrpAccount(acct);
         
         joinRepository.save(join);
-        em.flush();
+        //em.flush();
         
         return new InitOpenResponse(join.getContractNo(), acct.getIrpAcctNo());
     }
@@ -214,8 +245,6 @@ public class IrpJoinService {
 	public AccountContractResult completeJoinAndOpenIrpAccount(Long joinId, String irpPwd) {
 	    IrpJoinEntity join = joinRepository.findById(joinId)
 	        .orElseThrow(() -> new IllegalArgumentException("가입건 없음: " + joinId));
-
-	    //requireContractReady(join); // step3 완료 등 선행조건
 
 	    // 비번 규칙 검사
 	    if (irpPwd == null || !irpPwd.matches("\\d{4}")) {
@@ -239,19 +268,39 @@ public class IrpJoinService {
 	        throw new IllegalStateException("INVALID_STATE");
 	    }
 	    
-	    // 여기서 신규 납입금액을 IRP 계좌에 ‘한 번만’ 반영
-	    Long newAmt = join.getNewContribAmt();                 // step3에서 저장해둔 금액
-	    if (newAmt != null && newAmt > 0) {
-	        BigDecimal add = BigDecimal.valueOf(newAmt);
-	        if (acct.getBalance() == null) acct.setBalance(BigDecimal.ZERO);
-	        acct.setBalance(acct.getBalance().add(add));
+	    // ★ 동시에 이체 (한 트랜잭션)
+	    Long newAmt = join.getNewContribAmt();
+	    if (!Boolean.TRUE.equals(join.isNewAmtApplied()) && newAmt != null && newAmt > 0) {
+
+	        // 1) 출금계좌/IRP계좌 비관적 잠금
+	        BankAccount debit = bankRepository.findForUpdate(
+	                join.getAcctNo().getAcctNo()).orElseThrow();
+	        IrpAccount credit = irpAccountRepository.findForUpdate(
+	                acct.getIrpAcctNo()).orElseThrow();
+
+	        BigDecimal amt = BigDecimal.valueOf(newAmt);
+
+	        // 2) 잔액 체크
+	        if (debit.getBalance().compareTo(amt) < 0) {
+	            throw new IllegalStateException("계좌 잔액 부족");
+	        }
+
+	        // 3) 출금 → 입금
+	        debit.setBalance(debit.getBalance().subtract(amt));
+	        if (credit.getBalance() == null) credit.setBalance(BigDecimal.ZERO);
+	        credit.setBalance(credit.getBalance().add(amt));
+
+	        // 4) 멱등 플래그 ON (다음 번엔 재이체 금지)
+	        join.setNewAmtApplied(true);
 	    }
+	    
 
 	    // 비번 설정 + 활성화
 	    acct.setIrpPwd(irpPwd);
 	    acct.setStatus("ACTIVE");
+	    
 	    irpAccountRepository.save(acct);
-
+	    join.setStatus("ACTIVE"); // 조인도 완료 처리
 	    joinRepository.save(join);
 
 	    return AccountContractResult.builder()

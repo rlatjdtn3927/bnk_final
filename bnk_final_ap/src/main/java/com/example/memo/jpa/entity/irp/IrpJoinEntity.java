@@ -29,17 +29,17 @@ import lombok.NoArgsConstructor;
 public class IrpJoinEntity {
 	
 	@Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Oracle 12c+ IDENTITY
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name="join_id")
 	private Long joinId;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "user_id", nullable = false)	// FK(user_account.user_id)
+	@JoinColumn(name = "user_id", nullable = false)
 	private UserEntity user;
 	
 	//가입목적
     @Column(name="join_purpose", nullable=false, length=20)
-	private String joinPurpose;	// 세액공제, 퇴직금수령, 계약이전
+	private String joinPurpose;	// 세액공제, 퇴직금수령
 	
 	//연 납입 한도 금액
     @Column(name="annual_contrib_amt")
@@ -70,5 +70,16 @@ public class IrpJoinEntity {
     @Column(name="reg_date", nullable=false)
     private LocalDate regDate;
     
-    @PrePersist void prePersist(){ if(regDate==null) regDate = LocalDate.now(); }
+    // 진행상태: DRAFT(작성중) / PENDING(번호배정) / ACTIVE(완료)
+    @Column(name="status", length=20, nullable=false)
+    private String status;
+
+    // 신규 납입금액 이체 적용 여부(멱등)
+    @Column(name="new_amt_applied", nullable=false)
+    private boolean newAmtApplied;
+    
+    @PrePersist void prePersist(){ 
+    	if(regDate==null) regDate = LocalDate.now(); 
+    	if(status == null) status = "DRAFT";
+    }
 }

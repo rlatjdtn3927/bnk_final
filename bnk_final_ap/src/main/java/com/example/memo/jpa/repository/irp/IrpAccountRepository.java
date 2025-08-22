@@ -3,10 +3,13 @@ package com.example.memo.jpa.repository.irp;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.example.memo.jpa.entity.irp.IrpAccount;
+
+import jakarta.persistence.LockModeType;
 
 public interface IrpAccountRepository extends JpaRepository<IrpAccount, String>{
 	/** IRP 계좌번호로 조회 */
@@ -25,4 +28,11 @@ public interface IrpAccountRepository extends JpaRepository<IrpAccount, String>{
            where a.user.userId = :userId
            """)
     String findIrpAcctNoByUserId(@Param("userId") Long userId);
+    
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select a from IrpAccount a where a.irpAcctNo = :acctNo")
+    Optional<IrpAccount> findForUpdate(@Param("acctNo") String acctNo);
+    
+    // 완료(ACTIVE) 계좌 존재 여부
+    boolean existsByUser_UserIdAndStatus(Long userId, String status);
 }

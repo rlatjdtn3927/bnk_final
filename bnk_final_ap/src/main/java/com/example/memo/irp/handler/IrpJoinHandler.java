@@ -51,6 +51,7 @@ public class IrpJoinHandler implements TcpMessageHandler {
 			case IRP_JOIN_SAVE:
 				IrpJoinEntity joinEntity = mapper.convertValue(data, IrpJoinEntity.class);
 				return joinService.saveJoin(joinEntity);
+			
 			case IRP_JOIN_TAX_PURPOSE: {
 				Long joinId = requireLong(data, "joinId");
 			    String qualType = requireText(data, "irpQualType"); // "근로자"/"자영업자"
@@ -79,6 +80,20 @@ public class IrpJoinHandler implements TcpMessageHandler {
 	            String doc = data.get("withholdDoc").asText();
 	            joinService.saveRetirePurpose(joinId, retireDate, reason, corpName, amt, doc);
 	            return "OK";
+			}
+			case IRP_JOIN_CHECK_ELIGIBLE: {
+			    long userId = data.path("userId").asLong();
+			    boolean active = joinService.hasActiveIrp(userId); // ACTIVE만 체크
+
+			    ObjectNode res = mapper.createObjectNode()
+			        .put("ok", true)
+			        .put("eligible", !active);
+
+			    if (active) {
+			        res.put("code", "ALREADY_JOINED")
+			           .put("message", "이미 IRP에 가입하셨습니다.");
+			    }
+			    return res;
 			}
 			case IRP_JOIN_CREATE_DRAFT: {	// step1: 초안 생성
                 Long userId = data.get("userId").asLong();
