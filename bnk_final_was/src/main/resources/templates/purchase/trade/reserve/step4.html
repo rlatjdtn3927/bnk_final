@@ -45,7 +45,7 @@
   </section>
 
   <!-- 제출 폼: 컨트롤러 이미 존재 -->
-  <form id="consentForm" method="post" action="/purchase/trade/step4/next"
+  <form id="consentForm" method="post" action="/purchase/trade/reserve/step4/next"
         class="bg-white rounded-2xl p-4 shadow-sm">
     <!-- 세션 값 그대로 실어 보냄 -->
     <input type="hidden" name="targetProdIdList" th:value="${session.ReserveValueDto.targetProdIdList}">

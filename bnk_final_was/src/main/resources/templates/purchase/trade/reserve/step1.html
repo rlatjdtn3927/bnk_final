@@ -140,7 +140,7 @@
   </div>
 
   <!-- 제출 -->
-  <form th:action="@{/purchase/trade/step1/next}" method="post" class="mt-8 row" id="acctForm">
+  <form th:action="@{/purchase/trade/reserve/step1/next}" method="post" class="mt-8 row" id="acctForm">
     <!-- ✅ CSRF 토큰은 있을 때만 렌더 (없으면 이 줄 자체가 사라짐) -->
     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
