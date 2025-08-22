@@ -107,4 +107,8 @@ public class ChangePageViewController {
 		session.setAttribute("ChangeValueDto", dto);
 		return "purchase/trade/change/step2_change"; // 바로 뷰
 	}
+	@PostMapping("/step2_change/next")
+	public String step2_changeNext() {
+		return "";
+	}
 }

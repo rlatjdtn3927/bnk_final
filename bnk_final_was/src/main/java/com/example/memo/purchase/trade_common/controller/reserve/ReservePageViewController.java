@@ -137,7 +137,7 @@ public class ReservePageViewController {
 		System.out.println("FILEURLLIST: " + fileUrlListJson);
 
 		if (fileUrlListJson.equals("[]")) {
-			return "purchase/trade/reserve/step5"; // 비교 view
+			return "purchase/trade/reserve/step5_reserve"; // 비교 view
 		} else {
 			return "purchase/trade/reserve/step4"; // 서류동의 view
 		}
@@ -160,7 +160,7 @@ public class ReservePageViewController {
 	public String step5Page(HttpSession session) {
 		ReserveValueDto dto = (ReserveValueDto) session.getAttribute("ReserveValueDto");
 		session.setAttribute("ReserveValueDto", dto);
-		return "purchase/trade/reserve/step5";
+		return "purchase/trade/reserve/step5_reserve";
 	}
 
 	@PostMapping("/step5/next")
@@ -170,6 +170,6 @@ public class ReservePageViewController {
 
 	@GetMapping("/step6")
 	public String step6() {
-		return "purchase/trade/reserve/step6"; // 완료 view
+		return "purchase/trade/reserve/step6_reserve"; // 완료 view
 	}
 }
