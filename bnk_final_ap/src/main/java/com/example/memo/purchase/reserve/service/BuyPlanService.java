@@ -5,11 +5,14 @@ import java.util.stream.Stream;
 
 import org.springframework.stereotype.Service;
 
+import com.example.memo.jpa.entity.company.DcAccount;
+import com.example.memo.jpa.entity.irp.IrpAccount;
 import com.example.memo.jpa.entity.purchase.commodity.FundMaster;
 import com.example.memo.jpa.entity.purchase.commodity.PrincipalGuarantee;
 import com.example.memo.jpa.entity.purchase.trade.BuyPlanFund;
 import com.example.memo.jpa.entity.purchase.trade.BuyPlanPG;
 import com.example.memo.jpa.entity.user.UserEntity;
+import com.example.memo.jpa.repository.company.DcAccountRepository;
 import com.example.memo.jpa.repository.purchase.trade.BuyPlanFundRepository;
 import com.example.memo.jpa.repository.purchase.trade.BuyPlanPGRepository;
 import com.example.memo.purchase.common.dto.CurrentRetainDto;
@@ -29,16 +32,28 @@ public class BuyPlanService {
 	
 	private final BuyPlanFundRepository buyPlanFundRepo;
 	private final BuyPlanPGRepository buyPlanPGRepo;
+	private final DcAccountRepository dcAccountRepository;
 	private final ObjectMapper mapper;
 	
 	@Transactional
 	public List<CurrentRetainDto> getCurrentRetain(JsonNode data) {
 		try {
 			RetainRequestDto dto = mapper.treeToValue(data, RetainRequestDto.class);
+			Long userId = dto.getUserId();
+			String accountType = dto.getAccountType();
+			String accountNo = dto.getAccountId();
 			UserEntity ref = new UserEntity();
-			ref.setUserId(dto.getUserId());
-			List<BuyPlanFund> fundList = buyPlanFundRepo.findByUserAndIsCurrent(ref, "Y");
-			List<BuyPlanPG> PGList = buyPlanPGRepo.findByUserAndIsCurrent(ref, "Y");
+			ref.setUserId(userId);
+			List<BuyPlanFund> fundList = null;
+			List<BuyPlanPG> PGList = null;
+			
+			if("DC".equals(accountType)) {
+				fundList = buyPlanFundRepo.findByUserAndIsCurrentAndDcAccount_AccountNo(ref, "Y", accountNo);
+				PGList = buyPlanPGRepo.findByUserAndIsCurrentAndDcAccount_AccountNo(ref, "Y", accountNo);
+			} else {
+				fundList = buyPlanFundRepo.findByUserAndIsCurrentAndIrpAccount_IrpAcctNo(ref, "Y", accountNo);
+				PGList= buyPlanPGRepo.findByUserAndIsCurrentAndIrpAccount_IrpAcctNo(ref, "Y", accountNo);
+			}
 			
 			List<CurrentRetainDto> result = Stream.of(
 					fundList.stream().map(f -> CurrentRetainDto.builder()
@@ -68,10 +83,21 @@ public class BuyPlanService {
 		try {
 			ReserveUpdateRequestDto request = mapper.treeToValue(data, ReserveUpdateRequestDto.class);
 			Long userId = request.getUserId();
+			String accountNo = request.getAccountId();
+			String accountType = request.getAccountType();
 			List<String> targetProdIdList = request.getTargetProdIdList();
 			List<SourceProdRatioDto> sourceProdList = request.getSourceProdList();
+			List<BuyPlanFund> fundEntities = null;
+			List<BuyPlanPG> pgEntities = null;
 			
-			List<BuyPlanFund> fundEntities = buyPlanFundRepo.findByFund_ProductIdIn(targetProdIdList);
+			if("DC".equals(accountType)) {
+				fundEntities = buyPlanFundRepo.findByDcAccount_AccountNoAndFund_ProductIdIn(accountNo, targetProdIdList);
+				pgEntities = buyPlanPGRepo.findByDcAccount_AccountNoAndPrincipal_ProductIdIn(accountNo, targetProdIdList); 
+			} else {
+				fundEntities = buyPlanFundRepo.findByIrpAccount_IrpAcctNoAndFund_ProductIdIn(accountNo, targetProdIdList);
+				pgEntities = buyPlanPGRepo.findByIrpAccount_IrpAcctNoAndPrincipal_ProductIdIn(accountNo, targetProdIdList); 
+			}
+			 
 			// 타겟 아이디 엔티티 상태값 N으로 수정
 			if(fundEntities != null) {
 				for(BuyPlanFund entity : fundEntities) {
@@ -80,7 +106,7 @@ public class BuyPlanService {
 				}
 			}
 			
-			List<BuyPlanPG> pgEntities = buyPlanPGRepo.findByPrincipal_ProductIdIn(targetProdIdList);
+
 			if(pgEntities != null) {
 				for(BuyPlanPG entity : pgEntities) {
 					entity.setIsCurrent("N");
@@ -99,7 +125,13 @@ public class BuyPlanService {
 							.principal(PrincipalGuarantee.builder().productId(prodId).build())
 							.allocationPercent(ratio)
 							.isCurrent("Y")
-							.build(); 
+							.build();
+					if("DC".equals(accountType)) {
+						DcAccount dcAccount = dcAccountRepository.findByAccountNo(accountNo);
+						newEntity.setDcAccount(dcAccount);
+					}
+					else newEntity.setIrpAccount(IrpAccount.builder().irpAcctNo(accountNo).build());
+					
 					buyPlanPGRepo.save(newEntity);
 				} else { //fund인 경우
 					BuyPlanFund newEntity = BuyPlanFund.builder()
@@ -108,6 +140,13 @@ public class BuyPlanService {
 							.allocationPercent(ratio)
 							.isCurrent("Y")
 							.build();
+					
+					if("DC".equals(accountType)) {
+						DcAccount dcAccount = dcAccountRepository.findByAccountNo(accountNo);
+						newEntity.setDcAccount(dcAccount);
+					}
+					else newEntity.setIrpAccount(IrpAccount.builder().irpAcctNo(accountNo).build());
+					
 					buyPlanFundRepo.save(newEntity);
 				}
 			}

@@ -5,6 +5,8 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import com.example.memo.jpa.entity.BaseEntity;
+import com.example.memo.jpa.entity.company.DcAccount;
+import com.example.memo.jpa.entity.irp.IrpAccount;
 import com.example.memo.jpa.entity.purchase.commodity.PrincipalGuarantee;
 import com.example.memo.jpa.entity.user.UserEntity;
 
@@ -42,6 +44,14 @@ public class BuyPlanPG extends BaseEntity{
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "irp_account_no")
+    private IrpAccount irpAccount;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "dc_account_id", referencedColumnName = "account_no")
+    private DcAccount  dcAccount;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
