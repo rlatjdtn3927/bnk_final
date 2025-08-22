@@ -142,9 +142,8 @@ public class ChangeProductService {
 			List<BuyFundDto> buyFundList = dto.getBuyFundList();
 			List<SoldPrincipalDto> soldPrincipalIdList = dto.getSoldPrincipalIdList();
 			List<BuyPrincipalDto> buyPrincipalList = dto.getBuyPrincipalList();
-			List<FundHoldings> fundHolding = null;
 			
-			fundHolding = "DC".equals(accountType)
+			List<FundHoldings>  fundHolding = "DC".equals(accountType)
 				    ? fundHoldingsRepository.findByDcAccount(DcAccount.builder().accountNo(accountId).build())
 				    : fundHoldingsRepository.findByIrpAccount(IrpAccount.builder().irpAcctNo(accountId).build());
 				
@@ -297,8 +296,13 @@ public class ChangeProductService {
 			    	}
 				}
 			}
+			
+			List<PrincipalLedger> principalHolding = "DC".equals(accountType)
+				    ? principalLedgerRepository.findByDcAccount(DcAccount.builder().accountNo(accountId).build())
+				    : principalLedgerRepository.findByIrpAccount(IrpAccount.builder().irpAcctNo(accountId).build());
+			
 			if(soldPrincipalIdList != null) {
-				
+
 			}
 			if(buyPrincipalList != null) {
 				

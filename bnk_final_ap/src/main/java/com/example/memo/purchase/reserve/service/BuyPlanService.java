@@ -12,6 +12,7 @@ import com.example.memo.jpa.entity.purchase.commodity.PrincipalGuarantee;
 import com.example.memo.jpa.entity.purchase.trade.BuyPlanFund;
 import com.example.memo.jpa.entity.purchase.trade.BuyPlanPG;
 import com.example.memo.jpa.entity.user.UserEntity;
+import com.example.memo.jpa.repository.company.DcAccountRepository;
 import com.example.memo.jpa.repository.purchase.trade.BuyPlanFundRepository;
 import com.example.memo.jpa.repository.purchase.trade.BuyPlanPGRepository;
 import com.example.memo.purchase.common.dto.CurrentRetainDto;
@@ -31,6 +32,7 @@ public class BuyPlanService {
 	
 	private final BuyPlanFundRepository buyPlanFundRepo;
 	private final BuyPlanPGRepository buyPlanPGRepo;
+	private final DcAccountRepository dcAccountRepository;
 	private final ObjectMapper mapper;
 	
 	@Transactional
@@ -124,7 +126,10 @@ public class BuyPlanService {
 							.allocationPercent(ratio)
 							.isCurrent("Y")
 							.build();
-					if("DC".equals(accountType)) newEntity.setDcAccount(DcAccount.builder().accountNo(accountNo).build());
+					if("DC".equals(accountType)) {
+						DcAccount dcAccount = dcAccountRepository.findByAccountNo(accountNo);
+						newEntity.setDcAccount(dcAccount);
+					}
 					else newEntity.setIrpAccount(IrpAccount.builder().irpAcctNo(accountNo).build());
 					
 					buyPlanPGRepo.save(newEntity);
@@ -136,7 +141,10 @@ public class BuyPlanService {
 							.isCurrent("Y")
 							.build();
 					
-					if("DC".equals(accountType)) newEntity.setDcAccount(DcAccount.builder().accountNo(accountNo).build());
+					if("DC".equals(accountType)) {
+						DcAccount dcAccount = dcAccountRepository.findByAccountNo(accountNo);
+						newEntity.setDcAccount(dcAccount);
+					}
 					else newEntity.setIrpAccount(IrpAccount.builder().irpAcctNo(accountNo).build());
 					
 					buyPlanFundRepo.save(newEntity);
