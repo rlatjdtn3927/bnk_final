@@ -83,6 +83,7 @@ public class ReserveRetainAPIController {
     	RetainRequestDto dto = new RetainRequestDto();
     	dto.setUserId((Long)session.getAttribute("LOGIN_USER_ID"));
     	dto.setAccountType((String)session.getAttribute("accountType"));
+    	dto.setAccountId((String)session.getAttribute("accountId"));
     	JsonNode msg = mapper.valueToTree(dto);
     	TcpMessage message = new TcpMessage(Command.BUY_PLAN_CURRENT, msg);
     	JsonNode response = tcpClientService.sendMessage(message);

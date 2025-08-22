@@ -98,6 +98,7 @@ public class ReserveApplyAPIController {
             ObjectNode payload = om.createObjectNode();
             payload.put("userId", userId);
             payload.put("accountType", v.getAccountType()); // IRP or DC
+            payload.put("accountId", v.getAccountId());
 
             ArrayNode targetArr = om.createArrayNode();
             for (String id : targetIds) targetArr.add(id);

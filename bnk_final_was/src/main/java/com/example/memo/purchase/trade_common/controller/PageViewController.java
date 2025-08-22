@@ -29,7 +29,7 @@ public class PageViewController {
                              HttpSession session) {
         Long userId = (Long) session.getAttribute("LOGIN_USER_ID");
 
-
+        session.removeAttribute("ChangeValueDto");
         // 세션 DTO 준비
         ReserveValueDto dto = (ReserveValueDto) session.getAttribute("ReserveValueDto");
         if (dto == null) dto = new ReserveValueDto();
@@ -46,7 +46,7 @@ public class PageViewController {
                              HttpSession session) {
         Long userId = (Long) session.getAttribute("LOGIN_USER_ID");
 
-
+        session.removeAttribute("ReserveValueDto");
         // 세션 DTO 준비
         ChangeValueDto dto = (ChangeValueDto) session.getAttribute("ChangeValueDto");
         if (dto == null) dto = new ChangeValueDto();

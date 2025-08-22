@@ -17,4 +17,5 @@ import lombok.Setter;
 public class RetainRequestDto {
 	Long userId;
 	String accountType;
+	String accountId;
 }

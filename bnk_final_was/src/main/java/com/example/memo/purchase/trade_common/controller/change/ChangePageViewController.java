@@ -90,6 +90,7 @@ public class ChangePageViewController {
 	}
 
 	/** step2 진입 (세션만 사용; 뷰에서 ${session.PassValueDto.*}로 표시) */
+	//투자성향 분석 후 보유상품 목록 보여줌
 	@GetMapping("/step1/after-risk")
 	public String step2AfterRisk(HttpSession session) {
 		ChangeValueDto dto = (ChangeValueDto) session.getAttribute("ChangeValueDto");
@@ -106,9 +107,5 @@ public class ChangePageViewController {
 
 		session.setAttribute("ChangeValueDto", dto);
 		return "purchase/trade/change/step2_change"; // 바로 뷰
-	}
-	@PostMapping("/step2_change/next")
-	public String step2_changeNext() {
-		return "";
 	}
 }
