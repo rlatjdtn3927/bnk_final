@@ -1,5 +1,6 @@
 package com.example.memo.jpa.entity.company;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;

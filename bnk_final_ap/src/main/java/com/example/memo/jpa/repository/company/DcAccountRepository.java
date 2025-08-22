@@ -65,4 +65,5 @@ public interface DcAccountRepository extends JpaRepository<DcAccount, Long> {
         """, nativeQuery = true)
         List<MonthlyCountView> countMonthlyByCreatedAt(@Param("fromYm") String fromYm,
                                                        @Param("toYm") String toYm);
+    DcAccount findByAccountNo(String accountNo); 
 }
