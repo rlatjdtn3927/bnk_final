@@ -12,6 +12,11 @@ public class RetentionViewController {
     public String holdingsPage() {
         return "retention/holdings";
     }
+    
+    @GetMapping("/retain/accounts-test")
+    public String holdingsTestPage() {
+        return "retention/accounts-test";
+    }
 
     /** 보유 계좌 리스트 (retention-01) */
     @GetMapping("/retention/accounts")
