@@ -19,6 +19,7 @@ import lombok.Setter;
 public class ReserveUpdateRequestDto {
 	private Long userId;
 	private String accountType;
+	private String accountId;
 	private List<String> targetProdIdList;
 	private List<SourceProdRatioDto> sourceProdList;
 }
