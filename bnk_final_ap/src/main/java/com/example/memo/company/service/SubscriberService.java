@@ -208,8 +208,6 @@ public class SubscriberService {
                 dto.setRetireDate(status.getRetireDate());
                 dto.setCancelDate(status.getCancelDate());
                 dto.setFirstPayDate(status.getFirstPayDate());
-                dto.setDbRatio(status.getDbRatio());
-                dto.setDcRatio(status.getDcRatio());
             }
             return dto;
         }).collect(Collectors.toList());
