@@ -28,7 +28,7 @@ public class CompanyManager {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "login_id", nullable = false, length = 12)
+    @Column(name = "login_id", nullable = false, length = 12, unique=true)
     private String loginId;
 
     @Column(name = "password", nullable = false)

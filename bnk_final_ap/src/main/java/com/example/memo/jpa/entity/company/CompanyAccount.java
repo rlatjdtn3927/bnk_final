@@ -20,7 +20,7 @@ public class CompanyAccount {
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private Long id;
 	
-    @Column(name = "account_no", nullable = false)
+    @Column(name = "account_no", nullable = false, unique=true)
     private String accountNo;
 
     @Column(name = "bank", nullable = false)

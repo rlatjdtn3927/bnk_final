@@ -42,12 +42,6 @@ public class DcMemberStatus {
     @Column(name = "first_pay_date")
     private LocalDate firstPayDate;
 
-    @Column(name = "db_ratio")
-    private Double dbRatio;
-
-    @Column(name = "dc_ratio")
-    private Double dcRatio;
-
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "dc_member_id") 
     private DcMember dcMember;
