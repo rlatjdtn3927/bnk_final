@@ -31,7 +31,7 @@ public class DcMember {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "rrn", nullable = false)
+    @Column(name = "rrn", nullable = false, unique=true)
     private String rrn; // 주민등록번호 (암호화)
 
     private String name;
