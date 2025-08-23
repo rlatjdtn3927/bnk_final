@@ -1,1 +1,224 @@
-안녕
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <title>보유상품 목록 (변경 Step2)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-neutral-50 text-neutral-900">
+<div class="max-w-6xl mx-auto p-4 space-y-6">
+
+  <!-- 상단 카드: 사용자/계좌/리스크 -->
+  <section class="bg-white rounded-2xl shadow p-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-xl font-semibold">보유상품 변경</h2>
+        <p class="text-sm text-neutral-500">Step2 · 보유상품 목록에서 매도할 상품을 선택하세요.</p>
+      </div>
+      <div id="riskBadge" class="px-3 py-1 rounded-full text-sm bg-neutral-100">리스크: -</div>
+    </div>
+    <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+      <div class="p-3 rounded-lg bg-neutral-100">
+        <div class="text-neutral-500">사용자</div>
+        <div id="userName" class="font-semibold">-</div>
+      </div>
+      <div class="p-3 rounded-lg bg-neutral-100">
+        <div class="text-neutral-500">계좌유형</div>
+        <div id="accountType" class="font-semibold">-</div>
+      </div>
+      <div class="p-3 rounded-lg bg-neutral-100">
+        <div class="text-neutral-500">계좌ID</div>
+        <div id="accountId" class="font-semibold truncate">-</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 펀드 보유내역 -->
+  <section class="bg-white rounded-2xl shadow p-4">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-lg font-semibold">펀드 보유내역</h3>
+      <label class="text-sm text-neutral-500 flex items-center gap-2">
+        <input id="chkAllFund" type="checkbox" class="w-4 h-4"> 전체선택
+      </label>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+        <tr class="text-left text-neutral-500 border-b">
+          <th class="py-2 pr-3"><span class="sr-only">선택</span></th>
+          <th class="py-2 pr-3">상품명</th>
+          <th class="py-2 pr-3">보유좌수</th>
+          <th class="py-2 pr-3">평단가</th>
+          <th class="py-2 pr-3">평가액</th>
+          <th class="py-2 pr-3">수익률</th>
+        </tr>
+        </thead>
+        <tbody id="fundBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 원리금 보장상품 (각 건 개별) -->
+  <section class="bg-white rounded-2xl shadow p-4">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-lg font-semibold">원리금 보장상품</h3>
+      <p class="text-sm text-neutral-500">※ 일괄선택 없이 <b>건별로</b> 선택합니다.</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+        <tr class="text-left text-neutral-500 border-b">
+          <th class="py-2 pr-3"><span class="sr-only">선택</span></th>
+          <th class="py-2 pr-3">상품ID</th>
+          <th class="py-2 pr-3">가입원금</th>
+          <th class="py-2 pr-3">누적이자</th>
+          <th class="py-2 pr-3">만기일</th>
+          <th class="py-2 pr-3">상태</th>
+        </tr>
+        </thead>
+        <tbody id="principalBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="flex justify-end gap-3">
+    <a href="/purchase/trade/change/step1/after-risk" class="px-4 py-2 rounded-xl bg-neutral-200">이전</a>
+    <button id="nextBtn" class="px-4 py-2 rounded-xl bg-blue-600 text-white disabled:opacity-40" disabled>다음(매도 비율 설정)</button>
+  </div>
+</div>
+
+<!-- 세션에서 계좌/타입 주입 -->
+<script th:inline="javascript">
+  const SESSION_ACCOUNT_TYPE = /*[[${session.ChangeValueDto?.accountType}]]*/ null;
+  const SESSION_ACCOUNT_ID   = /*[[${session.ChangeValueDto?.accountId}]]*/ null;
+</script>
+<script>
+  const fmtKRW = n => (n ?? 0).toLocaleString('ko-KR') + '원';
+  const byPath = (obj, path) => path.split('.').reduce((o,k)=>o&&o[k], obj);
+
+  async function fetchUserInfo() {
+    const r = await fetch('/retain-api/change/user-info', {method:'POST'});
+    return await r.json();
+  }
+  async function fetchHoldings(accountType, accountId) {
+    const params = new URLSearchParams({accountType, accountId});
+    const r = await fetch('/retain-api/change/retain?' + params.toString(), {method:'POST'});
+    return await r.json();
+  }
+
+  function normalizeHoldings(res) {
+    // 응답 모양이 {fundHoldings, principalLedgers} 또는 {resultList:{...}} 등 다양할 수 있어 대비
+    const root = res?.resultList ?? res?.data ?? res;
+    return {
+      funds: root?.fundHoldings ?? [],
+      principals: root?.principalLedgers ?? []
+    };
+  }
+
+  function renderFunds(list) {
+    const tbody = document.getElementById('fundBody');
+    tbody.innerHTML = list.map(item => `
+      <tr class="border-b">
+        <td class="py-2 pr-3">
+          <input type="checkbox" class="fundChk w-4 h-4"
+                 data-id="${item.id}"
+                 data-product-id="${item.fundProductId}"
+                 data-name="${item.productName ?? ''}"
+                 data-base="${item.valuationAmount ?? 0}">
+        </td>
+        <td class="py-2 pr-3">${item.productName ?? '-'}</td>
+        <td class="py-2 pr-3">${item.units ?? '-'}</td>
+        <td class="py-2 pr-3">${fmtKRW(Number(item.avgPrice))}</td>
+        <td class="py-2 pr-3">${fmtKRW(Number(item.valuationAmount))}</td>
+        <td class="py-2 pr-3">${(item.returnRate ?? 0)}%</td>
+      </tr>
+    `).join('');
+    document.getElementById('chkAllFund')?.addEventListener('change', (e)=>{
+      document.querySelectorAll('.fundChk').forEach(c=> c.checked = e.target.checked);
+      toggleNext();
+    });
+    document.querySelectorAll('.fundChk').forEach(c => c.addEventListener('change', toggleNext));
+  }
+
+  function renderPrincipals(list) {
+    const tbody = document.getElementById('principalBody');
+    tbody.innerHTML = list.map(item => {
+      const base = Number(item.contractAmount ?? 0) + Number(item.interestAccrued ?? 0);
+      return `
+      <tr class="border-b">
+        <td class="py-2 pr-3">
+          <input type="checkbox" class="principalChk w-4 h-4"
+                 data-id="${item.id}"
+                 data-product-id="${item.principalId}"
+                 data-name="원리금보장(${item.principalId})"
+                 data-base="${base}">
+        </td>
+        <td class="py-2 pr-3">${item.principalId ?? '-'}</td>
+        <td class="py-2 pr-3">${fmtKRW(Number(item.contractAmount))}</td>
+        <td class="py-2 pr-3">${fmtKRW(Number(item.interestAccrued))}</td>
+        <td class="py-2 pr-3">${item.maturityDate ?? '-'}</td>
+        <td class="py-2 pr-3">${item.status ?? '-'}</td>
+      </tr>`;
+    }).join('');
+    document.querySelectorAll('.principalChk').forEach(c => c.addEventListener('change', toggleNext));
+  }
+
+  function toggleNext() {
+    const anyChecked = document.querySelectorAll('.fundChk:checked, .principalChk:checked').length > 0;
+    document.getElementById('nextBtn').disabled = !anyChecked;
+  }
+
+  function goNext() {
+    // 선택한 항목을 매도후보로 sessionStorage에 저장하고 다음 화면으로
+    const soldCandidates = [];
+    document.querySelectorAll('.fundChk:checked').forEach(c => {
+      soldCandidates.push({
+        type: 'FUND',
+        id: Number(c.dataset.id),
+        productId: c.dataset.productId,
+        name: c.dataset.name,
+        baseAmount: Number(c.dataset.base),
+        ratio: 0,
+        amount: 0
+      });
+    });
+    document.querySelectorAll('.principalChk:checked').forEach(c => {
+      soldCandidates.push({
+        type: 'PRINCIPAL',
+        id: Number(c.dataset.id),
+        productId: c.dataset.productId,
+        name: c.dataset.name,
+        baseAmount: Number(c.dataset.base),
+        ratio: 0,
+        amount: 0
+      });
+    });
+    sessionStorage.setItem('change.soldCandidates', JSON.stringify(soldCandidates));
+    location.href = '/purchase/trade/change/step2/sold-list';
+  }
+
+  // init
+  (async function init(){
+    // 상단 카드
+    const u = await fetchUserInfo();
+    const info = byPath(u, 'userInfo') || {};
+    document.getElementById('userName').textContent   = info.userName ?? '-';
+    document.getElementById('accountType').textContent= info.accountType ?? (SESSION_ACCOUNT_TYPE ?? '-');
+    document.getElementById('accountId').textContent  = info.accountId ?? (SESSION_ACCOUNT_ID ?? '-');
+    document.getElementById('riskBadge').textContent  = `리스크: ${info.riskGrade ?? '-'}`;
+
+    const accountType = info.accountType ?? SESSION_ACCOUNT_TYPE;
+    const accountId   = info.accountId   ?? SESSION_ACCOUNT_ID;
+
+    // 보유목록
+    const res = await fetchHoldings(accountType, accountId);
+    const {funds, principals} = normalizeHoldings(res);
+    renderFunds(funds || []);
+    renderPrincipals(principals || []);
+
+    document.getElementById('nextBtn').addEventListener('click', goNext);
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <title>매도합계 & 매수추가 (변경 Step2-2)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-neutral-50 text-neutral-900">
+<div class="max-w-3xl mx-auto p-4 space-y-6">
+  <section class="bg-white rounded-2xl shadow p-6 text-center">
+    <h2 class="text-xl font-semibold mb-2">매도 합계액</h2>
+    <div id="sum" class="text-3xl font-extrabold">0원</div>
+    <p class="text-sm text-neutral-500 mt-1">이 금액 한도 내에서 매수 상품을 배분합니다.</p>
+
+    <div class="mt-6 flex justify-center gap-3">
+      <a href="/purchase/trade/change/step2/sold-list" class="px-4 py-2 rounded-xl bg-neutral-200">이전</a>
+      <!-- step2_reserve와 유사 동작: 보유상품 변경 시 매수 상품 선택으로 이동 -->
+      <a href="/purchase/trade/change/step2/buy-list" class="px-5 py-2 rounded-xl bg-blue-600 text-white">매수상품 추가</a>
+    </div>
+  </section>
+</div>
+
+<script>
+  const fmtKRW = n => (n ?? 0).toLocaleString('ko-KR') + '원';
+  (function init(){
+    const sum = Number(sessionStorage.getItem('change.soldTotal') || '0');
+    document.getElementById('sum').textContent = fmtKRW(sum);
+  })();
+</script>
+</body>
+</html>
