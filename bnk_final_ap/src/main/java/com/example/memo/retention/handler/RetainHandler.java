@@ -1,9 +1,10 @@
 package com.example.memo.retention.handler;
 
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.example.memo.retention.dto.ResponseAccountListMinDto;
 import com.example.memo.retention.service.RetainAccountService;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpMessageHandler;
@@ -30,14 +31,18 @@ public class RetainHandler implements TcpMessageHandler {
         try {
             switch (command) {
                 case RETAIN_GET_ACCOUNTS: {
-                    // RetainAccountService 는 JsonNode 를 그대로 받아 처리
-                    ResponseAccountListMinDto result = retainAccountService.listAccountsMin(data);
-                    if (result == null) {
-                        return "계좌 목록 조회 실패";
+                    Long userId = data.hasNonNull("userId") ? data.get("userId").asLong() : null;
+                    if (userId == null) {
+                        return Map.of("ok", false, "error", "userId가 없습니다.");
                     }
-                    // AP 표준 응답 포맷: { "resultList": ... }
-                    return java.util.Map.of("resultList", result);
+
+                    var accounts = retainAccountService.findAccountsOfUser(userId);
+
+                    if (accounts == null) accounts = java.util.Collections.emptyList();
+
+                    return Map.of("ok", true, "accounts", accounts);
                 }
+                
                 default:
                     return "알 수 없는 명령: " + command.name();
             }

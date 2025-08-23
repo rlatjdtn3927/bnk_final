@@ -31,7 +31,7 @@ public enum Command {
     CONTRIBUTION_PAYABLE_ITEM_LIST,
     CONTRIBUTION_EXECUTE_ITEMS, // 선택 항목 입금 실행;
     
-    RETAIN_GET_ACCOUNTS, // 보유현황 - 계좌 목록 불러옴 
+    RETAIN_GET_ACCOUNTS, // 사용자 보유 계좌 목록 조회 (IRP/DC)
     
     
 	/* OCR 관련 */
@@ -67,8 +67,6 @@ public enum Command {
     
     /*가입자 리포트*/
     REPORT_MONTHLY_SUBSCRIBERS,
-    IRP_JOIN_GET_CONTRACT,
-    IRP_JOIN_INIT_OPEN,
     IRP_ACCOUNT_DEPOSIT,
     
     // ===== 보유현황 탭 =====
