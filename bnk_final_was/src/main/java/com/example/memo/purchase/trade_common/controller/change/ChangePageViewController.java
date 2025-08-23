@@ -108,4 +108,18 @@ public class ChangePageViewController {
 		session.setAttribute("ChangeValueDto", dto);
 		return "purchase/trade/change/step2_change"; // 바로 뷰
 	}
+	 @GetMapping("/step2/sold-list")
+	 public String step2SoldList() {
+	        return "purchase/trade/change/step2_soldList";
+	 }
+
+	 @GetMapping("/step2/change-add-ratio")
+	 public String step2ChangeAddRatio() {
+	        return "purchase/trade/change/step2_changeAddRatio";
+	 }
+
+	 @GetMapping("/step2/buy-list")
+	 public String step2BuyList() {
+	        return "purchase/trade/change/step2_buyList";
+	 }	
 }

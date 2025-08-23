@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <title>매수 상품 배분 (변경 Step2-3)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-neutral-50 text-neutral-900">
+<div class="max-w-5xl mx-auto p-4 space-y-6">
+
+  <section class="bg-white rounded-2xl shadow p-4">
+    <h2 class="text-xl font-semibold">매수 상품 배분</h2>
+    <p class="text-sm text-neutral-500">비율 총합이 100%가 되도록 배분하세요.</p>
+    <div class="mt-3 p-3 rounded-lg bg-neutral-100">
+      매도 합계액: <b id="soldTotal">0원</b>
+    </div>
+  </section>
+
+  <!-- 상품 추가 영역 (검색/선택 연동 자리) -->
+  <section class="bg-white rounded-2xl shadow p-4 space-y-3">
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-semibold">매수 목록</h3>
+      <div class="flex gap-2">
+        <!-- TODO: 실제 상품검색 모달/페이지 연동 -->
+        <button id="addRow" class="px-3 py-2 rounded-xl bg-neutral-200">행 추가</button>
+        <button id="clearAll" class="px-3 py-2 rounded-xl bg-neutral-200">초기화</button>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+        <tr class="text-left text-neutral-500 border-b">
+          <th class="py-2 pr-3">상품ID</th>
+          <th class="py-2 pr-3">상품명</th>
+          <th class="py-2 pr-3">배분비율(%)</th>
+          <th class="py-2 pr-3">매수금액</th>
+          <th class="py-2 pr-3"><span class="sr-only">삭제</span></th>
+        </tr>
+        </thead>
+        <tbody id="buyBody"></tbody>
+      </table>
+    </div>
+
+    <div class="flex items-center justify-between mt-3">
+      <div class="text-lg">
+        비율 합계: <b id="sumRatio">0%</b>
+      </div>
+      <div class="flex gap-2">
+        <a href="/purchase/trade/change/step2/change-add-ratio" class="px-4 py-2 rounded-xl bg-neutral-200">이전</a>
+        <!-- 다음: Step4 서류 -->
+        <button id="nextBtn" class="px-4 py-2 rounded-xl bg-blue-600 text-white disabled:opacity-40" disabled>
+          다음(서류 페이지)
+        </button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  const fmtKRW = n => (n ?? 0).toLocaleString('ko-KR') + '원';
+
+  function rowTemplate(idx, item){
+    return `
+      <tr class="border-b" data-idx="${idx}">
+        <td class="py-2 pr-3">
+          <input class="pid w-40 px-2 py-1 border rounded" value="${item.productId ?? ''}">
+        </td>
+        <td class="py-2 pr-3">
+          <input class="pname w-64 px-2 py-1 border rounded" value="${item.name ?? ''}">
+        </td>
+        <td class="py-2 pr-3">
+          <input type="number" min="0" max="100" step="1" class="ratio w-24 px-2 py-1 border rounded" value="${item.ratio ?? 0}">
+        </td>
+        <td class="py-2 pr-3"><span class="amount">${fmtKRW(item.amount ?? 0)}</span></td>
+        <td class="py-2 pr-3">
+          <button class="del px-2 py-1 rounded bg-red-100 text-red-700">삭제</button>
+        </td>
+      </tr>
+    `;
+  }
+
+  function recalc(all, soldTotal){
+    // 금액 = soldTotal * ratio/100 (소수점 버림)
+    all.forEach(it => {
+      const r = Number(it.ratio || 0);
+      it.amount = Math.floor(soldTotal * r / 100);
+    });
+  }
+
+  function render(all, soldTotal){
+    const tbody = document.getElementById('buyBody');
+    tbody.innerHTML = all.map((it, idx)=> rowTemplate(idx, it)).join('');
+
+    // events
+    tbody.querySelectorAll('.ratio').forEach(inp=>{
+      inp.addEventListener('input', ()=>{
+        const tr  = inp.closest('tr');
+        const idx = Number(tr.dataset.idx);
+        let v = Number(inp.value || 0);
+        if (v < 0) v = 0; if (v > 100) v = 100;
+        inp.value = v;
+        all[idx].ratio = v;
+        recalc(all, soldTotal);
+        tr.querySelector('.amount').textContent = fmtKRW(all[idx].amount || 0);
+        updateSummary(all);
+      });
+    });
+    tbody.querySelectorAll('.pid').forEach(inp=>{
+      inp.addEventListener('input', ()=>{
+        const idx = Number(inp.closest('tr').dataset.idx);
+        all[idx].productId = inp.value;
+      });
+    });
+    tbody.querySelectorAll('.pname').forEach(inp=>{
+      inp.addEventListener('input', ()=>{
+        const idx = Number(inp.closest('tr').dataset.idx);
+        all[idx].name = inp.value;
+      });
+    });
+    tbody.querySelectorAll('.del').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const idx = Number(btn.closest('tr').dataset.idx);
+        all.splice(idx,1);
+        render(all, soldTotal);
+        updateSummary(all);
+      });
+    });
+
+    updateSummary(all);
+  }
+
+  function updateSummary(all){
+    const sum = all.reduce((a,c)=> a + Number(c.ratio||0), 0);
+    document.getElementById('sumRatio').textContent = `${sum}%`;
+    const next = document.getElementById('nextBtn');
+    next.disabled = (sum !== 100) || all.length === 0 || all.some(x => !x.productId || !x.name);
+  }
+
+  async function goNext(all, soldTotal){
+     // 금액 최신 계산(보수)
+     all.forEach(it=>{
+       const r = Number(it.ratio || 0);
+       it.amount = Math.floor(soldTotal * r / 100);
+     });
+
+     // 서버 세션 저장 (type 분류: 행 추가 시 저장해두거나, 아래에서 추론)
+     const payload = all.map(it=>{
+       let type = it.type;
+       if(!type){
+         // 이름/선택 과정에서 못박지 않았다면 productId 패턴/라벨로 보수
+         const name = (it.name || '').toLowerCase();
+         type = (name.includes('예금') || name.includes('현금')) ? 'PRINCIPAL' : 'FUND';
+       }
+       return {
+         type,
+         productId: it.productId,
+         name: it.name,
+         ratio: it.ratio,
+         amount: it.amount
+       };
+     });
+
+     const resp = await fetch('/retain-api/change/step2/buy/save', {
+       method:'POST', headers:{'Content-Type':'application/json'},
+       body: JSON.stringify(payload)
+     });
+     if(!resp.ok){ alert('매수 목록 저장 실패'); return; }
+
+     // 다음(서류)
+     location.href = '/purchase/trade/change/step4';
+   }
+
+  (function init(){
+    const soldTotal = Number(sessionStorage.getItem('change.soldTotal') || '0');
+    document.getElementById('soldTotal').textContent = fmtKRW(soldTotal);
+
+    // 기존 선택값 복원
+    let all = [];
+    const raw = sessionStorage.getItem('change.buyList');
+    if (raw) {
+      try { all = JSON.parse(raw); } catch(_) {}
+    }
+    recalc(all, soldTotal);
+    render(all, soldTotal);
+
+    document.getElementById('addRow').addEventListener('click', ()=>{
+      all.push({productId:'', name:'', ratio:0, amount:0});
+      render(all, soldTotal);
+      updateSummary(all);
+    });
+    document.getElementById('clearAll').addEventListener('click', ()=>{
+      all = [];
+      render(all, soldTotal);
+      updateSummary(all);
+    });
+    document.getElementById('nextBtn').addEventListener('click', ()=>goNext(all, soldTotal));
+  })();
+</script>
+</body>
+</html>
