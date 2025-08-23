@@ -1,11 +1,21 @@
 package com.example.memo.irp.handler;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.stereotype.Component;
 
 import com.example.memo.irp.service.BankAccountService;
 import com.example.memo.irp.service.IrpJoinService;
+import com.example.memo.jpa.entity.ledger.FundHoldings;
+import com.example.memo.jpa.entity.ledger.FundLedger;
+import com.example.memo.jpa.entity.ledger.PrincipalLedger;
+import com.example.memo.jpa.entity.purchase.analysis.FundNav;
+import com.example.memo.jpa.entity.purchase.commodity.FundMaster;
+import com.example.memo.jpa.entity.purchase.commodity.PrincipalGuarantee;
+import com.example.memo.jpa.entity.purchase.trade.BuyPlanFund;
+import com.example.memo.jpa.entity.purchase.trade.BuyPlanPG;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpMessageHandler;
 import com.fasterxml.jackson.databind.JsonNode;

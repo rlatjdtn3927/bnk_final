@@ -55,6 +55,7 @@ public enum Command {
     ACCOUNT_GET_NUMBER,
     IRP_JOIN_GET_CONTRACT,
     IRP_JOIN_INIT_OPEN,
+    IRP_ACCOUNT_DEPOSIT,
     
     // ===== 보유현황 탭 =====
     SUMMARY_GET,              // SummaryHandler: 총 평가액/수익률/입금합/당일입금/운용수익 요약 조회

@@ -455,7 +455,8 @@ public class DcContributionService {
                     .orElseThrow(() -> new IllegalStateException("DC계좌 없음: " + m.getName()));
             
             BigDecimal dBal = Optional.ofNullable(dest.getBalance()).orElse(BigDecimal.ZERO);
-            BigDecimal temp = Optional.ofNullable(dest.getBalance()).orElse(BigDecimal.ZERO);
+            BigDecimal deposited = BigDecimal.valueOf(it.getAmount());
+            BigDecimal temp = BigDecimal.valueOf(it.getAmount());
             
             /**매수 예정 등록을 확인해보고 있으면 예정된 품목 구매 아니면 그냥 계좌로 입금**/
             List<BuyPlanFund> buyPlanList = buyPlanFundRepository.findByDcAccountAndIsCurrent(dest, "Y");
@@ -471,7 +472,7 @@ public class DcContributionService {
             		BigDecimal nav = fundNav.getNav();
             		BigDecimal addUnits = tradeAmt.divide(nav, SCALE_CAL, RMDN);
             		
-            		dBal = dBal.subtract(tradeAmt);
+            		deposited = deposited.subtract(tradeAmt);
             		
             		fundLedgerRepository.save(FundLedger.builder()
             				.dcAccount(dest)
@@ -505,6 +506,7 @@ public class DcContributionService {
 			    		fundHoldingsRepository.save(fundholdings);
             		} else { //없으면 새로 삽입
             			fundHoldingsRepository.save(FundHoldings.builder()
+            					.units(addUnits.setScale(SCALE_SAVE, RMDN))
             					.dcAccount(dest)
             					.fund(fund)
             					.avgPrice(nav)
@@ -515,38 +517,38 @@ public class DcContributionService {
             					.build());
             		}
             	}
-            	
-        		List<BuyPlanPG> buyPlanPgList = buyPlanPGRepository.findByDcAccountAndIsCurrent(dest, "Y");
-        		if(buyPlanPgList != null) {
-        			for(BuyPlanPG buyPlan : buyPlanPgList) {
-        				Integer ratio = buyPlan.getAllocationPercent();
-        				BigDecimal tradeAmt = temp.multiply(BigDecimal.valueOf(ratio)).divide(BigDecimal.valueOf(100), SCALE_CAL, RMDN);
-        				
-        				dBal = dBal.subtract(tradeAmt);
-        				
-        				PrincipalGuarantee pg = buyPlan.getPrincipal();
-        				long years = 0L;
-        				switch (pg.getMaturityYears()) {
-	        				case "1년" -> years = 1L;
-	        				case "2년" -> years = 2L;
-	        				case "3년" -> years = 3L;
-	        				case "5년" -> years = 5L;
-        				}
-        				principalLedgerRepository.save(PrincipalLedger.builder()
-        						.dcAccount(dest)
-        						.principal(pg)
-        						.contractAmount(tradeAmt.setScale(SCALE_SAVE, RMDN))
-        						.interestRate(pg.getDcRate())
-        						.startDate(LocalDate.now())
-        						.maturityDate(LocalDate.now().plusYears(years))
-        						.interestAccrued(BigDecimal.ZERO)
-        						.status("ACTIVE")
-        						.build());
-        			}
-        		}
             }
             
-            dest.setBalance(dBal.add(BigDecimal.valueOf(it.getAmount())));
+    		List<BuyPlanPG> buyPlanPgList = buyPlanPGRepository.findByDcAccountAndIsCurrent(dest, "Y");
+    		if(buyPlanPgList.isEmpty()) {
+    			for(BuyPlanPG buyPlan : buyPlanPgList) {
+    				Integer ratio = buyPlan.getAllocationPercent();
+    				BigDecimal tradeAmt = temp.multiply(BigDecimal.valueOf(ratio)).divide(BigDecimal.valueOf(100), SCALE_CAL, RMDN);
+    				
+    				deposited = deposited.subtract(tradeAmt);
+    				
+    				PrincipalGuarantee pg = buyPlan.getPrincipal();
+    				long years = 0L;
+    				switch (pg.getMaturityYears()) {
+        				case "1년" -> years = 1L;
+        				case "2년" -> years = 2L;
+        				case "3년" -> years = 3L;
+        				case "5년" -> years = 5L;
+    				}
+    				principalLedgerRepository.save(PrincipalLedger.builder()
+    						.dcAccount(dest)
+    						.principal(pg)
+    						.contractAmount(tradeAmt.setScale(SCALE_SAVE, RMDN))
+    						.interestRate(pg.getDcRate())
+    						.startDate(LocalDate.now())
+    						.maturityDate(LocalDate.now().plusYears(years))
+    						.interestAccrued(BigDecimal.ZERO)
+    						.status("ACTIVE")
+    						.build());
+    			}
+    		}
+            	
+            dest.setBalance(dBal.add(deposited));
 
             DcDepositHistory h = DcDepositHistory.builder()
                     .item(it)
