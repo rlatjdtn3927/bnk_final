@@ -39,7 +39,7 @@ public class DcAccount {
     private String status; 
 
     @Column(name = "balance")
-    private Long balance;
+    private BigDecimal balance;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

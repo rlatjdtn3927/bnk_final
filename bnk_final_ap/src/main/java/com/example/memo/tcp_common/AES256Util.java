@@ -3,6 +3,9 @@ package com.example.memo.tcp_common;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+
+import org.springframework.beans.factory.annotation.Value;
+
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Base64;
@@ -11,7 +14,8 @@ public class AES256Util {
 
     private static final String ALGORITHM = "AES/CBC/PKCS5Padding";
     // 256비트 키 (32바이트)
-    private static final String SECRET_KEY = "12345678901234567890123456789012";
+    @Value("${tcp.secretkey}")
+    private static String SECRET_KEY;
     private static final String CHARSET = "UTF-8";
 
     public static String encrypt(String plainText) throws Exception {

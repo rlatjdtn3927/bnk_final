@@ -185,8 +185,8 @@ public class ChangeProductService {
 					
 					if("DC".equals(accountType)) {
 						DcAccount dcAccount = dcAccountRepository.findByAccountNo(accountId);
-						Long oldBalance = dcAccount.getBalance();
-						dcAccount.setBalance(oldBalance + profit.longValue());
+						BigDecimal oldBalance = dcAccount.getBalance();
+						dcAccount.setBalance(oldBalance.add(profit).setScale(SCALE_SAVE, RMUP));
 						dcAccountRepository.save(dcAccount); // 수익 계좌 입금
 						fundLedger.setDcAccount(DcAccount.builder().accountNo(accountId).build());
 					} 
@@ -336,8 +336,8 @@ public class ChangeProductService {
 			        
 			        if("DC".equals(accountType)) {
 			        	DcAccount dcAccount = dcAccountRepository.findByAccountNo(accountId);
-			        	Long balance = dcAccount.getBalance();
-			        	Long newBalance = balance + interestAccrued.longValue();
+			        	BigDecimal balance = dcAccount.getBalance();
+			        	BigDecimal newBalance = balance.add(interestAccrued.setScale(SCALE_SAVE, RMUP));
 			        	dcAccount.setBalance(newBalance);
 			        	dcAccountRepository.save(dcAccount); //일할 이자율 정산
 			        } else {

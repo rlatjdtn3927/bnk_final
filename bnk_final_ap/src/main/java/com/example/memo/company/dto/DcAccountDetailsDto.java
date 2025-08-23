@@ -1,5 +1,6 @@
 package com.example.memo.company.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.example.memo.jpa.entity.company.DcMemberStatus;
@@ -12,7 +13,7 @@ public class DcAccountDetailsDto {
     // 계좌 정보
     private String accountNo;
     private String status;
-    private Long balance;
+    private BigDecimal balance;
     private LocalDateTime createdAt;
     
     // 가입자 정보
