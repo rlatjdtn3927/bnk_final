@@ -95,26 +95,36 @@ public class IrpJoinService {
 	@Transactional
 	public void saveTaxPurpose(Long joinId, String qualType, String busiNo) {
 		IrpJoinEntity join = joinRepository.findById(joinId).orElseThrow();
-		IrpTaxPurpose tax = IrpTaxPurpose.builder()
-				.join(join)
-				.irpQualType(qualType)
-				.businessNo(busiNo)
-				.build();
-		taxRepository.save(tax);
+		
+		IrpTaxPurpose tax = taxRepository.findById(joinId).orElse(null);
+	    if (tax == null) {
+	        tax = IrpTaxPurpose.builder().join(join).build();
+	    }
+	    tax.setIrpQualType(qualType);
+	    tax.setBusinessNo(busiNo);
+	    taxRepository.save(tax);
 	}
 		
 	//가입목적 - 퇴직금 수령
 	@Transactional
 	public void saveRetirePurpose(Long joinId, LocalDate retireDate, String retireReason, String corpName, Long severAmt, String withholdDoc) {
 		IrpJoinEntity join = joinRepository.findById(joinId).orElseThrow();
-		IrpRetirePurpose retire = IrpRetirePurpose.builder()
-				.join(join)
-				.retireDate(retireDate)
-				.retireReason(retireReason)
-				.corpName(corpName)
-				.severanceAmt(severAmt)
-				.withholdDoc(withholdDoc)
-				.build();
+		
+		// NOT NULL 보장(엔티티 제약과 맞춤)
+	    if (retireDate == null) throw new IllegalArgumentException("retireDate required");
+	    if (corpName == null || corpName.isBlank()) throw new IllegalArgumentException("corpName required");
+	    if (severAmt == null) throw new IllegalArgumentException("severanceAmt required");
+
+	    IrpRetirePurpose retire = retireRepository.findById(joinId).orElse(null);
+	    if (retire == null) {
+	        retire = IrpRetirePurpose.builder().join(join).build();
+	    }
+	    retire.setRetireDate(retireDate);
+	    retire.setRetireReason(retireReason);
+	    retire.setCorpName(corpName);
+	    retire.setSeveranceAmt(severAmt);
+	    retire.setWithholdDoc(withholdDoc);
+	    
 		retireRepository.save(retire);
 	}
 	
@@ -309,19 +319,5 @@ public class IrpJoinService {
 	            .contractNo(acct.getContractNo())
 	            .build();
 	}
-	
-	
-	/*
-	//step4: 상품등록(선택)저장
-	@Transactional
-    public void updateJoinProduct(Long joinId, String productId) {
-        IrpJoinEntity join = joinRepository.findById(joinId)
-                .orElseThrow(() -> new IllegalArgumentException("가입건 없음: " + joinId));
-        ProductMaster product = productRepository.findById(productId)
-                .orElseThrow(() -> new IllegalArgumentException("상품 없음: " + productId));
-        join.setProductId(product);
-        // 영속 상태라 save 생략 가능하지만 명시 저장 권장
-        joinRepository.save(join);
-    }
-	 */
+
 }

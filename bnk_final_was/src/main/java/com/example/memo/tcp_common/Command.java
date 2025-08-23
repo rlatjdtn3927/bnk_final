@@ -64,6 +64,7 @@ public enum Command {
     IRP_JOIN_COMPLETE,			// step5: 비밀번호 + 계좌개설 완료
     ACCOUNT_GET_BALANCE,		// 출금계좌 잔액조회
     ACCOUNT_GET_NUMBER,
+    IRP_JOIN_CHECK_ELIGIBLE,
     
     /*가입자 리포트*/
     REPORT_MONTHLY_SUBSCRIBERS,

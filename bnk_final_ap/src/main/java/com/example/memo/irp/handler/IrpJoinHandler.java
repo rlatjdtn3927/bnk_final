@@ -53,33 +53,50 @@ public class IrpJoinHandler implements TcpMessageHandler {
 				return joinService.saveJoin(joinEntity);
 			
 			case IRP_JOIN_TAX_PURPOSE: {
-				Long joinId = requireLong(data, "joinId");
-			    String qualType = requireText(data, "irpQualType"); // "근로자"/"자영업자"
-				
-				// 2) 옵션 파라미터(없으면 null로)
-			    String busiNo = null;
-			    JsonNode bn = data.get("businessNo");
-			    if (bn != null && !bn.isNull()) {
-			        String v = bn.asText();
-			        if (v != null && !v.isBlank()) {
-			            busiNo = v;
-			        }
+				try {
+			        Long joinId    = requireLong(data, "joinId");
+			        String qual    = requireText(data, "irpQualType");
+			        String busiNo  = optText(data, "businessNo"); // nullable
+
+			        joinService.saveTaxPurpose(joinId, qual, busiNo);
+
+			        return mapper.createObjectNode()
+			                     .put("ok", true)
+			                     .put("joinId", joinId);
+			    } catch (Exception e) {
+			        return mapper.createObjectNode()
+			                     .put("ok", false)
+			                     .put("error", e.getMessage() == null ? "AP_INTERNAL" : e.getMessage());
 			    }
-				joinService.saveTaxPurpose(joinId, qualType, busiNo);
-				ObjectNode res = mapper.createObjectNode();
-				 res.put("result", "OK");
-				 res.put("joinId", joinId);
-				return res;
 			}
 			case IRP_JOIN_RETIRED_PURPOSE: {
-	            Long joinId = data.get("joinId").asLong();
-	            LocalDate retireDate = LocalDate.parse(data.get("retireDate").asText());
-	            String reason = data.path("retireReason").asText();
-	            String corpName = data.get("corpName").asText();
-	            Long amt = data.path("severanceAmt").asLong(0);
-	            String doc = data.get("withholdDoc").asText();
-	            joinService.saveRetirePurpose(joinId, retireDate, reason, corpName, amt, doc);
-	            return "OK";
+				try {
+			        Long joinId = requireLong(data, "joinId");
+			        String retireDateStr = requireText(data, "retireDate"); // "YYYY-MM-DD"
+			        LocalDate retireDate = LocalDate.parse(retireDateStr);
+
+			        String reason   = optText(data, "retireReason");             // nullable 허용
+			        String corpName = requireText(data, "corpName");             // NOT NULL 컬럼
+			        Long   amt      = optLong(data, "severanceAmt");             // NOT NULL 컬럼
+			        String doc      = optText(data, "withholdDoc");              // nullable 허용
+
+			        // 필수값 검증 (DB 제약과 동일하게)
+			        if (amt == null) throw new IllegalArgumentException("severanceAmt required");
+			        if (corpName == null || corpName.isBlank()) throw new IllegalArgumentException("corpName required");
+
+			        // 서비스는 '업서트' 
+			        joinService.saveRetirePurpose(joinId, retireDate, reason, corpName, amt, doc);
+
+			        return mapper.createObjectNode()
+			                     .put("ok", true)
+			                     .put("joinId", joinId);
+
+			    } catch (Exception e) {
+			        ObjectNode err = mapper.createObjectNode();
+			        err.put("ok", false);
+			        err.put("error", e.getMessage() == null ? "AP_INTERNAL" : e.getMessage());
+			        return err; // 절대로 null/문자열만 반환하지 않음
+			    }
 			}
 			case IRP_JOIN_CHECK_ELIGIBLE: {
 			    long userId = data.path("userId").asLong();
@@ -226,6 +243,15 @@ public class IrpJoinHandler implements TcpMessageHandler {
 			default:
 				return "알 수 없는 명령: " + command.name();
 		}
+	}
+	
+	private String optText(JsonNode n, String field) {
+	    JsonNode v = n.get(field);
+	    return (v == null || v.isNull()) ? null : v.asText();
+	}
+	private Long optLong(JsonNode n, String field) {
+	    JsonNode v = n.get(field);
+	    return (v == null || v.isNull()) ? null : v.asLong();
 	}
 	
 	private Long requireLong(JsonNode n, String field) {

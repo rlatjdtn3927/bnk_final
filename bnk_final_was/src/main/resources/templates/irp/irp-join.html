@@ -2,11 +2,66 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>IRP가입하기</title>
+<style>
+  .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:9999}
+  .modal.is-open{display:flex}
+  .modal__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+  .modal__panel{position:relative;min-width:280px;max-width:90vw;padding:20px 24px;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);text-align:center}
+  .modal__title{margin:0 0 8px;font-size:18px;font-weight:700}
+  .modal__msg{margin:0 0 16px;font-size:14px;color:#333}
+  .modal__btn{padding:8px 16px;border:0;border-radius:8px;background:#333;color:#fff;cursor:pointer}
+  .modal__btn:focus{outline:2px solid #4B84CA;outline-offset:2px}
+</style>
 </head>
 <body>
 <h1>IRP가입하기 시작 페이지</h1>
-<a th:href="@{/irp/join/step1-purpose}">IRP가입하기</a>
+<a th:href="@{/irp/join/start}">IRP가입하기</a>
 
+<!-- FLASH 모달: toast가 있을 때만 생성 -->
+<div th:if="${toast}" id="flash-modal" class="modal is-open" role="dialog" aria-modal="true" aria-labelledby="flash-title">
+  <div class="modal__backdrop" data-close="1"></div>
+  <div class="modal__panel" role="document">
+    <h2 id="flash-title" class="modal__title">안내</h2>
+    <p class="modal__msg" th:text="${toast}">메시지</p>
+    <button id="flash-close" type="button" class="modal__btn">확인</button>
+  </div>
+</div>
+
+
+<script>
+(function () {
+  var m = document.getElementById('flash-modal');
+  if (!m) return;
+
+  var btn = document.getElementById('flash-close');
+  var prevOverflow = document.documentElement.style.overflow;
+  document.documentElement.style.overflow = 'hidden';
+  setTimeout(function(){ btn && btn.focus(); }, 0);
+
+  function closeModal(redirect){
+    m.classList.remove('is-open');
+    document.documentElement.style.overflow = prevOverflow || '';
+    if (redirect) {
+        window.location.href = "/";   // 메인으로 이동
+    }
+  }
+  
+  btn && btn.addEventListener('click', function(){
+	  closeModal(true);   // 확인 버튼은 닫고 메인으로
+  });
+  m.addEventListener('click', function(e){ 
+	  if(e.target.dataset.close) closeModal(true); // 백드롭 클릭도 메인으로
+  });
+  document.addEventListener('keydown', function(e){ 
+	  if(e.key === 'Escape') closeModal(true);     // ESC 눌러도 메인으로
+  });
+  
+  //(선택) 자동 닫힘 후 메인 이동
+  setTimeout(function(){ closeModal(true); }, 3000);
+
+})();
+</script>
 </body>
 </html>
