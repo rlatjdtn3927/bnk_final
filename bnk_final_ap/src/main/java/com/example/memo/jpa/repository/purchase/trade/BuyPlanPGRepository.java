@@ -17,4 +17,5 @@ public interface BuyPlanPGRepository extends JpaRepository<BuyPlanPG, Long>{
     List<BuyPlanPG> findByUserAndIsCurrentAndDcAccount_AccountNo(UserEntity user, String isCurrent, String accountNo);
     List<BuyPlanPG> findByDcAccount_AccountNoAndPrincipal_ProductIdIn(String accountNo, List<String> productIdList);
     List<BuyPlanPG> findByIrpAccount_IrpAcctNoAndPrincipal_ProductIdIn(String accountNo, List<String> productIdList);
+    List<BuyPlanPG> findByDcAccountAndIsCurrent(DcAccount account, String isCurrent);
 }
