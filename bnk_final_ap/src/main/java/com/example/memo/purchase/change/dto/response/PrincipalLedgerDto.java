@@ -25,5 +25,4 @@ public class PrincipalLedgerDto {
     private LocalDate maturityDate;    // 만기일
     private BigDecimal interestAccrued;// 현재까지 발생한 이자
     private String status;             // 계약 상태
-    private LocalDateTime lastUpdated; // 최종 업데이트
 }

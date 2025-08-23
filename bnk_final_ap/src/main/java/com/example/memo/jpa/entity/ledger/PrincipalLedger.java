@@ -55,6 +55,4 @@ public class PrincipalLedger {
     @Column(nullable = false)
     private String status; // 계약 상태 (ACTIVE, MATURED, TERMINATED)
 
-    @Column(nullable = false)
-    private LocalDateTime lastUpdated;
 }
