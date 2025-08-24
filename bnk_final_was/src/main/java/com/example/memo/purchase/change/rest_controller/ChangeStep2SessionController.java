@@ -7,11 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.example.memo.purchase.trade_common.dto.ChangeValueDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,34 +22,58 @@ public class ChangeStep2SessionController {
 
     private final ObjectMapper mapper = new ObjectMapper();
 
+    /** ✅ 매도 저장 */
     @PostMapping("/sold/save")
     public ResponseEntity<?> saveSold(@RequestBody List<ChangeValueDto.SoldItem> items, HttpSession session) {
         ChangeValueDto dto = (ChangeValueDto) session.getAttribute("ChangeValueDto");
         if (dto == null) dto = new ChangeValueDto();
 
-        BigDecimal total = items.stream()
-            .map(i -> i.getAmount() == null ? BigDecimal.ZERO : i.getAmount())
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        // ✅ PrincipalLedgerDto.id를 반드시 저장하도록 보강
+        // ✅ PK 보강
         for (ChangeValueDto.SoldItem item : items) {
+            if ("FUND".equalsIgnoreCase(item.getType())) {
+                // holdingId 보정
+                if (item.getHoldingId() == null || item.getHoldingId().isBlank()) {
+                    item.setHoldingId(item.getProdId()); // fallback
+                    System.out.println("== [보정] FUND holdingId -> prodId 사용: " + item.getProdId());
+                }
+                // prodId 누락 확인
+                if (item.getProdId() == null || item.getProdId().isBlank()) {
+                    System.out.println("⚠️ [WARN] FUND prodId 누락됨! holdingId=" + item.getHoldingId());
+                }
+            }
+
             if ("PRINCIPAL".equalsIgnoreCase(item.getType())) {
+                // ledgerId <-> id 싱크
+                if (item.getLedgerId() == null && item.getId() != null) {
+                    item.setLedgerId(item.getId());
+                }
+                if (item.getId() == null && item.getLedgerId() != null) {
+                    item.setId(item.getLedgerId());
+                }
+
                 if (item.getLedgerId() == null) {
-                    System.out.println("== [WARN] PRINCIPAL 매도인데 id 없음 → 오류 가능");
-                } else {
-                    System.out.println("== [INFO] PRINCIPAL 매도 저장 (ledger.id=" + item.getLedgerId() + ")");
+                    System.out.println("⚠️ [WARN] PRINCIPAL ledgerId 누락됨!");
                 }
             }
         }
+
+        // ✅ 매도 총액 계산
+        BigDecimal total = items.stream()
+            .map(i -> i.getAmount() == null ? BigDecimal.ZERO : i.getAmount())
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         dto.setSoldItems(items);
         dto.setSoldTotalAmount(total);
         session.setAttribute("ChangeValueDto", dto);
 
-        return ResponseEntity.ok(Map.of("ok", true, "soldTotal", total, "soldItems", items));
+        return ResponseEntity.ok(Map.of(
+            "ok", true,
+            "soldTotal", total,
+            "soldItems", items
+        ));
     }
 
-    /** ✅ 선택한 매수상품 + 문서까지 세션에 저장 */
+    /** ✅ 매수 저장 */
     @PostMapping("/buy/save")
     public ResponseEntity<?> saveBuy(@RequestBody Object body, HttpSession session) {
         ChangeValueDto dto = (ChangeValueDto) session.getAttribute("ChangeValueDto");
@@ -63,51 +83,46 @@ public class ChangeStep2SessionController {
         List<Map<String,Object>> fileUrls = new ArrayList<>();
 
         if (body instanceof List) {
-            // JS에서 배열만 보낸 경우: [ {...}, {...} ]
+            // JS에서 배열만 보낸 경우
             items = mapper.convertValue(body,
-                    mapper.getTypeFactory().constructCollectionType(List.class, ChangeValueDto.BuyItem.class));
+                mapper.getTypeFactory().constructCollectionType(List.class, ChangeValueDto.BuyItem.class));
 
-            // ✅ fileUrlList는 덮어쓰지 말고 세션에 있던 값 유지
+            // fileUrlList 유지
             if (dto.getFileUrlList() != null) {
-                try {
-                    fileUrls = mapper.readValue(dto.getFileUrlList(), List.class);
-                } catch (Exception ignored) {}
+                try { fileUrls = mapper.readValue(dto.getFileUrlList(), List.class); }
+                catch (Exception ignored) {}
             }
         } else if (body instanceof Map) {
             Map<String,Object> map = (Map<String,Object>) body;
-
             items = mapper.convertValue(map.get("buyItems"),
-                    mapper.getTypeFactory().constructCollectionType(List.class, ChangeValueDto.BuyItem.class));
-
+                mapper.getTypeFactory().constructCollectionType(List.class, ChangeValueDto.BuyItem.class));
             fileUrls = mapper.convertValue(map.get("fileUrlList"), List.class);
         }
 
-        // 합계 계산
         BigDecimal total = items.stream()
-                .map(i -> i.getAmount() == null ? BigDecimal.ZERO : i.getAmount())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            .map(i -> i.getAmount() == null ? BigDecimal.ZERO : i.getAmount())
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         dto.setBuyItems(items);
         dto.setBuyTotalAmount(total);
 
-        // fileUrlList 저장 (없으면 기존 값 유지)
-        try {
-            dto.setFileUrlList(mapper.writeValueAsString(fileUrls));
-        } catch (Exception e) {
+        // fileUrlList 저장 (없으면 기존 유지)
+        try { dto.setFileUrlList(mapper.writeValueAsString(fileUrls)); }
+        catch (Exception e) {
             if (dto.getFileUrlList() == null) dto.setFileUrlList("[]");
         }
 
         session.setAttribute("ChangeValueDto", dto);
 
         return ResponseEntity.ok(Map.of(
-                "ok", true,
-                "buyTotal", total,
-                "buyItems", items,
-                "fileUrls", fileUrls
+            "ok", true,
+            "buyTotal", total,
+            "buyItems", items,
+            "fileUrls", fileUrls
         ));
     }
 
-
+    /** ✅ 세션 스냅샷 */
     @GetMapping("/snapshot")
     public ResponseEntity<?> snapshot(HttpSession session) {
         ChangeValueDto dto = (ChangeValueDto) session.getAttribute("ChangeValueDto");

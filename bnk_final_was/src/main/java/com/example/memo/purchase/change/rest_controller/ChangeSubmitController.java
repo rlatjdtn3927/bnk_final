@@ -31,12 +31,60 @@ public class ChangeSubmitController {
     @PostMapping("/submit")
     public ResponseEntity<?> submitChange(@RequestBody RequestChangeDto req, HttpSession session) {
         try {
-            // 디버깅 로그
-            System.out.println("== [/submit] 요청 DTO: " + req);
+            // 전체 DTO JSON 로그
+            String jsonDebug = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(req);
+            System.out.println("== [/submit] 요청 DTO 전체(JSON):\n" + jsonDebug);
 
+            // 개별 필드 확인
+            System.out.println("== accountType: " + req.getAccountType());
+            System.out.println("== accountId: " + req.getAccountId());
+
+            // 매도 펀드
+            if (req.getSoldProdList() != null) {
+                System.out.println("== 매도 펀드 목록 (" + req.getSoldProdList().size() + "개)");
+                req.getSoldProdList().forEach(f ->
+                    System.out.println("   - prodId=" + f.getProdId() + ", ratio=" + f.getRatio())
+                );
+            } else {
+                System.out.println("== 매도 펀드 목록 없음");
+            }
+
+            // 매도 예금
+            if (req.getSoldPrincipalIdList() != null) {
+                System.out.println("== 매도 예금 목록 (" + req.getSoldPrincipalIdList().size() + "개)");
+                req.getSoldPrincipalIdList().forEach(p ->
+                    System.out.println("   - id=" + p.getId() + ", ratio=" + p.getRatio())
+                );
+            } else {
+                System.out.println("== 매도 예금 목록 없음");
+            }
+
+            // 매수 펀드
+            if (req.getBuyFundList() != null) {
+                System.out.println("== 매수 펀드 목록 (" + req.getBuyFundList().size() + "개)");
+                req.getBuyFundList().forEach(b ->
+                    System.out.println("   - prodId=" + b.getProdId() + ", cost=" + b.getCost())
+                );
+            } else {
+                System.out.println("== 매수 펀드 목록 없음");
+            }
+
+            // 매수 예금
+            if (req.getBuyPrincipalList() != null) {
+                System.out.println("== 매수 예금 목록 (" + req.getBuyPrincipalList().size() + "개)");
+                req.getBuyPrincipalList().forEach(b ->
+                    System.out.println("   - prodId=" + b.getProdId() + ", cost=" + b.getCost())
+                );
+            } else {
+                System.out.println("== 매수 예금 목록 없음");
+            }
+
+            // AP로 그대로 전송
             JsonNode payload = mapper.valueToTree(req);
             TcpMessage msg = new TcpMessage(Command.CHANGE_UPDATE_LEDGER, payload);
             JsonNode response = tcpClientService.sendMessage(msg);
+
+            System.out.println("== [/submit] AP 응답:\n" + response.toPrettyString());
 
             return ResponseEntity.ok(response);
 
