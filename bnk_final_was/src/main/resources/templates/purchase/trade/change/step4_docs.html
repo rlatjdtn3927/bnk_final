@@ -1,0 +1,155 @@
+<!-- templates/purchase/trade/change/step4_docs.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <title>서류 동의 - 변경 Step 4</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .doc-card{border:1px solid #e5e7eb;border-radius:14px;padding:14px}
+    .muted{color:#6b7280;font-size:.9rem}
+    .pill{background:#f3f4f6;border-radius:9999px;padding:2px 10px;font-size:12px}
+    .disabled{opacity:.5;pointer-events:none}
+  </style>
+</head>
+<body class="bg-neutral-100 text-neutral-900">
+<div class="max-w-3xl mx-auto p-5">
+
+  <header class="mb-5">
+    <h1 class="text-2xl font-bold">서류 확인 및 동의</h1>
+    <p class="muted mt-1">선택한 매수 상품의 문서를 확인하고 동의해 주세요.</p>
+  </header>
+
+  <!-- 세션 표시 -->
+  <section class="mb-4 text-sm flex gap-2 items-center">
+    <span class="pill">계좌유형: <b th:text="${session.ChangeValueDto?.accountType}">-</b></span>
+    <span class="pill">계좌ID: <b th:text="${session.ChangeValueDto?.accountId}">-</b></span>
+    <span class="pill" th:if="${session.ChangeValueDto?.riskGrade != null}">
+      투자성향: <b th:text="${session.ChangeValueDto?.riskGrade}">-</b>
+    </span>
+  </section>
+
+  <!-- 문서 리스트 -->
+  <section id="docList" class="space-y-3 mb-6">
+    <div class="doc-card bg-white">문서를 불러오는 중…</div>
+  </section>
+
+  <!-- 전체 동의 -->
+  <section class="bg-white rounded-2xl p-4 shadow-sm mb-4">
+    <label class="inline-flex items-center gap-2 cursor-pointer">
+      <input type="checkbox" id="checkAll" class="w-5 h-5">
+      <span class="font-medium">전체 동의</span>
+      <span id="progress" class="muted">(0/0)</span>
+    </label>
+  </section>
+
+  <!-- 제출 -->
+  <form id="consentForm" method="post" action="/purchase/trade/change/step4/next"
+        class="bg-white rounded-2xl p-4 shadow-sm">
+    <input type="hidden" id="fileUrlListField" name="fileUrlList" value="[]">
+    <div class="flex items-center justify-between">
+      <a href="/purchase/trade/change/step2/buy-list" class="px-4 py-2 rounded-xl border border-neutral-300">이전</a>
+      <button id="nextBtn" type="submit" class="px-5 py-2 rounded-xl bg-blue-600 text-white disabled">
+        다음(요약)
+      </button>
+    </div>
+  </form>
+
+  <p class="muted text-xs mt-3">* 모든 문서에 동의해야 다음 단계로 이동할 수 있습니다.</p>
+</div>
+
+<script>
+(async function(){
+  const listEl = document.getElementById('docList');
+  const checkAllEl = document.getElementById('checkAll');
+  const nextBtn = document.getElementById('nextBtn');
+  const progressEl = document.getElementById('progress');
+  const fileUrlListField = document.getElementById('fileUrlListField');
+
+  let files = [];
+
+  // ✅ WAS에서 /docs/list 호출
+  try {
+    const res = await fetch('/retain-api/change/docs/list');
+    const data = await res.json();
+    files = data.files || [];
+  } catch(e) {
+    console.error('문서 조회 실패', e);
+    files = [];
+  }
+
+  function escapeHtml(s){ return (s ?? '').toString()
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+  function render(){
+    listEl.innerHTML = '';
+    if(!files.length){
+      listEl.innerHTML = `<div class="doc-card bg-white">표시할 문서가 없습니다.</div>`;
+      nextBtn.classList.remove('disabled');
+      progressEl.textContent = '(0/0)';
+      return;
+    }
+    files.forEach(f=>{
+      // ✅ 안전 fallback 처리
+      const prodName = f.prodName || f.productName || f.fundName || '-';
+      const docType = f.docType || f.type || '';
+      const fileUrl = f.fileUrl || f.FILE_URL || f.url || '';
+      const href = fileUrl.startsWith('/')?fileUrl:'/'+fileUrl;
+
+      const row = document.createElement('div');
+      row.className='doc-card bg-white flex items-start justify-between gap-4';
+      row.innerHTML=`
+        <div class="flex-1">
+          <div class="font-semibold">${escapeHtml(prodName)}
+            ${docType? ' | <span class="muted">'+escapeHtml(docType)+'</span>':''}
+          </div>
+          <div class="muted mt-1 break-all">${escapeHtml(fileUrl)}</div>
+          <div class="mt-2 flex gap-2">
+            ${fileUrl ? `
+              <a class="px-3 py-1 rounded-lg border" href="${href}" target="_blank">미리보기</a>
+              <a class="px-3 py-1 rounded-lg border" href="${href}" download>다운로드</a>` 
+              : `<span class="text-red-500 text-sm">문서 없음</span>`}
+          </div>
+        </div>
+        <label class="flex items-center gap-2">
+          <input type="checkbox" class="doc-check w-5 h-5"><span class="text-sm">동의</span>
+        </label>`;
+      listEl.appendChild(row);
+    });
+    refreshProgress();
+  }
+
+  function refreshProgress(){
+    const checks=[...document.querySelectorAll('.doc-check')];
+    const total=checks.length, checked=checks.filter(c=>c.checked).length;
+    progressEl.textContent=`(${checked}/${total})`;
+    if(!total||checked===total) nextBtn.classList.remove('disabled');
+    else nextBtn.classList.add('disabled');
+    fileUrlListField.value=JSON.stringify(files.map((f,i)=>({...f,consented:!!checks[i]?.checked})));
+  }
+
+  checkAllEl.addEventListener('change',()=>{
+    document.querySelectorAll('.doc-check').forEach(c=>c.checked=checkAllEl.checked);
+    refreshProgress();
+  });
+
+  listEl.addEventListener('change',(e)=>{
+    if(e.target.classList.contains('doc-check')){
+      const checks=[...document.querySelectorAll('.doc-check')];
+      checkAllEl.checked=checks.length&&checks.every(c=>c.checked);
+      refreshProgress();
+    }
+  });
+
+  document.getElementById('consentForm').addEventListener('submit',(e)=>{
+    if(nextBtn.classList.contains('disabled')){
+      e.preventDefault(); alert('모든 문서에 동의해야 합니다.');
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
