@@ -21,14 +21,13 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class UpdateHoldings {
+public class UpdateHoldingsService {
 
     
 	static final int SCALE_CAL = 12;
 	static final int SCALE_SAVE = 6;
 	static final int SCALE_RATE = 4;
 	static final RoundingMode RMUP = RoundingMode.HALF_UP;
-	static final RoundingMode RMDN = RoundingMode.DOWN;
 	
     private final FundHoldingsRepository fundHoldingsRepository;
     private final PrincipalHoldingsRepository principalHoldingsRepository;
@@ -50,7 +49,7 @@ public class UpdateHoldings {
     			BigDecimal newProfitLoss = newValueAmt.subtract(holdings.getAcquisitionAmount());
     			holdings.setProfitLoss(newProfitLoss.setScale(SCALE_SAVE, RMUP));
     			BigDecimal newRr = newProfitLoss.divide(holdings.getAcquisitionAmount(), SCALE_CAL, RMUP);
-    			holdings.setReturnRate(newRr);
+    			holdings.setReturnRate(newRr.setScale(SCALE_RATE, RMUP));
     			
     			fundHoldingsRepository.save(holdings);
     		}
@@ -64,12 +63,14 @@ public class UpdateHoldings {
     		for(PrincipalHoldings holdings : principalHoldingList) {
     			BigDecimal contractAmount = holdings.getContractAmount();
     			LocalDate startDate = holdings.getStartDate();
-    			long days = ChronoUnit.DAYS.between(startDate, LocalDate.now())%365;
+    			long days = ChronoUnit.DAYS.between(startDate, LocalDate.now());
     			
     			BigDecimal interestRate = holdings.getInterestRate();
     			BigDecimal wholeInterest = contractAmount.multiply(interestRate).divide(BigDecimal.valueOf(100) , SCALE_CAL, RMUP);
-    			BigDecimal proRatedInterest = wholeInterest.multiply(BigDecimal.valueOf(days));
-    					
+    			BigDecimal proRatedInterest = wholeInterest.multiply(BigDecimal.valueOf(days)).divide(BigDecimal.valueOf(365) ,SCALE_CAL, RMUP);
+    			
+    			holdings.setInterestAccrued(proRatedInterest.setScale(SCALE_SAVE,RMUP));
+    			principalHoldingsRepository.save(holdings);
     		}
     	}
     }
