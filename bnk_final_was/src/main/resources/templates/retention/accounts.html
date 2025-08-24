@@ -205,7 +205,7 @@ h1{ font-size:22px; margin:0 0 16px 4px; letter-spacing:-0.2px; }
           <table class="table" id="tbl-principal">
             <thead>
               <tr>
-                <th class="sortable" data-key="principalId">상품ID</th>
+                <th class="sortable" data-key="principalId">상품명</th>
                 <th class="sortable" data-key="contractAmount" data-num>가입원금</th>
                 <th class="sortable" data-key="interestRate" data-num>약정금리</th>
                 <th>기간</th>
@@ -482,19 +482,27 @@ function renderReturnBar(){
 }
 
 function renderPrincipalTable(prins){
-  const tbody = document.querySelector('#tbl-principal tbody');
-  tbody.innerHTML =
-    (prins||[]).map(p=>`
-      <tr>
-        <td>${p.principalId||'-'}</td>
-        <td>${fmtCurrency(p.contractAmount)}</td>
-        <td>${p.interestRate??'-'} %</td>
-        <td>${(p.startDate||'').slice(5)}~${(p.maturityDate||'').slice(5)}</td>
-        <td>${fmtCurrency(p.interestAccrued)}</td>
-        <td>${p.status||'-'}</td>
-      </tr>`).join('') ||
-    `<tr><td colspan="6" class="small muted" style="text-align:center;">데이터 없음</td></tr>`;
-}
+	  const tbody = document.querySelector('#tbl-principal tbody');
+
+	  if (!Array.isArray(prins) || prins.length === 0){
+	    tbody.innerHTML = `<tr><td colspan="6" class="small muted" style="text-align:center;">데이터 없음</td></tr>`;
+	    return;
+	  }
+
+	  tbody.innerHTML = prins.map(p => {
+	    const name = p.prodName || p.principalName || p.principalId || '-';
+	    return `
+	      <tr>
+	        <td>${name}</td>
+	        <td>${fmtCurrency(p.contractAmount)}</td>
+	        <td>${p.interestRate ?? '-'} %</td>
+	        <td>${(p.startDate || '').slice(5)}~${(p.maturityDate || '').slice(5)}</td>
+	        <td>${fmtCurrency(p.interestAccrued)}</td>
+	        <td>${p.status || '-'}</td>
+	      </tr>`;
+	  }).join('');
+	}
+
 
 function renderFundTable(funds){
   const tbody = document.querySelector('#tbl-fund tbody');
@@ -595,7 +603,8 @@ function calcAndRenderPrincipalStats(prins=[], prinRatio){
       const mat = new Date(p.maturityDate);
       if ((mat - today) / (1000*60*60*24) <= 183) dueSoon++;
     }
-    const name = p.productName || p.principalName || p.productId || p.principalId || '상품';
+    const name = p.prodName || p.principalId || '상품ID';
+
     byProd[name] = (byProd[name] || 0) + principal;
   });
 
@@ -646,7 +655,7 @@ function renderHoldingCards(){
         <span class="tag red">원리금보장</span>
         <span class="small">${p.status||''}</span>
       </div>
-      <div class="h-name">${p.productName || p.principalName || p.principalId || '상품'}</div>
+      <div class="h-name">${p.prodName || p.principalId || '상품ID'}</div>
       <div class="h-grid" style="margin-top:10px">
         <div class="label">가입원금</div><div class="val">${fmtCurrency(p.contractAmount)}</div>
         <div class="label">평가액</div><div class="val">${fmtCurrency(evalAmt)}</div>
