@@ -56,6 +56,14 @@ public class AdminPageDataService {
         totals.put("dcFund",       dec(totalsNode.path("DC").path("fundTotal")));
         
         model.addAttribute("totals", totals);
+        try {
+            String totalsJson = objectMapper.writeValueAsString(totals);
+            model.addAttribute("totalsJson", totalsJson);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to serialize totals to JSON", e);
+            model.addAttribute("totalsJson", "{}");
+        }
+
 
         try {
             String allocationJson = objectMapper.writeValueAsString(result.path("allocation"));

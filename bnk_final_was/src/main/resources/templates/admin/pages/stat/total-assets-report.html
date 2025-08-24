@@ -110,53 +110,30 @@
   </div>
 
   <script th:inline="javascript">
-    const RAW = {
-      irp: {
-        cash:      '/*[[${totals.irpCash}]]*/',
-        principal: '/*[[${totals.irpPrincipal}]]*/',
-        fund:      '/*[[${totals.irpFund}]]*/',
-        total:     '/*[[${totals.irpTotal}]]*/'
-      },
-      dc: {
-        cash:      '/*[[${totals.dcCash}]]*/',
-        principal: '/*[[${totals.dcPrincipal}]]*/',
-        fund:      '/*[[${totals.dcFund}]]*/',
-        total:     '/*[[${totals.dcTotal}]]*/'
-      }
-    };
+    const totalsJson     = /*[[${totalsJson}]]*/ '{}';
+    const allocationJson = /*[[${allocationJson}]]*/ '[]';
+    const riskJson       = /*[[${riskJson}]]*/ '[]';
 
-    const toNum = v => {
-      const n = Number(String(v ?? '0').replace(/,/g,'').trim());
-      return Number.isFinite(n) ? n : 0;
-    };
-
-    const totals = {
-      irp: { cash: toNum(RAW.irp.cash), principal: toNum(RAW.irp.principal), fund: toNum(RAW.irp.fund), total: toNum(RAW.irp.total) },
-      dc:  { cash: toNum(RAW.dc.cash),  principal: toNum(RAW.dc.principal),  fund: toNum(RAW.dc.fund),  total: toNum(RAW.dc.total)  }
-    };
-
-    const allocation = /*[[${allocationJson}]]*/ '[]';
-    const risk       = /*[[${riskJson}]]*/ '[]';
+    const totals     = JSON.parse(totalsJson);
+    const allocation = JSON.parse(allocationJson);
+    const risk       = JSON.parse(riskJson);
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
   <script>
     const fmtMoney = n => (Number(n)||0).toLocaleString('ko-KR', { maximumFractionDigits: 0 });
     const fmtPct   = n => (Number(n)||0).toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     // Render Tables
     (function renderTables(){
-      const a = JSON.parse(allocation || '[]');
-      const r = JSON.parse(risk || '[]');
-
       document.querySelector('#tbl-allocation tbody').innerHTML =
-        a.map(x => `<tr><td>${x.category}</td><td>${fmtMoney(x.amount)}</td><td>${fmtPct(x.percent)}</td></tr>`).join('');
-
+        allocation.map(x => `<tr><td>${x.category}</td><td>${fmtMoney(x.amount)}</td><td>${fmtPct(x.percent)}</td></tr>`).join('');
       document.querySelector('#tbl-risk tbody').innerHTML =
-        r.map(x => `<tr><td>${x.bucket}</td><td>${fmtMoney(x.amount)}</td><td>${fmtPct(x.percent)}</td></tr>`).join('');
+        risk.map(x => `<tr><td>${x.bucket}</td><td>${fmtMoney(x.amount)}</td><td>${fmtPct(x.percent)}</td></tr>`).join('');
     })();
 
- // 막대 차트 (코드 보완 버전)
+ // 막대 차트
     const barCtx = document.getElementById('barTotalAssets').getContext('2d');
     new Chart(barCtx, {
       type: 'bar',
@@ -165,29 +142,25 @@
         datasets: [
           {
             label: '현금',
-            data: [totals.irp.cash, totals.dc.cash],
-            backgroundColor: '#36a2eb' // 파란색 계열
+            data: [totals.irpCash, totals.dcCash],
+            backgroundColor: '#36a2eb'
           },
           {
             label: '원리금',
-            data: [totals.irp.principal, totals.dc.principal],
-            backgroundColor: '#ff6384' // 붉은색 계열
+            data: [totals.irpPrincipal, totals.dcPrincipal],
+            backgroundColor: '#ff6384'
           },
           {
             label: '펀드',
-            data: [totals.irp.fund, totals.dc.fund],
-            backgroundColor: '#ffce56' // 노란색 계열
+            data: [totals.irpFund, totals.dcFund],
+            backgroundColor: '#ffce56'
           }
         ]
       },
       options: {
         responsive: true,
         scales: {
-          x: {
-            stacked: true,
-          },
           y: {
-            stacked: true,
             beginAtZero: true,
             ticks: {
               callback: v => `${(v/10000).toLocaleString()}만`
@@ -196,45 +169,33 @@
         },
         plugins:{
           legend:{ position:'top' },
-          // 툴팁 값 참조를 c.raw에서 c.parsed.y로 명확하게 변경
           tooltip:{ callbacks:{ label: c => `${c.dataset.label}: ${fmtMoney(c.parsed.y)}` } }
         }
       }
     });
 
     // Doughnut Charts
-    const allocData = JSON.parse(allocation || '[]');
     new Chart(document.getElementById('donutAllocation').getContext('2d'), {
       type:'doughnut',
-      data:{ labels: allocData.map(x=>x.category), datasets:[{ data: allocData.map(x=>x.amount) }] },
-      options:{ responsive:true, cutout:'60%',
-        plugins:{ legend:{ position:'right' }, tooltip:{ callbacks:{ label:c=>`${c.label}: ${fmtMoney(c.parsed)} (${fmtPct(allocData[c.dataIndex]?.percent||0)}%)` } } }
-      }
+      data:{ labels: allocation.map(x=>x.category), datasets:[{ data: allocation.map(x=>x.amount) }] },
+      options:{ responsive:true, cutout:'60%', plugins:{ legend:{ position:'right' }, tooltip:{ callbacks:{ label:c=>`${c.label}: ${fmtMoney(c.parsed)} (${fmtPct(allocation[c.dataIndex]?.percent||0)}%)` } } } }
     });
 
-    const riskData = JSON.parse(risk || '[]');
     new Chart(document.getElementById('donutRisk').getContext('2d'), {
       type:'doughnut',
-      data:{ labels: riskData.map(x=>x.bucket), datasets:[{ data: riskData.map(x=>x.amount) }] },
-      options:{ responsive:true, cutout:'60%',
-        plugins:{ legend:{ position:'right' }, tooltip:{ callbacks:{ label:c=>`${c.label}: ${fmtMoney(c.parsed)} (${fmtPct(riskData[c.dataIndex]?.percent||0)}%)` } } }
-      }
+      data:{ labels: risk.map(x=>x.bucket), datasets:[{ data: risk.map(x=>x.amount) }] },
+      options:{ responsive:true, cutout:'60%', plugins:{ legend:{ position:'right' }, tooltip:{ callbacks:{ label:c=>`${c.label}: ${fmtMoney(c.parsed)} (${fmtPct(risk[c.dataIndex]?.percent||0)}%)` } } } }
     });
 
     // CSV Download
     document.getElementById('btn-download').addEventListener('click', () => {
-      const a = JSON.parse(allocation || '[]');
-      const r = JSON.parse(risk || '[]');
-
       const totalsCsv = [
         ['type','cash','principal','fund','total'],
-        ['IRP', totals.irp.cash, totals.irp.principal, totals.irp.fund, totals.irp.total],
-        ['DC',  totals.dc.cash,  totals.dc.principal,  totals.dc.fund,  totals.dc.total]
+        ['IRP', totals.irpCash, totals.irpPrincipal, totals.irpFund, totals.irpTotal],
+        ['DC',  totals.dcCash,  totals.dcPrincipal,  totals.dcFund,  totals.dcTotal]
       ].map(row => row.join(',')).join('\n');
-
-      const allocCsv = [['category','amount','percent'], ...a.map(x=>[x.category,x.amount,x.percent??0])].map(r=>r.join(',')).join('\n');
-      const riskCsv  = [['bucket','amount','percent'],  ...r.map(x=>[x.bucket,x.amount,x.percent??0])].map(r=>r.join(',')).join('\n');
-
+      const allocCsv = [['category','amount','percent'], ...allocation.map(x=>[x.category,x.amount,x.percent??0])].map(r=>r.join(',')).join('\n');
+      const riskCsv  = [['bucket','amount','percent'],  ...risk.map(x=>[x.bucket,x.amount,x.percent??0])].map(r=>r.join(',')).join('\n');
       [{name:'totals.csv', data:totalsCsv},{name:'allocation.csv', data:allocCsv},{name:'risk.csv', data:riskCsv}]
         .forEach(f=>{
           const blob = new Blob([f.data], { type:'text/csv;charset=utf-8;' });
