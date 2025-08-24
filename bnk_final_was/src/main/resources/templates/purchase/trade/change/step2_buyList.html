@@ -17,12 +17,10 @@
     </div>
   </section>
 
-  <!-- 상품 추가 영역 (검색/선택 연동 자리) -->
   <section class="bg-white rounded-2xl shadow p-4 space-y-3">
     <div class="flex items-center justify-between">
       <h3 class="text-lg font-semibold">매수 목록</h3>
       <div class="flex gap-2">
-        <!-- TODO: 실제 상품검색 모달/페이지 연동 -->
         <button id="addRow" class="px-3 py-2 rounded-xl bg-neutral-200">행 추가</button>
         <button id="clearAll" class="px-3 py-2 rounded-xl bg-neutral-200">초기화</button>
       </div>
@@ -48,8 +46,7 @@
         비율 합계: <b id="sumRatio">0%</b>
       </div>
       <div class="flex gap-2">
-        <a href="/purchase/trade/change/step2/change-add-ratio" class="px-4 py-2 rounded-xl bg-neutral-200">이전</a>
-        <!-- 다음: Step4 서류 -->
+        <a href="/purchase/trade/change/step2/changeProdList" class="px-4 py-2 rounded-xl bg-neutral-200">이전</a>
         <button id="nextBtn" class="px-4 py-2 rounded-xl bg-blue-600 text-white disabled:opacity-40" disabled>
           다음(서류 페이지)
         </button>
@@ -60,13 +57,14 @@
 </div>
 
 <script>
-  const fmtKRW = n => (n ?? 0).toLocaleString('ko-KR') + '원';
+  const fmtKRW = n => (Number(n||0)).toLocaleString('ko-KR') + '원';
 
+  /* 행 템플릿: 필드명은 prodId 사용 */
   function rowTemplate(idx, item){
     return `
       <tr class="border-b" data-idx="${idx}">
         <td class="py-2 pr-3">
-          <input class="pid w-40 px-2 py-1 border rounded" value="${item.productId ?? ''}">
+          <input class="pid w-40 px-2 py-1 border rounded" value="${item.prodId ?? ''}">
         </td>
         <td class="py-2 pr-3">
           <input class="pname w-64 px-2 py-1 border rounded" value="${item.name ?? ''}">
@@ -83,7 +81,6 @@
   }
 
   function recalc(all, soldTotal){
-    // 금액 = soldTotal * ratio/100 (소수점 버림)
     all.forEach(it => {
       const r = Number(it.ratio || 0);
       it.amount = Math.floor(soldTotal * r / 100);
@@ -111,7 +108,7 @@
     tbody.querySelectorAll('.pid').forEach(inp=>{
       inp.addEventListener('input', ()=>{
         const idx = Number(inp.closest('tr').dataset.idx);
-        all[idx].productId = inp.value;
+        all[idx].prodId = inp.value;  // ← prodId
       });
     });
     tbody.querySelectorAll('.pname').forEach(inp=>{
@@ -136,65 +133,69 @@
     const sum = all.reduce((a,c)=> a + Number(c.ratio||0), 0);
     document.getElementById('sumRatio').textContent = `${sum}%`;
     const next = document.getElementById('nextBtn');
-    next.disabled = (sum !== 100) || all.length === 0 || all.some(x => !x.productId || !x.name);
+    next.disabled = (sum !== 100) || all.length === 0 || all.some(x => !x.prodId || !x.name);
+  }
+
+  function inferTypeByName(name=''){
+    const s = String(name).toLowerCase();
+    return (s.includes('예금') || s.includes('현금')) ? 'PRINCIPAL' : 'FUND';
   }
 
   async function goNext(all, soldTotal){
-     // 금액 최신 계산(보수)
-     all.forEach(it=>{
-       const r = Number(it.ratio || 0);
-       it.amount = Math.floor(soldTotal * r / 100);
-     });
+    // 보수 계산
+    recalc(all, soldTotal);
 
-     // 서버 세션 저장 (type 분류: 행 추가 시 저장해두거나, 아래에서 추론)
-     const payload = all.map(it=>{
-       let type = it.type;
-       if(!type){
-         // 이름/선택 과정에서 못박지 않았다면 productId 패턴/라벨로 보수
-         const name = (it.name || '').toLowerCase();
-         type = (name.includes('예금') || name.includes('현금')) ? 'PRINCIPAL' : 'FUND';
-       }
-       return {
-         type,
-         productId: it.productId,
-         name: it.name,
-         ratio: it.ratio,
-         amount: it.amount
-       };
-     });
+    // 서버 세션 저장: ChangeValueDto.BuyItem 스펙(prodId)
+    const payload = all.map(it=>({
+      type: it.type || inferTypeByName(it.name),
+      prodId: it.prodId,
+      name: it.name,
+      ratio: it.ratio,
+      amount: it.amount
+    }));
 
-     const resp = await fetch('/retain-api/change/step2/buy/save', {
-       method:'POST', headers:{'Content-Type':'application/json'},
-       body: JSON.stringify(payload)
-     });
-     if(!resp.ok){ alert('매수 목록 저장 실패'); return; }
+    const resp = await fetch('/retain-api/change/step2/buy/save', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if(!resp.ok){ alert('매수 목록 저장 실패'); return; }
 
-     // 다음(서류)
-     location.href = '/purchase/trade/change/step4';
-   }
+    location.href = '/purchase/trade/change/step4';
+  }
 
-  (function init(){
-    const soldTotal = Number(sessionStorage.getItem('change.soldTotal') || '0');
-    document.getElementById('soldTotal').textContent = fmtKRW(soldTotal);
-
-    // 기존 선택값 복원
+  (async function init(){
+    // 세션 스냅샷에서 soldTotal & buyItems 복원
+    let soldTotal = 0;
     let all = [];
-    const raw = sessionStorage.getItem('change.buyList');
-    if (raw) {
-      try { all = JSON.parse(raw); } catch(_) {}
+
+    try{
+      const r = await fetch('/retain-api/change/step2/snapshot', {method:'GET'});
+      const data = await r.json();
+      soldTotal = Number(data?.dto?.soldTotalAmount ?? 0);
+      const buyItems = Array.isArray(data?.dto?.buyItems) ? data.dto.buyItems : [];
+
+      // buyItems를 테이블 모델로 변환 (prodId 중심)
+      all = buyItems.map(b => ({
+        type: b.type,
+        prodId: b.prodId || b.productId || '',
+        name: b.name || '',
+        ratio: Number(b.ratio || 0),
+        amount: Number(b.amount || 0)
+      }));
+    }catch(e){
+      console.error(e);
     }
+
+    document.getElementById('soldTotal').textContent = fmtKRW(soldTotal);
     recalc(all, soldTotal);
     render(all, soldTotal);
 
     document.getElementById('addRow').addEventListener('click', ()=>{
-      all.push({productId:'', name:'', ratio:0, amount:0});
-      render(all, soldTotal);
-      updateSummary(all);
+      all.push({prodId:'', name:'', ratio:0, amount:0});
+      render(all, soldTotal); updateSummary(all);
     });
     document.getElementById('clearAll').addEventListener('click', ()=>{
-      all = [];
-      render(all, soldTotal);
-      updateSummary(all);
+      all = []; render(all, soldTotal); updateSummary(all);
     });
     document.getElementById('nextBtn').addEventListener('click', ()=>goNext(all, soldTotal));
   })();
