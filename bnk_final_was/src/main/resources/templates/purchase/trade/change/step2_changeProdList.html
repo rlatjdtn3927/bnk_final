@@ -652,33 +652,42 @@
       nextBtn.disabled = !(selectedMap.size > 0);
     }
   
-    async function submitNext(){
-      if (selectedMap.size === 0){
-        alert('상품을 선택해 주세요.');
-        return;
-      }
-      const payload = [];
-      for (const [pid, obj] of selectedMap.entries()){
-        const meta = obj.meta || {};
-        payload.push({
-          type: inferTypeFromMeta(meta), // FUND | PRINCIPAL
-          prodId: String(pid),
-          name: meta.productName || ''
-        });
-      }
-      try{
-        const resp = await fetch('/retain-api/change/step2/buy/save', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify(payload)
-        });
-        if(!resp.ok){ throw new Error('save failed'); }
-      }catch(e){
-        console.error(e);
-        alert('매수 목록 저장 실패');
-        return;
-      }
-      location.href = '/purchase/trade/change/step2/buy-list';
-    }
+	async function submitNext(){
+	  if (selectedMap.size === 0){
+	    alert('상품을 선택해 주세요.');
+	    return;
+	  }
+
+	  const buyItems = [];
+	  const fileUrlList = [];
+
+	  for (const [pid, obj] of selectedMap.entries()){
+	    const meta = obj.meta || {};
+	    buyItems.push({
+	      type: inferTypeFromMeta(meta),
+	      prodId: String(pid),
+	      name: meta.productName || ''
+	    });
+
+	    // ✅ docsByProd에서 선택한 상품 문서 가져오기
+	    const docs = lastDocsByProd.get(pid) || [];
+	    docs.forEach(d => fileUrlList.push(d));
+	  }
+
+	  try{
+	    await fetch('/retain-api/change/step2/buy/save', {
+	      method:'POST',
+	      headers:{'Content-Type':'application/json'},
+	      body: JSON.stringify({ buyItems, fileUrlList })
+	    });
+	  }catch(e){
+	    console.error(e);
+	    alert('매수 목록 저장 실패');
+	    return;
+	  }
+
+	  location.href = '/purchase/trade/change/step2/buy-list';
+	}
   
     function addCheckedFromModal(){
       document.querySelectorAll('#modalBody .pick:checked').forEach(chk=>{

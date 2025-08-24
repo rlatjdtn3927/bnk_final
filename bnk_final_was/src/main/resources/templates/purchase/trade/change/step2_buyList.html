@@ -76,7 +76,7 @@
   const fmtNum = n => (Number(n||0)).toLocaleString('ko-KR');
   const parseNum = s => Number(String(s ?? '').replace(/[^\d]/g,'')) || 0;
 
-  // 행 템플릿: 금액 입력은 "숫자만, 천단위" 표시
+  // 행 템플릿
   function rowTemplate(idx, item, soldTotal){
     return `
       <tr class="border-b" data-idx="${idx}">
@@ -94,8 +94,7 @@
           <div class="flex items-center gap-2">
             <input type="text" inputmode="numeric"
                    class="amount w-40 px-2 py-1 border rounded text-right"
-                   value="${fmtNum(item.amount ?? 0)}"
-                   aria-label="매수금액(원)">
+                   value="${fmtNum(item.amount ?? 0)}">
             <span class="text-xs text-neutral-500">최대 ${fmtNum(soldTotal)}</span>
           </div>
           <div class="row-msg text-xs mt-1 text-red-600 hidden"></div>
@@ -111,7 +110,7 @@
     const tbody = document.getElementById('buyBody');
     tbody.innerHTML = all.map((it, idx)=> rowTemplate(idx, it, soldTotal)).join('');
 
-    // 비율 변경
+    // 비율
     tbody.querySelectorAll('.ratio').forEach(inp=>{
       inp.addEventListener('input', ()=>{
         const tr  = inp.closest('tr');
@@ -124,38 +123,24 @@
       });
     });
 
-    // 금액 입력 (천단위 포맷 / 합계 한도 체크 / 개별 한도 체크)
+    // 금액
     tbody.querySelectorAll('.amount').forEach(inp=>{
       const tr  = inp.closest('tr');
       const idx = Number(tr.dataset.idx);
       const msg = tr.querySelector('.row-msg');
-
-      // 포커스 시 포맷 제거
-      inp.addEventListener('focus', ()=>{
-        inp.value = String(parseNum(inp.value));
-      });
-
-      // 입력 시 즉시 검증 + 남은 한도 내에서 캡
+      inp.addEventListener('focus', ()=>{ inp.value = String(parseNum(inp.value)); });
       inp.addEventListener('input', ()=>{
         const raw = parseNum(inp.value);
-        // 현재 행 제외한 다른 금액 합
         const others = all.reduce((a,c,i)=> a + (i===idx ? 0 : Number(c.amount||0)), 0);
         const remain = Math.max(0, soldTotal - others);
-        const clamped = Math.min(raw, remain, soldTotal); // 개별/전체 모두 보수적으로 캡
+        const clamped = Math.min(raw, remain, soldTotal);
         all[idx].amount = clamped;
-        inp.value = String(clamped); // 포맷 없이 보유
-        // 메시지/스타일
+        inp.value = String(clamped);
         msg.classList.toggle('hidden', clamped === raw);
-        msg.textContent = clamped === raw ? '' : `남은 한도 ${fmtNum(remain)}원 내로 자동 조정되었습니다.`;
-        tr.querySelector('.amount').classList.toggle('ring-2', clamped !== raw);
-        tr.querySelector('.amount').classList.toggle('ring-red-400', clamped !== raw);
+        msg.textContent = clamped === raw ? '' : `남은 한도 ${fmtNum(remain)}원 내로 자동 조정됨`;
         updateSummary(all, soldTotal);
       });
-
-      // 포커스 해제 시 천단위 포맷
-      inp.addEventListener('blur', ()=>{
-        inp.value = fmtNum(parseNum(inp.value));
-      });
+      inp.addEventListener('blur', ()=>{ inp.value = fmtNum(parseNum(inp.value)); });
     });
 
     // 삭제
@@ -180,13 +165,7 @@
     document.getElementById('buyTotal').textContent = toKRW(buyTotal);
     document.getElementById('remain').textContent   = toKRW(remain);
 
-    // 규칙: ① 비율 합계=100 ② 총 매수금액 ≤ 매도합계 ③ 각 행 prodId/name 필수 ④ 금액/비율은 0 이상 정수
-    const invalidRow = all.some(r =>
-      !r.prodId || !r.name ||
-      Number(r.ratio) < 0 || Number(r.ratio) > 100 ||
-      Number(r.amount) < 0 || Number(r.amount) > soldTotal
-    );
-
+    const invalidRow = all.some(r => !r.prodId || !r.name);
     const ok = sumRatio === 100 && buyTotal > 0 && buyTotal <= soldTotal && !invalidRow;
 
     document.getElementById('nextBtn').disabled = !ok;
@@ -195,56 +174,39 @@
       const parts = [];
       if (sumRatio !== 100) parts.push('비율 합계가 100%가 아닙니다.');
       if (buyTotal > soldTotal) parts.push('매수 합계액이 매도 합계액을 초과했습니다.');
-      if (invalidRow) parts.push('빈 필드 또는 잘못된 값이 있습니다.');
+      if (invalidRow) parts.push('빈 필드가 있습니다.');
       document.getElementById('errorBox').textContent = parts.join(' ');
     }
   }
 
-  function inferTypeByName(name=''){
-    const s = String(name).toLowerCase();
-    return (s.includes('예금') || s.includes('현금')) ? 'PRINCIPAL' : 'FUND';
-  }
-
+  // ✅ 여기 새로 바뀐 goNext
   async function goNext(all, soldTotal){
-    // 저장 페이로드 (amount/ratio 모두 사용)
-    const payload = all.map(it=>({
-      type  : it.type || inferTypeByName(it.name),
-      prodId: String(it.prodId||''),
-      name  : String(it.name||''),
-      ratio : Number(it.ratio||0),
-      amount: Number(it.amount||0)
-    }));
-
-    const resp = await fetch('/retain-api/change/step2/buy/save', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(payload)
+    await fetch("/retain-api/change/step2/buy/save", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify(all)
     });
-    if(!resp.ok){ alert('매수 목록 저장 실패'); return; }
-
-    location.href = '/purchase/trade/change/step4';
+    location.href = "/purchase/trade/change/step4/docs";
   }
 
-  // ===== init =====
+  // init
   (async function init(){
     let soldTotal = 0;
     let all = [];
 
     try{
-      const r = await fetch('/retain-api/change/step2/snapshot', {method:'GET'});
+      const r = await fetch('/retain-api/change/step2/snapshot');
       const data = await r.json();
       soldTotal = Number(data?.dto?.soldTotalAmount ?? 0);
       const buyItems = Array.isArray(data?.dto?.buyItems) ? data.dto.buyItems : [];
-
       all = buyItems.map(b => ({
         type  : b.type,
-        prodId: b.prodId || b.productId || '',
+        prodId: b.prodId || '',
         name  : b.name   || '',
         ratio : Number(b.ratio || 0),
-        amount: Math.min(Number(b.amount || 0), soldTotal) // 보수적 캡
+        amount: Math.min(Number(b.amount || 0), soldTotal)
       }));
-    }catch(e){
-      console.error(e);
-    }
+    }catch(e){ console.error(e); }
 
     document.getElementById('soldTotal').textContent = toKRW(soldTotal);
     render(all, soldTotal);
