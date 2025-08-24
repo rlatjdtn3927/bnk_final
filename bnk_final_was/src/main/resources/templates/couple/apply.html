@@ -291,7 +291,7 @@
                     break;
                 case 'AWAIT_ADMIN_REQUEST':
                     setStatus('error', '자동 판독 실패', '자동 판독에 3회 실패했습니다.<br>관리자에게 직접 검토를 요청하시겠습니까?');
-                    currentLinkId = data.linkI;
+                    currentLinkId = data.linkId;
                     submitBtn.style.display = 'none';
                     adminRequestBtn.style.display = 'flex';
                     break;

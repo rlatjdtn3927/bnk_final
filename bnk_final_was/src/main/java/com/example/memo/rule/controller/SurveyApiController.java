@@ -21,6 +21,7 @@ public class SurveyApiController {
 
     private final TcpClientService tcpClientService;
     private final ObjectMapper objectMapper;
+    private final AES256Util AES256Util;
 
     @PostMapping("/survey-api/submit")
     public ResponseEntity<?> submit(@RequestBody SurveySubmitReq req, HttpSession session) {

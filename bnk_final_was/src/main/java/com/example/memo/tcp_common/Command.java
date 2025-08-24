@@ -22,7 +22,7 @@ public enum Command {
     ACCOUNT_REQUEST_REJECT_BULK,   // 일괄 거절
     ACCOUNT_REQUEST_GET_APPROVED,
     ACCOUNT_REQUEST_GET_REJECTED,
-	ACCOUNT_GET_DETAILS,// 계좌 상세 조회
+	DC_ACCOUNT_GET_DETAILS,// 계좌 상세 조회
 	CONTRIBUTION_BATCH_CREATE,
     CONTRIBUTION_BATCH_VALIDATE,    // 부담금 일괄 등록 검증 실행
     CONTRIBUTION_BATCH_CONFIRM,   
@@ -68,6 +68,9 @@ public enum Command {
     
     /*가입자 리포트*/
     REPORT_MONTHLY_SUBSCRIBERS,
+//    IRP_JOIN_GET_CONTRACT,
+//    IRP_JOIN_INIT_OPEN,
+    IRP_ACCOUNT_DEPOSIT,
     
     // ===== 보유현황 탭 =====
     SUMMARY_GET,              // SummaryHandler: 총 평가액/수익률/입금합/당일입금/운용수익 요약 조회

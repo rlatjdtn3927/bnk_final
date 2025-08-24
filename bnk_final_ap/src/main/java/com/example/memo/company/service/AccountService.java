@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.memo.company.dto.DcAccountDetailsDto;
 import com.example.memo.jpa.entity.company.DcAccount;
 import com.example.memo.jpa.entity.company.DcMember;
+import com.example.memo.jpa.entity.company.DcMemberStatus;
 import com.example.memo.jpa.repository.company.DcAccountRepository;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -24,6 +25,8 @@ public class AccountService {
             .orElseThrow(() -> new EntityNotFoundException("해당 가입자의 계좌를 찾을 수 없습니다."));
 
         DcMember member = account.getDcMember();
+        DcMemberStatus memberStatus = member.getDcMemberStatus(); 
+
         String birthDate = "";
         try {
             birthDate = formatBirthdateFromServer(cryptoService.decrypt(member.getRrn()));
@@ -38,10 +41,13 @@ public class AccountService {
                 .createdAt(account.getCreatedAt())
                 .memberName(member.getName())
                 .birthDate(birthDate)
+                .memberStatus(memberStatus.getStatus()) // 재직 상태
+                .startDate(memberStatus.getJoinDate().toString()) // 입사일
+                .annualSalary(member.getAnnualSalary()) // 연봉
                 .build();
     }
     
-    // 주민번호 -> 생년월일 변환 메서드 (SubscriberService에서 가져오기)
+    // 주민번호 -> 생년월일 변환 메서드
     private String formatBirthdateFromServer(String rrn) {
         if (rrn == null || rrn.length() < 8) return "";
         
@@ -50,8 +56,8 @@ public class AccountService {
         String yearPrefix;
         
 
-        // 1, 2, 5, 6: 1900년대생 (5, 6은 외국인)
-        // 3, 4, 7, 8: 2000년대생 (7, 8은 외국인)
+        // 1, 2, 5, 6: 1900년대생
+        // 3, 4, 7, 8: 2000년대생
         switch (genderDigit) {
             case '1':
             case '2':

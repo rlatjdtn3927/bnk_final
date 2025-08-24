@@ -1,212 +1,193 @@
 @charset "UTF-8";
 
-:root{
-  --pri:#c82020;              /* BNK 메인 레드 */
-  --pri-h:#b01b1b;
-  --ink:#0b1324;
-  --mut:#6b7280;
-  --bg:#f5f7fb;
-  --card:#ffffff;
-  --line:#e5e7eb;
-  --ok:#0f9d58;
-  --err:#de350b;
-  --dup:#ffab00;
-  --shadow:0 8px 24px rgba(0,0,0,.08);
+:root {
+  --pri: #c82020;              /* BNK 메인 레드 */
+  --pri-h: #b01b1b;
+  --blue: #0052cc;              /* 신뢰감을 주는 파란색 추가 */
+  --ink: #172b4d;               /* 텍스트 색상을 좀 더 부드럽게 */
+  --ink-light: #42526e;
+  --mut: #6b7280;
+  --bg: #f4f5f7;                /* 배경색을 살짝 변경 */
+  --card: #ffffff;
+  --line: #dfe1e6;              /* 라인 색상 변경 */
+  --line-light: #e9ebf0;
+  --ok: #00875a;
+  --err: #de350b;
+  --dup: #ffab00;
+  --shadow-sm: 0 1px 1px rgba(0,0,0,.1); /* 그림자 스타일 변경 */
+  --shadow-sticky: 0 -2px 8px rgba(9, 30, 66, .1);
   --sticky-h: 72px;
 }
 
-*{box-sizing:border-box}
-html,body{height:100%}
-body.bnk-body{
-  margin:0;
-  font-family:Pretendard, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  color:var(--ink);
-  background:var(--bg);
-}
-
-/* 레이아웃 */
-.wrap{max-width:1200px; margin:32px auto 110px; padding:0 24px; padding-bottom: calc(var(--sticky-h) + 24px); }
-.page-head h1{margin:0 0 6px; font-size:28px; font-weight:900; letter-spacing:-.2px}
-.page-head .desc{margin:0 0 18px; color:var(--mut)}
-
-/* 카드 */
-.card{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:18px;
-  box-shadow:var(--shadow);
-  padding:18px;
-  margin-bottom:18px;
-}
-.card-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px}
-.card-head h2{margin:0; font-size:18px; font-weight:900}
-
-/* 버튼 */
-.btn{
-  display:inline-flex; align-items:center; justify-content:center; gap:8px;
-  padding:10px 16px; border-radius:10px; border:1px solid transparent;
-  font-weight:800; cursor:pointer; text-decoration:none; user-select:none;
-  transition:filter .15s ease, background .15s ease, border-color .15s ease;
-}
-.btn-primary{background:var(--pri); color:#fff}
-.btn-primary:hover{filter:brightness(.97)}
-.btn-outline{background:#fff; color:var(--ink); border-color:var(--line)}
-.btn-outline:hover{border-color:#c9d4ff}
-.btn-ghost{background:#f3f4f6; color:#1a1a1a}
-.btn-ghost:hover{filter:brightness(.96)}
-.btn:disabled{opacity:.6; cursor:not-allowed}
-
-/* 드롭존 */
-.dropzone{
-  border:2px dashed #cfd6e6; border-radius:16px; background:#fbfcff;
-  padding:28px; text-align:center; position:relative; outline:none;
-}
-.dropzone.is-hover{background:#f6f9ff; border-color:#b9c6ff}
-.dropzone input[type=file]{position:absolute; inset:0; opacity:0; cursor:pointer}
-.dz-inner{pointer-events:none}
-.dz-icon{font-size:24px; margin-bottom:4px}
-.dz-title{font-size:16px; font-weight:800}
-.dz-sub{color:var(--mut); font-size:12px}
-
-.upload-bar{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:12px}
-.file-pill{
-  display:inline-flex; align-items:center; gap:10px; padding:8px 12px; border-radius:999px;
-  background:#f3f6ff; border:1px solid #dce6ff; color:#1a1a1a;
-}
-.file-pill .x{all:unset; cursor:pointer; padding:0 6px; font-weight:900}
-.note{margin-top:10px; color:var(--mut)}
-
-/* 요약칩 */
-.summary{display:flex; gap:12px; flex-wrap:wrap; margin:8px 0 14px}
-.chip{display:inline-flex; align-items:center; gap:8px; background:#f5f6f8; border:1px solid var(--line);
-  border-radius:999px; padding:8px 12px; font-weight:800}
-.chip i{display:inline-block; width:10px; height:10px; border-radius:50%}
-.chip.total i{background:var(--pri)}
-.chip.ok i{background:var(--ok)}
-.chip.err i{background:var(--err)}
-.chip.dup i{background:var(--dup)}
-.chip b{margin-left:4px}
-
-/* 테이블 */
-.table-wrap{border:1px solid var(--line); border-radius:14px; overflow:hidden}
-.tbl{width:100%; border-collapse:collapse; min-width: 1100px}
-.tbl th, .tbl td{padding:12px 14px; border-bottom:1px solid var(--line); text-align:left}
-.tbl thead th{background:#fbfbfd; color:#445; font-size:13px}
-.tbl tbody tr:nth-child(even){background:#fbfcff}
-.tbl tbody tr:hover{background:#f6f9ff}
-.tr-error{background:#fff5f0}
-.tr-dup{background:#fff9e8}
-.with-tip{position:relative}
-.with-tip .tip{
-  visibility:hidden; opacity:0; position:absolute; left:0; bottom:100%; transform:translateY(-8px);
-  background:#222; color:#fff; padding:8px 10px; border-radius:8px; font-size:12px; white-space:pre-wrap; min-width:220px; z-index:5;
-  transition:opacity .12s ease, transform .12s ease;
-}
-.with-tip:hover .tip{visibility:visible; opacity:1; transform:translateY(-4px)}
-
-/* 가로 스크롤: 이중 래퍼 */
-.table-outer{
-  border:1px solid var(--line);
-  border-radius:14px;
-  background:#fff;
-  overflow:hidden;               /* 모서리 둥글게 유지 */
-}
-.table-scroll{
-  overflow:auto;                 /* ← 가로/세로 스크롤 허용 */
-  max-width:100%;
-}
-
-/* 하단 고정 바 */
-.sticky-bar{
-  position:fixed; left:0; right:0; bottom:0; z-index:50;
-  height: var(--sticky-h);                 /* ← 추가 */
-  display:flex; align-items:center; justify-content:space-between;
-  background:#fff; border-top:1px solid var(--line);
-  padding:0 24px;                          /* 높이 지정했으므로 수직 패딩 제거/조정 */
-}
-.sticky-bar .muted{color:var(--mut)}
-
-/* 스피너 */
-.spinner-mask[hidden] {
-  display: none;
-}
-
-.spinner-mask{
-  position:fixed; inset:0; background:rgba(255,255,255,.6); display:flex; align-items:center; justify-content:center; z-index:100;
-}
-.spinner{
-  width:54px; height:54px; border-radius:50%; border:6px solid #e3e7ef; border-top-color:var(--pri);
-  animation:spin 1s linear infinite;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-
-
-/* === 글자 렌더링 개선(윈도우/맥 공통) === */
+*{box-sizing: border-box}
+html, body {height: 100%}
 body.bnk-body {
+  margin: 0;
+  font-family: Pretendard, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-  letter-spacing: -0.2px;          /* 한글 살짝 다듬기 */
 }
 
-/* === 표 기본 타이포 정리 === */
+/* ✨ 1. 레이아웃 및 구조 개선
+  - 중앙의 좁은 카드 레이아웃 대신, 페이지 전체를 사용하는 구조로 변경
+  - 큰 그림자 대신 얇은 선(border)으로 영역을 구분하여 전문적인 느낌 강조
+*/
+.wrap {
+  max-width: 100%; /* 화면을 넓게 사용 */
+  margin: 0 auto;
+  padding: 0;
+  padding-bottom: calc(var(--sticky-h) + 24px);
+}
+.page-head {
+  background: var(--card);
+  padding: 24px 32px;
+  border-bottom: 1px solid var(--line);
+}
+.page-head h1 {margin: 0 0 8px; font-size: 24px; font-weight: 700;}
+.page-head .desc {margin: 0; color: var(--ink-light); font-size: 15px;}
+
+.card {
+  background: var(--card);
+  border: none; /* 테두리 제거 */
+  border-radius: 0; /* 각진 모서리 */
+  box-shadow: none; /* 그림자 제거 */
+  padding: 24px 32px;
+  margin-bottom: 10px; /* 섹션 간 간격 조정 */
+  border-bottom: 1px solid var(--line);
+}
+.card:last-of-type {
+  border-bottom: none;
+}
+.card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px; padding-bottom: 12px;
+  border-bottom: 1px solid var(--line-light);
+}
+.card-head h2 {
+  margin: 0; font-size: 17px; font-weight: 600; color: var(--blue);
+}
+
+/*
+  ✨ 2. 컴포넌트 디테일 수정
+  - 둥근 모서리(border-radius)를 대폭 줄여 샤프하고 견고한 느낌으로 변경
+  - 버튼, 입력 필드 등의 디자인을 정제하여 신뢰감 부여
+*/
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 8px 14px;
+  border-radius: 4px; /* 모서리 각지게 */
+  border: 1px solid var(--line);
+  font-weight: 500; /* 폰트 두께 조정 */
+  cursor: pointer; text-decoration: none; user-select: none;
+  transition: all .2s ease;
+  font-size: 14px;
+}
+.btn-primary {background: var(--pri); color: #fff; border-color: var(--pri);}
+.btn-primary:hover {background: var(--pri-h); border-color: var(--pri-h);}
+.btn-outline {background: #fff; color: var(--ink-light);}
+.btn-outline:hover {border-color: var(--ink); color: var(--ink);}
+.btn-ghost {background: var(--bg); color: var(--ink-light); border-color: var(--line);}
+.btn-ghost:hover {background: #e9ebf0;}
+.btn:disabled {opacity: .6; cursor: not-allowed; background: #fafafa !important; color: #aaa !important; border-color: var(--line) !important;}
+
+/* 드롭존 */
+.dropzone {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fafbfc;
+  padding: 32px; text-align: center; position: relative; outline: none;
+}
+.dropzone.is-hover {background: #f0f6ff; border-color: var(--blue);}
+.dropzone:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.dropzone input[type=file] {position: absolute; inset: 0; opacity: 0; cursor: pointer;}
+.dz-inner {pointer-events: none}
+.dz-icon {font-size: 28px; margin-bottom: 8px; color: var(--blue);}
+.dz-title {font-size: 16px; font-weight: 600; color: var(--ink);}
+.dz-sub {color: var(--mut); font-size: 13px; margin-top: 4px;}
+
+.upload-bar {display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px;}
+.file-pill {
+  display: inline-flex; align-items: center; gap: 10px; padding: 6px 12px; border-radius: 4px;
+  background: #f4f5f7; border: 1px solid var(--line); color: var(--ink-light);
+  font-size: 14px;
+}
+.file-pill .x {all: unset; cursor: pointer; padding: 0 4px; font-weight: 600;}
+.note {margin-top: 12px; color: var(--mut); font-size: 14px; padding: 12px; background: #fafbfc; border-radius: 4px;}
+
+/* 요약칩 */
+.summary {display: flex; gap: 12px; flex-wrap: wrap; margin: 8px 0 16px;}
+.chip {
+  display: inline-flex; align-items: center; gap: 8px; background: #fff; border: 1px solid var(--line);
+  border-radius: 4px; padding: 6px 10px; font-weight: 500; font-size: 14px;
+}
+.chip i {display: inline-block; width: 8px; height: 8px; border-radius: 50%;}
+.chip.total i {background: var(--ink);}
+.chip.ok i {background: var(--ok);}
+.chip.err i {background: var(--err);}
+.chip.dup i {background: var(--dup);}
+.chip b {margin-left: 4px; font-weight: 600;}
+
+/*
+  ✨ 3. 테이블 가독성 강화
+  - 기업용 시스템에 맞춰 정보 밀도를 높이고 명확성을 개선
+*/
+.table-outer {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  overflow: hidden;
+}
+.table-scroll {overflow: auto; max-width: 100%;}
 .tbl {
-  font-size: 14.5px;
-  line-height: 1.55;
-  color: #14171f;
+  width: 100%; border-collapse: collapse; min-width: 1100px;
+  font-size: 14px; line-height: 1.5; color: var(--ink);
 }
-
-/* 칸 여백 조금 키워서 답답함 해소 */
-.tbl th, .tbl td { 
-  padding: 14px 16px;
-  vertical-align: middle;
-  word-break: keep-all;            /* 한글 단어 중간 줄바꿈 방지 */
+.tbl th, .tbl td {
+  padding: 12px 14px; border-bottom: 1px solid var(--line-light);
+  text-align: left; vertical-align: middle;
 }
-
-/* 헤더 색감/굵기 조정 */
 .tbl thead th {
-  background: #f8f9fc;
-  color: #3b4453;
-  font-weight: 700;
-  border-bottom-color: #e7eaf0;
+  background: #fafbfc; color: var(--ink-light); font-weight: 500; font-size: 13px;
+  border-bottom: 1px solid var(--line);
 }
+.tbl tbody tr:last-child td { border-bottom: none; }
+.tbl tbody tr:hover {background: #f0f6ff;}
+.tr-error td {background: #fff4f2;}
+.tr-dup td {background: #fffbe6;}
 
-/* === 숫자/날짜/전화번호 가독성: 고정폭 숫자 + 줄바꿈 금지 === */
-/* 주민번호(2), 입사일(3), 기산일(4), 임금(5), 이메일(7 제외), 휴대폰(8), 상태(9), 가입일(10) */
-.tbl td:nth-child(2),
-.tbl td:nth-child(3),
-.tbl td:nth-child(4),
-.tbl td:nth-child(5),
-.tbl td:nth-child(8),
-.tbl td:nth-child(9),
-.tbl td:nth-child(10),
-.tbl th:nth-child(2),
-.tbl th:nth-child(3),
-.tbl th:nth-child(4),
-.tbl th:nth-child(5),
-.tbl th:nth-child(8),
-.tbl th:nth-child(9),
-.tbl th:nth-child(10) {
-  font-variant-numeric: tabular-nums;   /* 숫자 너비 고정 → 깔끔하게 정렬 */
-  font-feature-settings: "tnum";
-  white-space: nowrap;                  /* 줄바꿈 방지 */
+.with-tip {position: relative; cursor: help;}
+.with-tip .tip {
+  visibility: hidden; opacity: 0; position: absolute; left: 0; bottom: 100%; transform: translateY(-8px);
+  background: var(--ink); color: #fff; padding: 8px 10px; border-radius: 4px; font-size: 12px;
+  white-space: pre-wrap; min-width: 220px; z-index: 5;
+  transition: opacity .12s ease, transform .12s ease;
 }
+.with-tip:hover .tip {visibility: visible; opacity: 1; transform: translateY(-4px);}
 
-/* 금액은 오른쪽 정렬이 더 안정적 */
-.tbl td:nth-child(5) { text-align: right; }
+/* 하단 고정 바 */
+.sticky-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+  height: var(--sticky-h);
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(255, 255, 255, .8); /* 반투명 효과로 깊이감 */
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--line);
+  box-shadow: var(--shadow-sticky);
+  padding: 0 32px;
+}
+.sticky-bar .muted {color: var(--mut);}
 
-/* 이름은 한 줄 유지 */
-.tbl td:nth-child(1) { white-space: nowrap; }
-
-/* 이메일은 너무 길어 보이면 살짝 작게 */
-.tbl td:nth-child(7) { font-size: 14px; }
-
-/* 호버/줄무늬 톤 정리(너무 붉지 않게) */
-.tbl tbody tr:nth-child(even) { background:#fbfcff; }
-.tbl tbody tr:hover { background:#f3f6ff; }
-
-/* 오류/중복 강조 톤 미세 조정(텍스트는 그대로 또렷하게) */
-.tr-error { background: #fff6f1; }
-.tr-dup   { background: #fff9ec; }
-
+/* 스피너 */
+.spinner-mask[hidden] {display: none;}
+.spinner-mask {
+  position: fixed; inset: 0; background: rgba(255,255,255,.6);
+  display: flex; align-items: center; justify-content: center; z-index: 100;
+}
+.spinner {
+  width: 48px; height: 48px; border-radius: 50%; border: 5px solid #e3e7ef;
+  border-top-color: var(--pri);
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {to {transform: rotate(360deg)}}

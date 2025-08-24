@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <title>매수 상품 배분 (변경 Step2-3)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-neutral-50 text-neutral-900">
+<div class="max-w-5xl mx-auto p-4 space-y-6">
+
+  <!-- 상단 합계/잔여 안내 -->
+  <section class="bg-white rounded-2xl shadow p-4">
+    <h2 class="text-xl font-semibold">매수 상품 배분</h2>
+    <p class="text-sm text-neutral-500">비율 총합이 100%가 되도록 배분하세요. (금액 합계 ≤ 매도 합계액)</p>
+    <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+      <div class="p-3 rounded-lg bg-neutral-100">
+        매도 합계액: <b id="soldTotal">0원</b>
+      </div>
+      <div class="p-3 rounded-lg bg-neutral-100">
+        매수 합계액: <b id="buyTotal">0원</b>
+      </div>
+      <div class="p-3 rounded-lg bg-neutral-100">
+        남은 금액: <b id="remain">0원</b>
+      </div>
+    </div>
+  </section>
+
+  <!-- 매수 목록 -->
+  <section class="bg-white rounded-2xl shadow p-4 space-y-3">
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-semibold">매수 목록</h3>
+      <div class="flex gap-2">
+        <button id="addRow" class="px-3 py-2 rounded-xl bg-neutral-200">행 추가</button>
+        <button id="clearAll" class="px-3 py-2 rounded-xl bg-neutral-200">초기화</button>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+        <tr class="text-left text-neutral-500 border-b">
+          <th class="py-2 pr-3">상품ID</th>
+          <th class="py-2 pr-3">상품명</th>
+          <th class="py-2 pr-3">배분비율(%)</th>
+          <th class="py-2 pr-3">매수금액</th>
+          <th class="py-2 pr-3"><span class="sr-only">삭제</span></th>
+        </tr>
+        </thead>
+        <tbody id="buyBody"></tbody>
+      </table>
+    </div>
+
+    <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mt-3">
+      <div class="text-lg">
+        비율 합계: <b id="sumRatio">0%</b>
+        <span id="rulesHint" class="ml-2 text-sm text-neutral-500">
+          (비율 합계 100%, 매수 합계 ≤ 매도 합계)
+        </span>
+      </div>
+      <div id="errorBox" class="text-sm text-red-600 hidden">유효하지 않은 항목이 있습니다.</div>
+      <div class="flex gap-2">
+        <a href="/purchase/trade/change/step2/changeProdList" class="px-4 py-2 rounded-xl bg-neutral-200">이전</a>
+        <button id="nextBtn" class="px-4 py-2 rounded-xl bg-blue-600 text-white disabled:opacity-40" disabled>
+          다음(서류 페이지)
+        </button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  // ===== 유틸 =====
+  const toKRW = n => (Number(n||0)).toLocaleString('ko-KR') + '원';
+  const fmtNum = n => (Number(n||0)).toLocaleString('ko-KR');
+  const parseNum = s => Number(String(s ?? '').replace(/[^\d]/g,'')) || 0;
+
+  // 행 템플릿
+  function rowTemplate(idx, item, soldTotal){
+    return `
+      <tr class="border-b" data-idx="${idx}">
+        <td class="py-2 pr-3">
+          <input class="pid w-40 px-2 py-1 border rounded" value="${item.prodId ?? ''}">
+        </td>
+        <td class="py-2 pr-3">
+          <input class="pname w-64 px-2 py-1 border rounded" value="${item.name ?? ''}">
+        </td>
+        <td class="py-2 pr-3">
+          <input type="number" min="0" max="100" step="1"
+                 class="ratio w-24 px-2 py-1 border rounded text-right" value="${item.ratio ?? 0}">
+        </td>
+        <td class="py-2 pr-3">
+          <div class="flex items-center gap-2">
+            <input type="text" inputmode="numeric"
+                   class="amount w-40 px-2 py-1 border rounded text-right"
+                   value="${fmtNum(item.amount ?? 0)}">
+            <span class="text-xs text-neutral-500">최대 ${fmtNum(soldTotal)}</span>
+          </div>
+          <div class="row-msg text-xs mt-1 text-red-600 hidden"></div>
+        </td>
+        <td class="py-2 pr-3">
+          <button class="del px-2 py-1 rounded bg-red-100 text-red-700">삭제</button>
+        </td>
+      </tr>
+    `;
+  }
+
+  function render(all, soldTotal){
+    const tbody = document.getElementById('buyBody');
+    tbody.innerHTML = all.map((it, idx)=> rowTemplate(idx, it, soldTotal)).join('');
+
+    // 비율
+    tbody.querySelectorAll('.ratio').forEach(inp=>{
+      inp.addEventListener('input', ()=>{
+        const tr  = inp.closest('tr');
+        const idx = Number(tr.dataset.idx);
+        let v = Number(inp.value || 0);
+        if (v < 0) v = 0; if (v > 100) v = 100;
+        inp.value = v;
+        all[idx].ratio = v;
+        updateSummary(all, soldTotal);
+      });
+    });
+
+    // 금액
+    tbody.querySelectorAll('.amount').forEach(inp=>{
+      const tr  = inp.closest('tr');
+      const idx = Number(tr.dataset.idx);
+      const msg = tr.querySelector('.row-msg');
+      inp.addEventListener('focus', ()=>{ inp.value = String(parseNum(inp.value)); });
+      inp.addEventListener('input', ()=>{
+        const raw = parseNum(inp.value);
+        const others = all.reduce((a,c,i)=> a + (i===idx ? 0 : Number(c.amount||0)), 0);
+        const remain = Math.max(0, soldTotal - others);
+        const clamped = Math.min(raw, remain, soldTotal);
+        all[idx].amount = clamped;
+        inp.value = String(clamped);
+        msg.classList.toggle('hidden', clamped === raw);
+        msg.textContent = clamped === raw ? '' : `남은 한도 ${fmtNum(remain)}원 내로 자동 조정됨`;
+        updateSummary(all, soldTotal);
+      });
+      inp.addEventListener('blur', ()=>{ inp.value = fmtNum(parseNum(inp.value)); });
+    });
+
+    // 삭제
+    tbody.querySelectorAll('.del').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const idx = Number(btn.closest('tr').dataset.idx);
+        all.splice(idx,1);
+        render(all, soldTotal);
+        updateSummary(all, soldTotal);
+      });
+    });
+
+    updateSummary(all, soldTotal);
+  }
+
+  function updateSummary(all, soldTotal){
+    const sumRatio = all.reduce((a,c)=> a + Number(c.ratio||0), 0);
+    const buyTotal = all.reduce((a,c)=> a + Number(c.amount||0), 0);
+    const remain   = Math.max(0, soldTotal - buyTotal);
+
+    document.getElementById('sumRatio').textContent = `${sumRatio}%`;
+    document.getElementById('buyTotal').textContent = toKRW(buyTotal);
+    document.getElementById('remain').textContent   = toKRW(remain);
+
+    const invalidRow = all.some(r => !r.prodId || !r.name);
+    const ok = sumRatio === 100 && buyTotal > 0 && buyTotal <= soldTotal && !invalidRow;
+
+    document.getElementById('nextBtn').disabled = !ok;
+    document.getElementById('errorBox').classList.toggle('hidden', ok);
+    if (!ok){
+      const parts = [];
+      if (sumRatio !== 100) parts.push('비율 합계가 100%가 아닙니다.');
+      if (buyTotal > soldTotal) parts.push('매수 합계액이 매도 합계액을 초과했습니다.');
+      if (invalidRow) parts.push('빈 필드가 있습니다.');
+      document.getElementById('errorBox').textContent = parts.join(' ');
+    }
+  }
+
+  // ✅ 여기 새로 바뀐 goNext
+  async function goNext(all, soldTotal){
+    await fetch("/retain-api/change/step2/buy/save", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify(all)
+    });
+    location.href = "/purchase/trade/change/step4/docs";
+  }
+
+  // init
+  (async function init(){
+    let soldTotal = 0;
+    let all = [];
+
+    try{
+      const r = await fetch('/retain-api/change/step2/snapshot');
+      const data = await r.json();
+      soldTotal = Number(data?.dto?.soldTotalAmount ?? 0);
+      const buyItems = Array.isArray(data?.dto?.buyItems) ? data.dto.buyItems : [];
+      all = buyItems.map(b => ({
+        type  : b.type,
+        prodId: b.prodId || '',
+        name  : b.name   || '',
+        ratio : Number(b.ratio || 0),
+        amount: Math.min(Number(b.amount || 0), soldTotal)
+      }));
+    }catch(e){ console.error(e); }
+
+    document.getElementById('soldTotal').textContent = toKRW(soldTotal);
+    render(all, soldTotal);
+
+    document.getElementById('addRow').addEventListener('click', ()=>{
+      all.push({prodId:'', name:'', ratio:0, amount:0});
+      render(all, soldTotal);
+    });
+    document.getElementById('clearAll').addEventListener('click', ()=>{
+      all = []; render(all, soldTotal);
+    });
+    document.getElementById('nextBtn').addEventListener('click', ()=>goNext(all, soldTotal));
+  })();
+</script>
+</body>
+</html>

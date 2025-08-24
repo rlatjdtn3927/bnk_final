@@ -2,213 +2,253 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>가입자 명부 | BNK 퇴직연금</title>
+  <title>가입자 명부 조회 | BNK 퇴직연금</title>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
   <style>
     @charset "UTF-8";
 
+    /* 디자인 시스템 (등록 페이지와 동일) */
     :root {
-      /* 새로운 색상 팔레트: 전문적이고 세련된 다크 블루 테마 */
-      --pri: #4f46e5;
-      --pri-light: #eef2ff;
-      --pri-text: #3730a3;
-      --ink: #111827;
+      --pri: #c82020;              /* BNK 메인 레드 */
+      --pri-h: #b01b1b;
+      --blue: #0052cc;              /* 신뢰감을 주는 파란색 */
+      --ink: #172b4d;               /* 텍스트 색상 */
+      --ink-light: #42526e;
       --mut: #6b7280;
-      --bg: #f8f9fc;
+      --bg: #f4f5f7;                /* 배경색 */
       --card: #ffffff;
-      --line: #e5e7eb;
-      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -4px rgba(0, 0, 0, 0.07);
-      --ok: #16a34a;
-      --ok-light: #f0fdf4;
-      --amber: #f59e0b;
-      --amber-light: #fffbeb;
-      --blue: #2563eb;
-      --blue-light: #eff6ff;
-      --sticky: 64px;
+      --line: #dfe1e6;              /* 라인 색상 */
+      --line-light: #e9ebf0;
+      --ok: #00875a;                /* 성공 상태 */
+      --ok-light: #e3fcef;
+      --err: #de350b;               /* 오류 상태 */
+      --dup: #ffab00;               /* 중복/주의 상태 */
+      --dup-light: #fffbe6;
+      --blue-light: #f0f6ff;
+      --shadow-sm: 0 1px 1px rgba(0,0,0,.1);
+      --shadow-sticky: 0 -2px 8px rgba(9, 30, 66, .1);
+      --sticky-h: 72px;
     }
 
-    * { box-sizing: border-box }
-
-    html, body { height: 100% }
-
+    *{box-sizing: border-box}
+    html, body {height: 100%}
     body.bnk-body {
       margin: 0;
-      background: var(--bg);
-      color: var(--ink);
       font-family: Pretendard, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      text-rendering: optimizeLegibility;
-      letter-spacing: -0.02em;
     }
 
-    .wrap { max-width: 1100px; margin: 32px auto; padding: 0 24px 96px }
+    /* 레이아웃 구조 */
+    .wrap {
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 0;
+      padding-bottom: calc(var(--sticky-h) + 24px);
+    }
+    .page-head {
+      background: var(--card);
+      padding: 24px 32px;
+      border-bottom: 1px solid var(--line);
+    }
+    .page-head h1 {margin: 0 0 8px; font-size: 24px; font-weight: 700;}
+    .page-head .desc {margin: 0; color: var(--ink-light); font-size: 15px;}
 
-    /* 헤더/툴바 */
-    .page-head { display: flex; align-items: center; gap: 16px; margin-bottom: 20px }
-    .page-head h1 { margin: 0; font-size: 28px; font-weight: 800 }
-    .toolbar { display: flex; align-items: center; gap: 12px; margin-left: auto }
-    .seg { display: flex; gap: 6px; padding: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 999px }
+    .card {
+      background: var(--card);
+      padding: 24px 32px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .card:last-of-type { border-bottom: none; }
+    
+    /* 툴바 (필터링) */
+    .toolbar { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .filter-group { display: flex; align-items: center; gap: 8px; }
+    .filter-group .label { font-size: 14px; font-weight: 500; color: var(--mut); }
+    .seg-group { display: inline-flex; }
     .seg-btn {
-      border: 0;
-      background: transparent;
-      padding: 8px 14px;
-      border-radius: 999px;
-      font-weight: 600;
-      font-size: 14px;
-      cursor: pointer;
-      color: var(--mut);
-      transition: all 0.2s ease-in-out;
-    }
-    .seg-btn.is-active { background: var(--pri-light); color: var(--pri-text); font-weight: 700; }
-    .search input {
-      width: 240px;
-      padding: 10px 14px;
+      padding: 6px 12px;
       border: 1px solid var(--line);
-      border-radius: 10px;
-      outline: none;
-      font-size: 14px;
-      transition: all 0.2s;
+      background: #fff;
+      font-size: 13px;
+      color: var(--mut);
+      cursor: pointer;
     }
-    .search input:focus {
-      border-color: var(--pri);
-      box-shadow: 0 0 0 3px rgba(79, 70, 229, .15);
+    .seg-btn:first-of-type { border-radius: 4px 0 0 4px; }
+    .seg-btn:last-of-type { border-radius: 0 4px 4px 0; }
+    .seg-btn + .seg-btn { margin-left: -1px; }
+    .seg-btn.is-active { background: var(--blue-light); border-color: var(--blue); color: var(--blue); font-weight: 600; z-index: 1; }
+    .search-box input {
+      width: 220px;
+      padding: 7px 12px;
+      border-radius: 4px;
+      border: 1px solid var(--line);
+      font-size: 14px; outline: none;
+      transition: all .2s;
     }
+    .search-box input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-light); }
 
-    /* === ⭐ 핵심 개선: 카드형 목록 === */
-    .datacard { background: transparent; border: none; box-shadow: none; }
-    .table-wrap { border-radius: 12px; overflow: hidden; }
-    .tbl { width: 100%; border-collapse: collapse; border-spacing: 0; }
-    .tbl thead { display: none; } /* 테이블 헤더는 숨기고 카드 내부에 제목 표시 */
-    .tbl tbody tr { display: block; margin-bottom: 12px; }
-    .tbl tbody td {
-        display: block;
-        padding: 0;
-        border: 1px solid var(--line);
-        border-radius: 16px;
-        background: var(--card);
-        box-shadow: var(--shadow);
-        transition: all 0.2s ease-in-out;
+
+    /* 버튼 */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 8px 14px; border-radius: 4px; border: 1px solid var(--line);
+      font-weight: 500; cursor: pointer; text-decoration: none; user-select: none;
+      transition: all .2s ease; font-size: 14px;
     }
-    .tbl tbody tr:hover td { border-color: var(--pri); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
-    .tbl tbody tr.is-selected td { border-color: var(--pri); background: #fafaff; }
+    .btn-primary {background: var(--pri); color: #fff; border-color: var(--pri);}
+    .btn-primary:hover {background: var(--pri-h); border-color: var(--pri-h);}
+    .btn:disabled {opacity: .6; cursor: not-allowed; background: #fafafa !important; color: #aaa !important; border-color: var(--line) !important;}
+    .btn-icon { all: unset; display: inline-flex; padding: 4px; border-radius: 4px; cursor: pointer; transition: background .2s; }
+    .btn-icon:hover { background: #e9ebf0; }
+    .btn-icon svg { width: 18px; height: 18px; color: var(--mut); }
+    .btn-icon.primary svg { color: var(--blue); }
+    .btn-icon:disabled, .btn-icon.disabled { cursor: not-allowed; }
+    .btn-icon:disabled svg, .btn-icon.disabled svg { color: #ccc; }
 
-    /* 카드 내부 구조 */
-    .member-card { display: flex; align-items: center; padding: 20px; gap: 20px; }
-    .member-card .select-box { padding-right: 12px; }
-    .member-card .select-box input { width: 18px; height: 18px; }
 
-    .member-profile { flex-grow: 1; }
-    .member-profile .name { font-size: 18px; font-weight: 700; color: var(--ink); }
-    .member-profile .birth { font-size: 13px; color: var(--mut); margin-top: 4px; font-variant-numeric: tabular-nums; }
-
-    .member-details { display: flex; gap: 24px; text-align: right; padding-right: 24px; }
-    .detail-item { min-width: 120px; }
-    .detail-item .label { font-size: 12px; color: var(--mut); margin-bottom: 6px; }
-    .detail-item .value { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
-    .detail-item .value.mono { white-space: nowrap; }
-
-    .member-status .chip { font-size: 13px; padding: 6px 12px; }
-
-    .member-actions { padding-left: 24px; border-left: 1px solid var(--line); }
-
-    /* 칩/버튼 */
+    /* 칩 (상태 표시) */
     .chip {
-        display: inline-flex; align-items: center; gap: 6px; border-radius: 999px;
-        padding: 6px 10px; font-weight: 600; font-size: 12px;
-        border: 1px solid transparent;
+      display: inline-flex; align-items: center; gap: 6px; border-radius: 4px;
+      padding: 3px 8px; font-weight: 500; font-size: 12px;
+      border: 1px solid transparent;
     }
-    .chip-green { background: var(--ok-light); color: var(--ok); }
-    .chip-amber { background: var(--amber-light); color: var(--amber); }
-    .chip-blue { background: var(--blue-light); color: var(--blue); }
+    .chip.ok { background-color: var(--ok-light); color: var(--ok); border-color: #abe2c8; }
+    .chip.dup { background-color: var(--dup-light); color: #b77300; border-color: #ffd88a; }
+    .chip.info { background-color: var(--blue-light); color: var(--blue); border-color: #b3d4ff; }
 
-    .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; border-radius:10px; font-weight:700; cursor:pointer; border:1px solid transparent; transition: all 0.2s; }
-    .btn-primary { background:var(--pri); color:#fff; padding:10px 16px; font-size: 14px; }
-    .btn-primary:hover { background: #4338ca; }
-
-    .btn-icon { all: unset; display: inline-flex; padding: 8px; border-radius: 999px; cursor: pointer; transition: background 0.2s; }
-    .btn-icon:hover { background: #f3f4f6; }
-    .btn-icon svg { width: 20px; height: 20px; color: var(--mut); }
-    .btn-icon.primary svg { color: var(--pri); }
-    .btn-icon.disabled { cursor: not-allowed; }
-    .btn-icon.disabled svg { color: #d1d5db; }
-
+    /* 데이터 테이블 */
+    .table-outer {
+      border: 1px solid var(--line);
+      border-radius: 6px; background: #fff; overflow: hidden;
+    }
+    .table-scroll {overflow: auto; max-width: 100%;}
+    .tbl {
+      width: 100%; border-collapse: collapse; min-width: 1100px;
+      font-size: 14px; line-height: 1.5;
+    }
+    .tbl th, .tbl td {
+      padding: 12px 14px; border-bottom: 1px solid var(--line-light);
+      text-align: left; vertical-align: middle;
+    }
+    .tbl thead th {
+      background: #fafbfc; color: var(--ink-light); font-weight: 500; font-size: 13px;
+      border-bottom: 1px solid var(--line);
+    }
+    .tbl tbody tr:last-child td { border-bottom: none; }
+    .tbl tbody tr:hover {background: var(--blue-light);}
+    .tbl tbody tr.is-selected { background: #fffbe6; } /* 선택된 행 스타일 */
+    .tbl td .name { font-weight: 600; color: var(--ink); }
+    .tbl td .sub-text { font-size: 13px; color: var(--mut); }
+    .tbl .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .tbl .actions { text-align: center; }
+    .tbl .actions .btn-icon { margin: 0 2px; }
 
     /* 빈 상태 */
-    .empty { padding: 60px; text-align: center; color: var(--mut); background: var(--card); border-radius: 12px; }
+    .empty { padding: 60px; text-align: center; color: var(--mut); }
 
-    /* 하단 일괄바 */
-    .bulkbar {
-        position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 150%);
-        width: auto; max-width: 600px;
-        background: var(--ink); color: #fff;
-        border-radius: 12px;
+    /* 하단 고정 바 (일괄 처리) */
+    .sticky-bar {
+        position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+        height: var(--sticky-h);
+        background: rgba(255, 255, 255, .8);
+        backdrop-filter: blur(8px);
+        border-top: 1px solid var(--line);
+        box-shadow: var(--shadow-sticky);
         display: flex; align-items: center; justify-content: space-between;
-        padding: 12px 12px 12px 24px;
-        transition: transform .3s ease-in-out;
-        z-index: 50;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        padding: 0 32px;
+        transform: translateY(100%); /* 기본적으로 숨김 */
+        transition: transform .3s ease;
     }
-    .bulkbar.visible { transform: translate(-50%, 0); }
-    .bulkbar #selcount { font-weight: 600; }
-    .bulkbar .btn-primary { background: #fff; color: var(--ink); }
+    .sticky-bar.visible {
+        transform: translateY(0); /* visible 클래스가 붙으면 나타남 */
+    }
+    .sticky-bar #selcount { font-weight: 500; }
+    .sticky-bar #selcount b { color: var(--pri); font-weight: 700; }
 
-    /* 디테일 드로어 */
+    /* 디테일 드로어 (슬라이드 패널) */
     .drawer {
-        position: fixed; top: 0; right: -420px; width: 420px; height: 100vh;
-        background: #fff; border-left: 1px solid var(--line);
-        box-shadow: var(--shadow-lg); transition: right .3s cubic-bezier(0.4, 0, 0.2, 1);
-        z-index: 60;
+      position: fixed; top: 0; right: -420px; width: 420px; height: 100vh;
+      background: #fff; border-left: 1px solid var(--line);
+      box-shadow: var(--shadow-sticky); transition: right .3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 60;
     }
     .drawer.open { right: 0; }
     .drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--line); }
     .drawer-head strong { font-size: 18px; font-weight: 700; }
-    .drawer-head .x { all: unset; cursor: pointer; font-size: 24px; color: var(--mut); }
-    .drawer-body { padding: 24px; line-height: 1.9; }
-    .drawer-body .dl { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; }
+    .drawer-head .x { all: unset; cursor: pointer; font-size: 24px; color: var(--mut); line-height: 1; }
+    .drawer-body { padding: 24px; }
+    .drawer-body .dl { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--line-light); }
+    .drawer-body .dl:last-child { border-bottom: none; }
     .drawer-body .dl span { color: var(--mut); font-size: 14px; }
     .drawer-body .dl b { font-weight: 600; font-size: 15px; }
-    .drawer-body hr { border: none; border-top: 1px solid var(--line); margin: 12px 0; }
+    .drawer-body hr { border: none; border-top: 1px solid var(--line); margin: 16px 0; }
   </style>
 </head>
 <body class="bnk-body">
 
 <main class="wrap">
   <header class="page-head">
-    <h1>가입자 명부</h1>
+    <h1>가입자 명부 조회</h1>
+    <p class="desc">기업의 퇴직연금 가입자 명부를 조회하고 계좌 개설을 신청할 수 있습니다.</p>
+  </header>
+  
+  <section class="card">
     <div class="toolbar">
-      <div class="seg">
-        <button class="seg-btn is-active" data-employ="ACTIVE">재직</button>
-        <button class="seg-btn" data-employ="INACTIVE">퇴직</button>
-        <button class="seg-btn" data-employ="ALL">전체</button>
+      <div class="filter-group">
+        <span class="label">재직상태</span>
+        <div class="seg-group">
+          <button class="seg-btn is-active" data-employ="ACTIVE">재직</button>
+          <button class="seg-btn" data-employ="INACTIVE">퇴직</button>
+          <button class="seg-btn" data-employ="ALL">전체</button>
+        </div>
       </div>
-      <div class="seg">
-        <button class="seg-btn is-active" data-acc="ALL">전체</button>
-        <button class="seg-btn" data-acc="POSSIBLE">신청 가능</button>
-        <button class="seg-btn" data-acc="PENDING">처리중</button>
-        <button class="seg-btn" data-acc="COMPLETED">개설 완료</button>
+      <div class="filter-group">
+        <span class="label">계좌상태</span>
+        <div class="seg-group">
+          <button class="seg-btn is-active" data-acc="ALL">전체</button>
+          <button class="seg-btn" data-acc="POSSIBLE">신청 가능</button>
+          <button class="seg-btn" data-acc="PENDING">처리중</button>
+          <button class="seg-btn" data-acc="COMPLETED">개설 완료</button>
+        </div>
       </div>
-      <div class="search">
-        <input id="q" type="search" placeholder="이름 검색" />
+      <div class="filter-group" style="margin-left: auto;">
+        <div class="search-box">
+          <input id="q" type="search" placeholder="이름으로 검색" />
+        </div>
+        <button class="btn" id="searchBtn">조회</button>
       </div>
     </div>
-  </header>
+  </section>
 
-  <section class="datacard">
-    <div class="table-wrap">
-      <table class="tbl" id="tbl">
-        <thead></thead>
-        <tbody id="tbody">
-          </tbody>
-      </table>
+  <section class="card">
+    <div class="table-outer">
+      <div class="table-scroll">
+        <table class="tbl" id="tbl">
+          <thead>
+            <tr>
+              <th style="width: 50px;"><input type="checkbox" id="checkall"></th>
+              <th>이름/생년월일</th>
+              <th style="width: 100px;">재직상태</th>
+              <th style="width: 130px;">입사일</th>
+              <th class="num" style="width: 150px;">연봉</th>
+              <th style="width: 120px;">계좌상태</th>
+              <th class="actions" style="width: 120px;">관리</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
       <div id="empty" class="empty" hidden>해당 조건의 가입자가 없습니다.</div>
     </div>
   </section>
 
-  <div class="bulkbar" id="bulkbar">
-    <span id="selcount">0명 선택</span>
+  <div class="sticky-bar" id="bulkbar">
+    <span id="selcount"><b>0명</b> 선택됨</span>
     <button class="btn btn-primary" id="bulkRequest">선택 항목 일괄 신청</button>
   </div>
 </main>
@@ -247,57 +287,42 @@
     pending: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`
   };
   const chip = (s) => {
-    if (s === '개설 완료') return '<span class="chip chip-blue">개설 완료</span>';
-    if (s === '처리중') return '<span class="chip chip-amber">처리중</span>';
-    return '<span class="chip chip-green">신청 가능</span>';
+    if (s === '개설 완료') return '<span class="chip info">개설 완료</span>';
+    if (s === '처리중') return '<span class="chip dup">처리중</span>';
+    return '<span class="chip ok">신청 가능</span>';
   };
 
-  // ---------- 렌더링 함수 ----------
+  // ---------- [수정] 렌더링 함수: 새 테이블 구조에 맞게 수정 ----------
   function render(rows) {
     const tb = el('#tbody');
     tb.innerHTML = '';
     el('#empty').hidden = rows && rows.length > 0;
+    el('#checkall').checked = false;
 
-    rows.forEach(r => {
+    (rows || []).forEach(r => {
       const tr = document.createElement('tr');
       tr.dataset.memberId = r.memberId;
+      const isRequestable = r.accountStatus === '신청 가능';
+
       tr.innerHTML = `
+        <td><input type="checkbox" class="rowck" value="${r.memberId}" ${isRequestable ? '' : 'disabled'}></td>
         <td>
-          <div class="member-card">
-            <div class="select-box">
-              <input type="checkbox" class="rowck" value="${r.memberId}" ${r.accountStatus === '신청 가능' ? '' : 'disabled'}>
-            </div>
-            <div class="member-profile">
-              <div class="name">${r.name}</div>
-              <div class="birth">${r.birthDate}</div>
-            </div>
-            <div class="member-details">
-              <div class="detail-item">
-                <div class="label">재직상태</div>
-                <div class="value">${r.status}</div>
-              </div>
-              <div class="detail-item">
-                <div class="label">입사일</div>
-                <div class="value mono">${r.startDate}</div>
-              </div>
-              <div class="detail-item">
-                <div class="label">연봉</div>
-                <div class="value mono">${fmt(r.annualSalary)}원</div>
-              </div>
-            </div>
-            <div class="member-status">
-              ${chip(r.accountStatus)}
-            </div>
-            <div class="member-actions">
-              ${r.accountStatus === '개설 완료'
-                ? `<button class="btn-icon" data-view="${r.memberId}" title="계좌 보기">${ICONS.view}</button>`
-                : r.accountStatus === '처리중'
-                ? `<button class="btn-icon disabled" disabled title="신청 처리중">${ICONS.pending}</button>`
-                : `<button class="btn-icon primary" data-req="${r.memberId}" title="계좌 개설 신청">${ICONS.add}</button>`}
-            </div>
-          </div>
+            <div class="name">${r.name}</div>
+            <div class="sub-text">${r.birthDate}</div>
+        </td>
+        <td>${r.status}</td>
+        <td>${r.startDate}</td>
+        <td class="num">${fmt(r.annualSalary)}원</td>
+        <td>${chip(r.accountStatus)}</td>
+        <td class="actions">
+          ${r.accountStatus === '개설 완료'
+            ? `<button class="btn-icon" data-view="${r.memberId}" title="계좌 보기">${ICONS.view}</button>`
+            : r.accountStatus === '처리중'
+            ? `<button class="btn-icon disabled" disabled title="신청 처리중">${ICONS.pending}</button>`
+            : `<button class="btn-icon primary" data-req="${r.memberId}" title="계좌 개설 신청">${ICONS.add}</button>`}
         </td>
       `;
+      // 이벤트 리스너 바인딩
       tr.addEventListener('click', e => {
         if (e.target.closest('button, input')) return;
         openDrawer(r.memberId);
@@ -318,13 +343,18 @@
     updateBulkbar();
   }
 
+  // ---------- [수정] 하단 바 업데이트 로직 ----------
   function updateBulkbar() {
     const checked = $$('.rowck:checked');
-    el('#selcount').textContent = `${checked.length}명 선택`;
+    el('#selcount').innerHTML = `<b>${checked.length}명</b> 선택됨`; // 원본 코드에 있던 #selcount 사용
     el('#bulkbar').classList.toggle('visible', checked.length > 0);
+
+    // 전체 선택 체크박스 상태 업데이트
+    const allRequestable = $$('.rowck:not(:disabled)');
+    el('#checkall').checked = allRequestable.length > 0 && checked.length === allRequestable.length;
   }
 
-  // ---------- [수정] 데이터 로드: 실제 fetch 로직으로 복원 ----------
+  // ---------- 데이터 로드: 원본 fetch 로직 ----------
   async function load() {
     const params = new URLSearchParams({
       name: el('#q').value || '',
@@ -341,31 +371,44 @@
     render(data);
   }
 
-  // ---------- 이벤트 바인딩 ----------
+  // ---------- 이벤트 바인딩 (일부 수정) ----------
   document.addEventListener('DOMContentLoaded', () => {
     $$('.seg-btn').forEach(b => {
       b.addEventListener('click', () => {
-        const segGroup = b.parentElement;
-        segGroup.querySelectorAll('.seg-btn').forEach(x => x.classList.remove('is-active'));
+        b.parentElement.querySelectorAll('.seg-btn').forEach(x => x.classList.remove('is-active'));
         b.classList.add('is-active');
         if (b.dataset.employ) employ = b.dataset.employ;
         if (b.dataset.acc) acc = b.dataset.acc;
         load();
       });
     });
+    // 원본은 keydown 이벤트였으나, 별도 조회 버튼이 생겼으므로 두 가지 모두 지원
     el('#q').addEventListener('keydown', e => { if (e.key === 'Enter') load(); });
+    el('#searchBtn').addEventListener('click', load);
     
+    // 전체 선택 체크박스 이벤트
+    el('#checkall').addEventListener('change', e => {
+      const isChecked = e.target.checked;
+      $$('.rowck:not(:disabled)').forEach(ck => {
+        ck.checked = isChecked;
+        ck.closest('tr').classList.toggle('is-selected', isChecked);
+      });
+      updateBulkbar();
+    });
+
     el('#bulkRequest').addEventListener('click', () => {
       const ids = $$('.rowck:checked').map(c => c.value);
       if (ids.length === 0) return alert('대상이 없습니다.');
-      if (confirm(`${ids.length}명의 계좌 개설을 일괄 신청하시겠습니까?`)) requestAccount(ids);
+      if (confirm(`${ids.length}명의 계좌 개설을 일괄 신청하시겠습니까?`)) {
+        requestAccount(ids);
+      }
     });
     el('#drawerClose').addEventListener('click', closeDrawer);
 
-    load();
+    load(); // 초기 데이터 로드
   });
 
-  // ---------- [수정] API 호출: 실제 fetch 로직으로 복원 ----------
+  // ---------- API 호출: 원본 fetch 로직 ----------
   async function requestAccount(memberIds) {
     const r = await fetch('/company/dc/account/request', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -378,19 +421,24 @@
   }
 
   async function openDrawer(memberId) {
-    const r = await fetch(`/company/account/details/${memberId}`);
-    if (!r.ok) return alert('상세 정보를 불러오지 못했습니다.');
+  const r = await fetch(`/company/account/details/${memberId}`);
+    if (!r.ok) {
+        const errorBody = await r.text();
+        console.error("상세 정보 로드 실패:", errorBody);
+        alert('상세 정보를 불러오지 못했습니다.');
+        return;
+    }
     const d = await r.json();
 
-    el('#d-name').textContent = d.memberName;
-    el('#d-birth').textContent = d.birthDate;
-    el('#d-status').textContent = d.status;
-    el('#d-join').textContent = d.startDate;
+    el('#d-name').textContent = d.memberName || '-';
+    el('#d-birth').textContent = d.birthDate || '-';
+    el('#d-status').textContent = d.memberStatus || '-';   // 재직 상태
+    el('#d-join').textContent = d.startDate || '-';         // 입사일
     el('#d-salary').textContent = d.annualSalary ? `${fmt(d.annualSalary)}원` : '-';
     el('#d-accno').textContent = d.accountNo || '-';
-    el('#d-accst').textContent = d.accountStatus || '-';
+    el('#d-accst').textContent = d.status || '-';           // 계좌 상태
     el('#d-balance').textContent = d.balance != null ? `${fmt(d.balance)}원` : '-';
-    el('#d-created').textContent = d.createdAt ? new Date(d.createdAt).toLocaleString() : '-';
+    el('#d-created').textContent = d.createdAt ? new Date(d.createdAt).toLocaleString('ko-KR') : '-';
     el('#drawer').classList.add('open');
   }
   function closeDrawer() { el('#drawer').classList.remove('open'); }

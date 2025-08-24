@@ -27,7 +27,8 @@ public class SurveyResultController {
 
     private final TcpClientService tcpClientService;
     private final ObjectMapper objectMapper;
-
+    private final AES256Util AES256Util;
+    
     /**
      * 설문 제출 (POST)
      */

@@ -23,6 +23,7 @@ public class SurveySubmitHandler implements TcpMessageHandler {
 
     private final SurveyService surveyService;
     private final ObjectMapper objectMapper;
+    private final AES256Util AES256Util;
 
     @Override
     public boolean supports(Command command) {

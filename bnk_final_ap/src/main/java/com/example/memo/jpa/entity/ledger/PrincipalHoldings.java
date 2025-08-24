@@ -12,13 +12,13 @@ import com.example.memo.jpa.entity.irp.IrpAccount;
 import com.example.memo.jpa.entity.purchase.commodity.PrincipalGuarantee;
 
 @Entity
-@Table(name = "principal_ledger")
+@Table(name = "principal_holding")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PrincipalLedger {
+public class PrincipalHoldings {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -55,6 +55,4 @@ public class PrincipalLedger {
     @Column(nullable = false)
     private String status; // 계약 상태 (ACTIVE, MATURED, TERMINATED)
 
-    @Column(nullable = false)
-    private LocalDateTime lastUpdated;
 }

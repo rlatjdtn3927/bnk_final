@@ -1,17 +1,27 @@
 package com.example.memo.purchase.change.rest_controller;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.memo.purchase.change.dto.RetainHoldingsDto;
 import com.example.memo.purchase.reserve.dto.UserInfoDto;
-import com.example.memo.purchase.trade_common.dto.ReserveValueDto;
+import com.example.memo.purchase.trade_common.dto.ChangeValueDto;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpClientService;
 import com.example.memo.tcp_common.TcpMessage;
@@ -19,6 +29,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpSession;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/retain-api/change")
@@ -30,8 +43,8 @@ public class ChangeRetainAPIController {
     /** 상단 사용자/계좌 카드용 데이터 */
 	@PostMapping("/user-info")
 	public ResponseEntity<?> userInfo(HttpSession session) {
-	    ReserveValueDto dto = (ReserveValueDto) session.getAttribute("ReserveValueDto");
-	    String userName = (String) session.getAttribute("userName");
+	    ChangeValueDto dto = (ChangeValueDto) session.getAttribute("ChangeValueDto");
+	    String userName = (String) session.getAttribute("username");
 
 	    // 세션에 값이 없을 때도 NPE 없이 안전하게
 	    if (dto == null) {
@@ -57,7 +70,7 @@ public class ChangeRetainAPIController {
 	    }
 
 	    dto.setRiskGradeNum(riskGradeNum);
-	    session.setAttribute("ReserveValueDto", dto);
+	    session.setAttribute("ChangeValueDto", dto);
 
 	    UserInfoDto userInfo = UserInfoDto.builder()
 	        .accountId(dto.getAccountId())
@@ -72,7 +85,7 @@ public class ChangeRetainAPIController {
 
     /** 보유/이미 선택된 상품 목록(운용비율 포함) */
 	@PostMapping("/retain")
-    public ResponseEntity<?> retainList(@RequestParam String accountType, @RequestParam String accountId) {
+    public ResponseEntity<?> retainList(@RequestParam("accountType") String accountType, @RequestParam("accountId") String accountId) {
     	
     	RetainHoldingsDto dto = new RetainHoldingsDto(accountType,accountId);
     	JsonNode msg = mapper.valueToTree(dto);

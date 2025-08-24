@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <title>매도 비율 설정 (변경 Step2-1)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-neutral-50 text-neutral-900">
+<div class="max-w-5xl mx-auto p-4 space-y-6">
+  <section class="bg-white rounded-2xl shadow p-4">
+    <h2 class="text-xl font-semibold">매도 비율 설정</h2>
+    <p class="text-sm text-neutral-500">선택한 각 상품에 대해 매도 비율(%)을 입력하세요.</p>
+  </section>
+
+  <section class="bg-white rounded-2xl shadow p-4">
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+        <tr class="text-left text-neutral-500 border-b">
+          <th class="py-2 pr-3">유형</th>
+          <th class="py-2 pr-3">상품</th>
+          <th class="py-2 pr-3">기준금액</th>
+          <th class="py-2 pr-3">매도비율(%)</th>
+          <th class="py-2 pr-3">매도금액</th>
+        </tr>
+        </thead>
+        <tbody id="soldBody"></tbody>
+      </table>
+    </div>
+    <div class="mt-4 flex items-center justify-between">
+      <div class="text-lg">
+        합계 매도금액: <b id="totalSold">0원</b>
+      </div>
+      <div class="flex gap-2">
+        <a href="/purchase/trade/change/step2_change" class="px-4 py-2 rounded-xl bg-neutral-200">이전</a>
+        <button id="nextBtn" class="px-4 py-2 rounded-xl bg-blue-600 text-white disabled:opacity-40" disabled>
+          다음(매도합계 확인 & 매수상품 추가)
+        </button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  const fmtKRW = n => (n ?? 0).toLocaleString('ko-KR') + '원';
+
+  function calcAmount(base, ratio) {
+    const b = Number(base || 0), r = Number(ratio || 0);
+    return Math.floor(b * r / 100);
+  }
+
+  function renderRows(items) {
+    const tbody = document.getElementById('soldBody');
+    tbody.innerHTML = items.map((it, idx) => `
+      <tr class="border-b">
+        <td class="py-2 pr-3">${it.type === 'FUND' ? '펀드' : '원리금'}</td>
+        <td class="py-2 pr-3">${it.name ?? '-'}</td>
+        <td class="py-2 pr-3">${fmtKRW(Number(it.baseAmount))}</td>
+        <td class="py-2 pr-3">
+          <input type="number" min="0" max="100" step="1"
+                 class="ratioInput w-24 px-2 py-1 border rounded"
+                 data-idx="${idx}" value="${it.ratio ?? 0}">
+        </td>
+        <td class="py-2 pr-3"><span id="amt_${idx}">${fmtKRW(0)}</span></td>
+      </tr>
+    `).join('');
+
+    document.querySelectorAll('.ratioInput').forEach(inp => {
+      const idx = Number(inp.dataset.idx);
+      const update = () => {
+        let val = Number(inp.value || 0);
+        if (val < 0) val = 0;
+        if (val > 100) val = 100;
+        inp.value = val;
+        const amt = calcAmount(items[idx].baseAmount, val);
+        document.getElementById(`amt_${idx}`).textContent = fmtKRW(amt);
+        items[idx].ratio = val;
+        items[idx].amount = amt;
+        updateTotal(items);
+      };
+      inp.addEventListener('input', update);
+      update();
+    });
+  }
+
+  function updateTotal(items) {
+    const sum = items.reduce((a,c)=> a + Number(c.amount||0), 0);
+    document.getElementById('totalSold').textContent = fmtKRW(sum);
+    document.getElementById('nextBtn').disabled = sum <= 0;
+  }
+
+  async function goNext(items){
+        // 서버 세션 저장
+        const resp = await fetch('/retain-api/change/step2/sold/save', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(items.map(it => ({
+            type: it.type,
+            holdingId: it.type === 'FUND' ? (it.id ? String(it.id) : null) : null, // ✅ 펀드 → holdingId
+            ledgerId:  it.type === 'PRINCIPAL' ? (it.id ? Number(it.id) : null) : null, // ✅ 원리금 → ledgerId
+            prodId: it.prodId,   // ✅ productId 대신 prodId
+            name: it.name,
+            ratio: it.ratio,
+            amount: it.amount
+          })))
+        });
+        if(!resp.ok){ alert('매도 목록 저장 실패'); return; }
+
+        // 다음 화면
+        location.href = '/purchase/trade/change/step2/change-add-ratio';
+      }
+
+    (function init(){
+      const raw = sessionStorage.getItem('change.soldCandidates');
+      const items = raw ? JSON.parse(raw) : [];
+      if (!items.length) {
+        alert('선택된 매도 상품이 없습니다. 이전 화면으로 이동합니다.');
+        location.href = '/purchase/trade/change/step2_change';
+        return;
+      }
+
+      // 보정: productId → prodId 필드명 통일
+      items.forEach(it => {
+        if (it.productId && !it.prodId) it.prodId = it.productId;
+      });
+
+      renderRows(items);
+      document.getElementById('nextBtn').addEventListener('click', ()=>goNext(items));
+    })();
+</script>
+</body>
+</html>

@@ -90,6 +90,7 @@ public class ChangePageViewController {
 	}
 
 	/** step2 진입 (세션만 사용; 뷰에서 ${session.PassValueDto.*}로 표시) */
+	//투자성향 분석 후 보유상품 목록 보여줌
 	@GetMapping("/step1/after-risk")
 	public String step2AfterRisk(HttpSession session) {
 		ChangeValueDto dto = (ChangeValueDto) session.getAttribute("ChangeValueDto");
@@ -107,8 +108,52 @@ public class ChangePageViewController {
 		session.setAttribute("ChangeValueDto", dto);
 		return "purchase/trade/change/step2_change"; // 바로 뷰
 	}
-	@PostMapping("/step2_change/next")
-	public String step2_changeNext() {
-		return "";
-	}
+	
+	 @GetMapping("/step2/sold-list")
+	 public String step2SoldList() {
+	        return "purchase/trade/change/step2_soldList";
+	 }
+
+	 @GetMapping("/step2/change-add-ratio")
+	 public String step2ChangeAddRatio() {
+	        return "purchase/trade/change/step2_changeAddRatio";
+	 }
+
+	 @GetMapping("/step2/changeProdList")
+	 public String step2ChangeProdList() {
+	        return "purchase/trade/change/step2_changeProdList";
+	 }
+	 @GetMapping("/step2/buy-list")
+	 public String step2BuyList() {
+	        return "purchase/trade/change/step2_buyList";
+	 }	
+	 /** Step4 - 서류 동의 */
+	    @GetMapping("/step4/docs")
+	    public String step4Docs() {
+	        return "purchase/trade/change/step4_docs";
+	    }
+	    
+	    @PostMapping("/step4/next")
+	    public String step4Next(@RequestParam("fileUrlList") String fileUrlList,
+	                                       HttpSession session) {
+	        ChangeValueDto dto = (ChangeValueDto) session.getAttribute("ChangeValueDto");
+	        if (dto == null) dto = new ChangeValueDto();
+	        dto.setFileUrlList(fileUrlList);
+	        session.setAttribute("ChangeValueDto", dto);
+	        return "redirect:/purchase/trade/change/step5";
+	    }
+	    
+	 @GetMapping("/step5")
+	 public String step5Change(HttpSession session) {
+	     // 세션에 있는 ChangeValueDto 확인 로그
+	     ChangeValueDto dto = (ChangeValueDto) session.getAttribute("ChangeValueDto");
+	     if (dto != null) {
+	         System.out.println("== [/step5] buyItems size: " +
+	             (dto.getBuyItems() != null ? dto.getBuyItems().size() : 0));
+	         System.out.println("== [/step5] soldItems size: " +
+	             (dto.getSoldItems() != null ? dto.getSoldItems().size() : 0));
+	     }
+	     return "purchase/trade/change/step5_change";
+	 }
+
 }

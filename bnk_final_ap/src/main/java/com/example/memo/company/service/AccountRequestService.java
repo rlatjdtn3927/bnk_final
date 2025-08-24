@@ -1,5 +1,6 @@
 package com.example.memo.company.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -132,7 +133,7 @@ public class AccountRequestService {
         DcAccount newAccount = new DcAccount();
         newAccount.setAccountNo(generateDcAccountNumber()); // 계좌번호 생성
         newAccount.setStatus("ACTIVE");
-        newAccount.setBalance(0L);
+        newAccount.setBalance(BigDecimal.ZERO);
         newAccount.setDcMember(request.getDcMember());
 
         // 4. 생성된 계좌를 저장하고, 요청서에도 연결

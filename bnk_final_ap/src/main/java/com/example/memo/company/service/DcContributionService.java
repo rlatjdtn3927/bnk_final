@@ -1,5 +1,7 @@
 package com.example.memo.company.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -34,6 +36,14 @@ import com.example.memo.jpa.entity.company.DcContributionBatch;
 import com.example.memo.jpa.entity.company.DcContributionItem;
 import com.example.memo.jpa.entity.company.DcDepositHistory;
 import com.example.memo.jpa.entity.company.DcMember;
+import com.example.memo.jpa.entity.ledger.FundHoldings;
+import com.example.memo.jpa.entity.ledger.FundLedger;
+import com.example.memo.jpa.entity.ledger.PrincipalHoldings;
+import com.example.memo.jpa.entity.purchase.analysis.FundNav;
+import com.example.memo.jpa.entity.purchase.commodity.FundMaster;
+import com.example.memo.jpa.entity.purchase.commodity.PrincipalGuarantee;
+import com.example.memo.jpa.entity.purchase.trade.BuyPlanFund;
+import com.example.memo.jpa.entity.purchase.trade.BuyPlanPG;
 import com.example.memo.jpa.repository.company.CompanyAccountRepository;
 import com.example.memo.jpa.repository.company.CompanyManagerRepository;
 import com.example.memo.jpa.repository.company.CompanyRepository;
@@ -43,6 +53,14 @@ import com.example.memo.jpa.repository.company.DcContributionItemRepository;
 import com.example.memo.jpa.repository.company.DcDepositHistoryRepository;
 import com.example.memo.jpa.repository.company.DcMemberRepository;
 import com.example.memo.jpa.repository.company.DcMemberStatusRepository;
+import com.example.memo.jpa.repository.ledger.FundHoldingsRepository;
+import com.example.memo.jpa.repository.ledger.FundLedgerRepository;
+import com.example.memo.jpa.repository.ledger.PrincipalHoldingsRepository;
+import com.example.memo.jpa.repository.purchase.analysis.FundNavRepository;
+import com.example.memo.jpa.repository.purchase.commodity.FundMasterRepository;
+import com.example.memo.jpa.repository.purchase.trade.BuyPlanFundRepository;
+import com.example.memo.jpa.repository.purchase.trade.BuyPlanPGRepository;
+import com.example.memo.ocr.client.ClovaOcrClient;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -55,7 +73,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 public class DcContributionService {
-
+	
+	static final int SCALE_CAL = 12;
+	static final int SCALE_SAVE = 6;
+	static final int SCALE_RATE = 4;
+	static final RoundingMode RMUP = RoundingMode.HALF_UP;
+	static final RoundingMode RMDN = RoundingMode.DOWN;
+	
     private final DcContributionBatchRepository batchRepo;
     private final DcDepositHistoryRepository dcDepositHistoryRepository;
     private final DcMemberRepository dcMemberRepo;
@@ -65,8 +89,15 @@ public class DcContributionService {
     private final CompanyManagerRepository managerRepo;
     private final CompanyAccountRepository companyAccountRepository;
     private final DcContributionItemRepository itemRepo;
+    private final BuyPlanFundRepository buyPlanFundRepository;
+    private final BuyPlanPGRepository buyPlanPGRepository;
+    private final FundLedgerRepository fundLedgerRepository;
+    private final FundHoldingsRepository fundHoldingsRepository;
+    private final PrincipalHoldingsRepository principalHoldingsRepository;
+    private final FundNavRepository fundNavRepository;
     private final ObjectMapper objectMapper;
     private final CryptoService cryptoService;
+
 
     /** 배치 생성: 업로드 직후 초안(DRAFT) 저장 */
     @Transactional
@@ -149,7 +180,6 @@ public class DcContributionService {
                 .map(DcMember::getId)
                 .collect(Collectors.toSet());
 
-        // 필요한 데이터만 미리 조회 (잔고 조회 제거)
         Map<Long, Boolean> accountActiveMap = new HashMap<>();
         accountRepo.findByMemberIds(memberIds).forEach(a -> {
             if (a.getDcMember() != null) {
@@ -177,53 +207,37 @@ public class DcContributionService {
                 if (!Objects.equals(m.getCompanyId(), batch.getCompany().getId())) {
                     errorMessage = "해당 회사 소속 회원이 아닙니다.";
                 }
-
-                // DC 계좌 보유/활성 검증
                 if (errorMessage == null && !accountActiveMap.getOrDefault(m.getId(), false)) {
                     errorMessage = "DC 계좌가 없거나 비활성 상태입니다.";
                 }
-
-                // 재직 상태 검증
                 if (errorMessage == null) {
                     String status = statusMap.getOrDefault(m.getId(), "UNKNOWN");
                     if (!("재직".equals(status) || "ACTIVE".equalsIgnoreCase(status))) {
                         errorMessage = "납입 대상 상태가 아닙니다(현재상태: " + status + ").";
                     }
                 }
-
-             // 월 최소 납입금액 = floor(annualSalary / 144)
                 if (errorMessage == null) {
                     long annualSalary = annualSalaryMap.getOrDefault(m.getId(), 0L);
                     if (annualSalary <= 0) {
                         errorMessage = "연간임금총액(annualSalary)이 설정되지 않았습니다.";
                     } else {
-                        long monthlyMin = annualSalary / 144; // 내림
+                        long monthlyMin = annualSalary / 144;
                         long amount = Optional.ofNullable(it.getAmount()).orElse(0L);
-
                         if (amount < monthlyMin) {
-                            errorMessage = "월 최소 납입금액 미만입니다. (최소: " 
-                                         + String.format("%,d", monthlyMin) + "원)";
+                            errorMessage = "월 최소 납입금액 미만입니다. (최소: " + String.format("%,d", monthlyMin) + "원)";
                         }
                     }
                 }
-
-                // 금액 > 0 검증
                 if (errorMessage == null && (it.getAmount() == null || it.getAmount() <= 0)) {
                     errorMessage = "납입금액은 0보다 커야 합니다.";
                 }
             }
 
-        
-
-
-
-            // 검증 결과에 따라 상태 설정
             boolean isSuccess = (errorMessage == null);
             if (isSuccess) {
                 ok++;
                 okSum += Optional.ofNullable(it.getAmount()).orElse(0L);
                 it.setValidationStatus(DcContributionItem.ValidationStatus.SUCCESS);
-                it.setPaymentStatus(DcContributionItem.PaymentStatus.PENDING); 
             } else {
                 err++;
                 it.setValidationStatus(DcContributionItem.ValidationStatus.FAIL);
@@ -231,7 +245,6 @@ public class DcContributionService {
             it.setErrorMessage(errorMessage);
 
             itemDtos.add(ContribValidationItemDto.builder()
-                    // ... (이하 동일)
                     .itemId(it.getId())
                     .amount(it.getAmount() == null ? 0L : it.getAmount())
                     .validationStatus(isSuccess ? "OK" : "FAIL")
@@ -239,7 +252,6 @@ public class DcContributionService {
                     .dcMember(lite)
                     .build());
         }
-
 
         batch.setOkCount(ok);
         batch.setErrorCount(err);
@@ -256,6 +268,7 @@ public class DcContributionService {
                 .items(itemDtos)
                 .build();
     }
+
     
     @Transactional
     public Map<String, Object> confirmBatch(Long batchId, Long companyId) {
@@ -276,17 +289,27 @@ public class DcContributionService {
             throw new IllegalStateException("오류 건이 존재하여 확정할 수 없습니다.");
         }
 
-        // 확정
+        // 성공 항목만 입금대기로 전환
+        int pendingCount = 0;
+        for (DcContributionItem it : batch.getItems()) {
+            if (it.getValidationStatus() == DcContributionItem.ValidationStatus.SUCCESS) {
+                it.setPaymentStatus(DcContributionItem.PaymentStatus.PENDING);
+                pendingCount++;
+            }
+        }
+
+        // 배치 확정
         batch.setStatus(DcContributionBatch.BatchStatus.CONFIRMED);
 
-        // 응답 요약
         Map<String, Object> resp = new LinkedHashMap<>();
         resp.put("batchId", batch.getId());
         resp.put("status", batch.getStatus().name());
         resp.put("okCount", Optional.ofNullable(batch.getOkCount()).orElse(0));
+        resp.put("pendingCount", pendingCount);
         resp.put("totalAmount", Optional.ofNullable(batch.getTotalAmount()).orElse(0L));
         return resp;
     }
+
     
     @Transactional(readOnly = true)
     public ContribPlanListResponse listBatches(Long companyId, LocalDate from, LocalDate to,
@@ -328,7 +351,7 @@ public class DcContributionService {
     @Transactional(readOnly = true)
     public Page<PayableItemDto> listPayableItems(Long companyId, LocalDate from, LocalDate to, String paymentStatus, Pageable pageable) {
 
-        // [추가] 1. 컨트롤러에서 어떤 문자열을 받았는지 확인
+        // 1. 컨트롤러에서 어떤 문자열을 받았는지 확인
     	System.out.println("SERVICE_LOG_1: Controller에서 받은 paymentStatus 문자열: '" + paymentStatus + "'");
 
         List<DcContributionItem.PaymentStatus> statusesToSearch;
@@ -344,7 +367,7 @@ public class DcContributionService {
             );
         }
         
-        // [추가] 2. Repository로 어떤 Enum 리스트를 보낼 것인지 확인
+        // 2. Repository로 어떤 Enum 리스트를 보낼 것인지 확인
     	System.out.println("SERVICE_LOG_2: Repository로 보낼 statusesToSearch 리스트: {}" +  statusesToSearch);
         return itemRepo.findPayableItemsWithStatus(
                 companyId,
@@ -423,8 +446,101 @@ public class DcContributionService {
             DcAccount dest = accountRepo.findByDcMember_Id(m.getId())
                     .orElseThrow(() -> new IllegalStateException("DC계좌 없음: " + m.getName()));
             
-            long dBal = Optional.ofNullable(dest.getBalance()).orElse(0L);
-            dest.setBalance(dBal + it.getAmount());
+            BigDecimal dBal = Optional.ofNullable(dest.getBalance()).orElse(BigDecimal.ZERO);
+            BigDecimal deposited = BigDecimal.valueOf(it.getAmount());
+            BigDecimal temp = BigDecimal.valueOf(it.getAmount());
+            
+            /**매수 예정 등록을 확인해보고 있으면 예정된 품목 구매 아니면 그냥 계좌로 입금**/
+            List<BuyPlanFund> buyPlanList = buyPlanFundRepository.findByDcAccountAndIsCurrent(dest, "Y");
+            if(!buyPlanList.isEmpty()) { //매수 예정 등록분이 있다면 거래 진행
+            	for(BuyPlanFund plan : buyPlanList) {
+            		
+            		Integer ratio = plan.getAllocationPercent();
+            		BigDecimal tradeAmt = temp.multiply(BigDecimal.valueOf(ratio)).divide(BigDecimal.valueOf(100), SCALE_CAL, RMDN);
+            		
+            		FundMaster fund = plan.getFund(); 
+            		String prodId = fund.getProductId();
+            		FundNav fundNav = fundNavRepository.findTopByFund_ProductIdOrderByReferenceDateDesc(prodId).orElseThrow();
+            		BigDecimal nav = fundNav.getNav();
+            		BigDecimal addUnits = tradeAmt.divide(nav, SCALE_CAL, RMDN);
+            		
+            		deposited = deposited.subtract(tradeAmt);
+            		
+            		fundLedgerRepository.save(FundLedger.builder()
+            				.dcAccount(dest)
+            				.fund(fund)
+            				.tradeType("BUY")
+            				.tradeUnits(addUnits.setScale(SCALE_SAVE, RMDN))
+            				.tradePrice(nav.setScale(SCALE_SAVE, RMDN))
+            				.tradeAmount(tradeAmt.setScale(SCALE_SAVE, RMDN))
+            				.build());
+            		
+            		FundHoldings fundholdings = fundHoldingsRepository.findByDcAccountAndFund(dest, fund);
+            		if(fundholdings != null) { //있으면 업데이트 진행
+            			BigDecimal oldUnits = fundholdings.getUnits();
+            			BigDecimal newUnits = oldUnits.add(addUnits); // 새로운 보유좌수
+            			BigDecimal acquisitionAmount = fundholdings.getAcquisitionAmount();
+            			BigDecimal newAvgPrice = acquisitionAmount.add(tradeAmt).divide(newUnits, SCALE_CAL, RMDN); // 새로운 평균단가
+            			BigDecimal newAcquisitionAmount = newAvgPrice.multiply(newUnits); //새로운 매수원금
+            			BigDecimal newValuationAmt = newUnits.multiply(nav); //새로운 평가액
+            			BigDecimal newProfitLoss = newValuationAmt.subtract(newAcquisitionAmount); //새로운 평가손익
+			    		BigDecimal newRr = newAcquisitionAmount.signum()==0 ? BigDecimal.ZERO : // 새로운 수익률 산출
+			    		    newProfitLoss.multiply(BigDecimal.valueOf(100))
+			    		                 .divide(newAcquisitionAmount, SCALE_RATE, RMUP);
+			    		
+			    		fundholdings.setUnits(newUnits.setScale(SCALE_SAVE, RMDN));
+			    		fundholdings.setAvgPrice(newAvgPrice.setScale(SCALE_SAVE, RMDN));
+			    		fundholdings.setAcquisitionAmount(newAcquisitionAmount.setScale(SCALE_SAVE, RMDN));
+			    		fundholdings.setValuationAmount(newValuationAmt.setScale(SCALE_SAVE, RMDN));
+			    		fundholdings.setProfitLoss(newProfitLoss.setScale(SCALE_SAVE, RMDN));
+			    		fundholdings.setReturnRate(newRr.setScale(SCALE_RATE, RMUP));
+			    		
+			    		fundHoldingsRepository.save(fundholdings);
+            		} else { //없으면 새로 삽입
+            			fundHoldingsRepository.save(FundHoldings.builder()
+            					.units(addUnits.setScale(SCALE_SAVE, RMDN))
+            					.dcAccount(dest)
+            					.fund(fund)
+            					.avgPrice(nav)
+            					.acquisitionAmount(tradeAmt)
+            					.valuationAmount(tradeAmt)
+            					.profitLoss(BigDecimal.ZERO)
+            					.returnRate(BigDecimal.ZERO)
+            					.build());
+            		}
+            	}
+            }
+            
+    		List<BuyPlanPG> buyPlanPgList = buyPlanPGRepository.findByDcAccountAndIsCurrent(dest, "Y");
+    		if(!buyPlanPgList.isEmpty()) {
+    			for(BuyPlanPG buyPlan : buyPlanPgList) {
+    				Integer ratio = buyPlan.getAllocationPercent();
+    				BigDecimal tradeAmt = temp.multiply(BigDecimal.valueOf(ratio)).divide(BigDecimal.valueOf(100), SCALE_CAL, RMDN);
+    				
+    				deposited = deposited.subtract(tradeAmt);
+    				
+    				PrincipalGuarantee pg = buyPlan.getPrincipal();
+    				long years = 0L;
+    				switch (pg.getMaturityYears()) {
+        				case "1년" -> years = 1L;
+        				case "2년" -> years = 2L;
+        				case "3년" -> years = 3L;
+        				case "5년" -> years = 5L;
+    				}
+    				principalHoldingsRepository.save(PrincipalHoldings.builder()
+    						.dcAccount(dest)
+    						.principal(pg)
+    						.contractAmount(tradeAmt.setScale(SCALE_SAVE, RMDN))
+    						.interestRate(pg.getDcRate())
+    						.startDate(LocalDate.now())
+    						.maturityDate(LocalDate.now().plusYears(years))
+    						.interestAccrued(BigDecimal.ZERO)
+    						.status("ACTIVE")
+    						.build());
+    			}
+    		}
+            	
+            dest.setBalance(dBal.add(deposited));
 
             DcDepositHistory h = DcDepositHistory.builder()
                     .item(it)

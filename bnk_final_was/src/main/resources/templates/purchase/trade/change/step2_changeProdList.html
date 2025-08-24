@@ -1,0 +1,767 @@
+<!-- templates/purchase/trade/change/step2_changeProdList.html -->
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="css">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+</head>
+
+<style id="page-css" hx-swap-oob="true">
+  /* 레이아웃 */
+  .reserve-step2{width:min(92vw,960px);margin:0 auto;padding:16px 16px 132px}
+  .page-title{font-weight:700;font-size:20px;margin-bottom:4px}
+  .page-sub{color:#666;font-size:13px;margin-bottom:12px}
+  
+  .card{border:1px solid #eee;border-radius:12px;padding:14px;background:#fff}
+  .user-card{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+  .badge{display:inline-block;padding:2px 8px;border-radius:999px;background:#f3f4f6;font-size:10px;margin-right:0px}
+  .badge.risk{background:#ffe5e5;color:#cc2b2b}
+  .section-title{font-weight:700;font-size:16px;margin:18px 0 10px}
+  
+  /* 선택 상품 카드 */
+  .retain-list{display:flex;flex-direction:column;gap:10px}
+  .retain-card{border:1px solid #f0f0f0;border-radius:12px;padding:12px}
+  .retain-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+  .retain-name{font-weight:600;margin-bottom:8px}
+  .remove{border:none;background:transparent;font-size:18px;line-height:1;cursor:pointer;color:#bbb}
+  
+  /* 하단 고정 버튼 */
+  .page-bottom{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid #eee}
+  .page-bottom .stack{width:min(92vw,960px);margin:0 auto;display:flex;flex-direction:column;gap:10px}
+  .btn-primary{width:100%;padding:14px;border:none;border-radius:10px;background:#ff5252;color:#fff;font-weight:700;font-size:16px;cursor:pointer}
+  .btn-primary:disabled{background:#ffd6d6;cursor:not-allowed}
+  .btn-outline-red{width:fit-content;padding:10px 14px;border-radius:999px;border:1px solid #f2b7b7;background:#fff;color:#e26666;font-weight:600;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+  .btn-outline-red:disabled{opacity:.6;cursor:not-allowed}
+  .btn-outline-red .plus{font-weight:700}
+  
+  /* 모달 */
+  .modal{position:fixed;inset:0;display:none;align-items:stretch;justify-content:center;background:rgba(0,0,0,.4);z-index:999}
+  .modal.open{display:flex}
+  .modal-panel{width:100%;height:100%;background:#fff;border-radius:16px 16px 0 0;margin-top:4vh;display:flex;flex-direction:column;overflow:hidden}
+  .modal-head{padding:16px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .modal-title{font-weight:700; display: inline-block;}
+  .modal-info{display: flex; gap: 6px; margin-bottom: 5px;}
+  .tabs{display:flex;gap:8px;flex-wrap:nowrap;overflow:auto;-webkit-overflow-scrolling:touch}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{padding:6px 12px;border:1px solid #e5e7eb;border-radius:999px;background:#fff;cursor:pointer;font-size:13px;white-space:nowrap}
+  .tab.active{background:#111827;color:#fff;border-color:#111827}
+  .modal-controls{display:flex;align-items:center;gap:8px}
+  .select{border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;background:#fff}
+  
+  .modal-body{flex:1;overflow:auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+  .prod-card{border:1px solid #eee;border-radius:12px;padding:12px;display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"left mid actions";gap:10px;align-items:center}
+  .prod-left{grid-area:left;display:flex;align-items:center;gap:10px}
+  .prod-mid{grid-area:mid;min-width:0}
+  .prod-actions{grid-area:actions;display:flex;gap:8px;justify-self:end}
+  .btn{border:1px solid #e5e7eb;border-radius:8px;background:#fff;padding:8px 10px;font-size:13px;cursor:pointer}
+  .btn.gray{background:#f9fafb}
+  .chip{display:inline-block;border-radius:999px;padding:2px 8px;background:#f3f4f6;font-size:10px;margin-right:0px}
+  .chip.guarantee{background:#e8f5e9;color:#2e7d32}
+  .chip.noguarantee{background:#fff4e5;color:#b45a00}
+  
+  .modal-foot{padding:12px 16px;border-top:1px solid #eee;display:flex;gap:10px}
+  .modal-foot .grow{flex:1}
+  .btn-secondary{padding:12px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;cursor:pointer}
+  .btn-cta{padding:12px;border-radius:10px;border:none;background:#ff5252;color:#fff;font-weight:700;cursor:pointer}
+  
+  /* 모달 하단 더보기 바 */
+  .modal-more{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 0}
+  .btn-loadmore{padding:10px 14px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-weight:600}
+  .btn-loadmore[disabled]{opacity:.6;cursor:not-allowed}
+  .more-meta{font-size:12px;color:#666}
+    
+  /* === NEW: 보장/비보장 배지 색 === */
+  .badge.guarantee{ background:#e8f5e9; color:#2e7d32; }
+  .badge.noguarantee{ background:#fff4e5; color:#b45a00; }
+  
+  /* === 투자성향(안정형~공격투자형) 배지/칩 팔레트 === */
+  .badge.risk, .chip.risk { background:#f3f4f6; color:#374151; }
+  .badge.risk.risk-2, .chip.risk-2 { background:#e6f4ea; color:#1b5e20; }  /* 안정형 */
+  .badge.risk.risk-3, .chip.risk-3 { background:#e8f1fb; color:#1e5bc6; }  /* 안전추구형 */
+  .badge.risk.risk-4, .chip.risk-4 { background:#fff7cc; color:#946200; }  /* 위험중립형 */
+  .badge.risk.risk-5, .chip.risk-5 { background:#ffe5cc; color:#c24a00; }  /* 적극투자형 */
+  .badge.risk.risk-6, .chip.risk-6 { background:#ffe5e5; color:#cc2b2b; }  /* 공격투자형 */
+
+  /* === 펀드 위험도(초저~초고) 칩/배지 팔레트 === */
+  .badge.fund-risk, .chip.fund-risk { background:#f3f4f6; color:#374151; }
+  .badge.fund-risk.lowest, .chip.fund-risk.lowest { background:#e8f5e9; color:#1b5e20; }
+  .badge.fund-risk.low,    .chip.fund-risk.low    { background:#e0f2f1; color:#00695c; }
+  .badge.fund-risk.mid,    .chip.fund-risk.mid    { background:#fff7cc; color:#946200; }
+  .badge.fund-risk.high,   .chip.fund-risk.high   { background:#ffe5cc; color:#c24a00; }
+  .badge.fund-risk.highest,.chip.fund-risk.highest{ background:#ffe5e5; color:#cc2b2b; }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  
+  @media (max-width:768px){
+    .reserve-step2{
+      width: 100%;
+      padding: 12px 12px 132px;
+      box-sizing: border-box;
+    }
+    .btn-outline-red{width:100%;justify-content:center}
+    .modal-panel{height:100vh;margin-top:0;border-radius:0}
+    .modal-body{padding:10px 12px}
+    .page-bottom .stack{
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .prod-card{
+      grid-template-areas:
+        "mid"
+        "left"
+        "actions";
+      grid-template-columns:1fr;
+      align-items:stretch;
+    }
+    .prod-actions{justify-self:stretch}
+    .prod-actions .btn{flex:1}
+    .modal-head{padding:10px; flex-direction: column; align-items:start; justify-content:start; gap:4px}
+    .tabs{display:flex; gap:2px; flex-wrap:wrap; justify-content:space-between; width: 90%;}
+    .tab{padding:5px 10px; cursor:pointer; font-size:11px;}
+    .modal-controls{gap:3px}
+    .select{border:1px solid #e5e7eb;border-radius:8px;padding:5px 8px;background:#fff; font-size:11px;}
+    .btn{border:1px solid #e5e7eb;border-radius:8px;background:#fff;padding:5px 8px;font-size:11px;cursor:pointer}
+  }
+</style>
+</th:block>
+
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="content">
+<body>
+  <section class="reserve-step2">
+    <!-- 타이틀 -->
+    <div class="page-title">매수상품 선택</div>
+    <div class="page-sub">선택만 진행하세요. 다음 단계에서 금액/비율을 입력합니다.</div>
+  
+    <!-- 사용자/계좌 박스 -->
+    <div class="card" id="user-card">
+      <div class="user-card">
+        <div>
+          <div style="font-size:12px;color:#666">계좌유형</div>
+          <div id="accountType">-</div>
+        </div>
+        <div>
+          <div style="font-size:12px;color:#666">계좌번호</div>
+          <div id="accountId">-</div>
+        </div>
+        <div>
+          <div style="font-size:12px;color:#666">성명</div>
+          <div id="userName">-</div>
+        </div>
+        <div>
+          <div style="font-size:12px;color:#666">투자성향</div>
+          <div><span class="badge risk" id="riskGrade">-</span></div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- 선택 목록 -->
+    <div id="sectionTitle" class="section-title">추가로 매수할 상품</div>
+    <div class="card">
+      <div class="retain-list" id="retainList"></div>
+    </div>
+  
+    <!-- 서버 세션 값 -->
+    <div id="model-data"
+         th:data-flow="${session.ChangeValueDto?.flow ?: ''}"
+         th:data-account-type="${session.ChangeValueDto?.accountType ?: ''}"
+         th:data-account-id="${session.ChangeValueDto?.accountId ?: ''}"
+         th:data-risk-grade="${session.ChangeValueDto?.riskGrade ?: ''}"
+         th:data-risk-grade-num="${session.ChangeValueDto?.riskGradeNum ?: 0}">
+    </div>
+  
+    <!-- 하단 버튼 -->
+    <div class="page-bottom">
+      <div class="stack">
+        <button id="addProductBtn" class="btn-outline-red" type="button">
+          매수상품 추가 <span class="plus" aria-hidden="true">+</span>
+        </button>
+        <button id="nextBtn" class="btn-primary" type="button" disabled>다음</button>
+      </div>
+    </div>
+  
+    <!-- (구버전 호환 폼 — 유지만, 사용 안함) -->
+    <form id="nextForm" method="post" action="#" style="display:none">
+      <input type="hidden" name="flow" id="f_flow" />
+      <input type="hidden" name="accountType" id="f_accountType" />
+      <input type="hidden" name="accountId" id="f_accountId" />
+      <input type="hidden" name="riskGrade" id="f_riskGrade" />
+    </form>
+  
+    <!-- ====== 상품 모달 (조각으로 재사용 가능하도록 fragment 추가) ====== -->
+    <div id="productModal" class="modal" aria-hidden="true" th:fragment="productModalFragment">
+      <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-head">
+          <div class="modal-info">
+            <div id="modalTitle" class="modal-title">상품조회</div>
+            <span class="badge risk" id="modalRiskBadge">-</span>
+          </div>
+          <div class="tabs" role="tablist" aria-label="상품분류">
+            <button class="tab active" data-cat="deposit" type="button" role="tab" aria-selected="true">정기예금</button>
+            <button class="tab" data-cat="tdf" type="button" role="tab">TDF</button>
+            <button class="tab" data-cat="fund" type="button" role="tab">펀드</button>
+            <button class="tab" data-cat="etf" type="button" role="tab">ETF</button>
+            <button class="tab" data-cat="cash" type="button" role="tab">현금성 자산</button>
+          </div>
+          <div class="modal-controls">
+            <select id="sortSelect" class="select"></select>
+            <button id="applySortBtn" class="btn" type="button">조회</button>
+          </div>
+        </div>
+  
+        <div id="modalBody" class="modal-body"></div>
+  
+        <div class="modal-foot">
+          <button type="button" class="btn-secondary" id="closeModalBtn">닫기</button>
+          <div class="grow"></div>
+          <button type="button" class="btn-cta" id="addSelectedBtn">추가</button>
+        </div>
+      </div>
+    </div>
+  
+  </section>
+  
+  <script>
+    // ===== 전역 상태 =====
+    const selectedMap = new Map(); // { pid -> { meta } }
+    const pageState = { deposit:0, fund:0, etf:0, tdf:0, cash:0, size:10 };
+    let lastDocsByProd = new Map(); // prodId -> [FileUrlDto]
+    const pageMeta = { deposit:null, fund:null, etf:null, tdf:null, cash:null };
+  
+    const PERIOD_CODE_MAP = { '1개월':'1개월','3개월':'3개월','6개월':'6개월','1년':'1년' };
+  
+    document.addEventListener('DOMContentLoaded', initStep2);
+  
+    async function initStep2() {
+      const model = readModel();
+      applySectionTitle(model.accountType);
+      hydrateHiddenForm(model);
+      await loadUserInfo(model);
+      await bootstrapSelectedFromServer(); // 세션 스냅샷 복원
+      renderSelected();
+  
+      document.getElementById('addProductBtn')?.addEventListener('click', openProductModal);
+      document.getElementById('nextBtn')?.addEventListener('click', submitNext);
+      document.getElementById('closeModalBtn').addEventListener('click', closeProductModal);
+      document.getElementById('addSelectedBtn').addEventListener('click', addCheckedFromModal);
+  
+      document.getElementById('applySortBtn').addEventListener('click', ()=>{
+        pageState[currentCategory()] = 0;  // 정렬 변경 시 페이지 리셋
+        reloadModalList(false);
+      });
+  
+      document.getElementById('productModal').addEventListener('click', (e)=>{
+        if(e.target.id === 'productModal') closeProductModal();
+      });
+  
+      document.querySelectorAll('.tab[data-cat]').forEach(tab=>{
+        tab.addEventListener('click', ()=>{
+          if(tab.disabled) return;
+          document.querySelectorAll('.tab').forEach(t=>{t.classList.remove('active'); t.setAttribute('aria-selected','false');});
+          tab.classList.add('active'); tab.setAttribute('aria-selected','true');
+          pageState[currentCategory()] = 0; // 탭 바꿀 때 페이지 리셋
+          buildSortUI(); // 탭에 맞게 셀렉트 재구성
+          reloadModalList(false);
+        });
+      });
+  
+      document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeProductModal(); });
+  
+      // 외부(예: step2_changeAddRatio)에서 모달 오픈할 수 있게 노출
+      window.openChangeProductModal = openProductModal;
+    }
+  
+    function readModel(){
+      const el = document.getElementById('model-data');
+      const m = {
+        flow: el?.dataset?.flow ?? '',
+        accountType: el?.dataset?.accountType ?? '', // "IRP" | "DC"
+        accountId: el?.dataset?.accountId ?? '',
+        riskGrade: el?.dataset?.riskGrade ?? '',
+        riskGradeNum: Number(el?.dataset?.riskGradeNum ?? '') || 0
+      };
+      document.getElementById('modalRiskBadge').textContent = m.riskGrade || '-';
+      return m;
+    }
+  
+    function applySectionTitle(accountType){
+      const titleEl = document.getElementById('sectionTitle');
+      const t = String(accountType||'').toUpperCase();
+      if (t === 'DC') titleEl.textContent = '퇴직금으로 운용 (매수 후보 선택)';
+      else if (t === 'IRP') titleEl.textContent = '본인 부담금으로 운용 (매수 후보 선택)';
+      else titleEl.textContent = '매수 후보 선택';
+    }
+  
+    function hydrateHiddenForm(m){
+      document.getElementById('f_flow').value = m.flow || '';
+      document.getElementById('f_accountType').value = m.accountType || '';
+      document.getElementById('f_accountId').value = m.accountId || '';
+      document.getElementById('f_riskGrade').value = m.riskGrade || '';
+    }
+  
+    // --- 사용자 정보(상단 카드) ---
+    async function loadUserInfo(){
+      try{
+        const res = await fetch('/retain-api/change/user-info', { method:'POST' });
+        if(!res.ok) throw new Error('user-info failed');
+        const data = await res.json();
+        const u = data.userInfo || {};
+  
+        document.getElementById('accountType').textContent = u.accountType || '-';
+        document.getElementById('accountId').textContent   = u.accountId   || '-';
+        document.getElementById('userName').textContent    = u.userName    || '-';
+        document.getElementById('riskGrade').textContent   = u.riskGrade   || '-';
+        document.getElementById('modalRiskBadge').textContent = u.riskGrade || '-';
+        
+        applyRiskStyle(document.getElementById('riskGrade'), u.riskGrade);
+        applyRiskStyle(document.getElementById('modalRiskBadge'), u.riskGrade);
+  
+        const md = document.getElementById('model-data');
+        if (md){
+          md.dataset.accountType   = u.accountType || md.dataset.accountType || '';
+          md.dataset.accountId     = u.accountId   || md.dataset.accountId   || '';
+          md.dataset.riskGrade     = u.riskGrade   || md.dataset.riskGrade   || '';
+          md.dataset.riskGradeNum  = String(u.riskGradeNum ?? md.dataset.riskGradeNum ?? '0');
+        }
+  
+        document.getElementById('f_accountType').value = u.accountType || '';
+        document.getElementById('f_accountId').value   = u.accountId   || '';
+        document.getElementById('f_riskGrade').value   = u.riskGrade   || '';
+      } catch(e){
+        console.error(e);
+      }
+    }
+  
+    // --- 초기 선택(세션 스냅샷 복원) ---
+    async function bootstrapSelectedFromServer() {
+      try {
+        const res = await fetch('/retain-api/change/step2/snapshot', { method: 'GET' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const dto = data?.dto || {};
+        const buyItems = Array.isArray(dto.buyItems) ? dto.buyItems : [];
+        selectedMap.clear();
+        buyItems.forEach(b => {
+          const pid = b.productId || b.prodId;
+          if (!pid) return;
+          const meta = { productName: b.name || '', category: (b.type === 'PRINCIPAL' ? '정기예금' : (b.type === 'CASH' ? '현금성 자산' : 'FUND')), riskGradeText: b.riskGradeText || '', fundType: b.fundType || '' };
+          selectedMap.set(String(pid), { meta });
+        });
+      } catch (e) { console.error(e); }
+    }
+  
+    // ===== 모달 =====
+    function openProductModal(){
+      buildSortUI();
+      document.getElementById('productModal').classList.add('open');
+      reloadModalList(false);
+    }
+    function closeProductModal(){
+      document.getElementById('productModal').classList.remove('open');
+    }
+    function currentCategory(){
+      const active = document.querySelector('.tab.active');
+      return active?.dataset?.cat || 'deposit';
+    }
+  
+    function buildSortUI(){
+      const sel = document.getElementById('sortSelect');
+      const cat = currentCategory();
+      sel.innerHTML = '';
+  
+      if(cat === 'deposit'){
+        sel.append(new Option('금리순', 'rate', true, true));
+      }else if(cat === 'fund' || cat === 'etf' || cat === 'tdf'){
+        sel.append(new Option('1개월 수익률', '1개월'));
+        sel.append(new Option('3개월 수익률', '3개월', true, true));
+        sel.append(new Option('6개월 수익률', '6개월'));
+        sel.append(new Option('1년 수익률', '1년'));
+      }else if(cat === 'cash'){
+        sel.append(new Option('옵션 없음', '', true, true));
+      }else{
+        sel.append(new Option('옵션 없음', '', true, true));
+      }
+    }
+  
+    function makeRequestDto(cat, model){
+      const page = pageState[cat] ?? 0;
+      const size = pageState.size ?? 10;
+  
+      if(cat === 'deposit'){
+        const sortedBy = (model.accountType || '').toUpperCase() === 'IRP' ? 'irpRate' : 'dcRate';
+        return { category: 'pg', page, size, sortedBy };
+      }else if(cat === 'fund' || cat === 'etf' || cat === 'tdf'){
+        const periodCode = document.getElementById('sortSelect').value || '3개월';
+        return { category: cat, riskGradeNum: model.riskGradeNum || 0, page, size, periodCode };
+      }else if(cat === 'cash'){
+        return null; // 서버 호출 없음
+      }else{
+        return { category: cat, page, size };
+      }
+    }
+  
+    function getCashItems(){
+      return [{ productId: 'CASH_HOLD', productName: '현금성자산(미운용)', category: 'cash' }];
+    }
+  
+    function groupDocsByProd(fileUrlList){
+      const m = new Map();
+      (fileUrlList || []).forEach(d=>{
+        const key = d.prodId || d.productId;
+        if(!key) return;
+        if(!m.has(key)) m.set(key, []);
+        m.get(key).push(d);
+      });
+      return m;
+    }
+    function mergeDocsByProd(baseMap, addMap){
+      const out = new Map(baseMap);
+      for(const [k, arr] of addMap.entries()){
+        if(!out.has(k)) out.set(k, []);
+        out.get(k).push(...arr);
+      }
+      return out;
+    }
+  
+    async function reloadModalList(append = false){
+      const cat = currentCategory();
+      const model = readModel();
+      const dto = makeRequestDto(cat, model);
+  
+      if(cat === 'cash'){
+        const items = getCashItems();
+        pageMeta[cat] = { totalPages:1, last:true, number:0 };
+        renderModalList(items, cat, new Map(), model, pageMeta[cat], append);
+        return;
+      }
+  
+      let data;
+      try{
+        const res = await fetch('/product-api/search', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(dto)
+        });
+        if(!res.ok) throw new Error('search failed');
+        data = await res.json();
+      }catch(e){
+        console.error(e);
+        if(!append){
+          renderModalList([], cat, new Map(), model, null, append);
+        }
+        return;
+      }
+  
+      const pageJson = data?.resultList || {};
+      const items = Array.isArray(pageJson?.content) ? pageJson.content : [];
+  
+      const freshDocsByProd = groupDocsByProd(data?.fileUrlList);
+      lastDocsByProd = append ? mergeDocsByProd(lastDocsByProd, freshDocsByProd) : freshDocsByProd;
+  
+      pageMeta[cat] = pageJson || null;
+      renderModalList(items, cat, lastDocsByProd, model, pageJson, append);
+    }
+  
+    function renderModalList(items, cat, docsByProd, model, page, append = false){
+      const body = document.getElementById('modalBody');
+  
+      if(!append){
+        body.innerHTML = '';
+      }else{
+        const oldMore = body.querySelector('.modal-more');
+        if(oldMore) oldMore.remove();
+      }
+  
+      (items||[]).forEach(it=>{
+        const pid = it.productId || it.prodId || '';
+        const name = buildDisplayName(it, cat);
+        const checked = selectedMap.has(String(pid)) ? 'checked' : '';
+  
+        const guaranteeChip =
+          (cat === 'deposit' || cat === 'cash')
+            ? `<span class="chip guarantee">${cat === 'cash' ? '현금성' : '원리금보장'}</span>`
+            : `<span class="chip noguarantee">원리금 비보장</span>`;
+  
+        let rateOrMetaHtml = '';
+        if(cat === 'deposit'){
+          const isIRP = (model.accountType || '').toUpperCase() === 'IRP';
+          const rate = Number(isIRP ? it.irpRate : it.dcRate);
+          rateOrMetaHtml = `금리: <strong>${Number.isFinite(rate) ? rate : '-'}</strong> %`;
+        }else if(cat !== 'cash'){
+          const fee = toPct(it.totalExpenseRatio);
+          const pc = it.periodCode;
+          const pcLabel = PERIOD_CODE_MAP[pc] || pc || '';
+          const ret = toPct(it.fundReturn);
+          rateOrMetaHtml = `
+            <div style="display:flex;gap:12px;flex-wrap:wrap">
+              <span>총보수: <strong>${fee}</strong></span>
+              <span>수익률(${escapeHtml(pcLabel)}): <strong>${ret}</strong></span>
+            </div>
+          `;
+        }
+  
+        const card = document.createElement('div');
+        card.className = 'prod-card';
+        card.innerHTML = `
+          <div class="prod-mid">
+            <div style="display:flex;align-items:center;gap:1px;flex-wrap:wrap;margin-bottom:6px">
+              <input type="checkbox" class="pick"
+                data-pid="${escapeAttr(pid)}" ${checked}
+                data-pname="${escapeAttr(name)}"
+                data-cat="${escapeAttr(cat)}"
+                data-risk="${escapeAttr(it.riskGradeText || '')}"
+                data-fundtype="${escapeAttr(it.fundType || '')}"/>
+              ${guaranteeChip}
+              ${it.riskGradeText ? `<span class="chip fund-risk">${escapeHtml(it.riskGradeText)}</span>`:''}
+              ${it.fundType ? `<span class="chip">${escapeHtml(it.fundType)}</span>`:''}
+            </div>
+            <div style="font-weight:700;margin-bottom:6px">${escapeHtml(name)}</div>
+            ${cat === 'deposit' ? `<div>${rateOrMetaHtml}</div>` : rateOrMetaHtml}
+          </div>
+          <div class="prod-actions">
+            <button class="btn gray" type="button" data-action="detail" data-pid="${escapeAttr(pid)}">상품상세</button>
+            <button class="btn" type="button" data-action="docs" data-pid="${escapeAttr(pid)}">설명서 및 약관</button>
+          </div>
+        `;
+  
+        if (it.riskGradeText) {
+          const fr = card.querySelector('.chip.fund-risk');
+          if (fr) applyFundRiskStyle(fr, it.riskGradeText);
+        }
+  
+        card.querySelector('.pick').addEventListener('change', (e)=>{
+          const pid = String(e.target.dataset.pid);
+          const pname = e.target.dataset.pname || '';
+          const risk = e.target.dataset.risk || '';
+          const ftype = e.target.dataset.fundtype || '';
+          const cat = e.target.dataset.cat || '';
+          if(e.target.checked){
+            if(!selectedMap.has(pid)){
+              const categoryLabel = cat === 'deposit' ? '정기예금' : (cat === 'cash' ? '현금성 자산' : (it.category || cat.toUpperCase()));
+              selectedMap.set(pid, { meta: { productName: pname, category: categoryLabel, riskGradeText: risk, fundType: ftype } });
+            }
+          }else{
+            selectedMap.delete(pid);
+          }
+          updateNextButton();
+        });
+  
+        card.querySelectorAll('.prod-actions .btn').forEach(btn=>{
+          btn.addEventListener('click', ()=>{
+            const action = btn.dataset.action;
+            const pid = btn.dataset.pid;
+            if(action === 'docs'){
+              const docs = docsByProd.get(pid) || [];
+              if(docs.length === 0){ alert('등록된 문서가 없습니다.'); return; }
+              docs.forEach(d=>{ if(d.fileUrl) window.open(d.fileUrl, '_blank'); });
+            }else if(action === 'detail'){
+              alert('상세 페이지는 준비중입니다.');
+            }
+          });
+        });
+        
+        body.appendChild(card);
+      });
+  
+      renderMoreBar(page, cat);
+    }
+  
+    function buildDisplayName(it, cat){
+      if(cat === 'deposit'){
+        const bank = it.bankName || '';
+        const name = it.productName || '';
+        const years = (it.maturityYears != null) ? ` ${it.maturityYears}` : '';
+        const merged = `${bank} ${name}${years}`.trim();
+        return merged || (it.prodName || it.productId || '');
+      }
+      if(cat === 'cash'){
+        return it.productName || '현금성자산(미운용)';
+      }
+      return it.productName || it.prodName || it.productId || '';
+    }
+  
+    function renderMoreBar(page, cat){
+      const body = document.getElementById('modalBody');
+      const old = body.querySelector('.modal-more');
+      if(old) old.remove();
+      if(!page || !Number.isFinite(page.totalPages) || page.totalPages <= 1) return;
+  
+      const wrap = document.createElement('div');
+      wrap.className = 'modal-more';
+  
+      const meta = document.createElement('span');
+      meta.className = 'more-meta';
+      meta.textContent = `페이지 ${ (page.number ?? 0) + 1 } / ${ page.totalPages }`;
+  
+      const btn = document.createElement('button');
+      btn.className = 'btn-loadmore';
+      btn.type = 'button';
+      btn.textContent = page.last ? '마지막 페이지' : '더보기';
+      btn.disabled = !!page.last;
+  
+      if(!page.last){
+        btn.addEventListener('click', ()=> loadMore(cat));
+      }
+      wrap.appendChild(meta);
+      wrap.appendChild(btn);
+      body.appendChild(wrap);
+    }
+  
+    async function loadMore(cat){
+      pageState[cat] = (pageState[cat] ?? 0) + 1;
+      await reloadModalList(true);
+    }
+  
+    // --- 선택된 상품 카드 렌더 ---
+    function renderSelected(){
+      const wrap = document.getElementById('retainList');
+      wrap.innerHTML = '';
+      for(const [pid, obj] of selectedMap.entries()){
+        const it = obj.meta || {};
+        const card = document.createElement('div');
+        card.className = 'retain-card';
+        card.dataset.productId = pid;
+  
+        card.innerHTML = `
+          <div class="retain-head">
+            <div>
+              ${it.fundType
+                ? `<span class="badge noguarantee">원리금비보장</span>`
+                : `<span class="badge guarantee">${it.category === '현금성 자산' ? '현금성' : '원리금보장'}</span>`
+              }
+              ${it.riskGradeText ? `<span class="badge fund-risk">${escapeHtml(it.riskGradeText)}</span>` : ``}
+              ${it.fundType ? `<span class="badge">${escapeHtml(it.fundType)}</span>` : ``}
+            </div>
+            <button class="remove" title="삭제" aria-label="삭제">&times;</button>
+          </div>
+          <div class="retain-name">${escapeHtml(it.productName || '')}</div>
+          <div class="help" style="margin-top:6px;color:#666">※ 다음 단계에서 매수금액/비율을 입력합니다.</div>
+        `;
+        applyFundRiskStyle(card.querySelector('.badge.fund-risk'), it.riskGradeText);
+        card.querySelector('.remove').addEventListener('click', ()=>{
+          selectedMap.delete(pid);
+          card.remove();
+          updateNextButton();
+        });
+        wrap.appendChild(card);
+      }
+      updateNextButton();
+    }
+  
+    function updateNextButton(){
+      const nextBtn = document.getElementById('nextBtn');
+      nextBtn.disabled = !(selectedMap.size > 0);
+    }
+  
+	async function submitNext(){
+	  if (selectedMap.size === 0){
+	    alert('상품을 선택해 주세요.');
+	    return;
+	  }
+
+	  const buyItems = [];
+	  const fileUrlList = [];
+
+	  for (const [pid, obj] of selectedMap.entries()){
+	    const meta = obj.meta || {};
+	    buyItems.push({
+	      type: inferTypeFromMeta(meta),
+	      prodId: String(pid),
+	      name: meta.productName || ''
+	    });
+
+	    // ✅ docsByProd에서 선택한 상품 문서 가져오기
+	    const docs = lastDocsByProd.get(pid) || [];
+	    docs.forEach(d => fileUrlList.push(d));
+	  }
+
+	  try{
+	    await fetch('/retain-api/change/step2/buy/save', {
+	      method:'POST',
+	      headers:{'Content-Type':'application/json'},
+	      body: JSON.stringify({ buyItems, fileUrlList })
+	    });
+	  }catch(e){
+	    console.error(e);
+	    alert('매수 목록 저장 실패');
+	    return;
+	  }
+
+	  location.href = '/purchase/trade/change/step2/buy-list';
+	}
+  
+    function addCheckedFromModal(){
+      document.querySelectorAll('#modalBody .pick:checked').forEach(chk=>{
+        const pid = chk.dataset.pid;
+        if(!selectedMap.has(pid)){
+          const pname = chk.dataset.pname || '';
+          const risk = chk.dataset.risk || '';
+          const ftype = chk.dataset.fundtype || '';
+          const cat = chk.dataset.cat || '';
+          const categoryLabel = cat === 'deposit' ? '정기예금' : (cat === 'cash' ? '현금성 자산' : cat.toUpperCase());
+          selectedMap.set(pid, { meta: { productName: pname, category: categoryLabel, riskGradeText: risk, fundType: ftype } });
+        }
+      });
+      renderSelected();
+      closeProductModal();
+    }
+    
+    //=== 투자성향(안정형~공격투자형) ===
+    function riskLevelFromLabel(risk) {
+      if (risk == null) return null;
+      const t = String(risk).trim();
+      if (/^[-]?\d+$/.test(t)) {
+        const n = Number(t);
+        if (n >= 2 && n <= 6) return n;
+      }
+      switch (t) {
+        case '안정형': return 2;
+        case '안전추구형': return 3;
+        case '위험중립형': return 4;
+        case '적극투자형': return 5;
+        case '공격투자형': return 6;
+        default: return null;
+      }
+    }
+    function applyRiskStyle(el, riskLabelOrNum){
+      const lvl = riskLevelFromLabel(riskLabelOrNum);
+      if (!el) return;
+      ['risk-2','risk-3','risk-4','risk-5','risk-6'].forEach(c=>el.classList.remove(c));
+      if (lvl) el.classList.add(`risk-${lvl}`);
+    }
+  
+    // === 펀드 위험도 칩 색상 ===
+    function fundRiskLevel(label) {
+      const s = String(label || '').replace(/[()\s]/g, '');
+      if (!s) return null;
+      if (/(초고위험|매우높)/.test(s)) return 'highest';
+      if (/(고위험|다소높|높)/.test(s)) return 'high';
+      if (/(중위험|보통)/.test(s)) return 'mid';
+      if (/(초저위험|매우낮)/.test(s)) return 'lowest';
+      if (/(저위험|낮)/.test(s)) return 'low';
+      return null;
+    }
+    function applyFundRiskStyle(el, label) {
+      if (!el) return;
+      ['lowest','low','mid','high','highest'].forEach(c => el.classList.remove(c));
+      el.classList.add('fund-risk');
+      const lvl = fundRiskLevel(label);
+      if (lvl) el.classList.add(lvl);
+    }
+  
+    function inferTypeFromMeta(meta){
+      const cat = String(meta?.category || '').trim();
+      if (cat === '정기예금' || cat === '현금성 자산') return 'PRINCIPAL';
+      return 'FUND';
+    }
+  
+    // ===== 유틸 =====
+    function escapeHtml(str){ if(!str) return ''; return String(str).replace(/[&<>"']/g, (m)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;' }[m])); }
+    function escapeAttr(str){ return escapeHtml(str).replace(/"/g,'&quot;'); }
+    function toPct(v){
+      const n = Number(v);
+      if(Number.isFinite(n)) return n.toFixed(2) + '%';
+      return '-';
+    }
+  </script>
+</body>
+</th:block>
