@@ -15,9 +15,11 @@ import lombok.RequiredArgsConstructor;
 
 /*메세지 전송 시에 사용해야 할 클래스 함수 구현 자체는 신경쓰지 마세요*/
 @Service
+@RequiredArgsConstructor
 public class TcpClientService {
 	
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper;
+    private final AES256Util AES256Util; 
     
     /*이 함수 쓰면 됨 --> 요청하면 응답까지 받음*/
     public JsonNode sendMessage(TcpMessage message) {
@@ -27,6 +29,7 @@ public class TcpClientService {
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))
         ) {
             String json = mapper.writeValueAsString(message);
+            
             String encodedRequest = AES256Util.encrypt(json);
             out.println(encodedRequest);
             

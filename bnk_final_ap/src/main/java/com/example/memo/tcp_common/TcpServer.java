@@ -11,17 +11,18 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.RequiredArgsConstructor;
+
 /*신경 안써도 되는 클래스*/
 
 @Component
+@RequiredArgsConstructor
 public class TcpServer {
 	
 	private final TcpMessageRouter router;
-	private final ObjectMapper mapper = new ObjectMapper();
+	private final ObjectMapper mapper;
+	private final AES256Util AES256Util;
 	
-	public TcpServer(TcpMessageRouter router) {
-		this.router = router;
-	}
 	
 	public void start() throws IOException {
 		ServerSocket serverSocket = new ServerSocket(50000);
