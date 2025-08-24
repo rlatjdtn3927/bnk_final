@@ -91,36 +91,42 @@
   }
 
   async function goNext(items){
-      // 서버 세션 저장
-      const resp = await fetch('/retain-api/change/step2/sold/save', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(items.map(it => ({
-          type: it.type,
-          id: it.id,
-          productId: it.productId,
-          name: it.name,
-          baseAmount: it.baseAmount,
-          ratio: it.ratio,
-          amount: it.amount
-        })))
+        // 서버 세션 저장
+        const resp = await fetch('/retain-api/change/step2/sold/save', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(items.map(it => ({
+            type: it.type,
+            holdingId: it.type === 'FUND' ? (it.id ? String(it.id) : null) : null, // ✅ 펀드 → holdingId
+            ledgerId:  it.type === 'PRINCIPAL' ? (it.id ? Number(it.id) : null) : null, // ✅ 원리금 → ledgerId
+            prodId: it.prodId,   // ✅ productId 대신 prodId
+            name: it.name,
+            ratio: it.ratio,
+            amount: it.amount
+          })))
+        });
+        if(!resp.ok){ alert('매도 목록 저장 실패'); return; }
+
+        // 다음 화면
+        location.href = '/purchase/trade/change/step2/change-add-ratio';
+      }
+
+    (function init(){
+      const raw = sessionStorage.getItem('change.soldCandidates');
+      const items = raw ? JSON.parse(raw) : [];
+      if (!items.length) {
+        alert('선택된 매도 상품이 없습니다. 이전 화면으로 이동합니다.');
+        location.href = '/purchase/trade/change/step2_change';
+        return;
+      }
+
+      // 보정: productId → prodId 필드명 통일
+      items.forEach(it => {
+        if (it.productId && !it.prodId) it.prodId = it.productId;
       });
-      if(!resp.ok){ alert('매도 목록 저장 실패'); return; }
 
-      // 다음 화면
-      location.href = '/purchase/trade/change/step2/change-add-ratio';
-    }
-
-  (function init(){
-    const raw = sessionStorage.getItem('change.soldCandidates');
-    const items = raw ? JSON.parse(raw) : [];
-    if (!items.length) {
-      alert('선택된 매도 상품이 없습니다. 이전 화면으로 이동합니다.');
-      location.href = '/purchase/trade/change/step2_change';
-      return;
-    }
-    renderRows(items);
-    document.getElementById('nextBtn').addEventListener('click', ()=>goNext(items));
-  })();
+      renderRows(items);
+      document.getElementById('nextBtn').addEventListener('click', ()=>goNext(items));
+    })();
 </script>
 </body>
 </html>

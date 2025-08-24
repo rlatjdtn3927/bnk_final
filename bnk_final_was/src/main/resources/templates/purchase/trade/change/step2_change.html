@@ -222,33 +222,40 @@
   }
 
   function goNext() {
-    // 선택한 항목을 매도후보로 sessionStorage에 저장하고 다음 화면으로
     const soldCandidates = [];
+
+    // 펀드 매도
     document.querySelectorAll('.fundChk:checked').forEach(c => {
       soldCandidates.push({
         type: 'FUND',
-        id: c.dataset.id ? Number(c.dataset.id) : null,
-        productId: c.dataset.productId,
+        holdingId: c.dataset.id || null,       // FundHolding.id
+        prodId: c.dataset.productId || null,   // FundMaster.productId
         name: c.dataset.name,
         baseAmount: Number(c.dataset.base),
         ratio: 0,
         amount: 0
       });
     });
+
+    // 예금 매도
     document.querySelectorAll('.principalChk:checked').forEach(c => {
+      const ledgerId = c.dataset.id ? Number(c.dataset.id) : null;
       soldCandidates.push({
         type: 'PRINCIPAL',
-        id: c.dataset.id ? Number(c.dataset.id) : null,
-        productId: c.dataset.productId,
+        ledgerId: ledgerId,                     // PrincipalLedger.id
+        id: ledgerId,                           // 동일하게 id도 같이
+        prodId: c.dataset.productId || null,    // principalId
         name: c.dataset.name,
         baseAmount: Number(c.dataset.base),
         ratio: 0,
         amount: 0
       });
     });
+
     sessionStorage.setItem('change.soldCandidates', JSON.stringify(soldCandidates));
     location.href = '/purchase/trade/change/step2/sold-list';
   }
+
 
   // init
   (async function init(){
