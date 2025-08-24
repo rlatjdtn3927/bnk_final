@@ -201,7 +201,13 @@ public class IrpJoinService {
         Object v = em.createNativeQuery(
             "SELECT TO_CHAR(SYSDATE,'YYYYMMDD') || LPAD(IRP_ACCT_NO_SEQ.NEXTVAL, 5, '0') FROM DUAL"
         ).getSingleResult();
-        return v.toString();
+        String raw = v.toString(); // 예: 2025082300001
+
+        // 앞 4-중간 4-나머지로 포맷
+        String formatted = raw.substring(0,4) + "-" 
+                         + raw.substring(4,8) + "-" 
+                         + raw.substring(8);
+        return formatted;
     }
 	
 	// step5: 계약번호/계좌번호만 먼저 생성 (비번은 아직 X)
