@@ -36,6 +36,9 @@ public class ChangeValueDto {
         private String prodId;     // Fund productId
         /** PRINCIPAL일 때 */
         private Long   ledgerId;   // PrincipalLedgerDto.id
+        
+        private String holdingId; // ✅ FundHolding.id (보유펀드 PK)
+        private Long   id;  // PrincipalLedger.id
 
         private String name;       // 화면 표시용
         private Integer ratio;     // 팔 비율(%)
