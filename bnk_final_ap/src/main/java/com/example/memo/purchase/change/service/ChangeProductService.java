@@ -12,7 +12,7 @@ import com.example.memo.jpa.entity.company.DcAccount;
 import com.example.memo.jpa.entity.irp.IrpAccount;
 import com.example.memo.jpa.entity.ledger.FundHoldings;
 import com.example.memo.jpa.entity.ledger.FundLedger;
-import com.example.memo.jpa.entity.ledger.PrincipalLedger;
+import com.example.memo.jpa.entity.ledger.PrincipalHoldings;
 import com.example.memo.jpa.entity.purchase.analysis.FundNav;
 import com.example.memo.jpa.entity.purchase.commodity.FundMaster;
 import com.example.memo.jpa.entity.purchase.commodity.PrincipalGuarantee;
@@ -20,7 +20,7 @@ import com.example.memo.jpa.repository.company.DcAccountRepository;
 import com.example.memo.jpa.repository.irp.IrpAccountRepository;
 import com.example.memo.jpa.repository.ledger.FundHoldingsRepository;
 import com.example.memo.jpa.repository.ledger.FundLedgerRepository;
-import com.example.memo.jpa.repository.ledger.PrincipalLedgerRepository;
+import com.example.memo.jpa.repository.ledger.PrincipalHoldingsRepository;
 import com.example.memo.jpa.repository.purchase.analysis.FundNavRepository;
 import com.example.memo.jpa.repository.purchase.commodity.PrincipalGuaranteeRepository;
 import com.example.memo.purchase.change.dto.request.BuyFundDto;
@@ -51,7 +51,7 @@ public class ChangeProductService {
 	
 	private final FundLedgerRepository fundLedgerRepository;
 	private final FundHoldingsRepository fundHoldingsRepository;
-	private final PrincipalLedgerRepository principalLedgerRepository;
+	private final PrincipalHoldingsRepository principalHoldingsRepository;
 	private final FundNavRepository fundNavRepository;
 	private final IrpAccountRepository irpAccountRepository;
 	private final DcAccountRepository dcAccountRepository;
@@ -67,14 +67,14 @@ public class ChangeProductService {
 			String accountType = dto.getAccountType();
 			String accountId = dto.getAccountId();
 			List<FundHoldings> fundHoldingsList = null;
-			List<PrincipalLedger> principalHoldingList = null;
+			List<PrincipalHoldings> principalHoldingList = null;
 			if("DC".equals(accountType)) {
 				fundHoldingsList = fundHoldingsRepository.findByDcAccount_AccountNo(accountId);
-				principalHoldingList = principalLedgerRepository.findByDcAccount_AccountNo(accountId);
+				principalHoldingList = principalHoldingsRepository.findByDcAccount_AccountNo(accountId);
 			} else { //irp
 				IrpAccount proxy = IrpAccount.builder().irpAcctNo(accountId).build();
 				fundHoldingsList = fundHoldingsRepository.findByIrpAccount(proxy);
-				principalHoldingList = principalLedgerRepository.findByIrpAccount(proxy);
+				principalHoldingList = principalHoldingsRepository.findByIrpAccount(proxy);
 			}
 			
 			if (fundHoldingsList != null && principalHoldingList != null) {
@@ -104,7 +104,7 @@ public class ChangeProductService {
 			            		.build();
 			        }).toList();
 			    List<PrincipalLedgerDto> principalLedgerDtoList = principalHoldingList.stream()
-			    	    .map((PrincipalLedger e) -> {
+			    	    .map((PrincipalHoldings e) -> {
 			    	        return PrincipalLedgerDto.builder()
 			    	            .id(e.getId())
 			    	            .irpAccountId(e.getIrpAccount() != null ? e.getIrpAccount().getIrpAcctNo() : null)
@@ -298,16 +298,16 @@ public class ChangeProductService {
 				}
 			}
 			
-			List<PrincipalLedger> principalHolding = "DC".equals(accountType)
-				    ? principalLedgerRepository.findByDcAccount_AccountNo(accountId)
-				    : principalLedgerRepository.findByIrpAccount(IrpAccount.builder().irpAcctNo(accountId).build());
+			List<PrincipalHoldings> principalHolding = "DC".equals(accountType)
+				    ? principalHoldingsRepository.findByDcAccount_AccountNo(accountId)
+				    : principalHoldingsRepository.findByIrpAccount(IrpAccount.builder().irpAcctNo(accountId).build());
 			
 			if(soldPrincipalIdList != null) { //원리금 보장 상품 매도의 경우
 				
 			    for(SoldPrincipalDto soldDto : soldPrincipalIdList) {
 			    	Long prodId = soldDto.getId();
 			    	Integer ratio = soldDto.getRatio();
-			        PrincipalLedger targetEntity = principalHolding.stream()
+			        PrincipalHoldings targetEntity = principalHolding.stream()
 			    			.filter(f -> f.getId().equals(prodId))
 			    			.findFirst().orElse(null);
 			        if(targetEntity == null) return "해당 계좌에 보유상품 목록이 존재하지 않습니다!";
@@ -321,7 +321,7 @@ public class ChangeProductService {
 			        
 			        if(remainAmount.signum() == 0) {
 			        	targetEntity.setStatus("TERMINATED");
-			        	principalLedgerRepository.save(targetEntity);
+			        	principalHoldingsRepository.save(targetEntity);
 			        	continue;
 			        }
 			        
@@ -348,7 +348,7 @@ public class ChangeProductService {
 			        	irpAccountRepository.save(irpAccount); //일할 이자율 정산
 			        }
 			        
-			        principalLedgerRepository.save(targetEntity);
+			        principalHoldingsRepository.save(targetEntity);
 			    }
 			}
 			if(buyPrincipalList != null) { //원리금 보장 상품 매수의 경우
@@ -367,7 +367,7 @@ public class ChangeProductService {
 					  default -> throw new IllegalArgumentException("지원하지 않는 만기");
 					}
 					
-					PrincipalLedger pgLedger = PrincipalLedger.builder()
+					PrincipalHoldings pgLedger = PrincipalHoldings.builder()
 							.principal(pg)
 							.contractAmount(tradeAmt.setScale(SCALE_SAVE, RMUP))
 							.startDate(LocalDate.now())
@@ -385,7 +385,7 @@ public class ChangeProductService {
 						pgLedger.setIrpAccount(irpAccount);
 						pgLedger.setInterestRate(pg.getIrpRate());
 					}
-					principalLedgerRepository.save(pgLedger);
+					principalHoldingsRepository.save(pgLedger);
 				}
 			}
 			return "상품변경 신청이 완료 되었습니다.";

@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.example.memo.jpa.entity.company.DcAccount;
+import com.example.memo.jpa.entity.irp.IrpAccount;
 import com.example.memo.jpa.entity.purchase.trade.BuyPlanFund;
 import com.example.memo.jpa.entity.user.UserEntity;
 
@@ -18,4 +19,5 @@ public interface BuyPlanFundRepository extends JpaRepository<BuyPlanFund, Long>{
 	List<BuyPlanFund> findByIrpAccount_IrpAcctNoAndFund_ProductIdIn(String accountNo, List<String> prodIdList);
 	List<BuyPlanFund> findByDcAccount_AccountNoAndFund_ProductIdIn(String accountNo, List<String> prodIdList);
 	List<BuyPlanFund> findByDcAccountAndIsCurrent(DcAccount accountNo, String isCurrent);
+	List<BuyPlanFund> findByIrpAccountAndIsCurrent(IrpAccount accountNo, String isCurrent);
 }

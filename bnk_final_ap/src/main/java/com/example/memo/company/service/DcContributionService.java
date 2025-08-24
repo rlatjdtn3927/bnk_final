@@ -38,7 +38,7 @@ import com.example.memo.jpa.entity.company.DcDepositHistory;
 import com.example.memo.jpa.entity.company.DcMember;
 import com.example.memo.jpa.entity.ledger.FundHoldings;
 import com.example.memo.jpa.entity.ledger.FundLedger;
-import com.example.memo.jpa.entity.ledger.PrincipalLedger;
+import com.example.memo.jpa.entity.ledger.PrincipalHoldings;
 import com.example.memo.jpa.entity.purchase.analysis.FundNav;
 import com.example.memo.jpa.entity.purchase.commodity.FundMaster;
 import com.example.memo.jpa.entity.purchase.commodity.PrincipalGuarantee;
@@ -55,7 +55,7 @@ import com.example.memo.jpa.repository.company.DcMemberRepository;
 import com.example.memo.jpa.repository.company.DcMemberStatusRepository;
 import com.example.memo.jpa.repository.ledger.FundHoldingsRepository;
 import com.example.memo.jpa.repository.ledger.FundLedgerRepository;
-import com.example.memo.jpa.repository.ledger.PrincipalLedgerRepository;
+import com.example.memo.jpa.repository.ledger.PrincipalHoldingsRepository;
 import com.example.memo.jpa.repository.purchase.analysis.FundNavRepository;
 import com.example.memo.jpa.repository.purchase.commodity.FundMasterRepository;
 import com.example.memo.jpa.repository.purchase.trade.BuyPlanFundRepository;
@@ -93,7 +93,7 @@ public class DcContributionService {
     private final BuyPlanPGRepository buyPlanPGRepository;
     private final FundLedgerRepository fundLedgerRepository;
     private final FundHoldingsRepository fundHoldingsRepository;
-    private final PrincipalLedgerRepository principalLedgerRepository;
+    private final PrincipalHoldingsRepository principalHoldingsRepository;
     private final FundNavRepository fundNavRepository;
     private final ObjectMapper objectMapper;
     private final CryptoService cryptoService;
@@ -527,7 +527,7 @@ public class DcContributionService {
         				case "3년" -> years = 3L;
         				case "5년" -> years = 5L;
     				}
-    				principalLedgerRepository.save(PrincipalLedger.builder()
+    				principalHoldingsRepository.save(PrincipalHoldings.builder()
     						.dcAccount(dest)
     						.principal(pg)
     						.contractAmount(tradeAmt.setScale(SCALE_SAVE, RMDN))
