@@ -26,9 +26,8 @@ public class ChangeProductHandler implements TcpMessageHandler{
 	public Object handle(Command command, JsonNode data) {
 		
 		switch(command.name()) {
-			case "CHANGE_UPDATE_PRODUCT": {
-				
-				break;
+			case "CHANGE_UPDATE_LEDGER": {
+				return Map.of("result", changeProductService.updateLedger(data));
 			}
 			case "CHANGE_GET_HOLDINGS": {
 				ResponseAccountHoldingsDto result = changeProductService.getHoldings(data);
