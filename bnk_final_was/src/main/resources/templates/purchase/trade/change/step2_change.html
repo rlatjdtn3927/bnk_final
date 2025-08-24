@@ -54,7 +54,11 @@
           <th class="py-2 pr-3">수익률</th>
         </tr>
         </thead>
-        <tbody id="fundBody"></tbody>
+        <tbody id="fundBody">
+          <tr id="fundLoading">
+            <td colspan="6" class="py-6 text-center text-neutral-500">불러오는 중…</td>
+          </tr>
+        </tbody>
       </table>
     </div>
   </section>
@@ -77,7 +81,11 @@
           <th class="py-2 pr-3">상태</th>
         </tr>
         </thead>
-        <tbody id="principalBody"></tbody>
+        <tbody id="principalBody">
+          <tr id="principalLoading">
+            <td colspan="6" class="py-6 text-center text-neutral-500">불러오는 중…</td>
+          </tr>
+        </tbody>
       </table>
     </div>
   </section>
@@ -94,46 +102,84 @@
   const SESSION_ACCOUNT_ID   = /*[[${session.ChangeValueDto?.accountId}]]*/ null;
 </script>
 <script>
-  const fmtKRW = n => (n ?? 0).toLocaleString('ko-KR') + '원';
+  const fmtKRW = n => (Number(n ?? 0)).toLocaleString('ko-KR') + '원';
   const byPath = (obj, path) => path.split('.').reduce((o,k)=>o&&o[k], obj);
 
   async function fetchUserInfo() {
     const r = await fetch('/retain-api/change/user-info', {method:'POST'});
+    if (!r.ok) throw new Error('user-info failed');
     return await r.json();
   }
   async function fetchHoldings(accountType, accountId) {
     const params = new URLSearchParams({accountType, accountId});
     const r = await fetch('/retain-api/change/retain?' + params.toString(), {method:'POST'});
+    if (!r.ok) throw new Error('retain failed');
     return await r.json();
   }
 
+  // ★ 다양한 응답 형태를 모두 흡수
   function normalizeHoldings(res) {
-    // 응답 모양이 {fundHoldings, principalLedgers} 또는 {resultList:{...}} 등 다양할 수 있어 대비
-    const root = res?.resultList ?? res?.data ?? res;
-    return {
-      funds: root?.fundHoldings ?? [],
-      principals: root?.principalLedgers ?? []
-    };
+    const root =
+      res?.resultList ??
+      res?.data ??
+      res?.result ??
+      res?.payload ??
+      res;
+
+    if (Array.isArray(root)) {
+      const funds = root.filter(x => x?.fundProductId || (x?.productName && x?.units != null));
+      const principals = root.filter(x => x?.principalId || x?.contractAmount != null);
+      return { funds, principals };
+    }
+
+    const funds =
+         root?.fundHoldings
+      ?? root?.fundHoldingsDtoList
+      ?? root?.fundHoldingsList
+      ?? root?.funds
+      ?? [];
+
+    const principals =
+         root?.principalLedgers
+      ?? root?.principalLedgerDtoList
+      ?? root?.principalLedgersList
+      ?? root?.principals
+      ?? [];
+
+    if ((!funds || funds.length === 0) && (!principals || principals.length === 0)) {
+      console.warn('[holdings parsed empty] keys:', Object.keys(root || {}));
+    }
+
+    return { funds, principals };
   }
 
   function renderFunds(list) {
     const tbody = document.getElementById('fundBody');
-    tbody.innerHTML = list.map(item => `
+    if (!list || list.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-neutral-400">펀드 보유내역이 없습니다.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = list.map(item => {
+      const rr = Number(item.returnRate ?? 0);
+      const rrStr = Number.isFinite(rr) ? rr + '%' : (item.returnRate ?? '-') + '%';
+      return `
       <tr class="border-b">
         <td class="py-2 pr-3">
           <input type="checkbox" class="fundChk w-4 h-4"
-                 data-id="${item.id}"
-                 data-product-id="${item.fundProductId}"
-                 data-name="${item.productName ?? ''}"
-                 data-base="${item.valuationAmount ?? 0}">
+                 data-id="${item.id ?? ''}"
+                 data-product-id="${item.fundProductId ?? ''}"
+                 data-name="${(item.productName ?? '').replace(/"/g,'&quot;')}"
+                 data-base="${Number(item.valuationAmount ?? 0)}">
         </td>
         <td class="py-2 pr-3">${item.productName ?? '-'}</td>
         <td class="py-2 pr-3">${item.units ?? '-'}</td>
-        <td class="py-2 pr-3">${fmtKRW(Number(item.avgPrice))}</td>
-        <td class="py-2 pr-3">${fmtKRW(Number(item.valuationAmount))}</td>
-        <td class="py-2 pr-3">${(item.returnRate ?? 0)}%</td>
-      </tr>
-    `).join('');
+        <td class="py-2 pr-3">${fmtKRW(item.avgPrice)}</td>
+        <td class="py-2 pr-3">${fmtKRW(item.valuationAmount)}</td>
+        <td class="py-2 pr-3">${rrStr}</td>
+      </tr>`;
+    }).join('');
+
     document.getElementById('chkAllFund')?.addEventListener('change', (e)=>{
       document.querySelectorAll('.fundChk').forEach(c=> c.checked = e.target.checked);
       toggleNext();
@@ -143,24 +189,30 @@
 
   function renderPrincipals(list) {
     const tbody = document.getElementById('principalBody');
+    if (!list || list.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-neutral-400">원리금 보장상품 보유내역이 없습니다.</td></tr>`;
+      return;
+    }
+
     tbody.innerHTML = list.map(item => {
       const base = Number(item.contractAmount ?? 0) + Number(item.interestAccrued ?? 0);
       return `
       <tr class="border-b">
         <td class="py-2 pr-3">
           <input type="checkbox" class="principalChk w-4 h-4"
-                 data-id="${item.id}"
-                 data-product-id="${item.principalId}"
-                 data-name="원리금보장(${item.principalId})"
+                 data-id="${item.id ?? ''}"
+                 data-product-id="${item.principalId ?? ''}"
+                 data-name="원리금보장(${item.principalId ?? '-'})"
                  data-base="${base}">
         </td>
         <td class="py-2 pr-3">${item.principalId ?? '-'}</td>
-        <td class="py-2 pr-3">${fmtKRW(Number(item.contractAmount))}</td>
-        <td class="py-2 pr-3">${fmtKRW(Number(item.interestAccrued))}</td>
+        <td class="py-2 pr-3">${fmtKRW(item.contractAmount)}</td>
+        <td class="py-2 pr-3">${fmtKRW(item.interestAccrued)}</td>
         <td class="py-2 pr-3">${item.maturityDate ?? '-'}</td>
         <td class="py-2 pr-3">${item.status ?? '-'}</td>
       </tr>`;
     }).join('');
+
     document.querySelectorAll('.principalChk').forEach(c => c.addEventListener('change', toggleNext));
   }
 
@@ -175,7 +227,7 @@
     document.querySelectorAll('.fundChk:checked').forEach(c => {
       soldCandidates.push({
         type: 'FUND',
-        id: Number(c.dataset.id),
+        id: c.dataset.id ? Number(c.dataset.id) : null,
         productId: c.dataset.productId,
         name: c.dataset.name,
         baseAmount: Number(c.dataset.base),
@@ -186,7 +238,7 @@
     document.querySelectorAll('.principalChk:checked').forEach(c => {
       soldCandidates.push({
         type: 'PRINCIPAL',
-        id: Number(c.dataset.id),
+        id: c.dataset.id ? Number(c.dataset.id) : null,
         productId: c.dataset.productId,
         name: c.dataset.name,
         baseAmount: Number(c.dataset.base),
@@ -200,24 +252,33 @@
 
   // init
   (async function init(){
-    // 상단 카드
-    const u = await fetchUserInfo();
-    const info = byPath(u, 'userInfo') || {};
-    document.getElementById('userName').textContent   = info.userName ?? '-';
-    document.getElementById('accountType').textContent= info.accountType ?? (SESSION_ACCOUNT_TYPE ?? '-');
-    document.getElementById('accountId').textContent  = info.accountId ?? (SESSION_ACCOUNT_ID ?? '-');
-    document.getElementById('riskBadge').textContent  = `리스크: ${info.riskGrade ?? '-'}`;
+    try {
+      // 상단 카드
+      const u = await fetchUserInfo();
+      const info = byPath(u, 'userInfo') || {};
+      document.getElementById('userName').textContent    = info.userName ?? '-';
+      document.getElementById('accountType').textContent = info.accountType ?? (SESSION_ACCOUNT_TYPE ?? '-');
+      document.getElementById('accountId').textContent   = info.accountId ?? (SESSION_ACCOUNT_ID ?? '-');
+      document.getElementById('riskBadge').textContent   = `리스크: ${info.riskGrade ?? '-'}`;
 
-    const accountType = info.accountType ?? SESSION_ACCOUNT_TYPE;
-    const accountId   = info.accountId   ?? SESSION_ACCOUNT_ID;
+      const accountType = info.accountType ?? SESSION_ACCOUNT_TYPE;
+      const accountId   = info.accountId   ?? SESSION_ACCOUNT_ID;
 
-    // 보유목록
-    const res = await fetchHoldings(accountType, accountId);
-    const {funds, principals} = normalizeHoldings(res);
-    renderFunds(funds || []);
-    renderPrincipals(principals || []);
+      // 보유목록
+      const res = await fetchHoldings(accountType, accountId);
+      // console.debug('[holdings raw]', res); // 필요 시 주석 해제
+      const {funds, principals} = normalizeHoldings(res);
+      renderFunds(funds || []);
+      renderPrincipals(principals || []);
 
-    document.getElementById('nextBtn').addEventListener('click', goNext);
+      document.getElementById('nextBtn').addEventListener('click', goNext);
+    } catch (e) {
+      console.error(e);
+      document.getElementById('fundBody').innerHTML =
+        `<tr><td colspan="6" class="py-6 text-center text-red-500">보유내역을 불러오지 못했습니다.</td></tr>`;
+      document.getElementById('principalBody').innerHTML =
+        `<tr><td colspan="6" class="py-6 text-center text-red-500">보유내역을 불러오지 못했습니다.</td></tr>`;
+    }
   })();
 </script>
 </body>

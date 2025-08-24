@@ -15,17 +15,23 @@
 
     <div class="mt-6 flex justify-center gap-3">
       <a href="/purchase/trade/change/step2/sold-list" class="px-4 py-2 rounded-xl bg-neutral-200">이전</a>
-      <!-- step2_reserve와 유사 동작: 보유상품 변경 시 매수 상품 선택으로 이동 -->
-      <a href="/purchase/trade/change/step2/buy-list" class="px-5 py-2 rounded-xl bg-blue-600 text-white">매수상품 추가</a>
+      <a href="/purchase/trade/change/step2/changeProdList" class="px-5 py-2 rounded-xl bg-blue-600 text-white">매수상품 추가</a>
     </div>
   </section>
 </div>
 
 <script>
-  const fmtKRW = n => (n ?? 0).toLocaleString('ko-KR') + '원';
-  (function init(){
-    const sum = Number(sessionStorage.getItem('change.soldTotal') || '0');
-    document.getElementById('sum').textContent = fmtKRW(sum);
+  const fmtKRW = n => (Number(n||0)).toLocaleString('ko-KR') + '원';
+  (async function init(){
+    try{
+      const r = await fetch('/retain-api/change/step2/snapshot', {method:'GET'});
+      const data = await r.json();
+      const total = Number(data?.dto?.soldTotalAmount ?? 0);
+      document.getElementById('sum').textContent = fmtKRW(total);
+    }catch(e){
+      console.error(e);
+      document.getElementById('sum').textContent = '0원';
+    }
   })();
 </script>
 </body>

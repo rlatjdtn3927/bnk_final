@@ -21,7 +21,7 @@ public class AES256Util {
     private final String CHARSET = "UTF-8";
     
     public AES256Util(@Value("${tcp.secretkey}") String key) {
-    	SECRET_KEY= key;
+        SECRET_KEY = key;
     }
 
     public String encrypt(String plainText) throws Exception {

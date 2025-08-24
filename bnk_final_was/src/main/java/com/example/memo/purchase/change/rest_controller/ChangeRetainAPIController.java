@@ -85,7 +85,7 @@ public class ChangeRetainAPIController {
 
     /** 보유/이미 선택된 상품 목록(운용비율 포함) */
 	@PostMapping("/retain")
-    public ResponseEntity<?> retainList(@RequestParam String accountType, @RequestParam String accountId) {
+    public ResponseEntity<?> retainList(@RequestParam("accountType") String accountType, @RequestParam("accountId") String accountId) {
     	
     	RetainHoldingsDto dto = new RetainHoldingsDto(accountType,accountId);
     	JsonNode msg = mapper.valueToTree(dto);

@@ -512,7 +512,7 @@ public class DcContributionService {
             }
             
     		List<BuyPlanPG> buyPlanPgList = buyPlanPGRepository.findByDcAccountAndIsCurrent(dest, "Y");
-    		if(buyPlanPgList.isEmpty()) {
+    		if(!buyPlanPgList.isEmpty()) {
     			for(BuyPlanPG buyPlan : buyPlanPgList) {
     				Integer ratio = buyPlan.getAllocationPercent();
     				BigDecimal tradeAmt = temp.multiply(BigDecimal.valueOf(ratio)).divide(BigDecimal.valueOf(100), SCALE_CAL, RMDN);
