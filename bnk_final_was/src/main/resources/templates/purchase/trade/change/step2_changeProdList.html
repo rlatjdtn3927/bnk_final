@@ -662,7 +662,7 @@
         const meta = obj.meta || {};
         payload.push({
           type: inferTypeFromMeta(meta), // FUND | PRINCIPAL
-          productId: String(pid),
+          prodId: String(pid),
           name: meta.productName || ''
         });
       }
