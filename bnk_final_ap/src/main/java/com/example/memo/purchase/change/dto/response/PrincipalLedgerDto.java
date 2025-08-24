@@ -18,7 +18,8 @@ public class PrincipalLedgerDto {
     private String irpAccountId;    // IrpAccount FK -> id
     private String dcAccountNo;   // DcAccount FK -> account_no
     private String principalId;   // PrincipalGuarantee FK -> product_id
-
+    
+    private String prodName;
     private BigDecimal contractAmount; // 가입 원금
     private BigDecimal interestRate;   // 약정 금리
     private LocalDate startDate;       // 계약 시작일

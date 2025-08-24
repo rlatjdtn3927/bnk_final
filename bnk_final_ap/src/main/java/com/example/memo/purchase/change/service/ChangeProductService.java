@@ -110,7 +110,7 @@ public class ChangeProductService {
 			    	            .irpAccountId(e.getIrpAccount() != null ? e.getIrpAccount().getIrpAcctNo() : null)
 			    	            .dcAccountNo(e.getDcAccount() != null ? e.getDcAccount().getAccountNo() : null)
 			    	            .principalId(e.getPrincipal() != null ? e.getPrincipal().getProductId() : null)
-
+			    	            .prodName(e.getPrincipal().getBankName() + " " + e.getPrincipal().getProductName() + " " + e.getPrincipal().getMaturityYears())
 			    	            .contractAmount(e.getContractAmount())
 			    	            .interestRate(e.getInterestRate())
 			    	            .startDate(e.getStartDate())
@@ -330,8 +330,9 @@ public class ChangeProductService {
 			        
 			        BigDecimal daysBetween = new BigDecimal(ChronoUnit.DAYS.between(startDate, today));
 			        BigDecimal interestRate = targetEntity.getInterestRate();
-			        BigDecimal proRatedIr = daysBetween.divide(BigDecimal.valueOf(365), SCALE_CAL, RMUP).multiply(interestRate);
-			        BigDecimal interestAccrued = tradeAmount.multiply(proRatedIr);
+			        BigDecimal proRatedIr = daysBetween.divide(BigDecimal.valueOf(365), SCALE_CAL, RMUP).divide(BigDecimal.valueOf(100), SCALE_CAL, RMUP ).multiply(interestRate);
+			        BigDecimal interestAccrued = tradeAmount.multiply(proRatedIr).divide(BigDecimal.valueOf(ratio), SCALE_CAL, RMUP);
+			        targetEntity.setInterestAccrued(targetEntity.getInterestAccrued().subtract(interestAccrued).setScale(SCALE_SAVE,RMUP));
 			        // 중간 일할 이자율 계산 원래는 해지 이자율로 계산해야 되나 간단히 구현
 			        
 			        if("DC".equals(accountType)) {
