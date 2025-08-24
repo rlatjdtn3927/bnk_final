@@ -127,4 +127,33 @@ public class ChangePageViewController {
 	 public String step2BuyList() {
 	        return "purchase/trade/change/step2_buyList";
 	 }	
+	 /** Step4 - 서류 동의 */
+	    @GetMapping("/step4/docs")
+	    public String step4Docs() {
+	        return "purchase/trade/change/step4_docs";
+	    }
+	    
+	    @PostMapping("/step4/next")
+	    public String step4Next(@RequestParam("fileUrlList") String fileUrlList,
+	                                       HttpSession session) {
+	        ChangeValueDto dto = (ChangeValueDto) session.getAttribute("ChangeValueDto");
+	        if (dto == null) dto = new ChangeValueDto();
+	        dto.setFileUrlList(fileUrlList);
+	        session.setAttribute("ChangeValueDto", dto);
+	        return "redirect:/purchase/trade/change/step5";
+	    }
+	    
+	 @GetMapping("/step5")
+	 public String step5Change(HttpSession session) {
+	     // 세션에 있는 ChangeValueDto 확인 로그
+	     ChangeValueDto dto = (ChangeValueDto) session.getAttribute("ChangeValueDto");
+	     if (dto != null) {
+	         System.out.println("== [/step5] buyItems size: " +
+	             (dto.getBuyItems() != null ? dto.getBuyItems().size() : 0));
+	         System.out.println("== [/step5] soldItems size: " +
+	             (dto.getSoldItems() != null ? dto.getSoldItems().size() : 0));
+	     }
+	     return "purchase/trade/change/step5_change";
+	 }
+
 }

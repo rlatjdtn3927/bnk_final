@@ -1,0 +1,157 @@
+<!-- templates/purchase/trade/change/step5_change.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <title>최종 확인 - 변경 Step 5</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .pill{background:#f3f4f6;border-radius:9999px;padding:2px 10px;font-size:12px}
+    .warn{color:#dc2626;font-weight:600}
+    .disabled{opacity:.5;pointer-events:none}
+  </style>
+</head>
+<body class="bg-neutral-100 text-neutral-900">
+<div class="max-w-3xl mx-auto p-5">
+  <h1 class="text-2xl font-bold mb-4">최종 확인</h1>
+  <p class="text-sm text-neutral-500 mb-6">
+    선택한 매수 상품을 확인해 주세요. 매도/매수 개수가 일치해야 진행 가능합니다.
+  </p>
+
+  <!-- 세션 값 표시 -->
+  <section class="mb-4 text-sm flex gap-2 items-center">
+    <span class="pill">계좌유형: <b th:text="${session.ChangeValueDto?.accountType}">-</b></span>
+    <span class="pill">계좌ID: <b th:text="${session.ChangeValueDto?.accountId}">-</b></span>
+    <span class="pill" th:if="${session.ChangeValueDto?.riskGrade != null}">
+      투자성향: <b th:text="${session.ChangeValueDto?.riskGrade}">-</b>
+    </span>
+  </section>
+
+  <!-- 매수 상품 목록 -->
+  <section class="bg-white rounded-2xl p-4 shadow space-y-3 mb-6">
+    <h2 class="text-lg font-semibold">매수 상품 목록</h2>
+    <table class="min-w-full text-sm">
+      <thead class="text-left text-neutral-500 border-b">
+        <tr>
+          <th class="py-2 pr-3">상품ID</th>
+          <th class="py-2 pr-3">상품명</th>
+          <th class="py-2 pr-3">비율(%)</th>
+          <th class="py-2 pr-3">매수금액</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="b : ${session.ChangeValueDto?.buyItems}" class="border-b">
+          <td class="py-2 pr-3" th:text="${b.prodId}">-</td>
+          <td class="py-2 pr-3" th:text="${b.name}">-</td>
+		  <td class="py-2 pr-3" th:text="${b.ratio != null ? b.ratio : 0}">0</td>
+		  <td class="py-2 pr-3" th:text="${b.amount != null ? b.amount : 0}">0</td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(session.ChangeValueDto?.buyItems)}">
+          <td colspan="4" class="py-4 text-center text-neutral-400">선택한 매수 상품이 없습니다.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 경고 메시지 -->
+  <div id="warnMsg" class="warn mb-4 hidden">⚠️ 매도/매수 개수가 일치하지 않습니다.</div>
+
+  <!-- 버튼 -->
+  <div class="flex justify-between">
+    <a href="/purchase/trade/change/step4/docs" class="px-4 py-2 rounded-xl bg-neutral-200">이전</a>
+    <button id="confirmBtn" class="px-5 py-2 rounded-xl bg-blue-600 text-white" disabled>
+      변경 완료
+    </button>
+  </div>
+</div>
+
+<script>
+async function submitChange(){
+  // ✅ 세션 snapshot 불러오기
+  const res = await fetch("/retain-api/change/step2/snapshot");
+  const snap = await res.json();
+  const dto = snap.dto || {};
+
+  // ✅ 매도/매수 개수 체크
+  const soldCount = Array.isArray(dto.soldItems) ? dto.soldItems.length : 0;
+  const buyCount  = Array.isArray(dto.buyItems)  ? dto.buyItems.length  : 0;
+
+  if (soldCount !== buyCount) {
+    alert("⚠️ 매도/매수 개수가 일치해야 제출 가능합니다.");
+    return;
+  }
+
+  // ✅ RequestChangeDto 매핑 (AP와 100% 일치)
+  const payload = {
+    accountType: dto.accountType,
+    accountId: dto.accountId,
+    soldProdList: (dto.soldItems || [])
+      .filter(it => it.type === "FUND")
+      .map(it => ({ prodId: it.prodId, ratio: it.ratio || 0 })),
+    soldPrincipalIdList: (dto.soldItems || [])
+      .filter(it => it.type === "PRINCIPAL")
+      .map(it => ({ id: it.ledgerId, ratio: it.ratio || 0 })),
+    buyFundList: (dto.buyItems || [])
+      .filter(it => it.type === "FUND")
+      .map(it => ({ prodId: it.prodId, cost: it.amount || 0 })),
+    buyPrincipalList: (dto.buyItems || [])
+      .filter(it => it.type === "PRINCIPAL")
+      .map(it => ({ prodId: it.prodId, cost: it.amount || 0 }))
+  };
+
+  console.log("== 최종 제출 payload:", payload);
+
+  try {
+    const resp = await fetch("/retain-api/change/submit", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify(payload)
+    });
+    const data = await resp.json();
+    console.log("== 응답:", data);
+    alert("변경이 완료되었습니다 ✅");
+  } catch(e){
+    console.error("제출 실패", e);
+    alert("제출 실패");
+  }
+}
+
+// =======================
+// 🚀 페이지 진입 시 버튼 상태 제어
+// =======================
+document.addEventListener("DOMContentLoaded", async ()=>{
+  const btn = document.getElementById('confirmBtn');
+  const warn = document.getElementById('warnMsg');
+
+  try {
+    const res = await fetch("/retain-api/change/step2/snapshot");
+    const snap = await res.json();
+    const dto = snap.dto || {};
+
+    const soldCount = Array.isArray(dto.soldItems) ? dto.soldItems.length : 0;
+    const buyCount  = Array.isArray(dto.buyItems)  ? dto.buyItems.length  : 0;
+
+    if (soldCount === buyCount && soldCount > 0) {
+      btn.disabled = false;
+      btn.classList.remove("disabled");
+      warn.classList.add("hidden");
+    } else {
+      btn.disabled = true;
+      btn.classList.add("disabled");
+      warn.classList.remove("hidden"); // 경고 메시지 표시
+    }
+  } catch(e){
+    console.error("스냅샷 조회 실패", e);
+    btn.disabled = true;
+    btn.classList.add("disabled");
+    warn.classList.remove("hidden");
+  }
+
+  // 버튼 클릭 연결
+  btn.addEventListener('click', submitChange);
+});
+</script>
+
+
+</body>
+</html>

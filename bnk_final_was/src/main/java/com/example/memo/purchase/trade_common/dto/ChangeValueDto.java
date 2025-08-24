@@ -23,6 +23,9 @@ public class ChangeValueDto {
     /* Step2: 매수 선택 결과 */
     private List<BuyItem>   buyItems;        // step2_changeProdList/step2_buyList에서 저장
     private BigDecimal      buyTotalAmount;
+    
+    // step4 서류 동의
+    private String fileUrlList;
 
     @Data @NoArgsConstructor @AllArgsConstructor
     public static class SoldItem {
