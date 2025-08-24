@@ -5,20 +5,26 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Base64;
 
+@Component
 public class AES256Util {
 
     private static final String ALGORITHM = "AES/CBC/PKCS5Padding";
+   
     // 256비트 키 (32바이트)
-    @Value("${tcp.secretkey}")
-    private static String SECRET_KEY;
-    private static final String CHARSET = "UTF-8";
+    private final String SECRET_KEY;
+    private final String CHARSET = "UTF-8";
+    
+    public AES256Util(@Value("${tcp.secretkey}") String key) {
+    	SECRET_KEY= key;
+    }
 
-    public static String encrypt(String plainText) throws Exception {
+    public String encrypt(String plainText) throws Exception {
         byte[] iv = new byte[16];
         SecureRandom random = new SecureRandom();
         random.nextBytes(iv);
@@ -44,7 +50,7 @@ public class AES256Util {
         return Base64.getEncoder().encodeToString(encryptedWithIv);
     }
 
-    public static String decrypt(String encryptedText) throws Exception {
+    public String decrypt(String encryptedText) throws Exception {
         byte[] encryptedIvText = Base64.getDecoder().decode(encryptedText);
 
         byte[] iv = new byte[16];

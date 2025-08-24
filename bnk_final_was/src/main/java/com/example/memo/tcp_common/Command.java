@@ -67,6 +67,8 @@ public enum Command {
     
     /*가입자 리포트*/
     REPORT_MONTHLY_SUBSCRIBERS,
+//    IRP_JOIN_GET_CONTRACT,
+//    IRP_JOIN_INIT_OPEN,
     IRP_ACCOUNT_DEPOSIT,
     
     // ===== 보유현황 탭 =====
