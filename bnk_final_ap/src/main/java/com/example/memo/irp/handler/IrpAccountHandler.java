@@ -1,5 +1,7 @@
 package com.example.memo.irp.handler;
 
+import java.util.Map;
+
 import org.springframework.stereotype.Component;
 
 import com.example.memo.irp.service.BankAccountService;
@@ -24,9 +26,11 @@ public class IrpAccountHandler implements TcpMessageHandler{
 	@Override
 	public Object handle(Command command, JsonNode data) {
 		switch (command.name()) {
-		
+		case "IRP_ACCOUNT_DEPOSIT": {
+			return Map.of("result", bankAccountService.depositAccount(data));
 		}
-		return null;
+		}
+		return Map.of("error", "정의되지 않은 명령어입니다.");
 	}
 
 }

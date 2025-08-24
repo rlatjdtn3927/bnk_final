@@ -72,6 +72,8 @@ public enum Command {
     
     /*가입자 리포트*/
     REPORT_MONTHLY_SUBSCRIBERS,
+    
+    //IRP 계좌로 송금
     IRP_ACCOUNT_DEPOSIT,
     
     // ===== 보유현황 탭 =====
