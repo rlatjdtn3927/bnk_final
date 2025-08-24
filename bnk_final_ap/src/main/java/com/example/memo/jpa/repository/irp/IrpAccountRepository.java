@@ -1,5 +1,7 @@
 package com.example.memo.jpa.repository.irp;
 
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -25,4 +27,16 @@ public interface IrpAccountRepository extends JpaRepository<IrpAccount, String>{
            where a.user.userId = :userId
            """)
     String findIrpAcctNoByUserId(@Param("userId") Long userId);
+    
+    /**
+     * 전체 IRP 계좌 balance 합계
+     */
+    @Query("select coalesce(sum(a.balance),0) from IrpAccount a")
+    BigDecimal sumAllBalance();
+
+    /**
+     * 모든 IRP 계좌 번호 조회
+     */
+    @Query("select a.irpAcctNo from IrpAccount a")
+    List<String> findAllAcctNos();
 }

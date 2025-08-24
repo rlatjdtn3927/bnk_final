@@ -32,7 +32,10 @@ public enum Command {
     CONTRIBUTION_EXECUTE_ITEMS, // 선택 항목 입금 실행;
     
     RETAIN_GET_ACCOUNTS, // 사용자 보유 계좌 목록 조회 (IRP/DC)
-    
+    ADMIN_STATS_OVERVIEW,
+    ADMIN_STATS_TOTAL,
+    ADMIN_STATS_ALLOCATION,
+    ADMIN_STATS_RISK,
     
 	/* OCR 관련 */
     FAMILY_CERT_OCR,
