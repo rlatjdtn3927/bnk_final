@@ -32,6 +32,8 @@ public enum Command {
     CONTRIBUTION_EXECUTE_ITEMS, // 선택 항목 입금 실행;
     
     RETAIN_GET_ACCOUNTS, // 사용자 보유 계좌 목록 조회 (IRP/DC)
+    RETAIN_GET_ACCOUNTS_SUMMARY, // 메인페이지 계좌 요약 조회
+    
     ADMIN_STATS_OVERVIEW,
     ADMIN_STATS_TOTAL,
     ADMIN_STATS_ALLOCATION,
