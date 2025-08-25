@@ -1,5 +1,6 @@
 package com.example.memo.jpa.repository.irp;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,7 +21,12 @@ public interface IrpJoinRepository extends JpaRepository<IrpJoinEntity, Long>{
 	""")
 	Optional<IrpJoinEntity> findDetailById(@Param("joinId") Long joinId);
 	
-	// Oracle: YYYY-MM 로 묶어서 월별 집계
+	/** 진행중(DRAFT페이지, PENDING) 중 최신 1건 */
+	Optional<IrpJoinEntity> findTopByUser_UserIdAndStatusInOrderByRegDateDesc(
+            Long userId, Collection<String> statuses);
+	
+	
+	// ======= 통계 부분 : YYYY-MM로 묶어서 월별 집계 =======
     @Query(
       value = """
         SELECT TO_CHAR(reg_date, 'YYYY-MM') AS ym, COUNT(*) AS cnt

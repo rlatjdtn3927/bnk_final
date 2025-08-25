@@ -62,6 +62,7 @@ public enum Command {
     /*IRP가입관련*/
     IRP_JOIN_SAVE,
     IRP_JOIN_GET,
+    IRP_JOIN_CHECK_ELIGIBLE,	// 가입 진입 가능 여부
     IRP_JOIN_CREATE_DRAFT,      // step1: 가입목적 선택 생성
     IRP_JOIN_TAX_PURPOSE, 		// step1: 세액공제용 입력
     IRP_JOIN_RETIRED_PURPOSE, 	// step1: 퇴직금 수령용 입력
