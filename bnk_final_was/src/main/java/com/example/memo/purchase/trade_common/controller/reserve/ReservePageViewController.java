@@ -144,6 +144,11 @@ public class ReservePageViewController {
 		}
 	}
 
+	@GetMapping("/step4")
+	public String step4() {
+		return "purchase/trade/reserve/step4";
+	}
+	
 	// 세션 DTO 덮어쓰기 금지 → “머지 저장”으로 유지
 	// step3/next, step4/next에서 session.setAttribute("PassValueDto", dto)로 통째로 덮어쓰면
 	// flow 같은 공통필드가 사라질 수 있어요.
