@@ -44,6 +44,6 @@ public class LinkViewController {
 
     @GetMapping("/main")
     public String main() {
-        return "couple/main";
+        return "couple/couple-irp";
     }
 }

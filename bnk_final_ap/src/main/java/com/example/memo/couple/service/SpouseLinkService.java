@@ -40,9 +40,9 @@ import lombok.extern.slf4j.Slf4j;
 public class SpouseLinkService {
 
     private final IrpSpouseLinkRepository linkRepo;
-    private final LinkAdminReviewRepository reviewRepo;
+//    private final LinkAdminReviewRepository reviewRepo;
     private final UserRepository userRepo;
-    private final S3Service s3Service;
+//    private final S3Service s3Service;
     private final ClovaSpouseOcrService spouseOcrService;
     private final ObjectMapper om;
 
@@ -56,106 +56,99 @@ public class SpouseLinkService {
     public ObjectNode getStatus(Long userId) {
         ObjectNode out = om.createObjectNode();
 
+        Optional<IrpAccount> irpOpt = irpAccountRepo.findByUser_UserId(userId);
+        if (irpOpt.isPresent()) {
+            IrpAccount account = irpOpt.get();
+            out.put("hasIrpAccount", true);
+            ObjectNode accountNode = out.putObject("account");
+            accountNode.put("number", account.getIrpAcctNo()); // 엔티티 필드명에 맞게 getAccountNumber() -> getIrpAcctNo()
+            accountNode.put("balance", account.getBalance().toPlainString());
+        } else {
+            out.put("hasIrpAccount", false);
+        }
+
+
+        // 새로 만든 Repository 메소드를 사용하여 최신 데이터를 조회
         Optional<IrpSpouseLink> opt = linkRepo.findLatestOneByUser(userId);
 
         if (opt.isEmpty()) {
+            // 전혀 신청/연동 이력 없음
+            out.put("linked", false);
             out.put("hasAny", false);
-
-            Optional<IrpAccount> irpOpt = irpAccountRepo.findByUser_UserId(userId);
-            
-            if (irpOpt.isPresent()) {
-                IrpAccount account = irpOpt.get();
-                out.put("hasIrpAccount", true);
-                ObjectNode accountNode = out.putObject("account");
-                accountNode.put("number", account.getIrpAcctNo());
-                // BigDecimal을 보기 좋은 문자열로 포맷팅
-                accountNode.put("balance", NumberFormat.getInstance().format(account.getBalance()) + "원");
-            } else {
-                out.put("hasIrpAccount", false);
-            }
             return out;
         }
 
-        // 2. 연동 이력이 있는 경우 (이하 로직은 이전과 동일)
         IrpSpouseLink link = opt.get();
         String status = link.getLinkStatus().name();
         out.put("hasAny", true);
         out.put("linkId", link.getId());
         out.put("status", status);
-        out.put("linked", "LINKED".equals(status));
 
-        if (link.getLinkStatus() == LinkStatus.PENDING_SPOUSE) {
-            if (Objects.equals(link.getApplicantUserId(), userId)) {
-                out.put("myRole", "APPLICANT");
-            } else {
-                out.put("myRole", "SPOUSE");
-            }
+        // 내가 신청자인지 배우자인지 역할(myRole)을 알려주는 로직
+        if (Objects.equals(link.getApplicantUserId(), userId)) {
+            out.put("myRole", "APPLICANT");
+        } else if (Objects.equals(link.getSpouseUserId(), userId)) {
+            out.put("myRole", "SPOUSE");
         }
 
-        Long spouseUserId = Objects.equals(link.getApplicantUserId(), userId) 
-            ? link.getSpouseUserId() 
-            : link.getApplicantUserId();
-        
+        boolean isLinked = "LINKED".equals(status);
+        out.put("linked", isLinked);
+
+        Long spouseUserId;
+        if (Objects.equals(link.getApplicantUserId(), userId)) {
+            spouseUserId = link.getSpouseUserId();
+        } else {
+            spouseUserId = link.getApplicantUserId();
+        }
+
         if (spouseUserId != null) {
             userRepo.findById(spouseUserId).ifPresent(spouse -> {
                 out.put("spouseUserId", spouse.getUserId());
                 out.put("spouseName", spouse.getName());
             });
         }
-        
+
         if (link.getApprovedAt() != null) out.put("linkedAt", link.getApprovedAt().toString());
         if (link.getAppliedAt() != null)  out.put("appliedAt", link.getAppliedAt().toString());
-        
+
         return out;
     }
 
     @Transactional
-    public ObjectNode apply(Long applicantUserId,
-                            String spouseName,
-                            String spouseBirth,
-                            String filename,
-                            String contentType,
-                            String base64,
-                            Long existingLinkId) {
+    public ObjectNode apply(
+            Long linkId, Long applicantUserId,
+            String spouseName, String spouseBirth,
+            String filename, String contentType, String base64) {
 
         if (applicantUserId == null) {
             throw new IllegalArgumentException("로그인이 필요합니다.");
         }
 
-        IrpSpouseLink link;
-
-        if (existingLinkId != null) {
-            // --- 재시도 ---
-            link = linkRepo.findById(existingLinkId)
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 신청입니다."));
-
-            if (link.getOcrAttemptCount() >= 3) {
-                throw new IllegalStateException("최대 3회까지만 시도할 수 있습니다. 관리자 심사를 요청해주세요.");
-            }
-
-            // 재시도마다 이전에 올려둔 S3 증빙은 존재 자체가 없어야 정책상 일관 → 혹시 있을 경우 제거
-            if (link.getS3ObjectKey() != null) {
-                s3Service.delete(link.getS3ObjectKey());
-                link.setS3ObjectKey(null);
-            }
-
-        } else {
-            link = linkRepo.findLatestOpenByApplicant(applicantUserId).orElse(null);
-            if (link == null) {
-                // 이미 LINKED로 묶인 계정이면 신규 신청 차단
-                if (linkRepo.existsLinkedForUser(applicantUserId)) {
-                    throw new IllegalStateException("이미 연동 완료된 내역이 있습니다.");
-                }
-                // 진짜 신규 생성
-                link = new IrpSpouseLink();
-                link.setApplicantUserId(applicantUserId);
-                link.setLinkStatus(LinkStatus.APPLIED);
-                link.setAppliedAt(LocalDate.now());
-                link.setOcrAttemptCount(0);
-                linkRepo.save(link);
-            }
+        // 이미 연동완료인 경우 차단
+        if (linkRepo.existsLinkedForUser(applicantUserId)) {
+            throw new IllegalStateException("이미 연동 완료된 내역이 있습니다.");
         }
 
+        // ✅ 신규/재시도 분기
+        IrpSpouseLink link;
+        if (linkId != null) {
+            link = linkRepo.findById(linkId)
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 신청입니다."));
+            // 재시도 상한 체크
+            if (link.getOcrAttemptCount() >= 3) {
+                throw new IllegalStateException("최대 3회까지만 시도할 수 있습니다. 가까운 영업점을 방문해주세요.");
+            }
+        } else {
+            // 신규 신청
+            link = new IrpSpouseLink();
+            link.setApplicantUserId(applicantUserId);
+            link.setLinkStatus(LinkStatus.APPLIED);
+            link.setAppliedAt(LocalDate.now());
+            link.setOcrAttemptCount(0);
+            link = linkRepo.save(link); // linkId 확보
+        }
+
+        // --- OCR 검증 ---
         UserEntity me = userRepo.findById(applicantUserId)
                 .orElseThrow(() -> new IllegalStateException("사용자 정보를 찾을 수 없습니다."));
 
@@ -169,58 +162,32 @@ public class SpouseLinkService {
                 rq.setBase64(base64);
                 rq.setFilename(filename);
                 rq.setContentType(contentType);
-
                 rs = spouseOcrService.parse(rq);
 
                 if (rs != null && rs.isOk() && rs.isSpouseRelation()) {
-                    boolean selfNameOk   = safeEqualsName(me.getName(), rs.getApplicantName());
-                    boolean selfBirthOk  = sameBirth(dateToYmd(me.getBirthDate()), rs.getApplicantBirth());
-                    boolean spouseNameOk = safeEqualsName(spouseName, rs.getSpouseName());
-                    boolean spouseBirthOk= sameBirth(spouseBirth, rs.getSpouseBirth());
-
+                    boolean selfNameOk    = safeEqualsName(me.getName(), rs.getApplicantName());
+                    boolean selfBirthOk   = sameBirth(dateToYmd(me.getBirthDate()), rs.getApplicantBirth());
+                    boolean spouseNameOk  = safeEqualsName(spouseName, rs.getSpouseName());
+                    boolean spouseBirthOk = sameBirth(spouseBirth, rs.getSpouseBirth());
                     ocrOk = selfNameOk && selfBirthOk && spouseNameOk && spouseBirthOk;
-
-                    if (!ocrOk) {
-                        StringBuilder sb = new StringBuilder();
-                        if (!selfNameOk)   sb.append("본인 성명 불일치; ");
-                        if (!selfBirthOk)  sb.append("본인 생년월일 불일치; ");
-                        if (!spouseNameOk) sb.append("배우자 성명 불일치; ");
-                        if (!spouseBirthOk)sb.append("배우자 생년월일 불일치; ");
-                        failReason = sb.toString().replaceAll("; $", "");
-                    }
+                    if (!ocrOk) failReason = "OCR 정보 불일치";
                 } else {
-                    failReason = (rs != null && rs.getReason() != null) ? rs.getReason() : "OCR 실패 또는 배우자 정보 미검출";
+                    failReason = (rs != null && rs.getReason() != null) ? rs.getReason() : "OCR 실패 또는 정보 미검출";
                 }
             } catch (Exception e) {
-                failReason = "OCR 오류: " + e.getMessage();
+                failReason = "OCR 시스템 오류: " + e.getMessage();
             }
         } else {
-            failReason = "증빙 미첨부";
+            failReason = "증빙 서류 미첨부";
         }
 
-        // 시도 횟수 +1 (성공/실패 모두 금번 시도 반영)
-        int currentCount = link.getOcrAttemptCount();
-        link.setOcrAttemptCount(currentCount + 1);
-        
+        // 시도 횟수 증가
+        link.setOcrAttemptCount(link.getOcrAttemptCount() + 1);
+
         ObjectNode out = om.createObjectNode().put("linkId", link.getId());
-        ObjectNode ocr = om.createObjectNode();
-        if (rs != null) {
-            ocr.put("ok", rs.isOk());
-            ocr.put("reason", rs.getReason());
-            ocr.put("docType", rs.getDocType());
-            ocr.put("applicantName", rs.getApplicantName());
-            ocr.put("applicantBirth", rs.getApplicantBirth());
-            ocr.put("spouseName", rs.getSpouseName());
-            ocr.put("spouseBirth", rs.getSpouseBirth());
-            ocr.put("spouseRelation", rs.isSpouseRelation());
-        } else {
-            ocr.put("ok", false);
-            ocr.put("reason", failReason);
-        }
-        out.set("ocr", ocr);
 
         if (ocrOk) {
-            // 배우자 가입자 매칭
+            // ✅ OCR 성공 → 배우자 매핑 후 PENDING_SPOUSE
             String spouseNameOcr = rs.getSpouseName();
             LocalDate spouseBirthOcr = LocalDate.parse(rs.getSpouseBirth(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             UserEntity spouseUser = userRepo.findByNameAndBirthDate(spouseNameOcr, spouseBirthOcr)
@@ -228,43 +195,58 @@ public class SpouseLinkService {
 
             link.setSpouseUserId(spouseUser.getUserId());
             link.setLinkStatus(LinkStatus.PENDING_SPOUSE);
-            linkRepo.save(link);
 
-            // 알림
-            UserEntity applicantUser = me;
-            String message = applicantUser.getName() + "님이 부부 IRP 연동을 신청했습니다.";
-
-            notificationService.createNotification(
-                spouseUser.getUserId(),
-                message,
-                "/link-view/pending",
-                link.getId()
-            );
-
-            // 실시간 SSE 발송
+            String message = me.getName() + "님이 부부 IRP 연동을 신청했습니다.";
+            notificationService.createNotification(spouseUser.getUserId(), message, "/link-view/pending", link.getId());
             sseService.send(spouseUser.getUserId(), "new_link_request", message);
-
 
             out.put("status", LinkStatus.PENDING_SPOUSE.name());
             out.put("nextAction", "WAIT_SPOUSE");
             out.put("message", "배우자 수락 대기");
-
         } else {
-            // 🔴 여기서 더 이상 S3 업로드 하지 않음! (정책: 관리 심사 요청 때만 업로드)
-            // 실패 후 분기
+            // ❌ OCR 실패
             if (link.getOcrAttemptCount() >= 3) {
-                out.put("status", link.getLinkStatus().name()); // APPLIED 그대로
-                out.put("nextAction", "AWAIT_ADMIN_REQUEST");
-                out.put("message", "자동 판독에 3회 실패했습니다. 관리자에게 직접 검토를 요청할 수 있습니다.");
+                link.setLinkStatus(LinkStatus.REJECTED_OCR_FINAL);
+                out.put("status", link.getLinkStatus().name());
+                out.put("nextAction", "GUIDE_BRANCH_VISIT");
+                out.put("message", "3회 인증에 실패했습니다. 가까운 영업점을 방문해주세요.");
             } else {
+                // 계속 APPLIED 유지 (재시도)
+                if (link.getLinkStatus() == null) link.setLinkStatus(LinkStatus.APPLIED);
+                int remaining = 3 - link.getOcrAttemptCount();
                 out.put("status", link.getLinkStatus().name());
                 out.put("nextAction", "RETRY_OCR");
                 out.put("message", String.format("OCR 판독 실패 (%d/3회). 선명한 사진으로 다시 시도해주세요.", link.getOcrAttemptCount()));
+                out.put("remainingAttempts", remaining);
+                if (failReason != null) out.put("failReason", failReason);
             }
-            linkRepo.save(link);
         }
 
+        linkRepo.save(link);
         return out;
+    }
+
+    @Transactional
+    public ObjectNode initDraft(Long applicantUserId) {
+        if (applicantUserId == null) throw new IllegalArgumentException("로그인이 필요합니다.");
+        // 이미 LINKED면 차단
+        if (linkRepo.existsLinkedForUser(applicantUserId)) {
+            throw new IllegalStateException("이미 연동 완료된 내역이 있습니다.");
+        }
+        // 진행중 건이 있으면 그걸 반환 (APPLIED/PENDING_* 등)
+        Optional<IrpSpouseLink> latest = linkRepo.findLatestOneByUser(applicantUserId);
+        if (latest.isPresent() && latest.get().getLinkStatus() != LinkStatus.UNLINKED) {
+            return om.createObjectNode().put("linkId", latest.get().getId());
+        }
+
+        IrpSpouseLink link = new IrpSpouseLink();
+        link.setApplicantUserId(applicantUserId);
+        link.setLinkStatus(LinkStatus.APPLIED);
+        link.setAppliedAt(LocalDate.now());
+        link.setOcrAttemptCount(0);
+        link = linkRepo.save(link);
+
+        return om.createObjectNode().put("linkId", link.getId());
     }
 
     
@@ -272,6 +254,7 @@ public class SpouseLinkService {
      * 관리자가 검토 대기중인 연동 신청 목록을 조회
      * (배우자 정보 조회 로직 추가)
      */
+    /*
     public ArrayNode adminListPending(int urlTtlMinutes) {
         var links = linkRepo.findByLinkStatusOrderByAppliedAtDesc(LinkStatus.PENDING_ADMIN);
         if (links.isEmpty()) {
@@ -320,6 +303,7 @@ public class SpouseLinkService {
         }
         return resultList;
     }
+    */
 
     /**
      * 관리자가 연동 신청을 승인하거나 반려
@@ -329,6 +313,7 @@ public class SpouseLinkService {
      * @param reason 반려 사유 또는 관리자 메모
      * @return 처리 결과가 담긴 ObjectNode
      */
+    /*
     @Transactional
     public ObjectNode adminDecide(long linkId, String action, String reason) {
         if (action == null || !(action.equalsIgnoreCase("APPROVE") || action.equalsIgnoreCase("REJECT"))) {
@@ -394,7 +379,7 @@ public class SpouseLinkService {
         out.put("reviewStatus", rv.getReviewStatus().name());
         return out;
     }
-
+*/
     
     /**
      * 배우자가 연동 요청을 수락하거나 거절
@@ -465,6 +450,7 @@ public class SpouseLinkService {
      * @param applicantInputSpouseName 신청자가 마지막으로 입력한 배우자 이름
      * @param applicantInputSpouseBirth 신청자가 마지막으로 입력한 배우자 생년월일
      */
+    /*
     @Transactional
     public void requestAdminReview(Long linkId,
                                    String applicantInputSpouseName,
@@ -509,6 +495,7 @@ public class SpouseLinkService {
         reviewRepo.save(rv);
         linkRepo.save(link);
     }
+    */
     
     /**
      * 특정 연동 요청의 상세 정보(주로 신청자 이름)를 조회
@@ -533,7 +520,84 @@ public class SpouseLinkService {
 
         return details;
     }
+    
+    /**
+     * OCR 사전 검증만 수행하는 메소드
+     * DB 저장 없이 OCR 서비스 호출 후 결과만 반환
+     */
+    @Transactional // DB 수정이 필요하므로 Transactional 추가
+    public SpouseOcrResponse verifyOcrOnly(Long linkId, String base64, String filename, String contentType) {
+        // 1. linkId로 신청 건 조회
+        IrpSpouseLink link = linkRepo.findById(linkId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 신청입니다."));
 
+        // 2. 시도 횟수 확인 및 증가
+        int currentCount = link.getOcrAttemptCount();
+        if (currentCount >= 3) {
+            throw new IllegalStateException("OCR 판독 시도 횟수(3회)를 초과했습니다.");
+        }
+        link.setOcrAttemptCount(currentCount + 1);
+        linkRepo.save(link);
+
+        // 3. OCR 서비스 호출
+        SpouseOcrRequest rq = new SpouseOcrRequest();
+        rq.setBase64(base64);
+        rq.setFilename(filename);
+        rq.setContentType(contentType);
+
+        return spouseOcrService.parse(rq);
+    }
+
+    /**
+     * 사용자가 연동된 부부 관계를 해지합니다.
+     * @param linkId 해지할 연동 ID
+     * @param requestingUserId 해지를 요청한 사용자의 ID
+     * @return 처리 결과 (linkId, 최종 status)
+     */
+    @Transactional
+    public ObjectNode unlink(Long linkId, Long requestingUserId) {
+        // 1. 해지할 연동 정보 조회
+        IrpSpouseLink link = linkRepo.findById(linkId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 연동입니다."));
+
+        // 2. 보안 검증: 요청자가 실제 연동 당사자인지 확인
+        boolean isParty = Objects.equals(requestingUserId, link.getApplicantUserId()) ||
+                          Objects.equals(requestingUserId, link.getSpouseUserId());
+        if (!isParty) {
+            throw new SecurityException("연동 당사자 본인만 해지할 수 있습니다.");
+        }
+
+        // 3. 상태 검증: 'LINKED'(연동 완료) 상태일 때만 해지 가능
+        if (link.getLinkStatus() != LinkStatus.LINKED) {
+            throw new IllegalStateException("이미 해지되었거나 연동 완료 상태가 아니므로 해지할 수 없습니다.");
+        }
+
+        // 4. 해지 처리
+        link.setLinkStatus(LinkStatus.UNLINKED);
+        link.setUnlinkedAt(LocalDate.now()); // 해지일 기록
+        linkRepo.save(link);
+
+        // 5. 상대방 배우자에게 알림 발송
+        UserEntity requester = userRepo.findById(requestingUserId)
+                                       .orElseThrow(() -> new IllegalStateException("요청자 정보를 찾을 수 없습니다."));
+        
+        // 상대방 ID 결정
+        Long otherPartyUserId = Objects.equals(requestingUserId, link.getApplicantUserId())
+                ? link.getSpouseUserId()
+                : link.getApplicantUserId();
+
+        if (otherPartyUserId != null) {
+            String message = requester.getName() + "님이 부부 IRP 연동을 해지했습니다.";
+            notificationService.createNotification(otherPartyUserId, message, null, link.getId());
+            sseService.send(otherPartyUserId, "link_unlinked", message);
+        }
+
+        // 6. 최종 결과 반환
+        ObjectNode out = om.createObjectNode();
+        out.put("linkId", link.getId());
+        out.put("status", link.getLinkStatus().name());
+        return out;
+    }
 
     /* ================= helpers ================= */
 

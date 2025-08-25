@@ -1,15 +1,21 @@
-const $ = s => document.querySelector(s);
-const btn=$("#btn"), btxt=$("#btxt"), bsp=$("#bsp");
-const mypos=$("#mypos"), list=$("#list"), err=$("#err"), empty=$("#empty");
+(function () {
+  'use strict';
 
-let userLat=null, userLon=null;
+  const $ = s => document.querySelector(s);
+  const btn = $("#btn"), btxt = $("#btxt"), bsp = $("#bsp");
+  const mypos = $("#mypos"), list = $("#list"), err = $("#err"), empty = $("#empty");
+  const radiusInput = $("#radius"), resultsSection = $("#results");
+
+  let userLat = null, userLon = null;
 
 /* ----------- 공통 유틸 ----------- */
-function busy(on){
-  btn.disabled=on; btxt.textContent=on?"조회 중…":"5개 지점 조회"; bsp.style.display=on?"inline-block":"none";
+function busy(on) {
+  btn.disabled = on;
+  btxt.textContent = on ? "찾는 중..." : "내 주변 지점 찾기";
+  bsp.style.display = on ? "inline-block" : "none";
 }
-const fmt=(n, p=6)=>Number(n).toFixed(p);
-const km = n => Number(n).toFixed(3);
+const fmt = (n, p = 6) => Number(n).toFixed(p);
+const km = n => Number(n).toFixed(1); // [변경] 소수점 1자리로 통일
 
 /* ----------- 한국식 주소 포맷 ----------- */
 /**
@@ -88,70 +94,90 @@ async function reverseGeocode(lat, lon) {
 }
 
 /* ----------- 초기화/렌더/호출 ----------- */
-async function init(){
-  try{
-    const p = await geolocate();
-    userLat=p.lat; userLon=p.lon;
-    const addr = await reverseGeocode(userLat, userLon);
-    mypos.textContent = addr ? addr : `${fmt(userLat)}, ${fmt(userLon)}`;
-  }catch(e){
-    mypos.textContent = "위치 권한이 필요합니다.";
-  }
-}
-
-function render(items){
-  list.innerHTML="";
-  empty.style.display = items.length ? "none":"block";
-  if (!items.length) return;
-
-  const frag=document.createDocumentFragment();
-  items.forEach((b,i)=>{
-    const gmaps = `https://www.google.com/maps/search/?api=1&query=${b.latitude},${b.longitude}`;
-    const nav = `https://maps.google.com/?daddr=${b.latitude},${b.longitude}`;
-    const wrap=document.createElement("div");
-    wrap.className="item";
-    wrap.innerHTML = `
-      <div class="rank">${i+1}</div>
-      <div>
-        <div class="name"><a href="${gmaps}" target="_blank" rel="noopener">${b.branchName||"-"}</a></div>
-        <div class="addr">기관: 032 · 지점코드: ${b.branchCode||"-"}</div>
-        <div class="meta"><span class="dist">${km(b.distanceKm)} km</span>
-          <span class="muted">${fmt(b.latitude,5)}, ${fmt(b.longitude,5)}</span>
-        </div>
-      </div>
-      <div class="actions">
-        <a class="link" href="${gmaps}" target="_blank" rel="noopener">지도</a>
-        <a class="link" href="${nav}" target="_blank" rel="noopener">길찾기</a>
-      </div>`;
-    frag.appendChild(wrap);
-  });
-  list.appendChild(frag);
-}
-
-async function fetchNearby(){
-  err.style.display="none"; err.textContent="";
-  try{
-    busy(true);
-    if (userLat==null || userLon==null) {
-      const p = await geolocate(); userLat=p.lat; userLon=p.lon;
+ async function init() {
+    try {
+      const p = await geolocate();
+      userLat = p.lat; userLon = p.lon;
+      const addr = await reverseGeocode(userLat, userLon);
+      mypos.textContent = addr ? addr : `위도 ${fmt(userLat, 4)}, 경도 ${fmt(userLon, 4)}`;
+    } catch (e) {
+      mypos.textContent = "위치 권한을 허용해주세요.";
+      // 권한 거부 시 에러 메시지 표시
+      if (e.code === 1) {
+        err.textContent = "지점을 찾으려면 위치 정보 접근 권한이 필요합니다.";
+        err.style.display = "block";
+        resultsSection.style.display = "block";
+      }
     }
-    const radiusKm = Number($("#radius").value || "2.0");
-    const res = await fetch("/branches/nearby", {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ latitude:userLat, longitude:userLon, radiusKm })
-    });
-    if (!res.ok) throw new Error("서버 오류: " + res.status);
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    render(data.branches || []);
-  }catch(e){
-    err.textContent = e.message || String(e);
-    err.style.display="block";
-  }finally{
-    busy(false);
   }
-}
 
-init();
-$("#btn").addEventListener("click", fetchNearby);
+  // [변경] 새로운 CSS 디자인에 맞게 렌더링 함수 전체 수정
+  function render(items) {
+    list.innerHTML = "";
+    empty.style.display = items.length ? "none" : "block";
+    if (!items.length) return;
+
+    const frag = document.createDocumentFragment();
+    items.forEach(b => {
+      // 카카오맵 길찾기 링크 생성
+      const navLink = `https://map.kakao.com/link/to/${b.branchName},${b.latitude},${b.longitude}`;
+      const telLink = b.tel ? `tel:${b.tel}` : null;
+
+      const wrap = document.createElement("div");
+      wrap.className = "list-item";
+      // 새로운 UI 구조에 맞게 데이터 삽입
+      wrap.innerHTML = `
+        <div class="info">
+          <h3 class="branch-name">${b.branchName || "-"}</h3>
+          <p class="address">${b.address || `지점코드: ${b.branchCode || "-"}`}</p>
+        </div>
+        <div class="distance">${km(b.distanceKm)}km</div>
+        <div class="actions">
+          <a href="${navLink}" target="_blank" class="action-btn">🗺️ 길찾기</a>
+          ${telLink ? `<a href="${telLink}" class="action-btn">📞 전화</a>` : ''}
+        </div>`;
+      frag.appendChild(wrap);
+    });
+    list.appendChild(frag);
+  }
+
+  async function fetchNearby() {
+    err.style.display = "none";
+    err.textContent = "";
+    resultsSection.style.display = "block"; // [추가] 결과 섹션 보이기
+
+    try {
+      busy(true);
+      if (userLat == null || userLon == null) {
+        await init(); // 위치 정보가 없으면 다시 가져오기
+        if (userLat == null) throw new Error("위치 정보를 가져올 수 없습니다.");
+      }
+
+      const radiusKm = Number(radiusInput.value || "2.0");
+      const res = await fetch("/branches/nearby", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ latitude: userLat, longitude: userLon, radiusKm })
+      });
+
+      if (!res.ok) throw new Error("서버 오류: " + res.status);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      // API 응답 데이터에 tel, address 필드가 있다고 가정
+      render(data.branches || []);
+
+    } catch (e) {
+      err.textContent = e.message || String(e);
+      err.style.display = "block";
+      list.innerHTML = "";
+      empty.style.display = "none";
+    } finally {
+      busy(false);
+    }
+  }
+
+  init();
+  btn.addEventListener("click", fetchNearby);
+
+})();

@@ -5,187 +5,214 @@
     <title>부부연동 요청 수락</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
-    <style>
-        :root {
-            /* Color Palette */
-            --primary-blue: #3182f6;
-            --text-strong: #333d4b;
-            --text-normal: #4e5968;
-            --text-subtle: #8b95a1;
-            --surface-bg: #f2f4f6;
-            --content-bg: #ffffff;
-            --border-light: #e5e8eb;
-            --success-color: #28a745;
-            --danger-color: #f04452;
-
-            /* Sizing & Radius */
-            --content-padding: 24px;
-            --border-radius-l: 20px;
-            --border-radius-m: 12px;
-        }
-        
-        /* Basic Setup */
-        *, *::before, *::after { box-sizing: border-box; }
-        body {
-            font-family: 'Pretendard', sans-serif;
-            background: var(--surface-bg);
-            margin: 0;
-            color: var(--text-normal);
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-
-        /* Layout */
-        .mobile-container {
-            width: 100%;
-            max-width: 480px;
-            min-height: 100vh;
-            margin: 0 auto;
-            background: var(--content-bg);
-            position: relative;
-            padding-bottom: 120px; /* 하단 고정 버튼 영역 확보 */
-        }
-        .app-header {
-            display: flex;
-            align-items: center;
-            padding: 16px;
-            background: var(--content-bg);
-        }
-        .app-header .back-btn {
-            font-size: 28px;
-            font-weight: 500;
-            text-decoration: none;
-            color: var(--text-strong);
-            padding: 0 8px;
-        }
-        .app-header h1 {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text-strong);
-            margin: 0;
-            text-align: center;
-            flex-grow: 1;
-            transform: translateX(-20px); /* 아이콘 너비만큼 중앙 정렬 보정 */
-        }
-
-        /* Content Area */
-        .content-area {
-            padding: 40px var(--content-padding);
-            text-align: center;
-        }
-        .icon-wrapper {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 72px;
-            height: 72px;
-            background-color: var(--surface-bg);
-            border-radius: 50%;
-            font-size: 36px;
-            margin-bottom: 24px;
-        }
-        h2.title {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--text-strong);
-            margin: 0 0 12px;
-            line-height: 1.4;
-        }
-        p.subtitle {
-            font-size: 16px;
-            color: var(--text-subtle);
-            line-height: 1.6;
-            margin: 0 0 32px;
-        }
-
-        /* Benefit Box (using info-box style for consistency) */
-        .info-box {
-            background: var(--surface-bg);
-            padding: 20px;
-            border-radius: var(--border-radius-l);
-            text-align: left;
-            margin-bottom: 24px;
-        }
-        .info-box b {
-            font-weight: 700;
-            color: var(--text-strong);
-            font-size: 16px;
-        }
-        .info-box ul {
-            list-style: none;
-            padding: 0;
-            margin: 12px 0 0;
-        }
-        .info-box ul li {
-            position: relative;
-            padding-left: 22px;
-            font-size: 15px;
-            color: var(--text-normal);
-            margin-bottom: 8px;
-        }
-        .info-box ul li::before {
-            content: '✓';
-            position: absolute;
-            left: 0;
-            color: var(--primary-blue);
-            font-weight: bold;
-        }
-        
-        /* Action Footer */
-        .action-footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            width: 100%;
-            margin: 0 auto;
-            max-width: 480px;
-            padding: 16px var(--content-padding) 32px;
-            background: var(--content-bg);
-            box-shadow: 0 -8px 16px rgba(0,0,0,0.05);
-            border-top-left-radius: var(--border-radius-l);
-            border-top-right-radius: var(--border-radius-l);
-        }
-        .action-footer-buttons {
-            display: flex;
-            gap: 12px;
-        }
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            flex-grow: 1;
-            height: 52px;
-            padding: 0 24px;
-            border-radius: var(--border-radius-m);
-            border: none;
-            font-size: 17px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s, opacity 0.2s, transform 0.1s;
-        }
-        .btn:active { transform: scale(0.98); }
-        .btn.primary { background: var(--primary-blue); color: white; }
-        .btn.secondary { background: var(--surface-bg); color: var(--text-strong); }
-        .btn:disabled { opacity: .6; cursor: not-allowed; }
-
-        /* Result/Status message */
-        .result-message {
-            font-size: 16px;
-            font-weight: 500;
-            padding: 16px;
-            text-align: center;
-            border-radius: var(--border-radius-m);
-        }
-        .result-message.success {
-            background-color: #e8f3ff;
-            color: var(--primary-blue);
-        }
-        .result-message.error {
-            background-color: #fff2f2;
-            color: var(--danger-color);
-        }
-    </style>
+	<style>
+	    :root {
+	      /* Color Palette */
+	      --primary-red: #f85151;
+	      --primary-red-light: #feebeb;
+	      --ink: #1e293b;
+	      --text: #334155;
+	      --muted: #64748b;
+	      --bg: #f8fafc;
+	      --card: #ffffff;
+	      --bd: #e2e8f0;
+	      --success: #10b981;
+	      --danger: #f85151; /* Primary red for consistency */
+	
+	      /* Sizing & Radius */
+	      --pad: 24px;
+	      --r-l: 20px;
+	      --r-m: 12px;
+	    }
+	    
+	    /* Basic Setup */
+	    *, *::before, *::after { box-sizing: border-box; }
+	    body {
+	      font-family: 'Pretendard', sans-serif;
+	      background: var(--bg);
+	      margin: 0;
+	      color: var(--text);
+	      -webkit-font-smoothing: antialiased;
+	      -moz-osx-font-smoothing: grayscale;
+	    }
+	
+	    /* Layout */
+	    .mobile-container {
+	      max-width: 480px;
+	      min-height: 100vh;
+	      margin: 0 auto;
+	      background: var(--card);
+	      position: relative;
+	      padding-bottom: 120px; /* Footer area */
+	    }
+	    .app-header {
+	      display: flex;
+	      align-items: center;
+	      justify-content: center; /* Center h1 */
+	      position: relative;
+	      height: 56px;
+	      background: var(--card);
+	      border-bottom: 1px solid var(--bd);
+	    }
+	    .app-header .back-btn {
+	      position: absolute;
+	      left: 8px;
+	      top: 50%;
+	      transform: translateY(-50%);
+	      width: 40px;
+	      height: 40px;
+	      display: inline-flex;
+	      align-items: center;
+	      justify-content: center;
+	      font-size: 28px;
+	      text-decoration: none;
+	      color: var(--ink);
+	    }
+	    .app-header h1 {
+	      font-size: 18px;
+	      font-weight: 800;
+	      color: var(--ink);
+	      margin: 0;
+	    }
+	
+	    /* Content Area */
+	    .content-area {
+	      padding: 40px var(--pad);
+	      text-align: center;
+	    }
+	    .icon-wrapper {
+	      display: inline-flex;
+	      align-items: center;
+	      justify-content: center;
+	      width: 72px;
+	      height: 72px;
+	      background-image: linear-gradient(135deg, #fff1f1, #ffe8e8);
+	      border-radius: 50%;
+	      font-size: 36px;
+	      margin-bottom: 24px;
+	      color: var(--primary-red);
+	    }
+	    h2.title {
+	      font-size: 24px;
+	      font-weight: 800;
+	      color: var(--ink);
+	      margin: 0 0 12px;
+	      line-height: 1.4;
+	      word-break: keep-all;
+	    }
+	    p.subtitle {
+	      font-size: 16px;
+	      color: var(--muted);
+	      line-height: 1.6;
+	      margin: 0 0 32px;
+	    }
+	
+	    /* Benefit Box */
+	    .info-box {
+	      background: var(--primary-red-light);
+	      padding: 20px;
+	      border-radius: var(--r-l);
+	      text-align: left;
+	      margin-bottom: 24px;
+	      border: 1px solid #fdd;
+	    }
+	    .info-box h4 {
+	      font-weight: 800;
+	      color: var(--ink);
+	      font-size: 16px;
+	      margin: 0;
+	    }
+	    .info-box ul {
+	      list-style: none;
+	      padding: 0;
+	      margin: 16px 0 0;
+	    }
+	    .info-box ul li {
+	      position: relative;
+	      padding-left: 24px;
+	      font-size: 15px;
+	      color: var(--text);
+	      margin-bottom: 10px;
+	      line-height: 1.5;
+	    }
+	    .info-box ul li:last-child {
+	      margin-bottom: 0;
+	    }
+	    .info-box ul li::before {
+	      content: '✓';
+	      position: absolute;
+	      left: 0;
+	      top: 1px;
+	      color: var(--primary-red);
+	      font-weight: 800;
+	      font-size: 18px;
+	    }
+	    
+	    /* Action Footer */
+	    .action-footer {
+	      position: fixed;
+	      bottom: 0;
+	      left: 50%;
+	      transform: translateX(-50%);
+	      width: calc(100% - 32px);
+	      max-width: calc(480px - 32px);
+	      padding: 16px;
+	      padding-bottom: 28px; /* For safe area */
+	      background: var(--card);
+	      box-shadow: 0 -8px 24px rgba(0,0,0,.07);
+	      border-top-left-radius: var(--r-l);
+	      border-top-right-radius: var(--r-l);
+	    }
+	    .action-footer-buttons {
+	      display: flex;
+	      gap: 12px;
+	    }
+	    .btn {
+	      display: inline-flex;
+	      align-items: center;
+	      justify-content: center;
+	      flex-grow: 1;
+	      height: 52px;
+	      padding: 0 24px;
+	      border-radius: var(--r-m);
+	      border: none;
+	      font-size: 16px;
+	      font-weight: 700;
+	      cursor: pointer;
+	      transition: all 0.2s;
+	    }
+	    .btn:active { transform: scale(0.97); }
+	    .btn.primary {
+	      background: var(--primary-red);
+	      background-image: linear-gradient(to top, #f85151, #f96161);
+	      color: white;
+	      box-shadow: 0 4px 12px rgba(248, 81, 81, 0.2);
+	    }
+	    .btn.secondary {
+	      background: #f1f5f9;
+	      color: var(--text);
+	      border: 1px solid var(--bd);
+	    }
+	    .btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+	
+	    /* Result/Status message */
+	    .result-message {
+	      font-size: 16px;
+	      font-weight: 600;
+	      padding: 16px;
+	      text-align: center;
+	      border-radius: var(--r-m);
+	      line-height: 1.5;
+	    }
+	    .result-message.success {
+	      background-color: var(--primary-red-light);
+	      color: var(--primary-red);
+	    }
+	    .result-message.error {
+	      background-color: #fff0f0;
+	      color: var(--danger);
+	    }
+	  </style>
 </head>
 <body>
 <div class="mobile-container">
@@ -204,7 +231,7 @@
         </p>
 
         <div class="info-box">
-            <b>✅ 연동 시 이런 혜택이 있어요</b>
+            <b>연동 시 이런 혜택이 있어요</b>
             <ul>
                 <li>IRP 입금 시 입금액의 0.5% 추가 적립</li>
                 <li>연말정산 세액공제 전략 공동 수립</li>
