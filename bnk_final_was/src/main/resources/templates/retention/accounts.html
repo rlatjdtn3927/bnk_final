@@ -3,86 +3,753 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>보유 계좌</title>
-<link rel="stylesheet" href="/css/retention.css" />
+<title>퇴직연금 보유현황</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --primary:#3730a3; --primary-light:#eef2ff;
+  --accent:#d71921; --accent-soft:#fee2e2;
+  --ink:#111827; --muted:#6b7280; --light-gray:#f3f4f6;
+  --bg:#fafafc; --card:#fff; --bd:#e5e7eb;
+  --shadow:0 10px 24px -12px rgb(0 0 0 / 0.2);
+}
+*{ box-sizing:border-box }
+body{ margin:0; padding:16px; font-family:Pretendard,system-ui,-apple-system,Segoe UI,Roboto,Noto Sans KR,sans-serif; color:var(--ink); background:linear-gradient(180deg,#fff,var(--bg)); -webkit-font-smoothing:antialiased; }
+h1{ font-size:22px; margin:0 0 16px 4px; letter-spacing:-0.2px; }
+.card{ background:var(--card); border:1px solid var(--bd); border-radius:20px; padding:18px; margin-bottom:18px; box-shadow:var(--shadow); }
+.small{ color:var(--muted); font-size:13px; }
+.btn{ border:1px solid var(--bd); background:#fff; border-radius:999px; padding:10px 14px; font-size:14px; cursor:pointer; font-weight:700 }
+.kv{ display:flex; flex-direction:column; gap:6px; }
+.kv .big{ font-size:34px; font-weight:900; margin-top:4px; letter-spacing:-0.5px; }
+.kpis{ display:grid; grid-template-columns: repeat(3,1fr); gap:12px; margin-top:16px; }
+.kpis.k2{ grid-template-columns: repeat(2,1fr); }
+.kpi{ background:var(--bg); border-radius:16px; padding:12px; text-align:center; border:1px solid var(--bd); }
+.kpi .label{ font-size:12px; color:var(--muted); margin-bottom:6px; }
+.kpi .val{ font-weight:800; font-size:16px; letter-spacing:0.2px }
+.table{ width:100%; border-collapse:collapse; font-size:14px; margin-top:8px; }
+.table th,.table td{ padding:12px 8px; border-bottom:1px solid var(--light-gray); text-align:right; white-space:nowrap; }
+.table th:first-child,.table td:first-child{ text-align:left; }
+.table th.sortable{ cursor:pointer; user-select:none; }
+.table-wrap{ overflow-x:auto; }
+.toolbar{ display:flex; gap:8px; align-items:center; justify-content:flex-end; flex-wrap:wrap; }
+.badge{ display:inline-block; padding:4px 10px; border-radius:999px; background:var(--primary-light); color:var(--primary); font-size:12px; font-weight:600; }
+.pos{ color:#065f46 } .neg{ color:#b91c1c } .muted{ color:var(--muted); }
+.sel{ border:1px solid var(--bd); background:#fff; border-radius:16px; padding:12px; font-size:14px; width:100%; }
+.hide{ display:none !important; }
+
+/* 세그먼트 토글 */
+.seg-control{ display:flex; background:var(--light-gray); padding:4px; border-radius:12px; }
+.seg-control button{ flex:1; padding:8px 10px; border:none; background:transparent; border-radius:10px; font-size:13px; font-weight:800; cursor:pointer; color:var(--muted); transition: all 0.2s ease; }
+.seg-control button.active{ background:var(--card); color:var(--primary); box-shadow:0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); }
+
+/* 모달 */
+.modal-back{ position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:99; display:none; }
+.modal{ position:fixed; bottom:0; left:0; width:100%; max-height:92vh; background:var(--bg); border-radius:24px 24px 0 0; z-index:100; padding:16px; display:flex; flex-direction:column; transform:translateY(100%); transition:transform 0.25s ease-out; }
+.modal.active{ transform:translateY(0); }
+.modal-header{ padding-bottom:12px; }
+.modal-content{ flex:1; overflow-y:auto; padding-bottom:8px; }
+.modal-handle{ width:40px; height:4px; background:var(--bd); border-radius:2px; margin:0 auto 16px; }
+
+/* 헤더 */
+.header-flex{ display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.acct-lines{ display:flex; flex-direction:column; gap:4px; min-width:0; }
+.acct-title{ font-weight:900; font-size:16px; display:flex; align-items:center; gap:6px; }
+.acct-no{ font-size:13px; color:#9ca3af; }
+.pill-soft{ border:none; background:var(--accent-soft); color:var(--accent); border-radius:999px; padding:12px 16px; font-weight:900 }
+
+/* 카드형 리스트 */
+.h-section-title{font-weight:900;font-size:18px;margin:8px 4px 10px}
+.h-subtle{font-size:12px;color:var(--muted);margin:0 4px 10px}
+.hlist{display:flex;flex-direction:column;gap:12px}
+.hcard{background:#fff;border:1px solid var(--bd);border-radius:16px;padding:14px;box-shadow:var(--shadow)}
+.h-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.h-name{font-weight:900}
+.tag{font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;background:#f3f4f6;color:#374151}
+.tag.red{background:var(--accent-soft);color:var(--accent)}
+.h-grid{display:grid;grid-template-columns:1fr auto;row-gap:8px;column-gap:12px}
+.h-grid .label{font-size:12px;color:var(--muted)}
+.h-grid .val{font-weight:800}
+.h-cta{display:flex;justify-content:center;margin-top:10px}
+.h-cta .btn{background:var(--light-gray);border:none;color:#374151}
+.details{margin-top:10px;border-top:1px dashed #eee;padding-top:10px}
+.details-row{display:grid;grid-template-columns:1fr auto;row-gap:8px;column-gap:12px}
+
+/* 모달 탭 */
+.tabs{display:flex;gap:8px;margin:6px 0 10px}
+.tab{border:1px solid var(--bd);background:#fff;border-radius:999px;padding:8px 12px;font-size:13px;font-weight:800;cursor:pointer}
+.tab.active{background:var(--primary-light);color:var(--primary);border-color:var(--primary)}
+</style>
 </head>
 <body>
-<div class="mobile-container">
-<header class="appbar">
-<button class="icon-btn" aria-label="뒤로가기">←</button>
-<h1 class="appbar__title">보유 계좌</h1>
-<span class="appbar__spacer"></span>
-</header>
+  <h1>보유현황</h1>
+
+  <div class="card">
+    <div class="header-flex">
+      <div class="acct-lines">
+        <div class="acct-title"><span id="acct-title">-</span></div>
+        <div class="acct-no" id="acct-no">-</div>
+      </div>
+      <button class="pill-soft" id="btn-open">보유상품보기</button>
+    </div>
+
+    <div class="small" style="margin:14px 0 8px;">계좌 목록</div>
+    <select id="accountSelect" class="sel">
+      <option>불러오는 중…</option>
+    </select>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px;">
+      <span class="badge" id="acct-chip">-</span>
+      <button class="btn" id="btn-refresh">🔄</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="kv">
+      <div class="small">총 평가액 <span id="asof"></span></div>
+      <div class="big" id="totalVal">- 원</div>
+    </div>
+    <div class="kpis k2">
+      <div class="kpi"><div class="label">총 손익</div><div class="val" id="totalPnL">- 원</div></div>
+      <div class="kpi"><div class="label">총 수익률</div><div class="val" id="totalRtn">- %</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="seg-control" id="metric-toggle">
+      <button class="active" data-mode="ratio">자산비율</button>
+      <button data-mode="cumrtn">그룹별 수익률</button>
+    </div>
+
+    <div style="margin-top:20px;">
+      <div id="ratio-wrap">
+        <canvas id="donut" height="240"></canvas>
+        <div id="donut-empty" class="small muted" style="display:none; text-align:center; padding:20px 0;">표시할 자산이 없습니다.</div>
+      </div>
+      <div id="rtn-wrap" class="hide">
+        <canvas id="rtnbar" height="240"></canvas>
+        <div id="rtn-empty" class="small muted" style="display:none; text-align:center; padding:20px 0;">표시할 데이터가 없습니다.</div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px; font-weight:900; font-size:16px;">요약</div>
+    <div class="table-wrap">
+      <table class="table" id="tbl-summary">
+        <thead>
+          <tr><th>구분</th><th>평가액</th><th>손익</th><th>수익률</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <button class="btn" id="btn-open-dup" style="width:100%; margin-top:16px;">보유상품 상세 보기</button>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:900; font-size:18px;">펀드 세부 통계</div>
+    <div class="kpis" style="margin-top:12px;">
+      <div class="kpi"><div class="label">펀드 종목 수</div><div class="val" id="fundCount">-</div></div>
+      <div class="kpi"><div class="label">상승/하락</div><div class="val"><span id="fundUp">-</span>/<span id="fundDown">-</span></div></div>
+      <div class="kpi"><div class="label">펀드 수익률</div><div class="val" id="fundRtnKpi">- %</div></div>
+    </div>
+    <div style="margin-top:20px;">
+      <div class="small">펀드 카테고리별 비중</div>
+      <canvas id="fund-pie" height="220"></canvas>
+      <div id="fund-pie-empty" class="small muted" style="display:none; text-align:center; padding:20px 0;">데이터가 없습니다.</div>
+    </div>
+    <div style="margin-top:20px;">
+      <div class="small">보유 비중 상위 5개</div>
+      <canvas id="fund-top5" height="220"></canvas>
+      <div id="fund-top5-empty" class="small muted" style="display:none; text-align:center; padding:20px 0;">데이터가 없습니다.</div>
+    </div>
+
+    <hr style="border:none;border-top:1px solid var(--bd); margin:24px 0;">
+
+    <div style="font-weight:900; font-size:18px;">원리금보장 세부 통계</div>
+    <div class="kpis" style="margin-top:12px;">
+      <div class="kpi"><div class="label">평균 약정금리</div><div class="val" id="prinAvgRate">- %</div></div>
+      <div class="kpi"><div class="label">포트폴리오 비중</div><div class="val" id="prinShare">- %</div></div>
+      <div class="kpi"><div class="label">원리금 수익률</div><div class="val" id="prinRtnKpi">- %</div></div>
+    </div>
+    <div style="margin-top:20px;">
+      <div class="small">원리금보장 <b>상품별 비중</b> (가입원금 기준)</div>
+      <canvas id="prin-prod-share" height="220"></canvas>
+      <div id="prin-prod-share-empty" class="small muted" style="display:none; text-align:center; padding:20px 0;">데이터가 없습니다.</div>
+    </div>
+  </div>
+
+  <div class="modal-back" id="modal-back"></div>
+  <div class="modal" id="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="font-weight:900; font-size:18px;">보유상품 상세</div>
+        <div class="toolbar"><button class="btn" id="btn-close">닫기</button></div>
+      </div>
+      <div class="tabs">
+        <button class="tab active" data-tab="cards">카드형</button>
+        <button class="tab" data-tab="tables">표</button>
+      </div>
+    </div>
+    <div class="modal-content">
+      <div id="cards-view">
+        <div class="h-section-title">원리금보장</div>
+        <div id="prin-list" class="hlist"></div>
+
+        <div class="h-section-title">펀드/ETF/TDF</div>
+        <div class="h-subtle">평가액·수익률은 현재 계좌 내 보유 기준</div>
+        <div id="fund-list" class="hlist"></div>
+      </div>
+
+      <div id="tables-view" class="hide">
+        <div style="font-weight:700; margin-top:6px; margin-bottom:8px;">원리금보장</div>
+        <div class="table-wrap">
+          <table class="table" id="tbl-principal">
+            <thead>
+              <tr>
+                <th class="sortable" data-key="principalId">상품명</th>
+                <th class="sortable" data-key="contractAmount" data-num>가입원금</th>
+                <th class="sortable" data-key="interestRate" data-num>약정금리</th>
+                <th>기간</th>
+                <th class="sortable" data-key="interestAccrued" data-num>누적이자</th>
+                <th>상태</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div style="font-weight:700; margin-top:24px; margin-bottom:8px;">펀드/ETF/TDF</div>
+        <div class="table-wrap">
+          <table class="table" id="tbl-fund">
+            <thead>
+              <tr>
+                <th class="sortable" data-key="productName">상품명</th>
+                <th class="sortable" data-key="category">유형</th>
+                <th class="sortable" data-key="units" data-num>보유좌수</th>
+                <th class="sortable" data-key="avgPrice" data-num>평균단가</th>
+                <th class="sortable" data-key="acquisitionAmount" data-num>취득원금</th>
+                <th class="sortable" data-key="valuationAmount" data-num>평가액</th>
+                <th class="sortable" data-key="profitLoss" data-num>평가손익</th>
+                <th class="sortable" data-key="returnRate" data-num>수익률</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ===== 상태 ===== */
+let CURRENT = { type:null, id:null, userName:null, displayName:null };
+let donutChart=null, rtnBarChart=null, fundPieChart=null, fundTop5Chart=null, prinProdChart=null;
+let cache = { funds:[], prins:[] };
+
+/* ===== 포맷/정책 ===== */
+const MONEY_DECIMALS = 0;
+const SHARE_DECIMALS = 3;
+const PNL_DISPLAY_THRESHOLD = 1;   // 1원 미만은 표기상 0원
+const PCT_MIN_ABS = 0.005;         // ±0.005% 미만은 0.00%
+
+const clean = n => { const x = Number(n||0); if (Object.is(x,-0)) return 0; return Math.abs(x)<1e-9?0:x; };
+const round = (v,d=0) => Math.round(Number(v||0)*Math.pow(10,d))/Math.pow(10,d);
+
+const fmtCurrency = (v,d=MONEY_DECIMALS) => {
+  const r = round(clean(v), d);
+  const n = Object.is(r,-0) ? 0 : r;
+  return n.toLocaleString('ko-KR',{minimumFractionDigits:d, maximumFractionDigits:d}) + ' 원';
+};
+const fmtCurrencyPnL = v => (Math.abs(Number(v||0)) < PNL_DISPLAY_THRESHOLD) ? '0 원' : fmtCurrency(v);
+const fmtNum = (v,d=0) => {
+  const r = round(clean(v), d);
+  const n = Object.is(r,-0) ? 0 : r;
+  return n.toLocaleString('ko-KR',{minimumFractionDigits:d, maximumFractionDigits:d});
+};
+const normPct = x => { const v = Number(x ?? 0); return Math.abs(v) < PCT_MIN_ABS ? 0 : v; };
+const fmtPct = v => (v==null || isNaN(v)) ? '-' : `${normPct(v).toFixed(2)} %`;
+const valCls = v => { const n = Number(v||0); return Math.abs(n) < PNL_DISPLAY_THRESHOLD ? '' : (n>0?'pos':'neg'); };
+const valClsPct = v => { const n = normPct(v); return n>0 ? 'pos' : (n<0 ? 'neg' : ''); };
+
+/* 차트 기본 */
+Chart.defaults.font.family = 'Pretendard';
+Chart.defaults.plugins.legend.labels.boxWidth = 12;
+Chart.defaults.plugins.legend.labels.padding = 15;
+Chart.defaults.plugins.tooltip.padding = 10;
+Chart.defaults.plugins.tooltip.titleFont = { weight:'bold' };
+
+/* KRW 축 단위 */
+function chooseKRWUnit(max){
+  if (max >= 1e8) return { scale: 1e8, unit: '억' };
+  if (max >= 1e6) return { scale: 1e6, unit: '백만' };
+  if (max >= 1e4) return { scale: 1e4, unit: '만' };
+  return { scale: 1, unit: '원' };
+}
+function fmtKRWTick(v, scale, unit){
+  const n = v / scale;
+  const digits = (n < 10 && unit !== '원') ? 1 : 0;
+  return n.toLocaleString('ko-KR', { maximumFractionDigits: digits }) + (unit==='원' ? ' 원' : unit);
+}
+
+/* 공통 fetch */
+async function fetchJson(url, opts = {}) {
+  try {
+    const res = await fetch(url, { credentials:'include', ...opts });
+    const isJson = (res.headers.get('content-type')||'').includes('application/json');
+    const data = isJson ? await res.json() : await res.text();
+    if (!res.ok) return { ok:false, error:`${res.status} ${res.statusText}` };
+    return data;
+  } catch (e) {
+    console.error(e);
+    return { ok:false, error:String(e) };
+  }
+}
+
+/* 헤더 */
+function renderAccountHeader(){
+  const typeLabel = CURRENT.type==='IRP' ? '개인IRP' : (CURRENT.type==='DC' ? 'DC' : (CURRENT.type || '계좌'));
+  document.getElementById('acct-title').textContent = `${typeLabel} ${CURRENT.userName || CURRENT.displayName || ''}`.trim();
+  document.getElementById('acct-no').textContent = CURRENT.id || '-';
+  document.getElementById('acct-chip').textContent = `${CURRENT.displayName}`;
+}
+
+/* 계좌 목록 */
+async function loadAccounts(){
+  const data = await fetchJson('/api/retention/accounts');
+  const sel = document.getElementById('accountSelect');
+  if (!data.ok){ sel.innerHTML = `<option>오류: ${data.error||'계좌 조회 실패'}</option>`; return; }
+
+  const list = data.accounts || [];
+  if (!list.length){ sel.innerHTML = `<option>보유한 계좌가 없습니다.</option>`; return; }
+
+  sel.innerHTML = '';
+  list.forEach((a, idx)=>{
+    const opt = document.createElement('option');
+    opt.value = `${a.accountType}|${a.accountNo}`;
+    opt.textContent = `${a.displayName} (${a.accountNo})`;
+    opt.dataset.type = a.accountType;
+    opt.dataset.id = a.accountNo;
+    opt.dataset.user = a.userName;
+    opt.dataset.display = a.displayName;
+    if (idx===0) opt.selected = true;
+    sel.appendChild(opt);
+  });
+
+  const first = sel.options[sel.selectedIndex];
+  CURRENT = { type:first.dataset.type, id:first.dataset.id, userName:first.dataset.user, displayName:first.dataset.display };
+  renderAccountHeader();
+  await loadHoldings();
+
+  sel.addEventListener('change', async ()=>{
+    const o = sel.options[sel.selectedIndex];
+    CURRENT = { type:o.dataset.type, id:o.dataset.id, userName:o.dataset.user, displayName:o.dataset.display };
+    renderAccountHeader();
+    await loadHoldings();
+  });
+}
+
+/* 보유현황 */
+async function loadHoldings(){
+  const url = `/api/retention/holdings?type=${encodeURIComponent(CURRENT.type)}&id=${encodeURIComponent(CURRENT.id)}`;
+  const payload = await fetchJson(url);
+  if (payload.error){ alert('보유현황 조회 실패: ' + payload.error); return; }
+
+  const r = payload.resultList || { fundHoldings:[], principalLedgers:[] };
+  cache.funds = r.fundHoldings || [];
+  cache.prins = r.principalLedgers || [];
+  document.getElementById('asof').textContent = `(${new Date().toLocaleDateString('ko-KR')})`;
+
+  
+	//합계/수익률
+	//1. 펀드 손익, 평가액, 원금 합계
+	const fundPL = cache.funds.reduce((s,f)=> s + Number(f.profitLoss ?? 0), 0);
+	const fundVal = cache.funds.reduce((s,f)=> s + Number(f.valuationAmount||0), 0);
+	const fundPrincipal = cache.funds.reduce((s,f)=> s + Number(f.acquisitionAmount||0), 0);
+		
+	//2. 원리금보장 손익, 평가액(원금+이자), 원금 합계
+	const prinVal = cache.prins.reduce((s,p)=> s + Number(p.contractAmount||0) + Number(p.interestAccrued||0), 0);
+	const prinPL  = cache.prins.reduce((s,p)=> s + Number(p.interestAccrued||0), 0);
+	const prinPrincipal = cache.prins.reduce((s,p)=> s + Number(p.contractAmount||0), 0);
+		
+	//3. 수익률 계산
+	//펀드 수익률
+	const fundRtn = fundPrincipal > 0 
+	 ? ((fundVal / fundPrincipal - 1) * 100) 
+	 : null;	
+	 
+	//원리금보장 수익률
+	const prinRtn = prinPrincipal > 0 
+	 ? ((prinVal / prinPrincipal - 1) * 100) 
+	 : null;
+		
+	//포트폴리오 전체 값
+	const totalVal = clean(fundVal + prinVal);
+	const totalPL = clean(fundPL + prinPL);
+	const totalPrincipal = clean(fundPrincipal + prinPrincipal);
+
+	// 전체 수익률
+	const totalRtn = totalPrincipal > 0 
+	 ? ((totalVal / totalPrincipal - 1) * 100) 
+	 : null;
+		
+	//포트폴리오 내 원리금보장 비중
+	const prinRatio = totalVal > 0 ? (prinVal / totalVal * 100) : null;
 
 
-<main class="container">
-<section class="section">
-<h2 class="title">총 평가액 <span class="title__strong sk sk-text" style="width:120px;">&nbsp;</span></h2>
-</section>
+  // 상단 카드
+  document.getElementById('totalVal').textContent = fmtCurrency(totalVal);
+  const $pnl = document.getElementById('totalPnL'); $pnl.textContent = fmtCurrencyPnL(totalPL); $pnl.className = 'val ' + valCls(totalPL);
+  const $rtn = document.getElementById('totalRtn'); $rtn.textContent = fmtPct(totalRtn); $rtn.className = 'val ' + valClsPct(totalRtn);
+
+  // KPI: 그룹별 수익률
+  document.getElementById('fundRtnKpi').textContent = fmtPct(fundRtn);
+  document.getElementById('prinRtnKpi').textContent = fmtPct(prinRtn);
+
+  // 도넛(자산비율)
+  renderAssetRatioDonut(fundVal, prinVal);
+
+  // 요약 표
+  const tbodyS = document.querySelector('#tbl-summary tbody');
+  const row = (name, val, pl, rtn) =>
+    `<tr><td>${name}</td><td>${fmtCurrency(val)}</td><td class="${valCls(pl)}">${fmtCurrencyPnL(pl)}</td><td class="${valClsPct(rtn)}">${fmtPct(rtn)}</td></tr>`;
+  tbodyS.innerHTML = [
+    row('원리금보장',  prinVal,  prinPL,  prinRtn),
+    row('펀드/ETF/TDF', fundVal,  fundPL,  fundRtn),
+    `<tr><td><b>합계</b></td><td><b>${fmtCurrency(totalVal)}</b></td><td class="val ${valCls(totalPL)}"><b>${fmtCurrencyPnL(totalPL)}</b></td><td class="val ${valClsPct(totalRtn)}"><b>${fmtPct(totalRtn)}</b></td></tr>`
+  ].join('');
+
+  // 상세/통계
+  renderPrincipalTable(cache.prins);
+  renderFundTable(cache.funds);
+  calcAndRenderFundStats(cache.funds);
+  calcAndRenderPrincipalStats(cache.prins, prinRatio);
+  renderReturnBar();
+  applyMetricMode();
+  renderHoldingCards();
+}
+
+/* 차트/테이블 */
+function renderAssetRatioDonut(fundVal, prinVal){
+  const map = new Map();
+  if (prinVal > 0) map.set('원리금보장', prinVal);
+  cache.funds.forEach(f => {
+    const k = (f.category||'fund').toUpperCase();
+    const label = (k==='ETF' || k==='TDF') ? k : '펀드';
+    map.set(label, (map.get(label)||0) + Number(f.valuationAmount||0));
+  });
+  const labels = Array.from(map.keys());
+  const values = Array.from(map.values());
+  const isEmpty = values.reduce((a,b)=>a+b,0) <= 0;
+  document.getElementById('donut').style.display = isEmpty ? 'none' : 'block';
+  document.getElementById('donut-empty').style.display = isEmpty ? 'block' : 'none';
+  if (donutChart) donutChart.destroy();
+  if (!isEmpty){
+    donutChart = new Chart(document.getElementById('donut'), {
+      type:'doughnut',
+      data:{ labels, datasets:[{ data: values }] },
+      options:{ cutout:'60%', plugins:{ legend:{ position:'bottom' } } }
+    });
+  }
+}
+
+function renderReturnBar(){
+  const prinAcq = cache.prins.reduce((s,p)=> s + Number(p.contractAmount||0), 0);
+  const prinVal = cache.prins.reduce((s,p)=> s + Number(p.contractAmount||0) + Number(p.interestAccrued||0), 0);
+  const prinRtn = prinAcq > 0 ? ((prinVal / prinAcq - 1) * 100) : null;
+
+  const cats = { FUND:{acq:0,val:0}, ETF:{acq:0,val:0}, TDF:{acq:0,val:0} };
+  cache.funds.forEach(f=>{
+    const k = (f.category||'FUND').toUpperCase();
+    const c = (k==='ETF'||k==='TDF') ? k : 'FUND';
+    cats[c].acq += Number(f.acquisitionAmount||0);
+    cats[c].val += Number(f.valuationAmount||0);
+  });
+
+  const labels = ['원리금보장','펀드','ETF','TDF'];
+  const vals = [ prinRtn, ...['FUND','ETF','TDF'].map(k => cats[k].acq > 0 ? ((cats[k].val / cats[k].acq - 1) * 100) : null) ];
+
+  const plot = labels.map((lb,i)=>({lb,val:vals[i]})).filter(d=>d.val!=null && isFinite(d.val));
+  const isEmpty = plot.length===0;
+  document.getElementById('rtnbar').style.display = isEmpty ? 'none' : 'block';
+  document.getElementById('rtn-empty').style.display = isEmpty ? 'block' : 'none';
+  if (rtnBarChart) rtnBarChart.destroy();
+  if (!isEmpty) {
+    rtnBarChart = new Chart(document.getElementById('rtnbar'), {
+      type:'bar',
+      data:{ labels: plot.map(d=>d.lb), datasets:[{ label:'누적수익률(%)', data: plot.map(d=>normPct(d.val)) }] },
+      options:{ plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:(c)=> c.raw.toFixed(2)+' %' }}}, scales:{ y:{ ticks:{ callback:(v)=> v+' %' } } } }
+    });
+  }
+}
+
+function renderPrincipalTable(prins){
+	  const tbody = document.querySelector('#tbl-principal tbody');
+
+	  if (!Array.isArray(prins) || prins.length === 0){
+	    tbody.innerHTML = `<tr><td colspan="6" class="small muted" style="text-align:center;">데이터 없음</td></tr>`;
+	    return;
+	  }
+
+	  tbody.innerHTML = prins.map(p => {
+	    const name = p.prodName || p.principalName || p.principalId || '-';
+	    return `
+	      <tr>
+	        <td>${name}</td>
+	        <td>${fmtCurrency(p.contractAmount)}</td>
+	        <td>${p.interestRate ?? '-'} %</td>
+	        <td>${(p.startDate || '').slice(5)}~${(p.maturityDate || '').slice(5)}</td>
+	        <td>${fmtCurrency(p.interestAccrued)}</td>
+	        <td>${p.status || '-'}</td>
+	      </tr>`;
+	  }).join('');
+	}
 
 
-<section class="list" id="accountList">
-<!-- 스켈레톤 카드 3개 (데이터 연동 전 표시용) -->
-<article class="card">
-<div class="card__row">
-<div class="card__title sk sk-text" style="width:60%">&nbsp;</div>
-<span class="badge sk" style="width:52px">&nbsp;</span>
-</div>
-<div class="card__row">
-<div class="card__value sk sk-text" style="width:120px">&nbsp;</div>
-<div class="card__yield sk sk-text" style="width:44px">&nbsp;</div>
-</div>
-<div class="card__actions">
-<button class="btn btn--ghost" disabled>포트폴리오</button>
-<button class="btn" disabled>거래내역</button>
-</div>
-</article>
+function renderFundTable(funds){
+  const tbody = document.querySelector('#tbl-fund tbody');
+  if (!Array.isArray(funds) || funds.length === 0){
+    tbody.innerHTML = `<tr><td colspan="8" class="small muted" style="text-align:center;">데이터 없음</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = funds.map(f=>{
+    const acq = Number(f.acquisitionAmount || 0);
+    const val = Number(f.valuationAmount || 0);
+    const pl  = (f.profitLoss != null) ? Number(f.profitLoss) : (val - acq);
+    const rtn = (f.returnRate != null) ? Number(f.returnRate) : (acq > 0 ? (val / acq - 1) * 100 : null);
+    return `
+      <tr>
+        <td>${f.productName || '-'}</td>
+        <td>${(f.category || 'FUND').toUpperCase()}</td>
+        <td>${fmtNum(f.units, SHARE_DECIMALS)}</td>
+        <td>${fmtNum(f.avgPrice, MONEY_DECIMALS)}</td>
+        <td>${fmtCurrency(f.acquisitionAmount)}</td>
+        <td>${fmtCurrency(f.valuationAmount)}</td>
+        <td class="${valCls(pl)}">${fmtCurrencyPnL(pl)}</td>
+        <td class="${valClsPct(rtn)}">${fmtPct(rtn)}</td>
+      </tr>`;
+  }).join('');
+}
 
+function sortTable(tbody, list, key, isNum){
+  const dir = (tbody.getAttribute('data-dir')==='asc') ? 'desc':'asc';
+  tbody.setAttribute('data-dir', dir);
+  list.sort((a,b)=>{
+    const A = isNum ? Number(a?.[key]||0) : String(a?.[key]||'');
+    const B = isNum ? Number(b?.[key]||0) : String(b?.[key]||'');
+    return dir==='asc' ? (A>B?1:(A<B?-1:0)) : (A<B?1:(A>B?-1:0));
+  });
+  if (tbody.parentElement.id==='tbl-principal') renderPrincipalTable(list);
+  if (tbody.parentElement.id==='tbl-fund') renderFundTable(list);
+}
 
-<article class="card">
-<div class="card__row">
-<div class="card__title sk sk-text" style="width:70%">&nbsp;</div>
-<span class="badge sk" style="width:56px">&nbsp;</span>
-</div>
-<div class="card__row">
-<div class="card__value sk sk-text" style="width:100px">&nbsp;</div>
-<div class="card__yield sk sk-text" style="width:44px">&nbsp;</div>
-</div>
-<div class="card__actions">
-<button class="btn btn--ghost" disabled>포트폴리오</button>
-<button class="btn" disabled>거래내역</button>
-</div>
-</article>
+function calcAndRenderFundStats(funds=[]){
+  const totalVal = funds.reduce((s,f)=> s + Number(f.valuationAmount||0), 0);
+  let up=0, down=0;
+  const rows = funds.map(f=>{
+    const val = Number(f.valuationAmount||0); const acq = Number(f.acquisitionAmount||0);
+    const pl = (f.profitLoss!=null) ? Number(f.profitLoss) : (val - acq);
+    if (pl>0) up++; else if (pl<0) down++;
+    return { name: f.productName||'알수없음', cat: (f.category||'FUND').toUpperCase(), val };
+  });
+  const byCat = rows.reduce((m,r)=>{ const k=(r.cat==='ETF'||r.cat==='TDF')?r.cat:'펀드'; m[k]=(m[k]||0)+r.val; return m; }, {});
+  const catData = Object.entries(byCat).filter(([,v])=>v>0);
+  const top5 = rows.filter(r=>r.val>0).sort((a,b)=> b.val - a.val).slice(0,5);
 
+  document.getElementById('fundCount').textContent = funds.length;
+  document.getElementById('fundUp').textContent = up; document.getElementById('fundDown').textContent = down;
 
-<article class="card">
-<div class="card__row">
-<div class="card__title sk sk-text" style="width:55%">&nbsp;</div>
-<span class="badge sk" style="width:50px">&nbsp;</span>
-</div>
-<div class="card__row">
-<div class="card__value sk sk-text" style="width:140px">&nbsp;</div>
-<div class="card__yield sk sk-text" style="width:44px">&nbsp;</div>
-</div>
-<div class="card__actions">
-<button class="btn btn--ghost" disabled>포트폴리오</button>
-<button class="btn" disabled>거래내역</button>
-</div>
-</article>
-</section>
+  // 카테고리 파이
+  const pieEmpty = catData.length === 0;
+  document.getElementById('fund-pie').style.display = pieEmpty ? 'none' : 'block';
+  document.getElementById('fund-pie-empty').style.display = pieEmpty ? 'block' : 'none';
+  if (fundPieChart) fundPieChart.destroy();
+  if (!pieEmpty) {
+    fundPieChart = new Chart(document.getElementById('fund-pie'), {
+      type:'pie',
+      data:{ labels: catData.map(([k])=>k), datasets: [{ data: catData.map(([,v])=>v) }] },
+      options:{ plugins:{ legend:{ position:'bottom' } } }
+    });
+  }
 
+  // Top5 바
+  const top5Empty = top5.length === 0;
+  document.getElementById('fund-top5').style.display = top5Empty ? 'none' : 'block';
+  document.getElementById('fund-top5-empty').style.display = top5Empty ? 'block' : 'none';
+  if (fundTop5Chart) fundTop5Chart.destroy();
+  if (!top5Empty) {
+    const maxTop = Math.max(...top5.map(r=>r.val), 0);
+    const u = chooseKRWUnit(maxTop);
+    fundTop5Chart = new Chart(document.getElementById('fund-top5'), {
+      type:'bar',
+      data:{ labels: top5.map(r=>r.name), datasets:[{ label:'평가액', data: top5.map(r=> r.val) }] },
+      options:{
+        indexAxis:'y',
+        plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:(c)=> fmtCurrency(c.raw) }}},
+        scales:{ x:{ beginAtZero:true, ticks:{ callback:(v)=> fmtKRWTick(v, u.scale, u.unit) } } }
+      }
+    });
+  }
+}
 
-<!-- 빈 상태 예시 (데이터 없을 때 이 블록만 남겨두면 됨) -->
-<section class="empty" hidden>
-<div class="empty__icon">📄</div>
-<h3 class="empty__title">등록된 IRP 계좌가 없습니다.</h3>
-<p class="empty__text">IRP를 개설하고 자산을 시작해 보세요.</p>
-<div class="empty__actions">
-<a class="btn" href="/retention/empty">IRP 개설</a>
-<a class="btn btn--ghost" href="#">상품 둘러보기</a>
-</div>
-</section>
-</main>
-</div>
+function calcAndRenderPrincipalStats(prins=[], prinRatio){
+  const today = new Date();
+  let sumWeightedRate = 0, sumPrincipal = 0, dueSoon = 0;
+  const byProd = {}; // 상품명 기준 가입원금
+
+  prins.forEach(p => {
+    const principal = Number(p.contractAmount||0);
+    sumWeightedRate += principal * Number(p.interestRate||0);
+    sumPrincipal   += principal;
+    if (p.maturityDate) {
+      const mat = new Date(p.maturityDate);
+      if ((mat - today) / (1000*60*60*24) <= 183) dueSoon++;
+    }
+    const name = p.prodName || p.principalId || '상품ID';
+
+    byProd[name] = (byProd[name] || 0) + principal;
+  });
+
+  const avgRate = sumPrincipal > 0 ? (sumWeightedRate/sumPrincipal) : null;
+  document.getElementById('prinAvgRate').textContent = fmtPct(avgRate);
+  document.getElementById('prinShare').textContent = fmtPct(prinRatio);
+
+  renderPrincipalByProduct(byProd);
+}
+
+function renderPrincipalByProduct(byProd){
+  const labels = Object.keys(byProd);
+  const values = labels.map(k => byProd[k]);
+  const empty  = values.reduce((a,b)=> a+b, 0) <= 0;
+
+  const canvas = document.getElementById('prin-prod-share');
+  const emptyMsg = document.getElementById('prin-prod-share-empty');
+
+  canvas.style.display   = empty ? 'none' : 'block';
+  emptyMsg.style.display = empty ? 'block' : 'none';
+
+  if (prinProdChart) prinProdChart.destroy();
+  if (!empty){
+    prinProdChart = new Chart(canvas, {
+      type: 'doughnut',
+      data: { labels, datasets: [{ data: values }] },
+      options: { cutout: '60%', plugins: { legend: { position: 'bottom' } } }
+    });
+  }
+}
+
+function applyMetricMode() {
+  const currentMode = document.querySelector('#metric-toggle button.active').dataset.mode;
+  document.getElementById('ratio-wrap').classList.toggle('hide', currentMode !== 'ratio');
+  document.getElementById('rtn-wrap').classList.toggle('hide', currentMode !== 'cumrtn');
+}
+
+/* 카드형 리스트 */
+function renderHoldingCards(){
+  // 원리금보장
+  const prinWrap=document.getElementById('prin-list');
+  const prins=cache.prins||[];
+  prinWrap.innerHTML = prins.length? prins.map(p=>{
+    const evalAmt = Number(p.contractAmount||0)+Number(p.interestAccrued||0);
+    return `
+    <div class="hcard">
+      <div class="h-top">
+        <span class="tag red">원리금보장</span>
+        <span class="small">${p.status||''}</span>
+      </div>
+      <div class="h-name">${p.prodName || p.principalId || '상품ID'}</div>
+      <div class="h-grid" style="margin-top:10px">
+        <div class="label">가입원금</div><div class="val">${fmtCurrency(p.contractAmount)}</div>
+        <div class="label">평가액</div><div class="val">${fmtCurrency(evalAmt)}</div>
+        <div class="label">금리(연)</div><div class="val">${fmtPct(p.interestRate)}</div>
+      </div>
+      <div class="h-cta"><button class="btn btn-expand">상세보기</button></div>
+      <div class="details hide">
+        <div class="details-row">
+          <div class="label">기간</div><div class="val">${(p.startDate||'').slice(0,10)} ~ ${(p.maturityDate||'').slice(0,10)}</div>
+          <div class="label">누적이자</div><div class="val">${fmtCurrency(p.interestAccrued)}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('') : `<div class="small" style="text-align:center;color:#9ca3af">원리금보장 상품이 없습니다.</div>`;
+
+  // 펀드/ETF/TDF
+  const fWrap=document.getElementById('fund-list');
+  const funds=cache.funds||[];
+  fWrap.innerHTML = funds.length? funds.map(f=>{
+    const acq = Number(f.acquisitionAmount||0);
+    const val = Number(f.valuationAmount||0);
+    const pl  = (f.profitLoss != null) ? Number(f.profitLoss) : (val - acq);
+    const rtn = (f.returnRate != null) ? Number(f.returnRate) : (acq > 0 ? (val / acq - 1) * 100 : null);
+    const cat=(f.category||'FUND').toUpperCase();
+    return `
+    <div class="hcard">
+      <div class="h-top"><span class="tag">${(cat==='ETF'||cat==='TDF')?cat:'펀드'}</span></div>
+      <div class="h-name">${f.productName||'상품명'}</div>
+      <div class="h-grid" style="margin-top:10px">
+        <div class="label">매수원금</div><div class="val">${fmtCurrency(acq)}</div>
+        <div class="label">평가액</div><div class="val">${fmtCurrency(val)}</div>
+        <div class="label">수익률</div><div class="val ${valClsPct(rtn)}">${fmtPct(rtn)}</div>
+      </div>
+      <div class="h-cta"><button class="btn btn-expand">상세보기</button></div>
+      <div class="details hide">
+        <div class="details-row">
+          <div class="label">보유좌수</div><div class="val">${fmtNum(f.units, SHARE_DECIMALS)}</div>
+          <div class="label">평균단가</div><div class="val">${fmtNum(f.avgPrice, MONEY_DECIMALS)}</div>
+          <div class="label">평가손익</div><div class="val ${valCls(pl)}">${fmtCurrencyPnL(pl)}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('') : `<div class="small" style="text-align:center;color:#9ca3af">펀드/ETF/TDF 보유가 없습니다.</div>`;
+
+  // 상세 토글
+  document.querySelectorAll('.btn-expand').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      const card = e.target.closest('.hcard');
+      const det = card.querySelector('.details');
+      det.classList.toggle('hide');
+    });
+  });
+}
+
+/* 이벤트 */
+document.getElementById('btn-refresh').addEventListener('click', loadHoldings);
+const openModal = ()=>{ document.getElementById('modal-back').style.display='block'; document.getElementById('modal').classList.add('active'); };
+const closeModal = ()=>{ document.getElementById('modal-back').style.display='none'; document.getElementById('modal').classList.remove('active'); };
+document.getElementById('btn-open').addEventListener('click', openModal);
+document.getElementById('btn-open-dup').addEventListener('click', openModal);
+document.getElementById('btn-close').addEventListener('click', closeModal);
+document.getElementById('modal-back').addEventListener('click', closeModal);
+
+document.addEventListener('click', (e)=>{
+  if (e.target.matches('#tbl-principal thead th.sortable')) {
+    const key = e.target.dataset.key; const isNum = e.target.hasAttribute('data-num');
+    sortTable(document.querySelector('#tbl-principal tbody'), cache.prins, key, isNum);
+  }
+  if (e.target.matches('#tbl-fund thead th.sortable')) {
+    const key = e.target.dataset.key; const isNum = e.target.hasAttribute('data-num');
+    sortTable(document.querySelector('#tbl-fund tbody'), cache.funds, key, isNum);
+  }
+});
+
+document.getElementById('metric-toggle').addEventListener('click', (e)=>{
+  if(e.target.tagName === 'BUTTON'){
+    document.querySelectorAll('#metric-toggle button').forEach(btn => btn.classList.remove('active'));
+    e.target.classList.add('active');
+    applyMetricMode();
+  }
+});
+
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    const tab = t.dataset.tab;
+    document.getElementById('cards-view').classList.toggle('hide', tab!=='cards');
+    document.getElementById('tables-view').classList.toggle('hide', tab!=='tables');
+  });
+});
+
+/* 시작 */
+loadAccounts();
+</script>
 </body>
 </html>

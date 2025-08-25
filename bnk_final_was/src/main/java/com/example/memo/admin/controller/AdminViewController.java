@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.memo.admin.service.AdminPageDataService;
 import com.example.memo.admin.service.SidebarService;
 import com.example.memo.admin.service.Subcat;
 
@@ -22,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 public class AdminViewController {
 
     private final SidebarService sidebar;
+    private final AdminPageDataService pageData; // ★ 주입
 
     /**
      * 공통 모델 속성 준비 메소드
@@ -42,6 +44,9 @@ public class AdminViewController {
 
         // 추가: 헤더에 쓸 카테고리들
         model.addAttribute("headerCategories", sidebar.getHeaderCategories());
+        
+        pageData.populateFor(code, model); // ★ 여기서 total-assets면 totals 주입
+
     }
     /**
      * 관리자 홈 (첫 진입)
@@ -99,4 +104,6 @@ public class AdminViewController {
         prepareModelForView(code, model);
         return "admin/category_switch";
     }
+    
+    
 }

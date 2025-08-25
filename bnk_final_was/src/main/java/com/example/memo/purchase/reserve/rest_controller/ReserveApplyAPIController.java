@@ -123,6 +123,9 @@ public class ReserveApplyAPIController {
             JsonNode apResp = tcp.sendMessage(msg);
             System.out.println(">> AP response = " + (apResp == null ? "null" : apResp.toPrettyString()));
 
+            // --- ✅ 세션 정리 (성공 시) ---
+            session.removeAttribute("ReserveValueDto"); // 필요한 키만 제거
+            
             // 8) 응답
             ObjectNode ok = om.createObjectNode();
             ok.put("success", true);

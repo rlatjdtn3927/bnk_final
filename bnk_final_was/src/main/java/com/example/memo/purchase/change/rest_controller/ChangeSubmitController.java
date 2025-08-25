@@ -85,6 +85,9 @@ public class ChangeSubmitController {
             JsonNode response = tcpClientService.sendMessage(msg);
 
             System.out.println("== [/submit] AP 응답:\n" + response.toPrettyString());
+            
+            //세션 정리
+            session.removeAttribute("ChangeValueDto");
 
             return ResponseEntity.ok(response);
 

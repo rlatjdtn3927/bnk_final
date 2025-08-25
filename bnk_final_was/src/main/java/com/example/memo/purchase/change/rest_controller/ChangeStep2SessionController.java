@@ -28,36 +28,44 @@ public class ChangeStep2SessionController {
         ChangeValueDto dto = (ChangeValueDto) session.getAttribute("ChangeValueDto");
         if (dto == null) dto = new ChangeValueDto();
 
-        // ✅ PK 보강
+        System.out.println("== [/sold/save] 요청 매도아이템 " + items.size() + "건");
         for (ChangeValueDto.SoldItem item : items) {
             if ("FUND".equalsIgnoreCase(item.getType())) {
-                // holdingId 보정
+                System.out.println("   [FUND-REQ] prodId=" + item.getProdId()
+                        + ", holdingId=" + item.getHoldingId()
+                        + ", ratio=" + item.getRatio()
+                        + ", amount=" + item.getAmount());
+
                 if (item.getHoldingId() == null || item.getHoldingId().isBlank()) {
-                    item.setHoldingId(item.getProdId()); // fallback
-                    System.out.println("== [보정] FUND holdingId -> prodId 사용: " + item.getProdId());
+                    item.setHoldingId(item.getProdId());
+                    System.out.println("   [보정] FUND holdingId -> prodId 사용: " + item.getProdId());
                 }
-                // prodId 누락 확인
                 if (item.getProdId() == null || item.getProdId().isBlank()) {
                     System.out.println("⚠️ [WARN] FUND prodId 누락됨! holdingId=" + item.getHoldingId());
                 }
             }
+            else if ("PRINCIPAL".equalsIgnoreCase(item.getType())) {
+                System.out.println("   [PRINCIPAL-REQ] ledgerId=" + item.getLedgerId()
+                        + ", id=" + item.getId()
+                        + ", prodId=" + item.getProdId()
+                        + ", ratio=" + item.getRatio()
+                        + ", amount=" + item.getAmount());
 
-            if ("PRINCIPAL".equalsIgnoreCase(item.getType())) {
-                // ledgerId <-> id 싱크
                 if (item.getLedgerId() == null && item.getId() != null) {
                     item.setLedgerId(item.getId());
                 }
                 if (item.getId() == null && item.getLedgerId() != null) {
                     item.setId(item.getLedgerId());
                 }
-
                 if (item.getLedgerId() == null) {
                     System.out.println("⚠️ [WARN] PRINCIPAL ledgerId 누락됨!");
                 }
             }
+            else {
+                System.out.println("   [UNKNOWN TYPE] " + item);
+            }
         }
 
-        // ✅ 매도 총액 계산
         BigDecimal total = items.stream()
             .map(i -> i.getAmount() == null ? BigDecimal.ZERO : i.getAmount())
             .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -65,6 +73,8 @@ public class ChangeStep2SessionController {
         dto.setSoldItems(items);
         dto.setSoldTotalAmount(total);
         session.setAttribute("ChangeValueDto", dto);
+
+        System.out.println("== [/sold/save] 세션 저장 완료, 총액=" + total);
 
         return ResponseEntity.ok(Map.of(
             "ok", true,
@@ -82,12 +92,11 @@ public class ChangeStep2SessionController {
         List<ChangeValueDto.BuyItem> items = new ArrayList<>();
         List<Map<String,Object>> fileUrls = new ArrayList<>();
 
+        System.out.println("== [/buy/save] 요청 body: " + body);
+
         if (body instanceof List) {
-            // JS에서 배열만 보낸 경우
             items = mapper.convertValue(body,
                 mapper.getTypeFactory().constructCollectionType(List.class, ChangeValueDto.BuyItem.class));
-
-            // fileUrlList 유지
             if (dto.getFileUrlList() != null) {
                 try { fileUrls = mapper.readValue(dto.getFileUrlList(), List.class); }
                 catch (Exception ignored) {}
@@ -99,6 +108,23 @@ public class ChangeStep2SessionController {
             fileUrls = mapper.convertValue(map.get("fileUrlList"), List.class);
         }
 
+        // FUND / PRINCIPAL 나눠서 로그 출력
+        for (ChangeValueDto.BuyItem it : items) {
+            if ("FUND".equalsIgnoreCase(it.getType())) {
+                System.out.println("   [FUND-BUY] prodId=" + it.getProdId()
+                        + ", name=" + it.getName()
+                        + ", ratio=" + it.getRatio()
+                        + ", amount=" + it.getAmount());
+            } else if ("PRINCIPAL".equalsIgnoreCase(it.getType())) {
+                System.out.println("   [PRINCIPAL-BUY] prodId=" + it.getProdId()
+                        + ", name=" + it.getName()
+                        + ", ratio=" + it.getRatio()
+                        + ", amount=" + it.getAmount());
+            } else {
+                System.out.println("   [UNKNOWN-BUY] " + it);
+            }
+        }
+
         BigDecimal total = items.stream()
             .map(i -> i.getAmount() == null ? BigDecimal.ZERO : i.getAmount())
             .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -106,13 +132,14 @@ public class ChangeStep2SessionController {
         dto.setBuyItems(items);
         dto.setBuyTotalAmount(total);
 
-        // fileUrlList 저장 (없으면 기존 유지)
         try { dto.setFileUrlList(mapper.writeValueAsString(fileUrls)); }
         catch (Exception e) {
             if (dto.getFileUrlList() == null) dto.setFileUrlList("[]");
         }
 
         session.setAttribute("ChangeValueDto", dto);
+
+        System.out.println("== [/buy/save] 세션 저장 완료, 총액=" + total);
 
         return ResponseEntity.ok(Map.of(
             "ok", true,
@@ -127,6 +154,7 @@ public class ChangeStep2SessionController {
     public ResponseEntity<?> snapshot(HttpSession session) {
         ChangeValueDto dto = (ChangeValueDto) session.getAttribute("ChangeValueDto");
         if (dto == null) dto = new ChangeValueDto();
+        System.out.println("== [/snapshot] 세션 DTO: " + dto);
         return ResponseEntity.ok(Map.of("dto", dto));
     }
 }

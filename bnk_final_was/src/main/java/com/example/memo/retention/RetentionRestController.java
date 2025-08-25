@@ -1,11 +1,8 @@
 package com.example.memo.retention;
 
-import java.util.Map;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.memo.tcp_common.Command;
@@ -19,43 +16,33 @@ import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/retain-api/account")
+@RequestMapping("/api/retention")
 @RequiredArgsConstructor
 public class RetentionRestController {
 
     private final TcpClientService tcpClientService;
-    private final ObjectMapper mapper;
+    private final ObjectMapper om;
 
-    /**
-     * 계좌 최소 목록
-     * 응답: { ok: true, accounts:[{type,id}], default:{type,id} }
-     */
-    @GetMapping("/list-min")
-    public ResponseEntity<?> listMin(HttpSession session) {
+    /** 사용자 보유 계좌 목록 */
+    @GetMapping("/accounts")
+    public JsonNode getAccounts(HttpSession session) {
         Long userId = (Long) session.getAttribute("user");
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("ok", false, "error", "로그인이 필요합니다."));
-        }
+        if (userId == null) userId = 1L; // 임시
 
-        ObjectNode payload = mapper.createObjectNode().put("userId", userId);
-        TcpMessage message  = new TcpMessage(Command.RETAIN_GET_ACCOUNTS, payload);
-        JsonNode apRes      = tcpClientService.sendMessage(message); // AP: RetainHandler -> RetainAccountService
+        ObjectNode data = om.createObjectNode().put("userId", userId);
+        TcpMessage msg = new TcpMessage(Command.RETAIN_GET_ACCOUNTS, data);
+        return tcpClientService.sendMessage(msg); // { ok, accounts:[] }
+    }
 
-        if (apRes == null || apRes.isNull() || apRes.hasNonNull("error")) {
-            String err = (apRes != null && apRes.hasNonNull("error"))
-                    ? apRes.get("error").asText() : "AP 무응답";
-            return ResponseEntity.ok(Map.of("ok", false, "error", "계좌 목록 조회 실패: " + err));
-        }
+    /** 계좌 보유현황(현재 시점 스냅샷) */
+    @GetMapping("/holdings")
+    public JsonNode getHoldings(@RequestParam("type") String accountType,
+                                @RequestParam("id") String accountId) {
+        ObjectNode data = om.createObjectNode()
+                .put("accountType", accountType) // "IRP" | "DC"
+                .put("accountId", accountId);
 
-        JsonNode result   = apRes.get("resultList"); // { accounts, defaults }
-        JsonNode accounts = (result != null && result.has("accounts")) ? result.get("accounts") : mapper.createArrayNode();
-        JsonNode defaults = (result != null && result.has("defaults")) ? result.get("defaults") : mapper.nullNode();
-
-        return ResponseEntity.ok(Map.of(
-                "ok", true,
-                "accounts", accounts,
-                "default", defaults   // 프론트는 res.default 사용
-        ));
+        TcpMessage msg = new TcpMessage(Command.CHANGE_GET_HOLDINGS, data);
+        return tcpClientService.sendMessage(msg); // { resultList:{ fundHoldings[], principalLedgers[] } } or { error }
     }
 }

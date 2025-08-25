@@ -1,5 +1,6 @@
 package com.example.memo.jpa.repository.company;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -66,4 +67,19 @@ public interface DcAccountRepository extends JpaRepository<DcAccount, Long> {
         List<MonthlyCountView> countMonthlyByCreatedAt(@Param("fromYm") String fromYm,
                                                        @Param("toYm") String toYm);
     DcAccount findByAccountNo(String accountNo); 
+    
+    // DcAccount -> DcMember -> UserEntity.userId
+    List<DcAccount> findByDcMember_User_UserId(Long userId);
+    
+    /**
+     * 전체 DC 계좌 balance 합계
+     */
+    @Query("select coalesce(sum(a.balance),0) from DcAccount a")
+    BigDecimal sumAllBalance();
+
+    /**
+     * 모든 DC 계좌 번호 조회
+     */
+    @Query("select a.accountNo from DcAccount a")
+    List<String> findAllAccountNos();
 }

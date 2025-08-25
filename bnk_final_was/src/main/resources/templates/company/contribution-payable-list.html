@@ -122,225 +122,244 @@
     </div>
   </footer>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // 요소
-      const fromDateEl = document.getElementById('fromDate');
-      const toDateEl = document.getElementById('toDate');
-      const statusEl = document.getElementById('payment-status');
-      const searchBtn = document.getElementById('searchBtn');
-      const listBody = document.getElementById('payable-list-body');
-      const selectAllCheckbox = document.getElementById('selectAll');
-      const totalCountEl = document.getElementById('total-count');
-      const totalAmountEl = document.getElementById('total-amount');
-      const sourceAccountInfoEl = document.getElementById('sourceAccountInfo');
-      const payBtn = document.getElementById('payBtn');
-      const paginationEl = document.getElementById('pagination');
-      const btn1M = document.getElementById('btn1M');
-      const btn3M = document.getElementById('btn3M');
-      const btn6M = document.getElementById('btn6M');
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // 요소
+    const fromDateEl = document.getElementById('fromDate');
+    const toDateEl = document.getElementById('toDate');
+    const statusEl = document.getElementById('payment-status');
+    const searchBtn = document.getElementById('searchBtn');
+    const listBody = document.getElementById('payable-list-body');
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const totalCountEl = document.getElementById('total-count');
+    const totalAmountEl = document.getElementById('total-amount');
+    const sourceAccountInfoEl = document.getElementById('sourceAccountInfo');
+    const payBtn = document.getElementById('payBtn');
+    const paginationEl = document.getElementById('pagination');
+    const btn1M = document.getElementById('btn1M');
+    const btn3M = document.getElementById('btn3M');
+    const btn6M = document.getElementById('btn6M');
 
-      // 상태
-      let currentPage = 0;
-      let totalPages = 0;
-      let sourceAccountId = null;
+    // 상태
+    let currentPage = 0;
+    let totalPages = 0;
+    let sourceAccountId = null;
 
-      // 유틸
-      const fmtMoney = n => Number(n || 0).toLocaleString();
-      function setDates(months){
-        const today = new Date();
-        const past = new Date();
-        past.setMonth(today.getMonth() - months);
-        toDateEl.value = today.toISOString().split('T')[0];
-        fromDateEl.value = past.toISOString().split('T')[0];
-      }
+    // 유틸
+    const fmtMoney = n => Number(n || 0).toLocaleString();
 
-      // 출금계좌 조회
-      async function fetchAndSetSourceAccount(){
-        try{
-          const res = await fetch('/company/dc/contribution/source-accounts');
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.message || '출금 계좌 조회 실패');
+    // 로컬 기준 YYYY-MM-DD
+    function ymdLocal(d){
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
 
-          const accounts =
-            (Array.isArray(data.accounts) && data.accounts) ||
-            (Array.isArray(data.rows) && data.rows) ||
-            (Array.isArray(data.data?.accounts) && data.data.accounts) ||
-            (Array.isArray(data.data?.rows) && data.data.rows) || [];
+    /**
+     * 달 단위 윈도우 설정
+     * months=1 → 기준 달 1일 ~ 기준 달 말일
+     * months=3 → 기준 달 1일 ~ 기준 달+2 말일
+     * months=6 → 기준 달 1일 ~ 기준 달+5 말일
+     * anchorDate가 있으면 그 달을 기준, 없으면 오늘(이번 달) 기준
+     */
+    function setMonthWindow(months, anchorDate){
+      const base = anchorDate ? new Date(anchorDate) : new Date();
+      const start = new Date(base.getFullYear(), base.getMonth(), 1);
+      const end   = new Date(base.getFullYear(), base.getMonth() + months, 0); // months개월 뒤 달의 0일 = 직전달 말일
+      fromDateEl.value = ymdLocal(start);
+      toDateEl.value   = ymdLocal(end);
+    }
 
-          if (accounts.length > 0){
-            const a = accounts[0];
-            sourceAccountId = Number(a.accountId);
-            sourceAccountInfoEl.textContent = `${a.accountNo} (잔액: ${fmtMoney(a.balance)}원)`;
-            payBtn.disabled = false;
-          } else {
-            sourceAccountInfoEl.textContent = '등록된 출금계좌가 없습니다.';
-            payBtn.disabled = true;
-          }
-        }catch(e){
-          console.error(e);
-          sourceAccountInfoEl.textContent = '계좌 조회 오류';
+    // 출금계좌 조회
+    async function fetchAndSetSourceAccount(){
+      try{
+        const res = await fetch('/company/dc/contribution/source-accounts');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || '출금 계좌 조회 실패');
+
+        const accounts =
+          (Array.isArray(data.accounts) && data.accounts) ||
+          (Array.isArray(data.rows) && data.rows) ||
+          (Array.isArray(data.data?.accounts) && data.data.accounts) ||
+          (Array.isArray(data.data?.rows) && data.data.rows) || [];
+
+        if (accounts.length > 0){
+          const a = accounts[0];
+          sourceAccountId = Number(a.accountId);
+          sourceAccountInfoEl.textContent = `${a.accountNo} (잔액: ${fmtMoney(a.balance)}원)`;
+          payBtn.disabled = false;
+        } else {
+          sourceAccountInfoEl.textContent = '등록된 출금계좌가 없습니다.';
           payBtn.disabled = true;
         }
-      }
-
-      // 목록 조회/렌더
-      async function fetchAndRender(page = 0){
-        currentPage = page;
-        const params = new URLSearchParams({
-          fromDate: fromDateEl.value,
-          toDate: toDateEl.value,
-          paymentStatus: statusEl.value,   // ALL | PENDING | PAID | SKIPPED | FAILED
-          page: currentPage,
-          size: 10
-        });
-
-        listBody.innerHTML = `<tr><td colspan="6" style="padding:40px;">목록을 불러오는 중...</td></tr>`;
-        selectAllCheckbox.checked = false;
-
-        try{
-          const res = await fetch(`/company/dc/contribution/payable-list?${params.toString()}`);
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.message || '목록 조회 실패');
-
-          const items =
-            (Array.isArray(data.content) && data.content) ||
-            (Array.isArray(data.items) && data.items) ||
-            (Array.isArray(data.rows) && data.rows) ||
-            (Array.isArray(data.data?.content) && data.data.content) ||
-            (Array.isArray(data.data?.items) && data.data.items) ||
-            (Array.isArray(data.data?.rows) && data.data.rows) || [];
-
-          renderTable(items);
-          renderPagination(data);
-          updateSummary();
-        }catch(e){
-          listBody.innerHTML = `<tr><td colspan="6" style="padding:40px;color:var(--err);">${e.message}</td></tr>`;
-        }
-      }
-
-      function renderTable(items){
-        listBody.innerHTML = '';
-        if (items.length === 0){
-          listBody.innerHTML = `<tr><td colspan="6" style="padding:40px;">조회된 내역이 없습니다.</td></tr>`;
-          return;
-        }
-        const frag = document.createDocumentFragment();
-        items.forEach(item => {
-          const tr = document.createElement('tr');
-          const isPayable = (item.status === '입금대기') || (item.paymentStatus === 'PENDING');
-
-          tr.dataset.itemId = item.itemId ?? item.id;
-          tr.dataset.amount = item.amount ?? 0;
-          if (!isPayable) tr.classList.add('not-payable');
-
-          tr.innerHTML = `
-            <td><input type="checkbox" class="item-checkbox" ${isPayable ? '' : 'disabled'}></td>
-            <td>${item.status ?? item.paymentStatus ?? '-'}</td>
-            <td style="text-align:left;">${item.memberName ?? '-'}</td>
-            <td>${item.accountNo ?? '-'}</td>
-            <td>${item.planDate ?? '-'}</td>
-            <td class="num">${fmtMoney(item.amount)}원</td>
-          `;
-          frag.appendChild(tr);
-        });
-        listBody.appendChild(frag);
-      }
-
-      function renderPagination(data){
-        paginationEl.innerHTML = '';
-        totalPages = Number.isFinite(data.totalPages) ? data.totalPages : 0;
-        const pageNumber = Number.isFinite(data.number) ? data.number : currentPage;
-
-        if (!totalPages || totalPages <= 1) return;
-
-        const prev = document.createElement('button');
-        prev.textContent = '이전';
-        prev.className = 'btn btn-ghost';
-        prev.disabled = !!data.first || pageNumber <= 0;
-        prev.onclick = () => fetchAndRender(pageNumber - 1);
-        paginationEl.appendChild(prev);
-
-        const info = document.createElement('span');
-        info.className = 'page-info';
-        info.textContent = ` ${pageNumber + 1} / ${totalPages} `;
-        paginationEl.appendChild(info);
-
-        const next = document.createElement('button');
-        next.textContent = '다음';
-        next.className = 'btn btn-ghost';
-        next.disabled = !!data.last || pageNumber >= totalPages - 1;
-        next.onclick = () => fetchAndRender(pageNumber + 1);
-        paginationEl.appendChild(next);
-      }
-
-      function updateSummary(){
-        const selected = listBody.querySelectorAll('.item-checkbox:checked');
-        let count = 0, sum = 0;
-        listBody.querySelectorAll('tr').forEach(tr => tr.classList.remove('selected'));
-        selected.forEach(cb => {
-          const tr = cb.closest('tr');
-          tr.classList.add('selected');
-          count++;
-          sum += Number(tr.dataset.amount || 0);
-        });
-        totalCountEl.textContent = count.toLocaleString();
-        totalAmountEl.textContent = `${fmtMoney(sum)}원`;
-        payBtn.disabled = (count === 0) || (sourceAccountId == null);
-      }
-
-      // 이벤트
-      searchBtn.addEventListener('click', () => fetchAndRender(0));
-      btn1M.addEventListener('click', () => { setDates(1); fetchAndRender(0); });
-      btn3M.addEventListener('click', () => { setDates(3); fetchAndRender(0); });
-      btn6M.addEventListener('click', () => { setDates(6); fetchAndRender(0); });
-
-      selectAllCheckbox.addEventListener('change', (e) => {
-        listBody.querySelectorAll('.item-checkbox:not(:disabled)').forEach(cb => cb.checked = e.target.checked);
-        updateSummary();
-      });
-      listBody.addEventListener('change', (e) => {
-        if (e.target.classList.contains('item-checkbox')) updateSummary();
-      });
-
-      payBtn.addEventListener('click', async () => {
-        const selectedIds = Array.from(listBody.querySelectorAll('.item-checkbox:checked'))
-          .map(cb => Number(cb.closest('tr').dataset.itemId));
-        if (selectedIds.length === 0) return;
-
-        const amountText = totalAmountEl.textContent;
-        if (!confirm(`총 ${selectedIds.length}건, ${amountText}을 입금하시겠습니까?`)) return;
-
+      }catch(e){
+        console.error(e);
+        sourceAccountInfoEl.textContent = '계좌 조회 오류';
         payBtn.disabled = true;
-        const prevText = payBtn.textContent;
-        payBtn.textContent = '입금 처리 중...';
+      }
+    }
 
-        try{
-          const res = await fetch('/company/dc/contribution/execute-items', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ itemIds: selectedIds, sourceAccountId })
-          });
-          const result = await res.json();
-          if (!res.ok) throw new Error(result.message || '입금 처리 실패');
-
-          alert(`입금 처리가 성공적으로 요청되었습니다.\n- 처리 건수: ${result.processedCount}건\n- 총 입금액: ${fmtMoney(result.totalPaidAmount)}원`);
-          await fetchAndRender(currentPage);
-        }catch(e){
-          alert('입금 처리 중 오류가 발생했습니다: ' + e.message);
-        }finally{
-          payBtn.textContent = prevText || '입금 실행';
-          payBtn.disabled = false;
-        }
+    // 목록 조회/렌더
+    async function fetchAndRender(page = 0){
+      currentPage = page;
+      const params = new URLSearchParams({
+        fromDate: fromDateEl.value,
+        toDate: toDateEl.value,
+        paymentStatus: statusEl.value,   // ALL | PENDING | PAID | SKIPPED | FAILED
+        page: currentPage,
+        size: 10
       });
 
-      // 시작
-      (async function start(){
-        setDates(1);
-        await fetchAndSetSourceAccount();
-        await fetchAndRender(0);
-      })();
+      listBody.innerHTML = `<tr><td colspan="6" style="padding:40px;">목록을 불러오는 중...</td></tr>`;
+      selectAllCheckbox.checked = false;
+
+      try{
+        const res = await fetch(`/company/dc/contribution/payable-list?${params.toString()}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || '목록 조회 실패');
+
+        const items =
+          (Array.isArray(data.content) && data.content) ||
+          (Array.isArray(data.items) && data.items) ||
+          (Array.isArray(data.rows) && data.rows) ||
+          (Array.isArray(data.data?.content) && data.data.content) ||
+          (Array.isArray(data.data?.items) && data.data.items) ||
+          (Array.isArray(data.data?.rows) && data.data.rows) || [];
+
+        renderTable(items);
+        renderPagination(data);
+        updateSummary();
+      }catch(e){
+        listBody.innerHTML = `<tr><td colspan="6" style="padding:40px;color:var(--err);">${e.message}</td></tr>`;
+      }
+    }
+
+    function renderTable(items){
+      listBody.innerHTML = '';
+      if (items.length === 0){
+        listBody.innerHTML = `<tr><td colspan="6" style="padding:40px;">조회된 내역이 없습니다.</td></tr>`;
+        return;
+      }
+      const frag = document.createDocumentFragment();
+      items.forEach(item => {
+        const tr = document.createElement('tr');
+        const isPayable = (item.status === '입금대기') || (item.paymentStatus === 'PENDING');
+
+        tr.dataset.itemId = item.itemId ?? item.id;
+        tr.dataset.amount = item.amount ?? 0;
+        if (!isPayable) tr.classList.add('not-payable');
+
+        tr.innerHTML = `
+          <td><input type="checkbox" class="item-checkbox" ${isPayable ? '' : 'disabled'}></td>
+          <td>${item.status ?? item.paymentStatus ?? '-'}</td>
+          <td style="text-align:left;">${item.memberName ?? '-'}</td>
+          <td>${item.accountNo ?? '-'}</td>
+          <td>${item.planDate ?? '-'}</td>
+          <td class="num">${fmtMoney(item.amount)}원</td>
+        `;
+        frag.appendChild(tr);
+      });
+      listBody.appendChild(frag);
+    }
+
+    function renderPagination(data){
+      paginationEl.innerHTML = '';
+      totalPages = Number.isFinite(data.totalPages) ? data.totalPages : 0;
+      const pageNumber = Number.isFinite(data.number) ? data.number : currentPage;
+
+      if (!totalPages || totalPages <= 1) return;
+
+      const prev = document.createElement('button');
+      prev.textContent = '이전';
+      prev.className = 'btn btn-ghost';
+      prev.disabled = !!data.first || pageNumber <= 0;
+      prev.onclick = () => fetchAndRender(pageNumber - 1);
+      paginationEl.appendChild(prev);
+
+      const info = document.createElement('span');
+      info.className = 'page-info';
+      info.textContent = ` ${pageNumber + 1} / ${totalPages} `;
+      paginationEl.appendChild(info);
+
+      const next = document.createElement('button');
+      next.textContent = '다음';
+      next.className = 'btn btn-ghost';
+      next.disabled = !!data.last || pageNumber >= totalPages - 1;
+      next.onclick = () => fetchAndRender(pageNumber + 1);
+      paginationEl.appendChild(next);
+    }
+
+    function updateSummary(){
+      const selected = listBody.querySelectorAll('.item-checkbox:checked');
+      let count = 0, sum = 0;
+      listBody.querySelectorAll('tr').forEach(tr => tr.classList.remove('selected'));
+      selected.forEach(cb => {
+        const tr = cb.closest('tr');
+        tr.classList.add('selected');
+        count++;
+        sum += Number(tr.dataset.amount || 0);
+      });
+      totalCountEl.textContent = count.toLocaleString();
+      totalAmountEl.textContent = `${fmtMoney(sum)}원`;
+      payBtn.disabled = (count === 0) || (sourceAccountId == null);
+    }
+
+    // 이벤트
+    searchBtn.addEventListener('click', () => fetchAndRender(0));
+
+    // 달 단위 버튼: fromDate가 지정되어 있으면 그 달 기준, 아니면 이번 달 기준
+    btn1M.addEventListener('click', () => { setMonthWindow(1, fromDateEl.value || undefined); fetchAndRender(0); });
+    btn3M.addEventListener('click', () => { setMonthWindow(3, fromDateEl.value || undefined); fetchAndRender(0); });
+    btn6M.addEventListener('click', () => { setMonthWindow(6, fromDateEl.value || undefined); fetchAndRender(0); });
+
+    selectAllCheckbox.addEventListener('change', (e) => {
+      listBody.querySelectorAll('.item-checkbox:not(:disabled)').forEach(cb => cb.checked = e.target.checked);
+      updateSummary();
     });
-  </script>
+    listBody.addEventListener('change', (e) => {
+      if (e.target.classList.contains('item-checkbox')) updateSummary();
+    });
+
+    payBtn.addEventListener('click', async () => {
+      const selectedIds = Array.from(listBody.querySelectorAll('.item-checkbox:checked'))
+        .map(cb => Number(cb.closest('tr').dataset.itemId));
+      if (selectedIds.length === 0) return;
+
+      const amountText = totalAmountEl.textContent;
+      if (!confirm(`총 ${selectedIds.length}건, ${amountText}을 입금하시겠습니까?`)) return;
+
+      payBtn.disabled = true;
+      const prevText = payBtn.textContent;
+      payBtn.textContent = '입금 처리 중...';
+
+      try{
+        const res = await fetch('/company/dc/contribution/execute-items', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ itemIds: selectedIds, sourceAccountId })
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.message || '입금 처리 실패');
+
+        alert(`입금 처리가 성공적으로 요청되었습니다.\n- 처리 건수: ${result.processedCount}건\n- 총 입금액: ${fmtMoney(result.totalPaidAmount)}원`);
+        await fetchAndRender(currentPage);
+      }catch(e){
+        alert('입금 처리 중 오류가 발생했습니다: ' + e.message);
+      }finally{
+        payBtn.textContent = prevText || '입금 실행';
+        payBtn.disabled = false;
+      }
+    });
+
+    // 시작: 이번 달 1일 ~ 말일
+    (async function start(){
+      setMonthWindow(1);
+      await fetchAndSetSourceAccount();
+      await fetchAndRender(0);
+    })();
+  });
+</script>
+
 </body>
 </html>

@@ -18,7 +18,7 @@ public class RetentionViewController {
         return "retention/accounts-test";
     }
 
-    /** 보유 계좌 리스트 (retention-01) */
+    /** 보유현황!!! **/
     @GetMapping("/retention/accounts")
     public String accounts() {
         // 데이터 바인딩 없이 스켈레톤만 출력

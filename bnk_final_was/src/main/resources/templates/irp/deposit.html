@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>IRP 계좌 입금</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+<h2>IRP 계좌 입금</h2>
+
+<!-- ✅ IRP 계좌 표시 -->
+<div>
+    <label>IRP 계좌</label>
+    <input type="text" id="accountId" name="accountId"
+           th:value="${irpAccountId}" readonly/>
+</div>
+
+<form id="depositForm">
+    <div>
+        <label>입금 금액</label>
+        <input type="number" id="cash" name="cash" min="1000" step="1000" required/>
+    </div>
+    <button type="submit">입금하기</button>
+</form>
+
+<hr>
+<div id="result"></div>
+
+<script>
+document.getElementById("depositForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const req = {
+        accountId: document.getElementById("accountId").value,
+        cash: parseFloat(document.getElementById("cash").value)
+    };
+
+    try {
+        const res = await axios.post("/retain-api/irp/deposit", req);
+        document.getElementById("result").innerHTML =
+            "<pre>" + JSON.stringify(res.data, null, 2) + "</pre>";
+    } catch (err) {
+        document.getElementById("result").innerHTML =
+            "<span style='color:red'>에러: " + err + "</span>";
+    }
+});
+</script>
+
+</body>
+</html>
