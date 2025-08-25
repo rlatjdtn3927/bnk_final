@@ -1,20 +1,10 @@
 package com.example.memo.purchase.change.rest_controller;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,13 +15,11 @@ import com.example.memo.purchase.trade_common.dto.ChangeValueDto;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpClientService;
 import com.example.memo.tcp_common.TcpMessage;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpSession;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/retain-api/change")
@@ -83,15 +71,16 @@ public class ChangeRetainAPIController {
 	    return ResponseEntity.ok(Map.of("userInfo", userInfo));
 	}
 
-    /** 보유/이미 선택된 상품 목록(운용비율 포함) */
+    /** 보유/이미 선택된 상품 목록(운용비율 포함) 
+     * @throws JsonProcessingException */
 	@PostMapping("/retain")
-    public ResponseEntity<?> retainList(@RequestParam("accountType") String accountType, @RequestParam("accountId") String accountId) {
+    public ResponseEntity<?> retainList(@RequestParam("accountType") String accountType, @RequestParam("accountId") String accountId) throws JsonProcessingException {
     	
     	RetainHoldingsDto dto = new RetainHoldingsDto(accountType,accountId);
     	JsonNode msg = mapper.valueToTree(dto);
     	TcpMessage message = new TcpMessage(Command.CHANGE_GET_HOLDINGS, msg);
     	JsonNode response = tcpClientService.sendMessage(message);
-        System.out.println(response.toString()); //여기서 받아온 데이터 형식 확인하십쇼
+    	System.out.println(mapper.writeValueAsString(response)); //여기서 받아온 데이터 형식 확인하십쇼
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }

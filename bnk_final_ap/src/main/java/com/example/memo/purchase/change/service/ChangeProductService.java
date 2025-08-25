@@ -176,6 +176,7 @@ public class ChangeProductService {
 					FundLedger fundLedger = FundLedger.builder()
 							.fund(FundMaster.builder().productId(prodId).build())
 							.tradeType("SELL")
+							.tradePrice(nav.setScale(SCALE_SAVE, RMDN))
 							.tradeUnits(soldUnits.setScale(SCALE_SAVE,RMDN))
 							.tradeAmount(tradeAmount.setScale(SCALE_SAVE, RMDN))
 							.build();
@@ -240,6 +241,7 @@ public class ChangeProductService {
 							.fund(FundMaster.builder().productId(prodId).build())
 							.tradeType("BUY")
 							.tradeUnits(tradeUnits.setScale(SCALE_SAVE, RMDN))
+							.tradePrice(nav.setScale(SCALE_SAVE, RMDN))
 							.tradeAmount(tradeAmount.setScale(SCALE_SAVE, RMDN))
 							.build();
 					if("DC".equals(accountType)) fundLedger.setDcAccount(DcAccount.builder().accountNo(accountId).build());

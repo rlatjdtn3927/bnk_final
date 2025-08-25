@@ -21,15 +21,39 @@ public class ChangeDocsController {
     @GetMapping("/docs/list")
     public ResponseEntity<?> docsList(HttpSession session) {
         ChangeValueDto dto = (ChangeValueDto) session.getAttribute("ChangeValueDto");
-        if (dto == null) return ResponseEntity.ok(Map.of("files", List.of()));
+        if (dto == null || dto.getBuyItems() == null) {
+            return ResponseEntity.ok(Map.of("files", List.of()));
+        }
 
-        List<Map<String,Object>> files;
+        List<Map<String, Object>> files = new ArrayList<>();
         try {
-            files = mapper.readValue(dto.getFileUrlList(), List.class);
+            // fileUrlList → 배열로 변환
+            List<Map<String, Object>> savedFiles = new ArrayList<>();
+            if (dto.getFileUrlList() != null) {
+                savedFiles = mapper.readValue(
+                    dto.getFileUrlList(),
+                    new com.fasterxml.jackson.core.type.TypeReference<List<Map<String,Object>>>() {}
+                );
+            }
+
+            // buyItems 기준으로 돌면서, fileUrlList 에 있는 항목 매핑
+            for (ChangeValueDto.BuyItem item : dto.getBuyItems()) {
+                if (item == null || item.getProdId() == null) continue;
+
+                // fileUrlList 에서 해당 prodId 관련 문서만 추출
+                for (Map<String,Object> f : savedFiles) {
+                    String pid = (String) f.get("prodId");
+                    if (pid != null && pid.equals(item.getProdId())) {
+                        files.add(f);
+                    }
+                }
+            }
+
         } catch (Exception e) {
-            files = List.of();
+            e.printStackTrace();
         }
 
         return ResponseEntity.ok(Map.of("files", files));
     }
+
 }
