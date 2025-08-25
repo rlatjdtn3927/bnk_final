@@ -161,12 +161,6 @@ hr{
   margin: 0 auto 12px;
 }
 
-.header h2 {
-  font-size: 22px;
-  font-weight: 700;
-  margin: 20px 0 12px 16px;
-}
-
 .tabs {
   display: flex;
   gap: 60px;
@@ -217,11 +211,26 @@ hr{
   width: 130px;
 }
 
+.again {
+  color: #f85151;
+}
+
+.brand {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 20px auto auto 16px; 
+}
+
+.brand .red {
+  color: #D93C3C;           /* BNK 빨강 */
+  font-weight: 700;
+}
+
 </style>
 </head>
 <body>
   <div class="header">
-  <h2>투자 성향 분석</h2>
+    <div class="brand"><span class="red">BNK</span> 퇴직연금</div>
     <div class="tabs">
       <span class="tab">설문하기</span>
       <span class="tab active">결과보기</span>
@@ -276,7 +285,7 @@ hr{
       <a class="link" th:if="${error == null}" th:href="@{/purchase/trade/getProfileType}">확인</a>
 
       <!-- 다시하기 & 메인 -->
-      <a class="link" href="/survey-start">다시하기</a>
+      <a class="link again" href="/survey-start">다시하기</a>
       <a class="link" href="/main">메인으로</a>
     </div>
   </div>
