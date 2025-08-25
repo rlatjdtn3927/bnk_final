@@ -1,149 +1,260 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <title>통합 로그인</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root{
-      /* Brand → #D71921 */
-      --brand:#D71921; 
-      --brand-700:#b11217; /* hover/darker */
-      --bg:#fff2f2; 
-      --card:#ffffff; 
-      --text:#111827; 
-      --muted:#6b7280;
-      --primary:var(--brand); 
-      --primary-700:var(--brand-700); 
-      --line:#e5e7eb;
-      --btn:var(--brand);
-      --shadow:0 12px 28px rgba(0,0,0,.10);
-      --radius:16px;
-      --input-radius:12px;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0; font-family: "Noto Sans KR", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      background: radial-gradient(1200px 600px at 10% -10%, #ffe1e1 0%, transparent 60%) , var(--bg);
-      color:var(--text);
-    }
-    .wrap{max-width:900px; margin:56px auto; padding:0 16px;}
-    .grid{ display:grid; grid-template-columns: 1fr; gap:16px; }
-    @media(min-width:860px){ .grid{grid-template-columns: 520px;} .wrap{display:flex; justify-content:center;} }
+<meta charset="UTF-8" />
+<title>통합 로그인</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+* { box-sizing: border-box; } 
 
-    .card{ background:var(--card); border-radius:24px; box-shadow:var(--shadow); padding:28px 28px 22px; border:1px solid #f1f5f9; }
+body {
+  font-family: 'Pretendard', sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  color: #222;
+}
 
-    .logo{ display:flex; justify-content:center; align-items:center; gap:10px; margin-top:4px;}
-    .logo-badge{width:42px;height:42px;border-radius:10px;background:var(--brand); display:inline-flex; align-items:center; justify-content:center; color:#fff; font-weight:900}
-    .title{ text-align:center; font-size:28px; font-weight:800; margin:10px 0 6px;}
-    .subtitle{ text-align:center; color:var(--muted); margin-bottom:18px; }
+/* 전체 레이아웃 */
+.wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 90vh;
+  max-width:760px;
+} 
 
-    .input{
-      width:100%; padding:14px 14px; border:1px solid var(--line); border-radius: var(--input-radius);
-      font-size:16px; outline:none; transition:border-color .15s ease, box-shadow .15s ease;
-      background:#fff;
-    }
-    .input:focus{ border-color:#fecaca; box-shadow: 0 0 0 4px rgba(215,25,33,.15); }
+.grid {
+  width: 100%;
+  max-width: 400px;
+}
+/*
+@media(min-width:860px){ 
+  .grid{grid-template-columns: 520px;} 
+  .wrap{display:flex; justify-content:center;} 
+}
+*/
+/* 로그인 카드 */
+.card {
+  background: #fff;
+  padding: 40px 32px;
+  text-align: center;
+}
 
-    .row{ display:flex; flex-direction:column; gap:12px; }
-    .btn{
-      width:100%; padding:14px 16px; border:none; border-radius:14px;
-      background: var(--btn); color:#fff; font-weight:800; font-size:16px; cursor:pointer;
-      margin-top:8px;
-    }
-    .btn:hover{ background: var(--primary-700); }
-    .btn[disabled]{ opacity:.7; cursor:not-allowed; }
+.logo {
+  display: flex;
+  justify-content: center;   /* 가운데 정렬 */
+  align-items: center;
+  margin-bottom: 50px;
+}
 
-    .links{ display:flex; justify-content:center; gap:18px; margin-top:10px; font-size:14px;}
-    .links a{ color:#334155; text-decoration:none;}
-    .links a:hover{ text-decoration:underline; }
+.brand {
+  font-size: 28px;
+  font-weight: 700;
+}
 
-    .section{ background:#fff; border-radius:16px; padding:18px; border:1px solid #eef2f7; box-shadow:0 6px 20px rgba(0,0,0,.06); }
-    .section-title{ color:#475569; font-size:14px; margin:0 0 10px 4px; }
-    .sso-wrap{ display:flex; flex-direction:column; gap:10px; }
-    .sso{
-      display:flex; align-items:center; justify-content:center; gap:10px;
-      border-radius:12px; padding:12px; border:1px solid var(--line); background:#f8fafc; cursor:pointer; font-weight:700;
-    }
-    .sso.red{ background:#ffe6e6; border-color:#fecaca; }
-    .sso.blue{ background:#fdeaea; border-color:#fecaca; }
+.brand .red {
+  color: #D93C3C;           /* BNK 빨강 */
+  font-weight: 700;
+}
 
-    .sso-row{ display:flex; flex-wrap:wrap; gap:8px; }
-    .chip{ display:inline-flex; align-items:center; gap:8px; padding:10px 12px; border-radius:999px; background:#fff5f5; font-weight:700; font-size:14px; border:1px solid #ffd1d1; }
-    .chip.lock::before{content:"🔒";} .chip.n::before{content:"🟢";} .chip.k::before{content:"🟡";}
-    .chip.i::before{content:"🪪";} .chip.s::before{content:"✉️";}
+/* 부제목 */
+.subtitle {
+  display: flex;                   /* 가로 배치 */
+  justify-content: space-between;  /* 좌우 끝에 배치 */
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 20px;
+  align-items: center;             /* 세로 가운데 정렬 */
+}
 
-    .error{ color:#dc2626; text-align:center; margin-top:10px; min-height:18px; }
-    .tip { color:#64748b; font-size:12px; text-align:center; margin-top:8px; }
+.admin-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: #2e2f36;
+  padding: 4px 10px;
+  border-radius: 14px;
+  text-decoration: none;
+  margin-right: 5px; 
+}
 
-    .field{ display:flex; flex-direction:column; gap:6px;}
-    .pw-wrap{ position:relative; }
-    .pw-toggle{ position:absolute; right:12px; top:50%; transform:translateY(-50%); border:none; background:transparent; cursor:pointer; color:#475569; font-weight:700; }
+.admin-badge:hover {
+  background: #444;          /* hover 시 약간 밝게 */
+}
+
+/* 입력 필드 */
+.field {
+  margin-bottom: 16px;
+  position: relative;
+}
+
+/* 라벨 */
+.field-label{
+  display:block;
+  margin: 0 0 6px;
+  font-size:16px;
+  font-weight:700;
+  text-align: left; /* ✅ 왼쪽 정렬 */
+  color:#555555;  
+  margin-left: 3px;
+} 
+
+.input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  padding: auto auto auto 40px; /* 왼쪽에 아이콘 자리 확보 */
+}
+.input:focus {
+  border-color: #2e2f36;
+  background-image: none;   /* 포커스 시 아이콘 제거 */
+}
+
+/* 사람 아이콘 */
+.user-input {
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='%23666' viewBox='0 0 24 24'><path d='M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v3h20v-3c0-3.3-6.7-5-10-5z'/></svg>") no-repeat 12px center;
+  background-size: 18px;
+}
+
+/* 자물쇠 아이콘 */
+.pw-input {
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='%23666' viewBox='0 0 24 24'><path d='M17 8h-1V6c0-2.8-2.2-5-5-5S6 3.2 6 6v2H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM8 6c0-1.7 1.3-3 3-3s3 1.3 3 3v2H8V6zm9 16H5V10h12v12z'/></svg>") no-repeat 12px center;
+  background-size: 18px;
+}
+
+/* 비밀번호 토글 버튼 */
+.pw-wrap {
+  position: relative;
+}
+.pw-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-10%); 
+  background: transparent;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+}
+
+/* 눈 모양 아이콘 (비밀번호 숨김 상태) */
+.pw-toggle.show {
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='%23666' viewBox='0 0 24 24'><path d='M12 5c-7.633 0-11 7-11 7s3.367 7 11 7 11-7 11-7-3.367-7-11-7zm0 12c-2.757 0-5-2.243-5-5s2.243-5 5-5 5 2.243 5 5-2.243 5-5 5zm0-8a3 3 0 100 6 3 3 0 000-6z'/></svg>") no-repeat center;
+  background-size: 20px;
+}
+
+/* 눈 감은 아이콘 (비밀번호 표시 상태) */
+.pw-toggle.hide {
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.77 21.77 0 0 1 5.06-6.94'/><path d='M6.1 6.1C8.28 4.9 10.08 4 12 4c7 0 11 8 11 8a22 22 0 0 1-5.1 6.9'/><path d='M9.88 9.88A3 3 0 0 0 12 15a3 3 0 0 0 2.12-.88'/><path d='M1 1l22 22'/></svg>")
+    no-repeat center/20px;
+}
+
+/* 로그인 버튼 */
+.btn {
+  width: 100%;
+  padding: 14px 0;
+  background: #f85151; /* 보라색 */
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background 0.2s;
+}
+.btn:hover {
+  background: #e04444;
+}
+
+/* 오류 메시지 */
+.error {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #e74c3c;
+}
+
+/* 회원가입 링크 */
+.links {
+  margin-top: 20px;
+}
+.links a {
+  font-size: 16px;
+  color: #444;
+  text-decoration: none;
+}
+.links a:hover {
+  text-decoration: underline;
+}
+
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="grid">
+    
       <!-- 메인 로그인 카드 -->
       <div class="card">
         <div class="logo">
-          <span class="logo-badge">G</span>
+          <div class="brand"><span class="red">BNK</span> 퇴직연금</div>
         </div>
-        <div class="title">통합 로그인</div>
-        <div class="subtitle">서비스에 오신 것을 환영합니다.</div>
+        <div class="subtitle">
+          사용자 로그인입니다.
+          <a href="/admin" class="admin-badge">admin</a>
+        </div>
 
         <form id="login-form" autocomplete="on" class="row" novalidate>
           <div class="field">
-            <input class="input" id="username" name="username" type="text" placeholder="아이디" autocomplete="username" />
+            <label class="field-label" for="username">아이디</label>
+            <input class="input user-input" id="username" name="username" type="text" autocomplete="username" />
           </div>
 
           <div class="field pw-wrap">
-            <input class="input" id="password" name="password" type="password" placeholder="비밀번호" autocomplete="current-password" />
-            <button type="button" id="togglePw" class="pw-toggle" aria-controls="password" aria-label="비밀번호 표시 전환">표시</button>
+            <label class="field-label" for="password">비밀번호</label>
+            <input class="input pw-input" id="password" name="password" type="password" autocomplete="current-password" />
+            <button type="button" id="togglePw" class="pw-toggle" aria-controls="password" aria-label="비밀번호 표시 전환"></button>
           </div>
 
-          <button type="submit" id="loginBtn" class="btn">로그인</button>
+          <button type="submit" id="loginBtn" class="btn"><strong>로그인</strong></button>
           <div id="errorMsg" class="error" role="status" aria-live="polite"></div>
 
           <div class="links">
             <a href="/register">회원가입</a>
-            <a href="#" onclick="alert('아이디찾기 기능 준비 중입니다.');return false;">아이디찾기</a>
-            <a href="#" onclick="alert('비밀번호찾기 기능 준비 중입니다.');return false;">비밀번호찾기</a>
           </div>
         </form>
-      </div>
-
-      <!-- 간편인증 / 소셜 섹션 -->
-      <div class="section">
-        <div class="section-title">다양한 간편 로그인을 이용하세요</div>
-        <div class="sso-wrap">
-          <div class="sso">
-            <span>간편인증 로그인</span>
-            <span style="margin-left:8px; font-size:12px; color:#475569;">(예: 톡/패스/뱅크 등)</span>
-          </div>
-          <div class="sso red">모바일신분증 로그인</div>
-          <div class="sso blue">디지털원패스 로그인</div>
-
-          <div class="sso-row" style="margin-top:4px;">
-            <span class="chip n">네이버로그인</span>
-            <span class="chip k">카카오로그인</span>
-            <span class="chip i lock">인증서로그인</span>
-            <span class="chip s lock">SMS로그인</span>
-          </div>
-        </div>
-        <div class="tip">* 간편 로그인/인증 연동은 준비 중입니다.</div>
-      </div>
+      </div> 
+      <!-- card (end) -->
     </div>
-  </div>
+  </div> 
 
-  <script>
-    // 비밀번호 표시/숨기기
-    document.getElementById('togglePw').addEventListener('click', () => {
-      const pw = document.getElementById('password');
-      const btn = document.getElementById('togglePw');
-      if (pw.type === 'password') { pw.type = 'text'; btn.textContent = '숨김'; }
-      else { pw.type = 'password'; btn.textContent = '표시'; }
-    });
+<script>
+  // 비밀번호 표시/숨기기
+  const pw = document.getElementById('password');
+  const btn = document.getElementById('togglePw');
+
+  // 초기 상태 → 눈 아이콘
+  btn.classList.add('show');
+
+  btn.addEventListener('click', () => {
+    if (pw.type === 'password') {
+      pw.type = 'text';
+      btn.classList.remove('show');
+      btn.classList.add('hide'); // 눈 감은 아이콘
+    } else {
+      pw.type = 'password';
+      btn.classList.remove('hide');
+      btn.classList.add('show'); // 눈 아이콘
+    }
+  });
 
     // 로그인 처리
     document.getElementById("login-form").addEventListener("submit", async function(e) {

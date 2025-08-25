@@ -1,0 +1,272 @@
+body{
+  font-family: 'Pretendard', sans-serif;
+  margin:0;
+  padding: 0;
+  color: #222;
+}
+
+html, body { height:100%; margin:0; }
+.layout { height:100vh; display:flex; flex-direction:column; }
+
+/* 상단/하단 고정 */
+.header-wrap, .footer { flex:0 0 auto; background:#fff; }
+.footer { border-top:1px solid #eee; padding:12px 16px; }
+
+/* 본문만 스크롤 */
+.content {
+  flex:1 1 auto;
+  overflow:auto;          /* ✅ 스크롤 허용 */
+  min-height:0;           /* ✅ flex 자식 스크롤 막힘 방지(중요) */
+  -webkit-overflow-scrolling: touch;
+}
+
+.section {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 12px 16px;
+  margin-bottom: 30px;
+}
+
+.header {
+  padding: 12px 16px;
+}
+
+/* 헤더 */
+.logo{
+  background:#fff;
+}
+
+/* 로고 텍스트 */
+.brand{
+  font-size:22px;
+  font-weight:700;
+  /*color:#0e234a;                   기본 텍스트 색 */
+}
+.brand .red{
+  color:#D93C3C;                  /* BNK 빨강 */
+  font-weight:700;
+}
+
+/* 페이지 제목 */
+.page-title{
+  font-size:20px;
+  font-weight:600;
+  margin-top: 20px;
+  margin-bottom: 5px;
+}
+
+/* 제목 아래 연한 구분선 */
+.divider{
+  height:4px;
+  background:#eee;
+  border-radius:1px;
+}
+
+/* ==== 카드 스타일 ==== */
+.irp-card {
+  text-align: center;
+  background: #fff;
+}
+
+/* 헤더 */
+.irp-header {
+  display: flex;
+  justify-content: space-between;/* 좌우 끝으로 배치 */
+  align-items: center;           /* 수직 중앙 정렬 */
+  margin-bottom: 10px;
+}
+
+/* 제목 */
+.irp-title {
+  font-size: 18px;
+  font-weight: 700;
+
+  margin-bottom: 0px;
+}
+
+.irp-round {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #e85c5c;
+  background: #fff3f3;
+  padding: 6px 12px;
+  border-radius: 20px;
+  margin-top: 20px;
+}
+
+/* 이미지 */
+.irp-img img {
+  max-width: 180px;
+  margin: 0 auto 20px;
+  display: block;
+}
+
+/* 부제목 */
+.irp-subtitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #111;
+  margin-bottom: 8px;
+}
+
+/* 설명 */
+.irp-desc {
+  font-size: 16px;
+  margin: 0;
+}
+
+/* === 3가지 항목 === */
+.bg {
+  background: #f7f7f7; /* 연한 회색 */
+  padding: 30px 0;     /* 카드랑 간격 */
+}
+
+.benefit-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.06);
+  padding: 20px;
+  margin: 12px 16px;
+}
+
+/* 항목 */
+.benefit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.benefit-item:last-child {
+  margin-bottom: 0;
+}
+
+/* 아이콘 */
+.benefit-item .icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+/* 텍스트 */
+.benefit-item .text {
+  flex: 1;
+}
+.benefit-item .title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.benefit-item .desc {
+  font-size: 13px;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.benefit-item .highlight {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* ==== 카드 밑 안내 ==== */
+.benefit-info {
+  max-width: 420px;
+  margin: 20px auto 0;
+  padding: 0 16px;
+  color: #222;
+}
+
+.benefit-info h3 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 16px 0 6px;
+}
+
+.benefit-info ul {
+  list-style: disc;
+  margin: 0 0 12px 20px;
+  padding: 0;
+  font-size: 14px;
+  color: #444;
+}
+
+.benefit-info li {
+  margin-bottom: 4px;
+}
+
+.benefit-info p {
+  font-size: 14px;
+  margin: 0 0 12px;
+  color: #444;
+}
+
+/* ==== 투자성향분석 하러가기 ==== */
+.invest-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff3f3;   /* 연한 파랑/그레이 톤 배경 */
+  border-radius: 14px;
+  padding: 0 25px;
+  box-sizing: border-box;
+  margin: 30px auto auto auto;
+}
+
+/* 왼쪽 텍스트 */
+.invest-text h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 12px;
+  line-height: 1.5;
+  margin-bottom: 100px;
+  white-space: nowrap;
+}
+
+.invest-link {
+  font-size: 16px;
+  color: #444;
+  text-decoration: none;
+  
+}
+.invest-link:hover {
+  color: #f85151;
+}
+
+/* 오른쪽 이미지 */
+.invest-img img {
+  max-width: 120px;
+  height: auto;
+  margin-top: 100px;
+  margin-bottom: 10px;
+}
+
+/* ==== 가입하기 버튼 ==== */
+.footer-btn {
+  margin: 10px 0;
+}
+
+.btn-join {
+  display: block;            /* 가로 전체 */
+  width: 100%;
+  padding: 17px 0;
+  background: #f85151;       /* 빨강 (#0e234a 같은 브랜드컬러로 변경 가능) */
+  color: #fff;
+  font-size: 17px;
+  font-weight: 600;
+  border-radius: 12px;       /* 둥근 모서리 */
+  text-align: center;
+  text-decoration: none;     /* 링크 밑줄 제거 */
+  transition: background 0.2s;;
+}
+
+.btn-join:hover {
+  background: #e04444;       /* hover 시 진한 빨강 */
+}
+
+.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:9999}
+.modal.is-open{display:flex}
+.modal__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+.modal__panel{position:relative;min-width:280px;max-width:90vw;padding:20px 24px;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);text-align:center}
+.modal__title{margin:0 0 8px;font-size:18px;font-weight:700}
+.modal__msg{margin:0 0 16px;font-size:14px;color:#333}
+.modal__btn{padding:8px 16px;border:0;border-radius:8px;background:#f85151;color:#fff;cursor:pointer}
+.modal__btn:focus{outline:2px solid #e04444;outline-offset:2px}
