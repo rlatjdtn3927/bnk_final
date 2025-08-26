@@ -2,63 +2,113 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>STEP6. 완료</title>
-  <style>
-    :root{--bg:#f6f7fb;--fg:#111827;--muted:#6b7280;--border:#e5e7eb;--chip:#f3f4f6;--brand:#b30000}
-    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
-    .container{max-width:900px;margin:0 auto;padding:16px 16px 40px}
-    .header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#fff;border-bottom:1px solid var(--border)}
-    .brand{font-weight:700;color:var(--brand)}
-    h1{font-size:22px;margin:18px 0 10px}
-    .muted{color:var(--muted)}
-    .card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px;margin-top:14px}
-    .row{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border);border-radius:10px;margin:8px 0;padding:10px 12px;background:#fafafa}
-    .name{font-weight:600}
-    .chip{margin-left:8px;background:var(--chip);border:1px solid var(--border);border-radius:999px;padding:2px 8px;font-size:11px;color:#374151}
-    .ratio{font-size:12px;background:#fff2f2;border:1px solid #ffe1e1;border-radius:999px;padding:2px 8px}
-    .banner{margin:12px 0;padding:10px 12px;border-radius:10px;border:1px solid #fde68a;background:#fffbeb;color:#92400e}
-    .btn{appearance:none;border:0;border-radius:12px;padding:10px 14px;cursor:pointer;font-weight:700}
-    .primary{background:#ffd6d6}
-    .primary:hover{background:#ffbfbf}
-    .row-actions{display:flex;gap:10px;margin-top:16px}
-    pre{background:#0b1020;color:#e7e7e7;padding:10px;border-radius:10px;overflow:auto;max-height:260px}
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>STEP6. 완료</title>
+<style>
+/* ===== 레이아웃 기본 ===== */
+html, body { height:100%; }
+body{ font-family:'Pretendard',sans-serif; margin:0; color:#222;}
+.layout{ height:100vh; display:flex; flex-direction:column; }
+
+/* 헤더 고정 */
+.header-wrap{ position:sticky; top:0; z-index:1000; background:#fff; border-bottom:1px solid #eee; }
+.header{ max-width:960px; margin:0 auto; padding:14px 16px; }
+.page-title{ font-size:20px; font-weight:700; margin:6px 0; }
+
+/* 본문만 스크롤 */
+.content{ flex:1 1 auto; overflow:auto; min-height:0; -webkit-overflow-scrolling:touch; padding-bottom:120px; }
+.divider{ height:4px; background:#eee; border-radius:1px; }
+
+/* 섹션/카드 */
+.section{ max-width:960px; margin:0 auto; padding:12px 16px 28px; }
+.section h1{ font-size:20px; font-weight:700; margin:8px 0 4px; }
+.muted{ color:#6b7280; }
+
+.card{
+  background:#fff; border:1px solid #f0f0f0; border-radius:18px;
+  padding:20px; box-shadow:0 8px 16px rgba(0,0,0,.03);
+  
+}
+.banner{ display:none; margin:12px 0 16px; padding:10px 12px; border-radius:10px;
+  border:1px solid #fde68a; background:#fffbeb; color:#92400e; 
+  margin-bottom: 25px;  
+}
+
+/* 카드 내 “적용하기” — 작은 버튼 */
+.row-actions{ margin-top:12px; display:flex; justify-content:flex-end; }
+.btn{ display:inline-flex; align-items:center; justify-content:center; cursor:pointer; user-select:none; }
+.btn-primary{
+  height:38px; padding:0 16px; border-radius:10px; border:none;
+  background:#fff3f3; color:#f85151; font-weight:700; font-size:14px;
+  border:1px solid #f85151; 
+}
+.btn-primary:hover{ filter:brightness(.98); }
+
+/* ===== 하단 고정 버튼바 (보유현황으로 1개) ===== */
+.actions{
+  position:fixed; left:0; right:0; bottom:0; z-index:1100;
+  background:#fff; border-top:1px solid #eee;
+  padding:14px 16px 22px; margin:0 auto;
+  max-width:960px; display:grid; grid-template-columns:1fr; gap:12px;
+  margin-bottom: 20px;
+}
+.actions .btn,
+.actions a{
+  display:flex; align-items:center; justify-content:center;
+  height:56px; border-radius:14px; font-size:18px; font-weight:700;
+  text-decoration:none; border:none; color:#fff; background:#f85151; /* 회색 버튼 */
+}
+
+/* 필요 시 iOS 안전영역 */
+@supports(padding:max(0px)){
+  .actions{ padding-bottom:max(22px, env(safe-area-inset-bottom)); }
+}
+
+</style>
 </head>
 <body>
-<header class="header">
-  <div class="brand">BNK 퇴직연금</div>
-  <nav class="muted">상품관리</nav>
-</header>
-
-<div class="container">
-  <h1>STEP6. 완료</h1>
-  <div class="muted" th:text="'FLOW: ' + (${session['ReserveValueDto']?.flow} ?: '-')">FLOW</div>
-
-  <!-- 세션 JSON 원문(escape 없이) -->
-  <script id="json-source" type="application/json"
-          th:utext="${session['ReserveValueDto'] != null ? session['ReserveValueDto'].sourceProdIdList : '[]'}"></script>
-  <script id="json-target" type="application/json"
-          th:utext="${session['ReserveValueDto'] != null ? session['ReserveValueDto'].targetProdIdList : '[]'}"></script>
-
-  <div id="sumBanner" class="banner" style="display:none"></div>
-
-  <section class="card">
-    <div style="font-weight:700;margin-bottom:6px">적용 내역 (RESERVE)</div>
-    <div id="afterList">
-      <div class="muted">표시할 항목이 없습니다.</div>
+<!-- 전체 레이아웃 랩 -->
+<div class="layout">
+  <!-- 헤더 부분 -->
+  <div class="header-wrap">
+    <div class="header">
+      <h2 class="page-title">매수상품관리</h2>
     </div>
+  </div>
+  
+  <main class="content">
+    <div class="divider"></div>
 
-    <div class="row-actions">
-      <button id="applyBtn" class="btn primary">적용하기</button>
-      <a class="btn" th:href="@{/purchase/holdings}">보유현황으로</a>
-    </div>
-
-    <div style="margin-top:10px" class="muted">AP 응답</div>
-    <pre id="resultBox">{}</pre>
-  </section>
-</div>
+	<div class="section">
+	  <h1>완료</h1>
+	  <div class="muted" th:text="'FLOW: ' + (${session['ReserveValueDto']?.flow} ?: '-')">FLOW</div>
+	
+	  <!-- 세션 JSON 원문(escape 없이) -->
+	  <script id="json-source" type="application/json"
+	          th:utext="${session['ReserveValueDto'] != null ? session['ReserveValueDto'].sourceProdIdList : '[]'}"></script>
+	  <script id="json-target" type="application/json"
+	          th:utext="${session['ReserveValueDto'] != null ? session['ReserveValueDto'].targetProdIdList : '[]'}"></script>
+	
+	  <div id="sumBanner" class="banner" style="display:none"></div>
+	
+	  <section class="card">
+	    <div style="font-weight:700;margin-bottom:6px">적용 내역 (RESERVE)</div>
+	    <div id="afterList">
+	      <div class="muted">표시할 항목이 없습니다.</div>
+	    </div>
+	
+	    <div class="row-actions">
+	      <button id="applyBtn" class="btn btn-primary">적용</button>
+	    </div>
+	  </section>
+	  
+	  <div class="actions">
+	    <a class="btn btn-link" th:href="@{/retention/accounts}">보유현황으로</a>
+	  </div>
+	</div> <!-- section -->
+  </main>
+</div><!-- layout -->
 
 <script>
 (function(){
