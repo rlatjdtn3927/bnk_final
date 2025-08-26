@@ -45,4 +45,15 @@ public class RetentionRestController {
         TcpMessage msg = new TcpMessage(Command.CHANGE_GET_HOLDINGS, data);
         return tcpClientService.sendMessage(msg); // { resultList:{ fundHoldings[], principalLedgers[] } } or { error }
     }
+    
+    /** 계좌 요약 (메인 페이지용) */
+    @GetMapping("/accounts-summary")
+    public JsonNode getAccountsSummary(HttpSession session) {
+        Long userId = (Long) session.getAttribute("user");
+        if (userId == null) userId = 1L;
+
+        ObjectNode data = om.createObjectNode().put("userId", userId);
+        TcpMessage msg = new TcpMessage(Command.RETAIN_GET_ACCOUNTS_SUMMARY, data);
+        return tcpClientService.sendMessage(msg);
+    }
 }

@@ -1,65 +1,124 @@
 <th:block xmlns:th="http://www.thymeleaf.org" th:fragment="css">
 <style id="page-css" hx-swap-oob="true">
     /* ------------------------------ */
-    /* 1. 기본 & 색상 토큰             */
+    /* 1. 기본 & 색상 토큰 (개선)     */
     /* ------------------------------ */
     .dc-approval {
-        --pri: #0052cc; --pri-h: #0045ab; --red: #de350b;
-        --bd: #dfe1e6; --ink: #172b4d; --mut: #6b778c; --bg: #f4f5f7; --card: #ffffff;
+        /* [개선] 더 세련되고 부드러운 색상 팔레트 적용 */
+        --pri: #0052cc; --pri-h: #0045ab; --pri-l: #e6f0ff; --red: #de350b;
+        --bd: #dfe1e6; --bd-light: #e9ecef; /* 밝은 테두리 색상 추가 */
+        --ink: #172b4d; --mut: #6b778c; --text-body: #495057;
+        --bg: #f8f9fa; --card: #ffffff;
+        
         --chip-warn-bg: #fffbe6; --chip-warn-bd: #ffab00; --chip-warn-ink: #974F0C;
         --chip-wait-bg: #e6f0ff; --chip-wait-bd: #85b8ff; --chip-wait-ink: #0045ab;
         --chip-appr-bg: #e3fcef; --chip-appr-bd: #79f2c0; --chip-appr-ink: #006644;
         --chip-rej-bg: #ffebe6; --chip-rej-bd: #ff8f73; --chip-rej-ink: #bf2600;
+
+        /* [추가] 일관된 전환 효과를 위한 변수 */
+        --trs-normal: all 0.2s ease-in-out;
+        
         font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard Variable", Pretendard, Roboto, "Noto Sans KR", "Segoe UI", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
-        color: var(--ink);
+        color: var(--text-body); /* 기본 텍스트 색상 변경 */
+        background-color: var(--bg); /* 페이지 배경색 지정 */
     }
     .dc-approval ::-webkit-input-placeholder { color: #a1aab8; }
     .dc-approval :-ms-input-placeholder { color: #a1aab8; }
     .dc-approval ::-moz-placeholder { color: #a1aab8; }
 
     /* ------------------------------ */
-    /* 2. 레이아웃 & 툴바             */
+    /* 2. 레이아웃 & 툴바 (개선)      */
     /* ------------------------------ */
-    .dc-approval .toolbar { display: flex; gap: 1rem; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+    .dc-approval .toolbar { display: flex; gap: 1rem; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
     .dc-approval .filters { display: flex; gap: 0.75rem; flex-wrap: wrap; }
-    .dc-approval .filters .field { display: flex; gap: 0.5rem; align-items: center; background: var(--card); border: 1px solid var(--bd); border-radius: 8px; padding: 0.5rem 0.75rem; font-size: 0.875rem; }
-    .dc-approval .filters .field:focus-within { border-color: var(--pri); box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.2); }
-    .dc-approval .filters input, .dc-approval .filters select { border: none; outline: none; background: transparent; font-size: inherit; }
-    .dc-approval .note { color: var(--mut); font-size: 0.8rem; }
-    .dc-approval .card { background: var(--card); border: 1px solid var(--bd); border-radius: 16px; box-shadow: 0 4px 12px -2px rgba(23, 43, 77, 0.08); overflow: hidden; }
-    .dc-approval .card-hd { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--bd); }
-    .dc-approval .card .title { font-weight: 700; font-size: 1.25rem; }
+    .dc-approval .filters .field { 
+        display: flex; gap: 0.5rem; align-items: center; background: var(--card); 
+        border: 1px solid var(--bd); border-radius: 8px; 
+        padding: 0.5rem 0.875rem; /* 패딩 조정 */
+        font-size: 0.875rem;
+        transition: var(--trs-normal); /* 전환 효과 추가 */
+    }
+    .dc-approval .filters .field:focus-within { 
+        border-color: var(--pri); 
+        box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.15); /* 포커스 효과 강화 */
+    }
+    .dc-approval .filters input, .dc-approval .filters select { border: none; outline: none; background: transparent; font-size: inherit; color: var(--ink); }
+    .dc-approval .note { color: var(--mut); font-size: 0.8125rem; }
+    .dc-approval .card { 
+        background: var(--card); border: 1px solid var(--bd); 
+        border-radius: 12px; /* 살짝 줄여서 날렵하게 */
+        box-shadow: 0 4px 12px -2px rgba(23, 43, 77, 0.08); 
+        overflow: hidden; 
+    }
+    .dc-approval .card-hd { 
+        display: flex; align-items: center; justify-content: space-between; 
+        padding: 1.5rem; /* 일관된 패딩 */
+        border-bottom: 1px solid var(--bd-light); /* 더 연한 테두리 */
+    }
+    .dc-approval .card .title { font-weight: 600; font-size: 1.25rem; color: var(--ink); }
 
     /* ------------------------------ */
-    /* 3. 테이블 & 컨텐츠              */
+    /* 3. 테이블 & 컨텐츠 (개선)       */
     /* ------------------------------ */
     .dc-approval table { width: 100%; border-collapse: collapse; border-spacing: 0; }
-    .dc-approval thead th { position: sticky; top: 0; background: #fafbfc; border-bottom: 1px solid var(--bd); padding: 0.75rem 1rem; text-align: left; font-size: 0.8rem; color: #42526e; font-weight: 600; z-index: 10; }
-    .dc-approval tbody td { padding: 1rem; vertical-align: middle; transition: background-color 0.2s; border: 0; }
-    .dc-approval tbody tr { border-bottom: 1px solid var(--bd); }
-    .dc-approval tbody tr:last-child { border-bottom: none; }
-    .dc-approval .row-toggle { color: var(--pri); text-decoration: none; font-weight: 600; }
-    .dc-approval .row-toggle:hover { text-decoration: underline; }
-
-    /* 그룹 헤더 (회사) + 접기/펼치기 */
-    .dc-approval .grp { background: #f7f8fa; font-weight: 700; color: #344563; cursor: pointer; position: relative; border-top: 2px solid var(--bd); border-bottom: 0; }
-    .dc-approval .grp:hover { background: #f0f2f5; }
-    .dc-approval .grp td { border: 0; }
-    .dc-approval .grp td::after {
-        content: ''; position: absolute; right: 1.5rem; top: 50%; transform: translateY(-50%) rotate(0deg);
-        width: 1rem; height: 1rem; background-color: var(--mut);
-        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-        transition: transform 0.2s ease-in-out;
+    .dc-approval thead th { 
+        position: sticky; top: 0; background: var(--bg);
+        border-bottom: 1px solid var(--bd); 
+        padding: 0.875rem 1.25rem; /* 패딩 조정 */
+        text-align: left; font-size: 0.8125rem; /* 가독성 위한 크기 조정 */
+        color: var(--mut); font-weight: 600; 
+        z-index: 10;
+        text-transform: uppercase; /* [추가] 영문 헤더 느낌으로 */
+        letter-spacing: 0.04em;
     }
+    .dc-approval tbody td { 
+        padding: 1.125rem 1.25rem; /* 패딩 조정 */
+        vertical-align: middle; 
+        transition: background-color 0.2s; 
+        border: 0; 
+    }
+    .dc-approval tbody tr { border-bottom: 1px solid var(--bd-light); /* 더 연한 테두리 */ }
+    .dc-approval tbody tr:last-child { border-bottom: none; }
+    /* [추가] 행에 호버 효과 */
+    .dc-approval tbody tr.item-row:not(.expanded):hover { background-color: #fafdff; }
+
+    .dc-approval .row-toggle { color: var(--pri); text-decoration: none; font-weight: 500; }
+    .dc-approval .row-toggle:hover { text-decoration: underline; color: var(--pri-h); }
+
+    /* 그룹 헤더 (회사) + 접기/펼치기 (개선) */
+    .dc-approval .grp { 
+        background: var(--bg); font-weight: 600; color: var(--ink); 
+        cursor: pointer; position: relative; 
+        border-top: 2px solid var(--bd); 
+        border-bottom: 1px solid var(--bd-light); /* 아래 테두리 추가 */
+        transition: var(--trs-normal);
+    }
+    .dc-approval .grp:hover { background: #f0f2f5; }
+    .dc-approval .grp td { border: 0; padding-top: 1rem; padding-bottom: 1rem; }
+    .dc-approval .grp td::after {
+        content: ''; position: absolute; right: 1.5rem; top: 50%; 
+        transform: translateY(-50%) rotate(0deg);
+        width: 1rem; height: 1rem; 
+        background-color: var(--mut); /* 아이콘 색상 */
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        transition: transform 0.2s ease-in-out, background-color 0.2s;
+    }
+    .dc-approval .grp:hover td::after { background-color: var(--ink); }
     .dc-approval tr.group-collapsed + .item-row { display: none; }
     .dc-approval tr.group-collapsed .grp td::after { transform: translateY(-50%) rotate(-90deg); }
 
-    /* 확장 영역 */
+    /* 확장 영역 (개선) */
     .dc-approval .expand { display: none; background: #fafbfc; }
     .dc-approval tr.expanded + .expand { display: table-row; }
-    .dc-approval tr.expanded + .expand td { padding-left: 3rem; border-top: 0; border-bottom: 1px solid var(--bd); }
-    .dc-approval tr.expanded { background-color: #f7f8fa; border-bottom: 0; }
-
+    .dc-approval tr.expanded + .expand td { 
+        padding: 1rem 1.25rem 1rem 3rem; /* 패딩 조정 */
+        border-top: 0; border-bottom: 1px solid var(--bd-light); 
+        color: var(--mut);
+        /* [추가] 부모 행과 연결되는 시각적 라인 */
+        box-shadow: inset 3px 0 0 var(--pri-l);
+    }
+    .dc-approval tr.expanded { background-color: var(--pri-l); border-bottom: 0; }
+    
     /* ------------------------------ */
     /* 4. 컴포넌트 (칩, 버튼, 벌크바)  */
     /* ------------------------------ */
@@ -69,23 +128,60 @@
     .dc-approval .chip.approved { border-color: var(--chip-appr-bd); background: var(--chip-appr-bg); color: var(--chip-appr-ink); }
     .dc-approval .chip.rejected { border-color: var(--chip-rej-bd); background: var(--chip-rej-bg); color: var(--chip-rej-ink); }
     .dc-approval .row-actions { display: flex; gap: 0.5rem; }
-    .dc-approval .btn { border: 1px solid var(--bd); background: var(--card); border-radius: 8px; padding: 0.5rem 0.875rem; font-size: 0.875rem; cursor: pointer; transition: all 0.2s ease; }
-    .dc-approval .btn:hover { border-color: #c1c7d0; background: #f7f8fa; }
+    
+    .dc-approval .btn { 
+        border: 1px solid var(--bd); background: var(--card); 
+        border-radius: 8px; padding: 0.5rem 0.875rem; 
+        font-size: 0.875rem; font-weight: 500; /* 폰트 두께 조정 */
+        cursor: pointer; 
+        transition: var(--trs-normal); 
+    }
+    .dc-approval .btn:hover { border-color: #c1c7d0; background: #f7f8fa; transform: translateY(-1px); }
     .dc-approval .btn.pri { background: var(--pri); border-color: var(--pri); color: #fff; }
     .dc-approval .btn.pri:hover { background: var(--pri-h); border-color: var(--pri-h); }
+    .dc-approval input.rowchk { width: 16px; height: 16px; accent-color: var(--pri); }
     .dc-approval input.rowchk:disabled { cursor: not-allowed; opacity: .5; }
 
-    /* 벌크바 */
-    .dc-approval .bulkbar { position: sticky; top: 48px; /* thead height */ z-index: 5; background: #e9f2ff; border-bottom: 1px solid #cce0ff; display: none; align-items: center; gap: 1rem; padding: 0.75rem 1.5rem; }
+    /* 벌크바 (개선) */
+    .dc-approval .bulkbar { 
+        position: sticky; top: 54px; /* thead 높이에 맞게 조정 */
+        z-index: 5; 
+        background: var(--ink); /* [변경] 테마와 어울리는 어두운 배경 */
+        color: var(--card);
+        border-bottom: 1px solid var(--bd); 
+        display: none; align-items: center; gap: 1rem; 
+        padding: 0.75rem 1.5rem; 
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* 그림자 추가 */
+    }
     .dc-approval .bulkbar.visible { display: flex; }
     .dc-approval .bulkbar .meta { font-weight: 600; }
+    .dc-approval .bulkbar .btn {
+        background: transparent;
+        border-color: rgba(255,255,255,0.4);
+        color: white;
+    }
+    .dc-approval .bulkbar .btn:hover {
+        background: rgba(255,255,255,0.1);
+        border-color: rgba(255,255,255,0.8);
+    }
+    .dc-approval .bulkbar .btn.pri {
+        background: var(--pri);
+        border-color: var(--pri);
+    }
+     .dc-approval .bulkbar .btn.pri:hover {
+        background: var(--pri-h);
+        border-color: var(--pri-h);
+    }
 
     /* ------------------------------ */
-    /* 5. 상태 & 보조 스타일           */
+    /* 5. 상태 & 보조 스타일 (개선)    */
     /* ------------------------------ */
     .dc-approval tr.is-approved td, .dc-approval tr.is-rejected td { opacity: .7; }
     .dc-approval tr.is-rejected { background: #fff8f7; }
-    .dc-approval .empty, .dc-approval .error, .dc-approval .loading { padding: 3rem; text-align: center; color: var(--mut); }
+    .dc-approval .empty, .dc-approval .error, .dc-approval .loading { 
+        padding: 4rem 2rem; /* 패딩 증가 */
+        text-align: center; color: var(--mut); 
+    }
 </style>
 </th:block>
 

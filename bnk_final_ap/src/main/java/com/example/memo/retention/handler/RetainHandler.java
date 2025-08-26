@@ -5,6 +5,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.example.memo.retention.service.AccountSummaryService;
 import com.example.memo.retention.service.RetainAccountService;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpMessageHandler;
@@ -16,6 +17,9 @@ public class RetainHandler implements TcpMessageHandler {
 
     @Autowired
     private RetainAccountService retainAccountService;
+    
+    @Autowired
+    private AccountSummaryService accountSummaryService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -42,6 +46,18 @@ public class RetainHandler implements TcpMessageHandler {
 
                     return Map.of("ok", true, "accounts", accounts);
                 }
+                case RETAIN_GET_ACCOUNTS_SUMMARY: {
+                    Long userId = data.hasNonNull("userId") ? data.get("userId").asLong() : null;
+                    if (userId == null) {
+                        return Map.of("ok", false, "error", "userId가 없습니다.");
+                    }
+
+                    // AP 비즈니스 로직 호출 → AccountsResponse 생성
+                    var summary = accountSummaryService.getAccounts(userId);
+
+                    return Map.of("ok", true, "data", summary);
+                }
+
                 
                 default:
                     return "알 수 없는 명령: " + command.name();

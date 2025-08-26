@@ -32,7 +32,7 @@ public class SidebarService {
         name.put("customers",  "고객 관리");
         name.put("review",     "리뷰 관리");
         name.put("account",    "계좌 개설 관리");
-        name.put("couple-irp", "부부IRP 관리");
+//        name.put("couple-irp", "부부IRP 관리");
     }
     
 
@@ -43,8 +43,8 @@ public class SidebarService {
         
         register("stat", "stat-subscribers", "가입자 리포트", "admin/pages/stat/subscribers-report", true);
         register("stat", "sales-report", "판매 리포트", "admin/pages/stat/sales-report", false);
-        register("stat", "total-assets", "총 자산 규모 조회(IRP/DC)", "admin/pages/stat/total-assets-report", false);
-        register("stat", "product-allocation", "상품별 운용비중", "admin/pages/stat/product-allocation-ratio", false);
+        register("stat", "total-assets", "총 자산 통계", "admin/pages/stat/total-assets-report", false);
+//        register("stat", "product-allocation", "상품별 운용비중", "admin/pages/stat/product-allocation-ratio", false);
 
         register("commodity", "commodity-management", "상품 관리", "admin/pages/commodity/commodity-management", true);
         register("commodity", "crawling-management", "크롤링 관리", "admin/pages/commodity/crawling-management", false);
@@ -54,9 +54,8 @@ public class SidebarService {
         register("review", "review-management", "후기 관리", "admin/pages/review/review-management", true);
 
         register("account", "account-open", "계좌 개설", "admin/pages/account/open-account", true);
-        register("account", "account-close", "계좌 해지", "admin/pages/account/open-close", false);
 
-        register("couple-irp", "couple-irp", "부부 IRP 관리", "admin/pages/couple/couple-irp", true);
+//        register("couple-irp", "couple-irp", "부부 IRP 관리", "admin/pages/couple/couple-irp", true);
     }
     
     /**

@@ -5,15 +5,15 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.example.memo.jpa.entity.rule.ProfileHistory;
+import com.example.memo.jpa.entity.rule.ProfileResult;
+import com.example.memo.jpa.entity.rule.ProfileType;
+import com.example.memo.jpa.repository.rule.ProfileHistoryRepository;
+import com.example.memo.jpa.repository.rule.ProfileResultRepository;
+import com.example.memo.jpa.repository.rule.ProfileTypeRepository;
 import com.example.memo.rule.dto.AnswerDTO;
 import com.example.memo.rule.dto.SurveySubmitReq;
 import com.example.memo.rule.dto.SurveySubmitRes;
-import com.example.memo.rule.entity.ProfileHistory;
-import com.example.memo.rule.entity.ProfileResult;
-import com.example.memo.rule.entity.ProfileType;
-import com.example.memo.rule.repository.ProfileHistoryRepository;
-import com.example.memo.rule.repository.ProfileResultRepository;
-import com.example.memo.rule.repository.ProfileTypeRepository;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;

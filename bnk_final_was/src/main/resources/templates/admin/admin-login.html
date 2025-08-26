@@ -1,10 +1,133 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <title>관리자 로그인</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
+<meta charset="UTF-8" />
+<title>관리자 로그인</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<style>
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Pretendard', sans-serif;
+  background: #eef2f6;
+  color: #222;   /* 기본 텍스트 컬러 */
+}
+
+/* 중앙 정렬 */
+.wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+/* 로그인 카드 */
+.card {
+  background: #fff;
+  padding: 40px 50px;
+  border-radius: 12px;
+  border: 1px solid #e6e8ec;
+  width: 380px;
+  text-align: center;
+}
+
+.card h1 {
+  font-size: 22px;
+  margin-bottom: 28px;
+  color: #0e234a;
+  font-weight: 700;
+}
+
+/* 입력 필드 */
+.field {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0e234a;
+  margin-left: 9px;
+}
+
+.input-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.input {
+  width: 100%;
+  padding: 12px 42px 12px 14px; /* 오른쪽 여백 확보 */
+  border-radius: 50px;          /* 둥근 모양 */
+  border: 1px solid #ccc;
+  outline: none;
+  font-size: 14px;
+  /*transition: border .2s;*/
+  box-sizing: border-box;
+}
+
+.input:focus {
+  border-color: #0e234a;
+}
+
+/* 아이콘 공통 */
+.icon {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: #0e234a;
+  pointer-events: none;
+}
+
+/* 유저 아이콘 (Font Awesome 기준) */
+.icon.user::before {
+  content: "\f007"; /* user 아이콘 */
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+}
+
+/* 자물쇠 아이콘 */
+.icon.lock::before {
+  content: "\f023"; /* lock 아이콘 */
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+}
+
+/* 버튼 */
+.btn {
+  width: 100%;
+  padding: 12px;
+  background: #0e234a;
+  color: #fff;
+  font-size: 16px;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 10px;
+  transition: background .2s;
+}
+
+.btn:hover {
+  background: #142f5c;
+}
+
+/* 에러 메시지 */
+.error {
+  margin-top: 12px;
+  color: #e74c3c;
+  font-size: 14px;
+}
+
+
+  
+  	/*
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;background:#f8fafc;}
     .wrap{max-width:420px;margin:8vh auto;padding:0 16px;}
     .card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:24px 22px;box-shadow:0 8px 24px rgba(0,0,0,.08)}
@@ -14,7 +137,8 @@
     .btn{width:100%;padding:12px;border:none;border-radius:10px;background:#111827;color:#fff;font-weight:700;margin-top:14px;cursor:pointer}
     .btn[disabled]{opacity:.6;cursor:not-allowed}
     .error{color:#dc2626;text-align:center;min-height:18px;margin-top:10px}
-  </style>
+    */
+</style>
 </head>
 <body>
   <div class="wrap">
@@ -24,11 +148,17 @@
       <form id="login-form" autocomplete="on" novalidate>
         <div class="field">
           <label for="username">아이디</label>
-          <input class="input" id="username" name="username" type="text" required autocomplete="username" />
+          <div class="input-wrap">
+            <input class="input" id="username" name="username" type="text" required autocomplete="username" placeholder="ID" />
+            <span class="icon user"></span>
+          </div>
         </div>
         <div class="field">
           <label for="password">비밀번호</label>
-          <input class="input" id="password" name="password" type="password" required autocomplete="current-password" />
+          <div class="input-wrap">
+            <input class="input" id="password" name="password" type="password" required autocomplete="current-password" placeholder="PASSWORD" />
+            <span class="icon lock"></span>
+          </div>
         </div>
         <button class="btn" id="loginBtn" type="submit">로그인</button>
         <div id="errorMsg" class="error" role="status" aria-live="polite"></div>

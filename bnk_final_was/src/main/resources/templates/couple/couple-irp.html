@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>부부 IRP</title>
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<style>
+    :root{
+      /* === Key Color Changes === */
+      --primary-red: #f85151;
+      --primary-red-light: #feebeb; /* A light, complementary pink */
+      --danger: #f85151; /* Unified with primary color */
+
+      /* Original Colors (some retained) */
+      --primary-blue:#3182f6; --primary-blue-light:#e8f3ff; /* Kept for reference, but unused */
+      --ink:#1e293b; --text:#334155; --muted:#64748b;
+      --bg:#f8fafc; --card:#fff; --bd:#e2e8f0; --bd-dark:#cbd5e1;
+      --light-gray-bg: #f1f5f9; /* Light gray for backgrounds */
+      --success:#1fa97a; --warn:#f59e0b;
+      
+      /* === Refined Sizing === */
+      --r-lg:16px; --r-md:10px; --pad:24px;
+    }
+    *,*:before,*:after{box-sizing:border-box}
+    body{
+      margin:0; background:var(--bg); color:var(--text);
+      font-family: Pretendard, system-ui, -apple-system, Segoe UI, Roboto, Apple SD Gothic Neo, 'Noto Sans KR', sans-serif;
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+      -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+    }
+    .mobile{max-width:480px; min-height:100vh; background:var(--card); margin:0 auto; box-shadow:0 10px 25px rgba(0,0,0,.04)}
+    header{
+      position:sticky; top:0; z-index:10; background:var(--card);
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px var(--pad); border-bottom:1px solid var(--bd);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    header h1{margin:0;font-size:20px;font-weight:800;color:var(--ink)}
+    main{padding:20px var(--pad)}
+    .view{display:none;opacity:0;transition:opacity .3s ease}
+    .view.active{display:block;opacity:1}
+    .center{text-align:center}
+    .icon{display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:50%;background:var(--light-gray-bg);font-size:36px;margin-bottom:20px}
+    h2.title{margin:0 0 10px;color:var(--ink);font-size:22px;font-weight:800;line-height:1.45}
+    p.subtitle{margin:0 0 26px;color:var(--muted);font-size:15px;line-height:1.6}
+    .btn{
+      display:flex;align-items:center;justify-content:center;width:100%;height:52px;border:1px solid var(--bd);background:var(--card);border-radius:var(--r-md);
+      font-size:16px;font-weight:700;color:var(--ink);text-decoration:none;cursor:pointer;
+      transition:transform .1s, box-shadow .2s;
+    }
+    .btn:active{transform:scale(.97)}
+    .btn-primary{
+      background: var(--primary-red);
+      background-image: linear-gradient(to top, #f85151, #f96161);
+      border-color: var(--primary-red); color:#fff;
+      box-shadow: 0 4px 12px rgba(248, 81, 81, 0.2);
+    }
+    .btn-primary:active{ box-shadow: 0 2px 6px rgba(248, 81, 81, 0.2); }
+    .btn-secondary{background:var(--light-gray-bg); border-color: #e2e8f0;}
+    .btn-link{background:transparent;border:none;color:var(--muted);font-weight:600;height:auto;padding:8px 0}
+    .card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r-lg);padding:20px;margin:0 0 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);}
+    .card h4{margin:0 0 4px;color:#94a3b8;font-size:13px;font-weight:700}
+    .card p{margin:0;color:var(--text);font-size:16px;font-weight:600}
+    .balance{display:flex;justify-content:space-between;align-items:flex-end;margin-top:14px}
+    .balance span{color:#94a3b8;font-size:13px}
+    .balance strong{color:var(--ink);font-size:20px}
+    
+    /* === 1. 계좌 정보 카드 왼쪽 정렬 적용 === */
+    #acctCard { text-align: left; }
+
+    /* === 2. 혜택 부분 박스 스타일 적용 === */
+    ul.benefits{
+      list-style: none;
+      margin: 0 0 24px;
+      padding: 20px;
+      text-align: left;
+      background: var(--light-gray-bg);
+      border-radius: var(--r-lg);
+    }
+    ul.benefits li{position:relative;padding:6px 0 6px 26px;font-size:15px}
+    ul.benefits li:before{content:'✓';position:absolute;left:0;top:5px; color:var(--primary-red);font-size:18px; font-weight:800}
+
+    .highlight{background:var(--primary-red-light);border:1px solid var(--primary-red-light);border-radius:var(--r-lg);padding:18px;margin:0 0 18px}
+    .highlight h3{margin:0 0 8px;color:var(--ink);font-size:16px;font-weight:800}
+    .highlight p{margin:0;font-size:15px}
+    .spouse strong{color:var(--primary-red)}
+    .unlink{display:block;margin-top:18px;text-align:center}
+    /* notification */
+    .notif{position:relative}
+    .notif-btn{all:unset;cursor:pointer;position:relative; width:32px; height:32px; display:inline-flex;align-items:center;justify-content:center;gap:8px;color:var(--ink); font-size:24px;}
+    .badge{position:absolute;right:-5px;top:-2px;min-width:18px;height:18px;border-radius:999px;background:var(--danger);color:#fff;font-size:11px;line-height:1;display:none;padding:4px 5px;border:2px solid #fff; font-weight:700;}
+    .badge.show{display:block}
+    .panel{position:absolute;right:0;top:44px;width:320px;background:#fff;border:1px solid var(--bd);border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,.12);display:none;overflow:hidden; z-index: 20;}
+    .panel.show{display:block}
+    .panel ul{list-style:none;margin:0;max-height:420px;overflow:auto;padding:8px 0}
+    .panel li{padding:12px 16px;font-size:14px;cursor:pointer; line-height: 1.5;}
+    .panel li:hover{background:#f8fafc}
+    .panel .empty{padding:28px;color:#94a3b8;cursor:default; text-align: center;}
+    .panel footer{border-top:1px solid var(--bd);padding:10px 12px;background:#fafbff;text-align:center}
+    .panel footer a{color:#64748b;text-decoration:none;font-size:13px;font-weight:600}
+    /* skeleton & toast */
+    .skeleton{background:linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 37%,#f1f5f9 63%);background-size:400% 100%;animation:s 1.4s ease infinite;border-radius:8px}
+    @keyframes s{0%{background-position:100% 50%}100%{background-position:0 50%}}
+    .sk-line{height:16px;margin:10px 0}
+    .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:rgba(20,20,20,0.85);color:#fff;padding:12px 18px;border-radius:100px;font-size:14px;display:none; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); z-index: 100;}
+    .toast.show{display:block; animation: fadein 0.3s, fadeout 0.3s 1.3s;}
+    @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 24px; opacity: 1; } }
+    @keyframes fadeout { from { bottom: 24px; opacity: 1; } to { bottom: 0; opacity: 0; } }
+  </style>
+</head>
+<body>
+<div class="mobile">
+  <header>
+    <h1>부부 IRP</h1>
+    <div class="notif" aria-live="polite">
+      <button id="notifBtn" class="notif-btn" aria-haspopup="true" aria-expanded="false" aria-controls="notifPanel" title="알림 열기">
+        🔔
+      </button>
+      <span id="notifBadge" class="badge" aria-hidden="true"></span>
+      <div id="notifPanel" class="panel" role="menu" aria-label="알림 목록">
+        <ul id="notifList"></ul>
+        <footer><a href="/link-view/notifications">모든 알림 보기</a></footer>
+      </div>
+    </div>
+  </header>
+
+  <main id="content">
+    <!-- loading -->
+    <section id="v-loading" class="view active center" aria-busy="true">
+      <div class="card">
+        <div class="sk-line skeleton" style="width:60%"></div>
+        <div class="sk-line skeleton" style="width:80%"></div>
+        <div class="sk-line skeleton" style="width:40%"></div>
+      </div>
+    </section>
+
+    <!-- not linked -->
+    <section id="v-not" class="view center" aria-hidden="true">
+      <div id="acctCard" class="card" style="display:none">
+        <h4>보유중인 개인형IRP 계좌</h4>
+        <p id="acctNo"></p>
+        <div class="balance">
+          <span>계좌 잔액</span>
+          <strong id="acctBal"></strong>
+        </div>
+      </div>
+
+      <div class="icon">🤝</div>
+      <h2 class="title">함께라서 더 든든한,<br>부부 IRP</h2>
+      <p class="subtitle">배우자와 계좌를 연동하고 혜택을 받아보세요.</p>
+      <ul class="benefits">
+        <li>연말정산 세액공제 혜택 극대화</li>
+        <li>부부 연동 시 제공되는 0.5% 특별 우대 혜택</li>
+        <li>배우자와 함께하는 든든한 노후 준비</li>
+      </ul>
+      <a href="/link-view/apply" class="btn btn-primary">부부 IRP 연동 신청하기</a>
+      <a id="btnJoinIrp" href="/irp/join/irp-join" class="btn btn-secondary" style="margin-top:10px">IRP 계좌 만들기</a>
+    </section>
+
+    <!-- linked -->
+    <section id="v-linked" class="view center" aria-hidden="true">
+      <div class="icon">👨‍👩‍👧‍</div>
+      <h2 class="title">부부 IRP 연동 완료</h2>
+      <div class="card spouse">
+        <p><strong id="spouseName">배우자</strong>님과 함께하고 있습니다.<br>
+           <small style="color:#9aa3af">연동일: <span id="linkedAt"></span></small>
+        </p>
+      </div>
+      <div class="highlight">
+        <h3>부부 연동 특별 혜택</h3>
+        <p>IRP 입금 시 <b>입금액의 0.5% 추가 적립</b>을 드립니다.</p>
+      </div>
+      <a href="/irp/deposit" class="btn btn-primary">입금하고 혜택받기</a>
+      <button class="btn-link unlink" id="btnUnlink" type="button">연동 해지하기</button>
+    </section>
+
+    <!-- pending (applicant or waiting) -->
+    <section id="v-pending" class="view center" aria-hidden="true">
+      <div class="icon">⏳</div>
+      <h2 id="pendingTitle" class="title">처리 중입니다</h2>
+      <div class="card">
+        <p id="pendingMsg"></p>
+      </div>
+      <p class="subtitle">완료되면 알림으로 알려드립니다.</p>
+      <a href="/link-view/main" class="btn btn-primary">새로고침</a>
+    </section>
+
+    <!-- rejected by spouse/admin -->
+    <section id="v-rej" class="view center" aria-hidden="true">
+      <div class="icon">⚠️</div>
+      <h2 class="title" id="rejTitle">연동 신청이 반려되었습니다</h2>
+      <div class="card"><p id="rejMsg"></p></div>
+      <a href="/link-view/apply" class="btn btn-primary">다시 신청하기</a>
+    </section>
+
+    <!-- final rejected (3 fails) -->
+    <section id="v-final" class="view center" aria-hidden="true">
+      <div class="icon">🏦</div>
+      <h2 class="title">본인 확인이 필요합니다</h2>
+      <div class="card">
+        <p>OCR 인증을 3회 이상 실패하여 온라인 연동이 제한되었습니다.<br>
+           가까운 영업점을 방문해주시면 신속히 도와드리겠습니다.</p>
+      </div>
+      <a href="/branch/search" class="btn btn-primary">영업점 찾기</a>
+    </section>
+  </main>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  const V = {
+    loading: qs('#v-loading'),
+    not: qs('#v-not'),
+    linked: qs('#v-linked'),
+    pending: qs('#v-pending'),
+    rej: qs('#v-rej'),
+    final: qs('#v-final')
+  };
+  const notifBtn = qs('#notifBtn');
+  const notifBadge = qs('#notifBadge');
+  const notifPanel = qs('#notifPanel');
+  const notifList = qs('#notifList');
+  const toast = qs('#toast');
+
+  let current = { linkId:null, status:null };
+
+  onReady(init);
+
+  function onReady(fn){ document.readyState!=='loading' ? fn() : document.addEventListener('DOMContentLoaded', fn); }
+  function qs(s, el=document){ return el.querySelector(s); }
+  function show(view){
+    Object.values(V).forEach(v=>v.classList.remove('active'));
+    (V[view]||V.not).classList.add('active');
+  }
+  function money(v){
+    if(v===undefined||v===null) return '-';
+    try{
+      const n = typeof v==='string'? Number(v.replace(/[^\d.-]/g,'')) : Number(v);
+      return isFinite(n)? n.toLocaleString('ko-KR',{ style:'currency', currency:'KRW', maximumFractionDigits:0 }) : v;
+    }catch(e){ return v; }
+  }
+  function setText(id, val){ const el=qs(id); if(el) el.textContent = val ?? ''; }
+
+  async function init(){
+    await Promise.all([loadStatus(), loadUnread()]);
+    setupNotif();
+    setupUnlink();
+    document.addEventListener('click', e=>{
+      if(!notifBtn.contains(e.target) && !notifPanel.contains(e.target)){
+        notifPanel.classList.remove('show'); notifBtn.setAttribute('aria-expanded','false');
+      }
+    });
+  }
+
+  async function loadStatus(){
+    try{
+      const res = await fetch('/link/status');
+      if(!res.ok) throw new Error('서버 응답 오류');
+      const body = await res.json();
+      if(!body.success) throw new Error(body.message||'상태 조회 실패');
+      render(body.data);
+    }catch(e){
+      console.error(e); toastMsg('상태 정보를 불러오지 못했습니다.');
+      show('not');
+    }
+  }
+
+  function render(data){
+    // 공통: IRP 계좌 카드 반영
+    const hasAcct = !!(data.hasIrpAccount && data.account);
+    if(hasAcct){
+      qs('#acctCard').style.display='block';
+      setText('#acctNo', data.account.number);
+      setText('#acctBal', money(data.account.balance));
+      qs('#btnJoinIrp').style.display='none';
+    }else{
+      qs('#btnJoinIrp').style.display='flex';
+    }
+
+    current.linkId = data.linkId || null;
+    current.status = data.status || null;
+
+    // 상태 분기
+    if(!data.hasAny){
+      show('not'); return;
+    }
+
+    switch(data.status){
+      case 'LINKED':
+        setText('#spouseName', data.spouseName || '배우자');
+        setText('#linkedAt', data.linkedAt || '');
+        show('linked');
+        break;
+
+      case 'PENDING_SPOUSE':
+        if(data.myRole === 'SPOUSE'){
+          // 배우자 입장에서 아직 수락하지 않은 상태 → 미연동 화면에서 신청 안내 노출
+          show('not');
+        }else{
+          setText('#pendingTitle','배우자 수락 대기 중');
+          setText('#pendingMsg', `신청일: ${data.appliedAt||''}\n배우자의 확인 후 연동이 완료됩니다.`);
+          show('pending');
+        }
+        break;
+
+      case 'PENDING_ADMIN': // 현재 요건에서는 잘 안 씀(서류 심사 제거), 그래도 안전 방어
+        setText('#pendingTitle','관리자 검토 중');
+        setText('#pendingMsg','서류 확인에 영업일 기준 1~2일 소요될 수 있습니다.');
+        show('pending');
+        break;
+
+      case 'REJECTED_SPOUSE':
+        setText('#rejTitle','배우자가 연동을 거절했습니다');
+        setText('#rejMsg','배우자 확인 후 다시 신청해주세요.');
+        show('rej');
+        break;
+
+      case 'REJECTED_OCR_FINAL':
+        show('final');
+        break;
+
+      case 'REJECTED_ADMIN':
+        setText('#rejTitle','연동 신청이 반려되었습니다');
+        setText('#rejMsg','정보 불일치 또는 확인 불가로 반려되었습니다.');
+        show('rej');
+        break;
+
+      default:
+        show('not');
+    }
+  }
+
+  // -------- 알림 ----------
+  async function loadUnread(){
+    try{
+      const r = await fetch('/api/notifications/unread');
+      if(!r.ok) throw new Error();
+      const j = await r.json();
+      const arr = j && j.success ? (j.data||[]) : [];
+      renderNotifs(arr);
+    }catch(e){
+      renderNotifs([]);
+    }
+  }
+
+  function renderNotifs(list){
+    notifList.innerHTML = '';
+    const n = Array.isArray(list) ? list.length : 0;
+    if(n>0){
+      notifBadge.classList.add('show');
+      notifBadge.textContent = n>9 ? '9+' : String(n);
+      list.forEach(item=>{
+        const li = document.createElement('li');
+        li.textContent = item.message;
+        li.dataset.notificationId = item.id;
+        li.dataset.linkUrl = item.linkUrl || '';
+        li.dataset.linkId = item.linkId || '';
+        li.addEventListener('click', onNotifClick);
+        notifList.appendChild(li);
+      });
+    }else{
+      notifBadge.classList.remove('show');
+      notifList.innerHTML = '<li class="empty">새로운 알림이 없습니다.</li>';
+    }
+  }
+
+  function setupNotif(){
+    notifBtn.addEventListener('click', async (e)=>{
+      e.stopPropagation();
+      const open = notifPanel.classList.toggle('show');
+      notifBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if(open){ await loadUnread(); }
+    });
+  }
+
+  async function onNotifClick(e){
+    const id = e.currentTarget.dataset.notificationId;
+    const url = e.currentTarget.dataset.linkUrl;
+    const linkId = e.currentTarget.dataset.linkId;
+    if(!id) return;
+    try{
+      await fetch(`/api/notifications/${id}/read`, { method:'POST' });
+      if(url){
+        const dest = new URL(url, location.origin);
+        if(linkId) dest.searchParams.set('linkId', linkId);
+        location.href = dest.href;
+      }else{
+        await loadUnread();
+      }
+    }catch(err){
+      console.error(err);
+      toastMsg('알림 처리 실패');
+    }
+  }
+
+  // -------- 해지 ----------
+  function setupUnlink(){
+    const btn = qs('#btnUnlink');
+    if(!btn) return;
+    btn.addEventListener('click', async ()=>{
+      if(!current.linkId){ toastMsg('연동 정보가 없습니다.'); return; }
+      if(!confirm('정말로 부부 IRP 연동을 해지하시겠습니까?\n해지 시 추가 적립 혜택이 중단됩니다.')) return;
+      try{
+        const res = await fetch('/link/unlink', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json' },
+          body: JSON.stringify({ linkId: current.linkId })
+        });
+        const j = await res.json();
+        if(res.ok){
+          toastMsg('연동이 해지되었습니다.');
+          setTimeout(()=>location.reload(), 650);
+        }else{
+          throw new Error(j && j.message ? j.message : '해지 실패');
+        }
+      }catch(e){
+        console.error(e);
+        toastMsg('연동 해지에 실패했습니다.');
+      }
+    });
+  }
+
+  // -------- 유틸 ----------
+  function toastMsg(msg){
+    toast.textContent = msg || '';
+    toast.classList.add('show');
+    setTimeout(()=>toast.classList.remove('show'), 1600);
+  }
+})();
+</script>
+</body>
+</html>

@@ -41,7 +41,7 @@
       <div class="card-head">
         <h2>파일 업로드</h2>
         <div class="actions">
-          <a class="btn btn-outline" th:href="@{/sample/subscriber.xlsx}" download>엑셀 양식 다운로드</a>
+          <a class="btn btn-outline" th:href="@{/file/가입자명부등록 양식.xlsx}" download>엑셀 양식 다운로드</a>
           <button type="button" class="btn btn-ghost" id="clearBtn">초기화</button>
         </div>
       </div>
@@ -50,8 +50,7 @@
           <div class="dz-icon">⬆</div>
           <div class="dz-title">파일을 이곳에 끌어놓거나 클릭하여 선택</div>
           <div class="dz-sub">지원 형식: .xlsx / 최대 20MB</div>
-          <input type="file" id="excelFile" accept=".xlsx" hidden />
-        </div>
+			<input type="file" id="excelFile" accept=".xlsx" hidden />        </div>
       </div>
       <div class="upload-bar">
         <div class="file-pill" id="filePill" hidden>

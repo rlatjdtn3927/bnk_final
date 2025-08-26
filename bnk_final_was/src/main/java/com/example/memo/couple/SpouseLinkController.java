@@ -1,24 +1,32 @@
 package com.example.memo.couple;
 
+import java.util.Base64;
+import java.util.Map;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpClientService;
 import com.example.memo.tcp_common.TcpMessage;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
+import jakarta.servlet.http.HttpSession;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
 
 @RequiredArgsConstructor
@@ -31,58 +39,23 @@ public class SpouseLinkController {
 
     /**
      * 부부연동 신청 (WAS → AP)
-     * - form-data: spouseName, spouseBirth(yyyy-MM-dd), file(optional), existingLinkId(optional)
-     * - 세션 키: "user" (Long/Integer/String OK)
      */
     @PostMapping(value = "/apply",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> apply(@RequestParam("spouseName") String spouseName,
+    public ResponseEntity<?> apply(@RequestParam(name="linkId", required=false) Long linkId, // ✅ 추가
+                                   @RequestParam("spouseName") String spouseName,
                                    @RequestParam("spouseBirth") String spouseBirth,
                                    @RequestPart(name = "file", required = false) MultipartFile file,
-                                   // ▼▼▼ 재시도를 위한 파라미터 추가 ▼▼▼
-                                   @RequestParam(name = "existingLinkId", required = false) Long existingLinkId,
                                    HttpSession session) {
-        Map<String, Object> body = new HashMap<>();
         try {
-            // 0) 파라미터 검증
-            if (!StringUtils.hasText(spouseName) || !StringUtils.hasText(spouseBirth)) {
-                body.put("success", false);
-                body.put("code", "BAD_REQUEST");
-                body.put("message", "배우자 이름/생년월일을 입력하세요.");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
-            }
+            Long applicantUserId = getUserIdFromSession(session);
 
-            // 1) 세션에서 사용자 ID 얻기 ("user" 하나만 사용)
-            Object v = session.getAttribute("user");
-            if (v == null) {
-                body.put("success", false);
-                body.put("code", "UNAUTHORIZED");
-                body.put("message", "로그인이 필요합니다.");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
-            }
-            Long applicantUserId;
-            try {
-                applicantUserId = (v instanceof Long) ? (Long) v
-                        : (v instanceof Integer) ? ((Integer) v).longValue()
-                        : Long.valueOf(v.toString());
-            } catch (Exception e) {
-                body.put("success", false);
-                body.put("code", "SESSION_TYPE_ERROR");
-                body.put("message", "세션 사용자 정보 형식 오류");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
-            }
-
-            // 2) AP로 보낼 payload 조립
             ObjectNode payload = objectMapper.createObjectNode();
+            if (linkId != null) payload.put("linkId", linkId); // ✅ 재시도 시 필요
             payload.put("applicantUserId", applicantUserId);
             payload.put("spouseName", spouseName);
             payload.put("spouseBirth", spouseBirth);
-
-            // ▼▼▼ existingLinkId가 있으면 payload에 추가 ▼▼▼
-            if (existingLinkId != null) {
-                payload.put("existingLinkId", existingLinkId);
-            }
 
             if (file != null && !file.isEmpty()) {
                 ObjectNode f = objectMapper.createObjectNode();
@@ -92,126 +65,94 @@ public class SpouseLinkController {
                 payload.set("file", f);
             }
 
-            // 3) TCP 전송 (암/복호화는 TcpClientService 내부)
             TcpMessage msg = new TcpMessage(Command.SPOUSE_LINK_APPLY, payload);
             JsonNode apRes = tcpClientService.sendMessage(msg);
+            return ResponseEntity.ok(Map.of("success", true, "code", "OK", "data", apRes));
 
-            // 4) 응답 처리 (AP 응답이 null이거나 에러인 경우)
-            if (apRes == null) {
-                body.put("success", false);
-                body.put("code", "AP_UNREACHABLE");
-                body.put("message", "AP 응답 없음");
-                return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(body);
-            }
-
-            // AP 응답이 에러 형식일 경우 그대로 클라이언트에 전달
-            if (apRes.has("success") && !apRes.get("success").asBoolean()) {
-                return ResponseEntity.badRequest().body(apRes);
-            }
-
-            // 5) 성공 응답 그대로 래핑하여 반환
-            body.put("success", true);
-            body.put("code", "OK");
-            body.put("data", apRes); // { linkId, status, nextAction, ... }
-            return ResponseEntity.ok(body);
-
+        } catch (AuthException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("success", false, "message", e.getMessage()));
         } catch (Exception e) {
-            body.put("success", false);
-            body.put("code", "INTERNAL_ERROR");
-            body.put("message", "신청 처리 중 오류: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("success", false, "message", e.getMessage()));
         }
     }
-    
     
     /**
      * 배우자가 연동 요청을 수락/거절하는 API
      */
     @PostMapping("/spouse/decide")
     public ResponseEntity<?> decideBySpouse(@RequestBody JsonNode payload, HttpSession session) {
-        Long userId = (Long) session.getAttribute("user");
-        if (userId == null) {
-            return ResponseEntity.status(401).build(); // 비로그인 사용자는 401 Unauthorized
+        try {
+            Long spouseUserId = getUserIdFromSession(session);
+            ((ObjectNode) payload).put("spouseUserId", spouseUserId);
+
+            TcpMessage message = new TcpMessage(Command.SPOUSE_LINK_DECIDE, payload);
+            JsonNode apResponse = tcpClientService.sendMessage(message);
+
+            return ResponseEntity.ok(apResponse);
+        } catch (AuthException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("success", false, "message", e.getMessage()));
         }
-
-        // AP로 보낼 payload에 세션의 사용자 ID(배우자 ID)를 추가
-        ((ObjectNode) payload).put("spouseUserId", userId);
-
-        TcpMessage message = new TcpMessage(Command.SPOUSE_LINK_DECIDE, payload);
-        JsonNode apResponse = tcpClientService.sendMessage(message);
-
-        return ResponseEntity.ok(apResponse);
     }
     
+    // =================================================================
+    // ▼▼▼ [추가] 연동 해지 API ▼▼▼
+    // =================================================================
     /**
-     * 사용자가 OCR 3회 실패 후 관리자 검토를 직접 요청하는 API
-     * 
+     * 부부 IRP 연동을 해지합니다.
      */
-    @PostMapping(
-    	    value = "/request-admin-review",
-    	    consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
-    	    produces = MediaType.APPLICATION_JSON_VALUE
-    	)
-    	public ResponseEntity<?> requestAdminReview(
-    	        @RequestParam("linkId") Long linkId,
-    	        @RequestParam("spouseName") String spouseName,
-    	        @RequestParam("spouseBirth") String spouseBirth,
-    	        @RequestPart("file") MultipartFile file, // 반드시 첨부
-    	        HttpSession session) {
+    @PostMapping("/unlink")
+    public ResponseEntity<?> unlink(@RequestBody UnlinkRequestDto unlinkRequest, HttpSession session) {
+        try {
+            Long requestingUserId = getUserIdFromSession(session);
 
-    	    Long userId = (Long) session.getAttribute("user");
-    	    if (userId == null) {
-    	        return ResponseEntity.status(401).build();
-    	    }
-    	    try {
-    	        var payload = objectMapper.createObjectNode();
-    	        payload.put("linkId", linkId);
-    	        payload.put("spouseName", spouseName);
-    	        payload.put("spouseBirth", spouseBirth);
+            // AP로 보낼 데이터 생성
+            ObjectNode payload = objectMapper.createObjectNode();
+            payload.put("linkId", unlinkRequest.getLinkId());
+            payload.put("requestingUserId", requestingUserId);
 
-    	        var f = objectMapper.createObjectNode();
-    	        f.put("filename", file.getOriginalFilename());
-    	        f.put("contentType", file.getContentType());
-    	        f.put("base64", Base64.getEncoder().encodeToString(file.getBytes()));
-    	        payload.set("file", f);
+            // AP 서버에 해지 명령 전송
+            TcpMessage msg = new TcpMessage(Command.SPOUSE_LINK_UNLINK, payload);
+            JsonNode apResponse = tcpClientService.sendMessage(msg);
 
-    	        TcpMessage message =
-    	            new TcpMessage(Command.SPOUSE_LINK_REQUEST_ADMIN_REVIEW, payload);
-    	        JsonNode apResponse = tcpClientService.sendMessage(message);
-    	        return ResponseEntity.ok(apResponse);
-    	    } catch (Exception e) {
-    	        var err = objectMapper.createObjectNode();
-    	        err.put("success", false).put("code", "INTERNAL_ERROR")
-    	           .put("message", e.getMessage());
-    	        return ResponseEntity.status(500).body(err);
-    	    }
-    	}
-    
+            // AP의 응답을 클라이언트에 그대로 전달
+            return ResponseEntity.ok(apResponse);
+
+        } catch (AuthException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("success", false, "message", "연동 해지 처리 중 오류가 발생했습니다: " + e.getMessage()));
+        }
+    }
+
+    // 요청 Body를 받기 위한 DTO
+    @Getter @Setter
+    static class UnlinkRequestDto {
+        private Long linkId;
+    }
+    // =================================================================
+    // ▲▲▲ 연동 해지 API 끝 ▲▲▲
+    // =================================================================
+
+    /**
+     * 현재 사용자의 연동 상태를 조회하는 API
+     */
     @GetMapping("/status")
     public ResponseEntity<?> getLinkStatus(HttpSession session) {
-        Map<String, Object> body = new HashMap<>();
         try {
-            Object v = session.getAttribute("user");
-            if (v == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("success", false, "message", "로그인이 필요합니다."));
-            }
-            Long userId = (v instanceof Long) ? (Long) v
-                    : (v instanceof Integer) ? ((Integer) v).longValue()
-                    : Long.valueOf(v.toString());
+            Long userId = getUserIdFromSession(session);
 
             ObjectNode payload = objectMapper.createObjectNode().put("userId", userId);
             TcpMessage msg = new TcpMessage(Command.SPOUSE_LINK_STATUS, payload);
             JsonNode apRes = tcpClientService.sendMessage(msg);
 
-            // AP 표준 응답 그대로 전달
             return ResponseEntity.ok(apRes);
 
+        } catch (AuthException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("success", false, "message", e.getMessage()));
         } catch (Exception e) {
-            body.put("success", false);
-            body.put("code", "INTERNAL_ERROR");
-            body.put("message", "상태 조회 중 오류: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("success", false, "message", "상태 조회 중 오류: " + e.getMessage()));
         }
     }
 
@@ -221,26 +162,96 @@ public class SpouseLinkController {
     @GetMapping("/details/{linkId}")
     public ResponseEntity<?> getLinkDetails(@PathVariable("linkId") Long linkId) {
         try {
-            // 1. AP로 보낼 payload 생성
-            ObjectNode payload = objectMapper.createObjectNode();
-            payload.put("linkId", linkId);
-
-            // 2. TCP 메시지 생성 및 전송
+            ObjectNode payload = objectMapper.createObjectNode().put("linkId", linkId);
             TcpMessage msg = new TcpMessage(Command.SPOUSE_LINK_GET_DETAILS, payload);
             JsonNode apResponse = tcpClientService.sendMessage(msg);
-
-            // 3. AP 응답 그대로 반환
-            if (apResponse == null || (apResponse.has("success") && !apResponse.get("success").asBoolean())) {
-                return ResponseEntity.badRequest().body(apResponse);
-            }
+            
             return ResponseEntity.ok(apResponse);
-
         } catch (Exception e) {
-            Map<String, Object> errorBody = new HashMap<>();
-            errorBody.put("success", false);
-            errorBody.put("message", "상세 정보 조회 중 오류 발생: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBody);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("success", false, "message", "상세 정보 조회 중 오류 발생: " + e.getMessage()));
         }
     }
     
+    /**
+     * OCR 사전 검증 API
+     * 파일만 받아서 OCR 처리 후 결과 텍스트만 반환
+     */
+    @PostMapping("/ocr-verify")
+    public ResponseEntity<?> verifyOcr(@RequestParam("linkId") Long linkId, // ✅ 추가 (필수)
+                                       @RequestPart("file") MultipartFile file) {
+        try {
+            if (file == null || file.isEmpty()) {
+                throw new IllegalArgumentException("검증할 파일이 없습니다.");
+            }
+            if (linkId == null || linkId == 0L) {
+                throw new IllegalArgumentException("linkId가 필요합니다.");
+            }
+
+            ObjectNode payload = objectMapper.createObjectNode();
+            payload.put("linkId", linkId); // ✅ AP에서 필요
+            ObjectNode f = payload.putObject("file");
+            f.put("filename", file.getOriginalFilename());
+            f.put("contentType", file.getContentType());
+            f.put("base64", Base64.getEncoder().encodeToString(file.getBytes()));
+
+            TcpMessage msg = new TcpMessage(Command.SPOUSE_LINK_OCR_VERIFY, payload);
+            JsonNode apResponse = tcpClientService.sendMessage(msg);
+
+            return ResponseEntity.ok(Map.of("success", true, "data", apResponse));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                 .body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+    
+    @PostMapping("/init")
+    public ResponseEntity<?> initLink(HttpSession session) {
+        try {
+            Long applicantUserId = getUserIdFromSession(session);
+            ObjectNode payload = objectMapper.createObjectNode().put("applicantUserId", applicantUserId);
+            TcpMessage msg = new TcpMessage(Command.SPOUSE_LINK_INIT, payload);
+            JsonNode apRes = tcpClientService.sendMessage(msg);
+            return ResponseEntity.ok(apRes);
+        } catch (AuthException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+
+    // =================================================================
+    // Helper Methods
+    // =================================================================
+    
+    /**
+     * 세션에서 사용자 ID를 안전하게 가져오는 헬퍼 메소드
+     */
+    private Long getUserIdFromSession(HttpSession session) throws AuthException {
+        Object v = session.getAttribute("user");
+        if (v == null) {
+            throw new AuthException("로그인이 필요합니다.");
+        }
+        try {
+            return (v instanceof Long) ? (Long) v
+                    : (v instanceof Integer) ? ((Integer) v).longValue()
+                    : Long.valueOf(v.toString());
+        } catch (Exception e) {
+            throw new AuthException("세션 사용자 정보 형식 오류");
+        }
+    }
+    
+    
+    
+    /**
+     * 인증 관련 예외 처리를 위한 내부 클래스
+     */
+    private static class AuthException extends Exception {
+        public AuthException(String message) {
+            super(message);
+        }
+    }
 }

@@ -60,4 +60,10 @@ public class UserService {
     }
 
     private boolean isBlank(String s) { return s == null || s.trim().isEmpty(); }
+    
+    public String getUserName(Long userId) {
+        return userRepository.findById(userId)
+                .map(UserEntity::getName)  
+                .orElse("알 수 없음");
+    }
 }

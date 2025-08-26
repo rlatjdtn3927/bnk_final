@@ -1,47 +1,50 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <title>부산은행 인근 지점 찾기</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-   <link rel="stylesheet" th:href="@{/css/branches.css}" href="/css/branches.css" />
-</head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<link rel="stylesheet" th:href="@{/css/branches.css}" href="/css/branches.css" /></head>
 <body>
-<header class="header">
-  <h1>부산은행 인근 지점 찾기</h1>
-  <p class="subtitle">내 주변에서 가장 가까운 BNK 부산은행 지점을 빠르게 찾아보세요.</p>
-</header>
+  <div class="wrap">
+    <header class="header">
+      <h1>인근 지점 찾기</h1>
+      <p class="subtitle">내 주변에서 가장 가까운 BNK 부산은행 지점을 찾아보세요.</p>
+    </header>
 
-<main>
-  <section class="card">
-    <div class="row">
-      <div>
-        <div class="muted subtle">내 현재 위치</div>
-        <div id="mypos" class="pill">위치를 불러오는 중…</div>
-      </div>
-      <div class="actions">
-        <input id="radius" type="number" step="0.1" min="0.5" value="2.0" title="검색 반경(km)" />
-        <span class="unit">km</span>
+    <main>
+      <section class="card">
+        <div class="controls-grid">
+          <div class="control-item">
+            <label>내 현재 위치</label>
+            <div id="mypos" class="pill">위치 권한을 허용해주세요</div>
+          </div>
+          <div class="control-item">
+            <label for="radius">검색 반경</label>
+            <div class="radius-control">
+              <input id="radius" type="number" step="0.1" min="0.5" value="2.0" title="검색 반경(km)" />
+              <span class="unit">km</span>
+            </div>
+          </div>
+        </div>
         <button id="btn" class="btn">
-          <span id="btxt">5개 지점 조회</span>
+          <span id="btxt">내 주변 지점 찾기</span>
           <span id="bsp" class="spinner" style="display:none"></span>
         </button>
-      </div>
-    </div>
+      </section>
 
-    <div id="err" class="error" style="display:none"></div>
-    <div id="empty" class="empty" style="display:none">
-      근처에서 지점을 찾지 못했어요. 반경을 넓혀 다시 시도해보세요.
-    </div>
+      <section id="results" class="results-section" style="display:none;">
+        <h2>검색 결과</h2>
+        <div id="err" class="feedback error" style="display:none"></div>
+        <div id="empty" class="feedback empty" style="display:none">
+          근처에서 지점을 찾지 못했어요. 반경을 넓혀 다시 시도해보세요.
+        </div>
+        <div id="list" class="list"></div>
+      </section>
+    </main>
 
-    <div id="list" class="list"></div>
-  </section>
-</main>
+  </div>
+  <script th:src="@{/js/branches.js}" src="/js/branches.js" defer></script>
 
-<footer class="footer">
-  © BNK 안내 데모 · 지도 링크는 외부 서비스로 이동합니다.
-</footer>
-
-<script th:src="@{/js/branches.js}" src="/js/branches.js" defer></script>
 </body>
 </html>

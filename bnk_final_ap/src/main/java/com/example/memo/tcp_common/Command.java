@@ -37,6 +37,8 @@ public enum Command {
     CONTRIBUTION_PAYABLE_ITEM_LIST,
     CONTRIBUTION_EXECUTE_ITEMS, // 선택 항목 입금 실행;
     RETAIN_GET_ACCOUNTS, // 사용자 보유 계좌 목록 조회 (IRP/DC)
+    RETAIN_GET_ACCOUNTS_SUMMARY, // 메인페이지 계좌 요약 조회
+    
     ADMIN_STATS_OVERVIEW,
     ADMIN_STATS_TOTAL,
     ADMIN_STATS_ALLOCATION,
@@ -59,9 +61,13 @@ public enum Command {
     SPOUSE_LINK_REQUEST_ADMIN_REVIEW,
     SPOUSE_LINK_STATUS,
     SPOUSE_LINK_GET_DETAILS,
+    SPOUSE_LINK_UNLINK,
+    SPOUSE_LINK_OCR_VERIFY,
+    SPOUSE_LINK_INIT,
     /*IRP가입관련*/
     IRP_JOIN_SAVE,
     IRP_JOIN_GET,
+    IRP_JOIN_CHECK_ELIGIBLE,	// 가입 진입 가능 여부
     IRP_JOIN_CREATE_DRAFT,      // step1: 가입목적 선택 생성
     IRP_JOIN_TAX_PURPOSE, 		// step1: 세액공제용 입력
     IRP_JOIN_RETIRED_PURPOSE, 	// step1: 퇴직금 수령용 입력

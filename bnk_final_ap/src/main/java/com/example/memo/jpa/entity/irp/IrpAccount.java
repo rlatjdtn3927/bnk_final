@@ -9,16 +9,20 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "IRP_account")
+@Table(name = "IRP_account", 
+	   uniqueConstraints = {
+			   @UniqueConstraint(name = "UQ_IRP_ACCOUNT_USER", columnNames = {"user_id"})
+	   })
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -29,8 +33,8 @@ public class IrpAccount {
     @Column(name = "irp_acct_no", length = 20)
     private String irpAcctNo;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable=false)
+	@OneToOne(fetch = FetchType.LAZY) // <-- 사용자당 1개
+    @JoinColumn(name = "user_id", nullable=false, unique = true)
     private UserEntity user;
 
     @Column(precision = 18, scale = 0)
@@ -47,5 +51,6 @@ public class IrpAccount {
     
     @PrePersist void prePersist() {
         if (balance == null) balance = BigDecimal.ZERO;
+        if (status == null) status = "PENDING";
     }
 }

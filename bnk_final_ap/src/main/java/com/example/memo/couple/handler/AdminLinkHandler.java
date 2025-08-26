@@ -29,12 +29,15 @@ public class AdminLinkHandler implements TcpMessageHandler {
     public Object handle(Command command, JsonNode data) {
         try {
             switch (command) {
-                case ADMIN_SPOUSE_LINK_LIST: {
+                /*
+            case ADMIN_SPOUSE_LINK_LIST: {
                     ArrayNode list = spouseLinkService.adminListPending(10); // presign 10분
                     ObjectNode res = om.createObjectNode();
                     res.put("success", true).put("code", "OK").set("data", list);
                     return res;
                 }
+                */
+            /*
                 case ADMIN_SPOUSE_LINK_DECIDE: {
                     long linkId = data.path("linkId").asLong();
                     String action = data.path("action").asText(null);
@@ -47,6 +50,7 @@ public class AdminLinkHandler implements TcpMessageHandler {
                     res.put("success", true).put("code", "OK").set("data", d);
                     return res;
                 }
+                */
                 default: {
                     return "알 수 없는 명령: " + command.name();
                 }

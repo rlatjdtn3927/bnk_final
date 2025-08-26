@@ -32,6 +32,8 @@ public enum Command {
     CONTRIBUTION_EXECUTE_ITEMS, // 선택 항목 입금 실행;
     
     RETAIN_GET_ACCOUNTS, // 사용자 보유 계좌 목록 조회 (IRP/DC)
+    RETAIN_GET_ACCOUNTS_SUMMARY, // 메인페이지 계좌 요약 조회
+    
     ADMIN_STATS_OVERVIEW,
     ADMIN_STATS_TOTAL,
     ADMIN_STATS_ALLOCATION,
@@ -53,6 +55,9 @@ public enum Command {
     SPOUSE_LINK_REQUEST_ADMIN_REVIEW,
     SPOUSE_LINK_STATUS,
     SPOUSE_LINK_GET_DETAILS,
+    SPOUSE_LINK_UNLINK,
+    SPOUSE_LINK_OCR_VERIFY,
+    SPOUSE_LINK_INIT,
     
     /*IRP가입관련*/
     IRP_JOIN_SAVE,
@@ -67,6 +72,7 @@ public enum Command {
     IRP_JOIN_COMPLETE,			// step5: 비밀번호 + 계좌개설 완료
     ACCOUNT_GET_BALANCE,		// 출금계좌 잔액조회
     ACCOUNT_GET_NUMBER,
+    IRP_JOIN_CHECK_ELIGIBLE,
     
     /*가입자 리포트*/
     REPORT_MONTHLY_SUBSCRIBERS,

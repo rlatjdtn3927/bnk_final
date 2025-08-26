@@ -1,356 +1,524 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8"/>
-    <title>부부 IRP 연동 신청</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
-    <style>
-        :root {
-            /* Color Palette */
-            --primary-blue: #3182f6;
-            --text-strong: #333d4b;
-            --text-normal: #4e5968;
-            --text-subtle: #8b95a1;
-            --surface-bg: #f2f4f6;
-            --content-bg: #ffffff;
-            --border-light: #e5e8eb;
-            --success-color: #059669;
-            --warning-color: #f59e0b;
-            --danger-color: #f04452;
-        }
+  <meta charset="UTF-8"/>
+  <title>부부 IRP 연동 신청</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <style>
+    :root{
+      --primary-red: #f85151;
+      --primary-red-light: #feebeb;
+      --ink:#1e2d3b; --text:#334155; --muted:#64748b;
+      --bg:#f8fafc; --card:#ffffff; --bd:#e2e8f0;
+      --light-gray-bg: #f1f5f9;
+      --success:#10b981; --warn:#f59e0b; --danger:#f85151;
+    }
 
-        /* Basic Setup */
-        *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body {
-            font-family: 'Pretendard', sans-serif;
-            background: var(--surface-bg);
-            margin: 0;
-            color: var(--text-normal);
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
+    /* === 튀어나옴 문제 해결을 위한 핵심 코드 === */
+    *, *:before, *:after {
+      box-sizing: border-box;
+    }
 
-        /* Layout */
-        .mobile-container {
-            width: 100%;
-            max-width: 480px;
-            min-height: 100vh;
-            margin: 0 auto;
-            background: var(--surface-bg);
-            padding-bottom: 120px; /* Footer height */
-        }
-        .app-header {
-            display: flex; align-items: center; padding: 16px; background: var(--content-bg);
-        }
-        .app-header .back-btn {
-            font-size: 28px; font-weight: 500; text-decoration: none; color: var(--text-strong); padding: 0 8px;
-        }
-        .app-header h1 {
-            font-size: 18px; font-weight: 700; color: var(--text-strong); margin: 0; text-align: center; flex-grow: 1; transform: translateX(-20px);
-        }
-        .content-area { padding: 16px; }
+    body{font-family:Pretendard,system-ui,-apple-system,Segoe UI,Roboto,'Noto Sans KR',sans-serif;background:var(--bg);margin:0;color:var(--text); -webkit-tap-highlight-color: transparent;}
+    .wrap{max-width:480px;min-height:100vh;margin:0 auto;background:var(--bg);padding-bottom:120px; box-shadow:0 10px 25px rgba(0,0,0,.04)}
+    .hdr{display:flex;align-items:center;justify-content:center;position:relative;height:56px;padding:0 16px;background:var(--card);border-bottom:1px solid var(--bd)}
+    .back{position:absolute;left:8px;top:50%;transform:translateY(-50%);width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;font-size:28px;color:var(--ink);text-decoration:none}
+    .hdr h1{margin:0;color:var(--ink);font-size:18px;font-weight:800}
+    main{padding:16px}
+    .card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:24px;margin-bottom:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);}
+    .card h2{margin:0 0 20px;color:var(--ink);font-size:20px;font-weight:800}
+    .fg{margin-bottom:20px}
+    label{display:block;margin-bottom:8px;color:var(--ink);font-weight:700;font-size:14px}
+    input[type=text],input[type=date]{width:100%;height:52px;border:1px solid var(--bd);border-radius:10px;background:var(--light-gray-bg);padding:0 16px;font-size:16px;color:var(--ink);-webkit-appearance:none}
+    input:focus{outline:none;border-color:var(--primary-red);box-shadow:0 0 0 3px rgba(248, 81, 81, .15)}
+    .hint{color:var(--muted);font-size:13px;line-height:1.5;margin-top:8px}
+    /* file */
+    input[type=file]{display:none}
+    .filebox{display:flex;align-items:center;justify-content:space-between;height:52px;border:1px solid var(--bd);border-radius:10px;background:var(--light-gray-bg);padding:0 8px 0 16px;cursor:pointer}
+    .filebox.has-file{border-color:var(--primary-red);background:var(--primary-red-light)}
+    .fname{font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
+    .fbtn{background:#fff;border:1px solid var(--bd);border-radius:8px;padding:8px 14px;font-size:14px;font-weight:700;color:var(--ink); flex-shrink: 0;}
+    /* status */
+    .status{display:none}
+    .status.show{display:block}
+    .status .icon{font-size:36px;margin-bottom:10px;text-align:center}
+    .status .title{margin:0 0 6px;font-size:18px;font-weight:800;color:var(--ink);text-align:center}
+    .status .msg{margin:0;color:var(--text);font-size:15px;text-align:center;white-space:pre-line}
+    .status.success .icon{color:var(--success)}
+    .status.warn .icon{color:var(--warn)}
+    .status.error .icon{color:var(--danger)}
+    /* ocr result */
+    .ocr{background:var(--light-gray-bg);border:1px solid #e2e8f0;border-radius:16px;padding:20px;margin-bottom:12px;display:none}
+    .ocr h2{margin:0 0 14px;font-size:18px;color:var(--ink)}
+    .grid{display:grid;grid-template-columns:110px 1fr;gap:12px 10px}
+    .grid dt{color:var(--muted);font-weight:600}
+    .grid dd{margin:0;color:var(--ink);font-weight:600}
+    .ocr .warn{margin-top:16px;color:var(--danger);font-size:14px;text-align:center;font-weight: 600;}
+    /* footer */
+    .footer{
+      position:fixed;
+      bottom:0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 32px);
+      max-width: calc(480px - 32px);
+      background:var(--card);
+      box-shadow:0 -8px 24px rgba(0,0,0,.07);
+      border-top-left-radius:20px;
+      border-top-right-radius:20px;
+      padding:16px;
+      padding-bottom: 28px;
+    }
+    .row{display:flex}
+    .btn{width:100%;height:52px;border:none;border-radius:10px;font-size:16px;font-weight:800;cursor:pointer; transition:transform .1s, box-shadow .2s;}
+    .btn:active{transform:scale(.98)}
+    .btn:disabled{background:#cbd5e1;color:#fff;cursor:not-allowed; box-shadow: none;}
+    .btn-primary{
+      background: var(--primary-red);
+      background-image: linear-gradient(to top, #f85151, #f96161);
+      color:#fff;
+      box-shadow: 0 4px 12px rgba(248, 81, 81, 0.2);
+    }
+    .btn-primary:active{ box-shadow: 0 2px 6px rgba(248, 81, 81, 0.2); }
+    .btn-ghost{background:var(--light-gray-bg);color:var(--ink);border:1px solid var(--bd)}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
 
-        /* Form Card & Elements */
-        .form-card {
-            background: var(--content-bg);
-            border-radius: 20px;
-            padding: 24px;
-            margin-bottom: 12px;
-        }
-        .form-card h2 {
-            font-size: 20px; font-weight: 700; color: var(--text-strong); margin: 0 0 24px;
-        }
-        .form-group { margin-bottom: 20px; }
-        .form-group:last-child { margin-bottom: 0; }
-        label {
-            display: block; font-size: 14px; font-weight: 600; color: var(--text-strong); margin-bottom: 8px;
-        }
-        input[type=text], input[type=date] {
-            width: 100%; height: 52px; padding: 0 16px;
-            border-radius: 12px; border: 1px solid var(--border-light);
-            background: var(--surface-bg); color: var(--text-strong);
-            font-size: 16px; font-family: 'Pretendard', sans-serif;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        input[type=text]:focus, input[type=date]:focus {
-            outline: none; border-color: var(--primary-blue);
-            box-shadow: 0 0 0 3px rgba(49, 130, 246, 0.15);
-        }
-        .muted-text { color: var(--text-subtle); font-size: 13px; line-height: 1.5; margin-top: 8px; }
+/* 안내 박스 스타일 */
+.notice-box {
+  position: relative;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background-color: #f7f8fa;
+}
 
-        /* Custom File Upload */
-        input[type=file] { display: none; }
-        .file-upload-label {
-            display: flex; align-items: center; justify-content: space-between;
-            width: 100%; height: 52px; padding: 0 8px 0 16px;
-            border-radius: 12px; border: 1px solid var(--border-light);
-            background: var(--surface-bg); color: var(--text-subtle);
-            cursor: pointer; transition: border-color 0.2s;
-        }
-        .file-upload-label.has-file { border: 1px solid var(--primary-blue); }
-        .file-upload-label .file-name {
-            font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .file-upload-label.has-file .file-name { color: var(--text-strong); }
-        .file-upload-label .file-btn {
-            background: var(--content-bg); border: 1px solid var(--border-light);
-            color: var(--text-strong); padding: 8px 14px; border-radius: 8px;
-            font-size: 14px; font-weight: 600; white-space: nowrap;
-        }
+.notice-title {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
 
-        /* Action Footer */
-        .action-footer {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            width: 100%; margin: 0 auto; max-width: 480px;
-            padding: 16px 16px 32px; background: var(--content-bg);
-            box-shadow: 0 -8px 16px rgba(0,0,0,0.05);
-            border-top-left-radius: 20px; border-top-right-radius: 20px;
-        }
-        .btn {
-            display: flex; align-items: center; justify-content: center; width: 100%;
-            height: 52px; padding: 0 24px; border-radius: 12px; border: none;
-            font-size: 17px; font-weight: 600; cursor: pointer; text-decoration: none;
-            transition: background-color 0.2s, opacity 0.2s, transform 0.1s;
-        }
-        .btn:active { transform: scale(0.98); }
-        .btn.primary { background: var(--primary-blue); color: white; }
-        .btn.secondary { background: var(--surface-bg); color: var(--text-strong); }
-        .btn:disabled { background-color: #bec3c9; cursor: not-allowed; }
-        
-        /* Status & Precheck Card */
-        .status-card, .precheck-card {
-            display: flex; flex-direction: column; align-items: center; text-align: center;
-            background: var(--content-bg); border-radius: 20px; padding: 32px 24px;
-        }
-        .status-card .icon, .precheck-card .icon { font-size: 36px; line-height: 1; margin-bottom: 16px; }
-        .status-card .title, .precheck-card .title { font-size: 22px; font-weight: 700; margin: 0 0 8px; color: var(--text-strong); }
-        .status-card .message, .precheck-card .message { font-size: 16px; line-height: 1.6; color: var(--text-normal); margin: 0; }
-        .precheck-card .btn { margin-top: 24px; }
-        .status-card.success .icon { color: var(--success-color); }
-        .status-card.warning .icon { color: var(--warning-color); }
-        .status-card.error .icon { color: var(--danger-color); }
+.notice-box ul {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}
 
-        .loading-text { text-align: center; padding-top: 40px; color: var(--text-subtle); }
-    </style>
+.notice-box ul li::marker {
+  color: var(--muted);
+}
+
+/* 접힌 모서리 효과 */
+.notice-box::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(to left top, var(--bg) 50%, transparent 50%);
+  box-shadow: -1px -1px 2px rgba(0,0,0,0.04);
+  border-bottom-left-radius: 4px;
+}
+  
+  </style>
 </head>
 <body>
-<div class="mobile-container">
-    <header class="app-header">
-      <a href="/link-view/main" class="back-btn" aria-label="뒤로가기">‹</a>
-      <h1>부부 IRP 연동 신청</h1>
-    </header>
+<div class="wrap">
+  <header class="hdr">
+    <a href="/link-view/main" class="back" aria-label="뒤로가기">‹</a>
+    <h1>부부 IRP 연동 신청</h1>
+  </header>
 
-    <main class="content-area">
-        <div id="loading-view">
-            <p class="loading-text">신청 자격를 확인하는 중입니다...</p>
+  <main>
+    <div id="loading"><p class="hint" style="text-align:center;padding:40px 0">신청 자격을 확인하는 중입니다...</p></div>
+
+    <div id="needIrp" class="card" style="display:none;text-align:center">
+      <div style="font-size:36px">🏦</div>
+      <h2>IRP 계좌가 먼저 필요해요</h2>
+      <p class="hint">부부 연동을 신청하려면 본인의 IRP 계좌가 있어야 합니다.</p>
+    </div>
+
+    <div id="appArea" style="display:none">
+      <div id="statusBox" class="card status" aria-live="polite"></div>
+
+      <section id="ocrCard" class="ocr" aria-live="polite">
+        <h2>OCR 판독 결과</h2>
+        <dl class="grid">
+          <dt>신청자 이름</dt><dd id="ocrMe">-</dd>
+          <dt>배우자 이름</dt><dd id="ocrSpouse">-</dd>
+          <dt>배우자 생년월일</dt><dd id="ocrBirth">-</dd>
+        </dl>
+      </section>
+
+      <form id="form" class="card" enctype="multipart/form-data">
+        <h2>배우자 정보</h2>
+        <div class="fg">
+          <label for="spouseName">이름</label>
+          <input type="text" id="spouseName" name="spouseName" placeholder="배우자 성명을 정확히 입력" required autocomplete="off" inputmode="text" />
+        </div>
+        <div class="fg">
+          <label for="spouseBirth">생년월일</label>
+          <input type="date" id="spouseBirth" name="spouseBirth" required />
         </div>
 
-        <div id="precheck-view" style="display: none;">
-            <div class="precheck-card">
-                <div class="icon">🏦</div>
-                <h3 class="title">IRP 계좌가 먼저 필요해요</h3>
-                <p class="message">부부 연동을 신청하려면<br>본인의 IRP 계좌가 있어야 합니다.</p>
-                <a href="/irp/join/irp-join" class="btn primary">IRP 계좌 개설하기</a>
-            </div>
+        <h2 style="margin-top:18px">증빙 서류</h2>
+        <div class="fg">
+          <label for="file">가족관계증명서 (PDF)</label>
+          <label for="file" class="filebox" id="filebox">
+            <span id="fname" class="fname">파일 선택</span>
+            <span class="fbtn">파일 찾기</span>
+          </label>
+          <input id="file" type="file" name="file" accept="application/pdf,.pdf" />
+		<div class="notice-box">
+		  <h3 class="notice-title">서류 자동 검증 안내 ›</h3>
+		  <ul>
+		    <li>가족관계증명서는 OCR 기술을 통해 자동으로 검증됩니다.</li>
+		    <li>사진이 흐릿하거나 글자가 보이지 않으면 검증에 실패할 수 있으니, <strong>선명한 원본 서류</strong>를 올려주세요.</li>
+		    <li>업로드된 서류는 검증이 끝나면 <strong>즉시 파기</strong>되며, 서버에 <strong>저장되지 않습니다.</strong></li>
+		    <li>제출하신 서류의 내용이 사실과 다를 경우, 연동 신청이 <strong>반려될 수 있습니다.</strong></li>
+		  </ul>
+		</div>
         </div>
-        
-        <div id="form-container" style="display: none;">
-            <div id="statusBox"></div>
-            <form id="applyForm" enctype="multipart/form-data">
-                <div class="form-card">
-                    <h2>배우자 정보</h2>
-                    <div class="form-group">
-                        <label for="spouseName">이름</label>
-                        <input type="text" id="spouseName" name="spouseName" placeholder="배우자 성명을 정확히 입력" required/>
-                    </div>
-                    <div class="form-group">
-                        <label for="spouseBirth">생년월일</label>
-                        <input type="date" id="spouseBirth" name="spouseBirth" required/>
-                    </div>
-                </div>
+      </form>
+    </div>
+  </main>
 
-                <div class="form-card">
-                    <h2>증빙 서류</h2>
-                    <div class="form-group">
-                        <label for="file">가족관계증명서</label>
-                        <label for="file" class="file-upload-label" id="file-label">
-                            <span class="file-name" id="file-name">파일 선택</span>
-                            <span class="file-btn">파일 찾기</span>
-                        </label>
-                        <input id="file" type="file" name="file" accept=".pdf,application/pdf" required/>
-                        <p class="muted-text">주민등록번호 뒷자리는 가리고 업로드해주세요. (PDF 형식)</p>
-                    </div>
-                </div>
-            </form>
-            <footer class="action-footer">
-              <button class="btn primary" type="submit" id="submitBtn" form="applyForm">신청하기</button>
-              <button class="btn secondary" type="button" id="adminRequestBtn" style="display: none;">관리자에게 검토 요청</button>
-            </footer>
-        </div>
-    </main>
+  <footer class="footer">
+    <div class="row">
+      <button id="primaryBtn" class="btn btn-primary" type="button">로딩 중...</button>
+    </div>
+  </footer>
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // --- DOM 요소 ---
-    const loadingView = document.getElementById('loading-view');
-    const precheckView = document.getElementById('precheck-view');
-    const formContainer = document.getElementById('form-container');
-    const form = document.getElementById('applyForm');
-    const fileInput = document.getElementById('file');
-    const fileLabel = document.getElementById('file-label');
-    const fileNameSpan = document.getElementById('file-name');
-    const submitBtn = document.getElementById('submitBtn');
-    const adminRequestBtn = document.getElementById('adminRequestBtn');
-    const statusBox = document.getElementById('statusBox');
+(function(){
+  'use strict';
 
-    let currentLinkId = null;
+  // ===== DOM =====
+  const el = s => document.querySelector(s);
+  const loading = el('#loading');
+  const needIrp = el('#needIrp');
+  const appArea = el('#appArea');
+  const statusBox = el('#statusBox');
+  const ocrCard = el('#ocrCard');
+  const oMe = el('#ocrMe'), oSp = el('#ocrSpouse'), oBirth = el('#ocrBirth');
+  const spouseName = el('#spouseName');
+  const spouseBirth = el('#spouseBirth');
+  const file = el('#file');
+  const filebox = el('#filebox');
+  const fname = el('#fname');
+  const primaryBtn = el('#primaryBtn');
 
-    async function checkUserIrpStatus() {
-        try {
+  // ===== Const/State =====
+  const MAX_PDF_MB = 10;
+  const API = { STATUS:'/link/status', INIT:'/link/init', VERIFY:'/link/ocr-verify', APPLY:'/link/apply' };
 
-            const response = await fetch('/link/status'); 
-            const result = await response.json();
-            
-            if (result.success && result.data.hasIrpAccount) {
-                // 계좌가 있으면 신청서 폼을 보여줌
-                formContainer.style.display = 'block';
-            } else {
-                // 계좌가 없으면 개설 안내 화면을 보여줌
-                precheckView.style.display = 'block';
-            }
-        } catch (error) {
-            console.error('IRP status check failed:', error);
+  const UI = {
+    LOADING:'LOADING',
+    NEED_IRP:'NEED_IRP',
+    READY:'READY',                // 입력+파일 준비 → [OCR 판독하기]
+    VERIFYING:'VERIFYING',        // 판독 중
+    VERIFIED_MATCH:'VERIFIED_MATCH',     // 일치 → [이 정보로 신청하기]
+    VERIFIED_MISMATCH:'VERIFIED_MISMATCH', // 불일치 → [다른 파일로 다시 판독]
+    SUBMITTING:'SUBMITTING',      // 신청 중
+    FINAL_REJECT:'FINAL_REJECT',  // 3회 초과 → 영업점 안내
+    PENDING:'PENDING',            // 진행 중(배우자 대기 등)
+    LINKED:'LINKED'               // 이미 연동됨
+  };
 
-            precheckView.style.display = 'block';
-        } finally {
-            loadingView.style.display = 'none';
-        }
+  const state = {
+    ui:UI.LOADING,
+    linkId:null,
+    hasIrp:false,
+    linked:false,
+    serverStatus:null,            // 서버 link status (PENDING_SPOUSE 등)
+    attempts:0,                   // OCR 시도 횟수
+    ocr:{ applicantName:'', spouseName:'', spouseBirth:'' }
+  };
+
+  // ===== Utils =====
+  function showStatus(type, title, msg){
+    const icon = type==='success'?'✅':type==='warn'?'⚠️':type==='error'?'❗️':'ℹ️';
+    statusBox.className = `card status show ${type||''}`;
+    statusBox.innerHTML = `<div class="icon">${icon}</div><h3 class="title">${title||''}</h3><p class="msg">${msg||''}</p>`;
+  }
+  function clearStatus(){
+    statusBox.className = 'card status';
+    statusBox.innerHTML = '';
+  }
+  const normName = s => (s||'').replace(/\s+/g,'').toLowerCase();
+  const eqName = (a,b) => !!a && !!b && normName(a)===normName(b);
+  const toYmd = s => {
+    if(!s) return '';
+    if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    const d = (s+'').replace(/\D/g,'');
+    return d.length===8 ? `${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6)}` : s;
+  };
+  const eqBirth = (a,b) => toYmd(a)===toYmd(b);
+
+  function isOcrLimitReached(resp){
+    const d = resp?.data || resp || {};
+    const status = d.status || '';
+    const code   = d.code || '';
+    const action = d.nextAction || '';
+    const text = JSON.stringify(resp||{});
+    return status==='REJECTED_OCR_FINAL' || code==='OCR_LIMIT_EXCEEDED' || action==='GUIDE_BRANCH_VISIT' || /3\s*회|최종|초과|limit|exceed/i.test(text);
+  }
+
+  async function api(url, opt){
+    const r = await fetch(url, opt);
+    const j = await r.json().catch(()=>({}));
+    if(!r.ok || j?.success===false) throw new Error(j?.message || `요청 실패 (${r.status})`);
+    return j?.data ?? j;
+  }
+
+  async function fetchStatusAndSync(){
+    const d = await api(API.STATUS);
+    state.hasIrp = !!d.hasIrpAccount;
+    state.linked = !!d.linked;
+    state.serverStatus = d.status || null;
+    state.linkId = d.linkId || state.linkId;
+    state.attempts = d.ocrAttemptCount ?? state.attempts ?? 0;
+    return d;
+  }
+
+  async function ensureLinkId(){
+    if(state.linkId) return;
+    const d = await api(API.INIT, { method:'POST' });
+    state.linkId = d.linkId || null;
+    if(!state.linkId) throw new Error('신청 세션 생성 실패');
+  }
+
+  function isFormReady(){
+    return spouseName.value.trim().length>=2 && !!spouseBirth.value && !!file.files[0];
+  }
+
+  function setPrimary(label, onClick, disabled=false, ghost=false){
+    primaryBtn.textContent = label;
+    primaryBtn.className = `btn ${ghost?'btn-ghost':'btn-primary'}`;
+    primaryBtn.disabled = !!disabled;
+    primaryBtn.onclick = onClick;
+  }
+
+  function render(){
+    // view switching
+    loading.style.display = (state.ui===UI.LOADING)?'block':'none';
+    needIrp.style.display = (state.ui===UI.NEED_IRP)?'block':'none';
+    appArea.style.display = (state.ui!==UI.LOADING && state.ui!==UI.NEED_IRP)?'block':'none';
+
+    // OCR card
+    if(state.ui===UI.VERIFIED_MATCH || state.ui===UI.VERIFIED_MISMATCH) {
+      ocrCard.style.display = 'block';
+      oMe.textContent    = state.ocr.applicantName || '미인식';
+      oSp.textContent    = state.ocr.spouseName    || '미인식';
+      oBirth.textContent = state.ocr.spouseBirth   || '미인식';
+    } else {
+      ocrCard.style.display = 'none';
     }
 
-    // --- 상태 메시지 UI 설정 ---
-    const setStatus = (type, title, message) => {
-        if (!type) {
-            statusBox.innerHTML = '';
-            return;
+    clearStatus();
+
+    // Single-button states
+    switch(state.ui){
+      case UI.READY:
+        setPrimary('OCR 판독하기', handleVerify, !isFormReady());
+        break;
+      case UI.VERIFYING:
+        setPrimary('판독 중...', ()=>{}, true);
+        break;
+      case UI.VERIFIED_MATCH:
+        showStatus('success','OCR 확인 완료','입력 정보와 판독 결과가 일치합니다.');
+        setPrimary('이 정보로 신청하기', handleSubmit, false);
+        break;
+      case UI.VERIFIED_MISMATCH: {
+        const msgTail = state.attempts ? ` (시도 ${state.attempts}/3)` : '';
+        showStatus('warn','입력 정보와 판독 결과가 달라요'+msgTail,'더 선명한 서류로 다시 판독해주세요.');
+        setPrimary('다른 파일로 다시 판독', () => {
+          // 파일 다시 선택 유도
+          file.value = ''; fname.textContent='파일 선택'; filebox.classList.remove('has-file');
+          state.ui = UI.READY;
+          render();
+          file.click(); // 곧바로 파일 선택창
+        }, false, true);
+        break;
+      }
+      case UI.SUBMITTING:
+        setPrimary('신청 중...', ()=>{}, true);
+        break;
+      case UI.FINAL_REJECT:
+        showStatus('error','자동 인증 3회 실패','가까운 영업점을 방문하여 연동을 신청해주세요.');
+        // 폼 숨김
+        el('#form').style.display='none';
+        setPrimary('가까운 영업점 찾기', ()=>{ location.href='/branches/page'; }, false);
+        break;
+      case UI.PENDING:
+        showStatus('error','이미 진행 중인 신청이 있습니다','배우자의 수락을 기다려주세요.');
+        el('#form').style.display='none';
+        setPrimary('메인으로', ()=>{ location.href='/link-view/main'; }, false, true);
+        break;
+      case UI.LINKED:
+        showStatus('error','이미 연동된 상태입니다','메인 화면에서 상태를 확인해주세요.');
+        el('#form').style.display='none';
+        setPrimary('메인으로', ()=>{ location.href='/link-view/main'; }, false, true);
+        break;
+    }
+  }
+
+  // ===== Handlers =====
+  function handleFileChange(){
+    const f = file.files[0];
+    if(!f){
+      fname.textContent='파일 선택';
+      filebox.classList.remove('has-file');
+    }else{
+      const okType = f.type==='application/pdf' || /\.pdf$/i.test(f.name);
+      const okSize = f.size <= MAX_PDF_MB*1024*1024;
+      if(!okType){ alert('PDF 파일만 업로드 가능합니다.'); file.value=''; }
+      else if(!okSize){ alert(`파일 용량이 너무 큽니다. ${MAX_PDF_MB}MB 이하로 업로드해주세요.`); file.value=''; }
+      else{ fname.textContent=f.name; filebox.classList.add('has-file'); }
+    }
+    if(state.ui===UI.READY) render();
+  }
+
+  async function handleVerify(){
+    try{
+      state.ui = UI.VERIFYING; render();
+      await ensureLinkId();
+
+      const fd = new FormData();
+      fd.append('linkId', state.linkId);
+      fd.append('file', file.files[0]);
+
+      const data = await api(API.VERIFY, { method:'POST', body:fd });
+
+      // 서버 상태/시도횟수 동기화
+      try{
+        const st = await fetchStatusAndSync();
+        if (isOcrLimitReached(st) || state.attempts>=3 || st.status==='REJECTED_OCR_FINAL'){
+          state.ui = UI.FINAL_REJECT; render(); return;
         }
-        const icons = { success: '✅', warning: '⚠️', error: '❗️' };
-        const icon = icons[type] || 'ℹ️';
-        statusBox.innerHTML = `
-            <div class="status-card ${type}" style="margin-bottom: 12px;">
-                <div class="icon">${icon}</div>
-                <h3 class="title">${title}</h3>
-                <p class="message">${message}</p>
-            </div>`;
-        
-        if (type === 'success') {
-            document.getElementById('applyForm').style.display = 'none';
+      }catch(e){ /* status 실패해도 진행 */ }
+
+      if (isOcrLimitReached(data)){
+        state.ui = UI.FINAL_REJECT; render(); return;
+      }
+
+      // 저장 & 비교
+      state.ocr = {
+        applicantName: data.applicantName || '',
+        spouseName: data.spouseName || '',
+        spouseBirth: toYmd(data.spouseBirth || '')
+      };
+
+      const match = eqName(state.ocr.spouseName, spouseName.value) &&
+                    eqBirth(state.ocr.spouseBirth, spouseBirth.value);
+      state.ui = match ? UI.VERIFIED_MATCH : UI.VERIFIED_MISMATCH;
+      render();
+
+    }catch(e){
+      showStatus('error','OCR 판독 실패', e.message || '잠시 후 다시 시도해주세요.');
+      state.ui = UI.READY; render();
+    }
+  }
+
+  async function handleSubmit(){
+    try{
+      state.ui = UI.SUBMITTING; render();
+
+      const fd = new FormData();
+      fd.append('linkId', state.linkId);
+      fd.append('spouseName', spouseName.value.trim());
+      fd.append('spouseBirth', spouseBirth.value);
+      if (file.files[0]) fd.append('file', file.files[0]);
+
+      const data = await api(API.APPLY, { method:'POST', body:fd });
+
+      // 최종 분기
+      if (isOcrLimitReached(data)){
+        state.ui = UI.FINAL_REJECT; render(); return;
+      }
+      if (data.nextAction==='WAIT_SPOUSE' || data.status==='PENDING_SPOUSE'){
+        alert('신청이 완료되었습니다. 메인 페이지에서 진행 상태를 확인합니다.');
+        location.href='/link-view/main';
+        return;
+      }
+      if (data.nextAction==='RETRY_OCR'){
+        // 메시지에서 시도 횟수 추출
+        const m = (data.message||'').match(/(\d)\s*\/\s*3/);
+        if (m) state.attempts = Number(m[1]);
+        else {
+          try{
+            const st = await fetchStatusAndSync();
+            state.attempts = st?.ocrAttemptCount ?? state.attempts;
+          }catch(e){}
         }
-    };
+        state.ui = (state.attempts>=3) ? UI.FINAL_REJECT : UI.VERIFIED_MISMATCH;
+        render();
+        return;
+      }
 
-    // --- 이벤트 리스너 ---
-    fileInput.addEventListener('change', () => {
-        if (fileInput.files.length > 0) {
-            fileNameSpan.textContent = fileInput.files[0].name;
-            fileLabel.classList.add('has-file');
-        } else {
-            fileNameSpan.textContent = '파일 선택';
-            fileLabel.classList.remove('has-file');
-        }
-    });
+      // 예측 못한 케이스는 상태 다시 확인
+      try{
+        const st = await fetchStatusAndSync();
+        if (st.status==='PENDING_SPOUSE'){ location.href='/link-view/main'; return; }
+        if (st.status==='REJECTED_OCR_FINAL' || state.attempts>=3){ state.ui=UI.FINAL_REJECT; render(); return; }
+      }catch(e){}
+      showStatus('error','알 수 없는 상태','관리자에게 문의해주세요.');
+      state.ui = UI.VERIFIED_MATCH; render();
 
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        setStatus(null);
-        submitBtn.disabled = true;
-        submitBtn.textContent = '처리 중...';
-        adminRequestBtn.style.display = 'none';
+    }catch(e){
+      showStatus('error','오류가 발생했습니다', e.message || '잠시 후 다시 시도해주세요.');
+      state.ui = UI.VERIFIED_MATCH; render();
+    }
+  }
 
-        try {
-            const fd = new FormData(form);
-            if (currentLinkId) fd.append("existingLinkId", currentLinkId);
+  // ===== Init =====
+  function bind(){
+    spouseName.addEventListener('input', ()=>{ if(state.ui===UI.READY) render(); });
+    spouseBirth.addEventListener('input', ()=>{ if(state.ui===UI.READY) render(); });
+    file.addEventListener('change', handleFileChange);
+    primaryBtn.onclick = ()=>{}; // 초기 no-op
+  }
 
-            const res = await fetch('/link/apply', { method: 'POST', headers: { 'Accept': 'application/json' }, body: fd });
-            const result = await res.json();
-            
-            if (!res.ok) throw new Error(result.message || `서버 응답 오류 (${res.status})`);
-            
-            const data = result.data;
-            
-            switch (data.nextAction) {
-                case 'WAIT_SPOUSE':
-                    setStatus('success', '신청이 완료되었습니다', '배우자에게 연동 요청 알림을 보냈습니다.<br>이제 이 페이지를 닫으셔도 됩니다.');
-                    formContainer.querySelector('.action-footer').style.display = 'none';
-                    break;
-                case 'RETRY_OCR':
-                    const attempt = data.message.match(/(\d\/\d)/)?.[0] || '';
-                    setStatus('warning', `OCR 판독 실패 (${attempt})`, '증빙 서류가 선명하게 나오도록 다시 업로드해주세요.');
-                    currentLinkId = data.linkId;
-                    submitBtn.textContent = '다시 신청하기';
-                    break;
-                case 'AWAIT_ADMIN_REQUEST':
-                    setStatus('error', '자동 판독 실패', '자동 판독에 3회 실패했습니다.<br>관리자에게 직접 검토를 요청하시겠습니까?');
-                    currentLinkId = data.linkId;
-                    submitBtn.style.display = 'none';
-                    adminRequestBtn.style.display = 'flex';
-                    break;
-                case 'WAIT_ADMIN':
-                    setStatus('success', '관리자 검토 요청됨', '관리자에게 검토를 요청했습니다. 처리에는 1~2 영업일이 소요될 수 있습니다.');
-                    formContainer.querySelector('.action-footer').style.display = 'none';
-                    break;
-                default:
-                    setStatus('error', '알 수 없는 오류', data.message || '알 수 없는 상태입니다.');
-                    submitBtn.textContent = '다시 신청하기';
-            }
-        } catch (err) {
-            setStatus('error', '오류가 발생했습니다', err.message);
-            submitBtn.textContent = currentLinkId ? '다시 신청하기' : '신청하기';
-        } finally {
-            submitBtn.disabled = false;
-        }
-    });
+  async function boot(){
+    bind();
+    try{
+      const d = await fetchStatusAndSync();
 
-    adminRequestBtn.addEventListener('click', async () => {
-        const spouseName = document.getElementById('spouseName').value;
-        const spouseBirth = document.getElementById('spouseBirth').value;
-        
-        if (!spouseName || !spouseBirth || !fileInput.files || fileInput.files.length === 0) {
-            setStatus('error', '정보 누락', '관리자 검토 요청 시에는 배우자 정보와 증빙 서류가 모두 필요합니다.');
-            return;
-        }
-        
-        adminRequestBtn.disabled = true;
-        adminRequestBtn.textContent = '요청 중...';
+      // 상단 날짜 제한
+      spouseBirth.max = new Date().toISOString().slice(0,10);
 
-        try {
-            const fd = new FormData();
-            fd.append('linkId', currentLinkId);
-            fd.append('spouseName', spouseName);
-            fd.append('spouseBirth', spouseBirth);
-            fd.append('file', fileInput.files[0]);
+      if (!state.hasIrp){
+        state.ui = UI.NEED_IRP;
+        // 단일 버튼: IRP 계좌 개설하기
+        setPrimary('IRP 계좌 개설하기', ()=>{ location.href='/irp/join/irp-join'; }, false);
+      } else if (state.linked){
+        state.ui = UI.LINKED;
+      } else if (d.status==='PENDING_SPOUSE'){
+        state.ui = UI.PENDING;
+      } else if (d.status==='REJECTED_OCR_FINAL' || state.attempts>=3){
+        state.ui = UI.FINAL_REJECT;
+      } else {
+        await ensureLinkId();
+        state.ui = UI.READY;
+      }
+    }catch(e){
+      // 오류여도 입력은 가능하도록
+      state.ui = UI.READY;
+    }finally{
+      loading.style.display='none';
+      render();
+    }
+  }
 
-            const res = await fetch('/link/request-admin-review', { method: 'POST', body: fd });
-            const result = await res.json();
-            
-            if (!res.ok || (result.hasOwnProperty('success') && !result.success)) {
-                throw new Error(result.message || '요청에 실패했습니다.');
-            }
-          
-            setStatus('success', '검토 요청 완료', '관리자에게 검토를 요청했습니다. 처리에는 1~2 영업일이 소요됩니다.<br>이제 이 페이지를 닫으셔도 됩니다.');
-            formContainer.querySelector('.action-footer').style.display = 'none';
-
-        } catch (err) {
-            setStatus('error', '요청 실패', err.message);
-            adminRequestBtn.disabled = false;
-        } finally {
-            adminRequestBtn.textContent = '관리자에게 검토 요청';
-        }
-    });
-
-    // --- 페이지 초기화 실행 ---
-    checkUserIrpStatus();
-  });
+  boot();
+})();
 </script>
 </body>
 </html>

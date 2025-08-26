@@ -4,11 +4,213 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>BNK 퇴직연금</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <style>@charset "UTF-8";
+/* 폰트 */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+/* --------------------------------
+   1) 토큰
+--------------------------------- */
+:root {
+  --surface-pink:  #FCE8E8;
+  --surface-blue:  #F3F7FE;
+  --surface-ivory: #FFFBE3;
+  --surface-lilac: #F8F3FC;
+  --surface-green: #EEF5ED;
+  --surface-yellow: #FFFBE3;
+
+  --ink:   #1F2937;
+  --muted: #6B7280;
+  --border-color: #E7EBF2;
+
+  --bg-outer: #FAFAFC;
+  --bg-color: #FFFFFF;
+  --white:    #FFFFFF;
+
+  --positive: #2E7D32;
+  --negative: #B91C1C;
+
+  --radius: 16px;
+  --elev-1: 0 4px 12px rgba(17,24,39,0.06);
+  --elev-2: 0 10px 24px rgba(17,24,39,0.08);
+
+  --icon-size: 22px;
+  --icon-stroke: 2;
+  --icon-chip-bg: #F3F5F8;
+  --icon-chip-border: #E7EBF2;
+}
+
+/* --------------------------------
+   2) 리셋 & 베이스
+--------------------------------- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Pretendard','Noto Sans KR',sans-serif;
+  background: var(--bg-outer);
+  color: var(--ink);
+  display: flex; justify-content: center;
+  letter-spacing: -0.02em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+a { color: inherit; text-decoration: none; }
+button { border: none; background: none; cursor: pointer; }
+
+/* --------------------------------
+   3) 레이아웃
+--------------------------------- */
+.mobile-container {
+  width: 100%;
+  max-width: 420px;
+  min-height: 100vh;
+  background: var(--bg-color);
+  position: relative;
+  box-shadow: 0 10px 36px rgba(0,0,0,0.06);
+}
+.content { padding: 20px; padding-bottom: 100px; }
+
+/* --------------------------------
+   4) 헤더
+--------------------------------- */
+.main-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 20px;
+  background: var(--white);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky; top: 0; z-index: 100;
+}
+.logo { height: 20px; }
+.hamburger-menu { display: flex; flex-direction: column; gap: 4px; }
+.hamburger-menu span { width: 22px; height: 2px; border-radius: 2px; background: var(--ink); display: block; }
+
+/* --------------------------------
+   5) 상단 자산 카드
+--------------------------------- */
+.greeting-section {
+  background: #F0F3FE;
+  color: var(--ink);
+  padding: 22px 20px;
+  border-radius: calc(var(--radius) + 4px);
+  margin-bottom: 24px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--elev-1);
+}
+/* --- 자산 카드 내부 레이아웃 --- */
+.greeting-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; /* 상단 정렬 */
+  margin-bottom: 12px;
+}
+.greeting-title h2 { font-size: 18px; font-weight: 600; color: var(--muted); }
+.greeting-title .user-name { font-weight: 800; color: var(--ink); }
+.account-info {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 500;
+  margin-top: 4px;
+  min-height: 18px; /* 내용 없을 때 높이 유지 */
+}
+.asset-amount { font-size: 32px; font-weight: 800; margin: 4px 0 6px; letter-spacing: -0.02em; }
+.asset-details { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: var(--muted); gap: 10px; }
+.asset-details .positive { color: var(--positive); font-weight: 700; }
+.asset-details .negative { color: var(--negative); font-weight: 700; }
+
+.btn-details {
+  font-weight: 700; color: var(--ink);
+  background: rgba(17,24,39,0.04);
+  padding: 6px 12px; border-radius: 14px;
+  border: 1px solid rgba(17,24,39,0.08);
+  transition: background .2s ease, border-color .2s ease;
+}
+.btn-details:hover { background: rgba(17,24,39,0.06); border-color: rgba(17,24,39,0.12); }
+
+/* 계좌 없음(Empty State) 카드 스타일 */
+.empty-state-card { text-align: center; padding: 30px 20px; background: var(--surface-blue); border-radius: var(--radius); border: 1px solid var(--border-color); }
+.empty-state-card .icon { width: 52px; height: 52px; margin: 0 auto 12px; display: grid; place-items: center; border-radius: 50%; background: var(--white); color: var(--ink); box-shadow: 0 0 0 1px var(--border-color); }
+.empty-state-card .icon svg { width: 26px; height: 26px; stroke-width: var(--icon-stroke); }
+.empty-state-card h3 { font-size: 16px; font-weight: 800; color: var(--ink); margin-bottom: 8px; }
+.empty-state-card p { font-size: 14px; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
+.empty-state-card .btn-details { display: inline-block; background: var(--white); border-color: var(--white); box-shadow: var(--elev-1); }
+
+/* --- [신규] 계좌 타입 선택 드롭다운 --- */
+.account-type-selector { position: relative; }
+.account-type-selector select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background: var(--white);
+  padding: 6px 28px 6px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.account-type-selector::after {
+  content: '';
+  position: absolute; right: 10px; top: 50%;
+  transform: translateY(-50%);
+  width: 16px; height: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  pointer-events: none;
+}
+
+/* --------------------------------
+   6) 빠른 메뉴 ~ 9) 하단 내비 (변경 없음)
+--------------------------------- */
+.quick-menu { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; text-align: center; margin-bottom: 24px; }
+.menu-item { background: var(--white); padding: 14px 6px; border-radius: var(--radius); border: 1px solid var(--border-color); box-shadow: var(--elev-1); font-size: 13px; font-weight: 700; color: var(--ink); transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+.menu-item:hover { transform: translateY(-2px); box-shadow: var(--elev-2); border-color: #DEE5EF; }
+.menu-item .icon{ width: 44px; height: 44px; margin: 0 auto 8px; display: grid; place-items: center; border-radius: 12px; background: var(--icon-chip-bg); box-shadow: inset 0 0 0 1px var(--icon-chip-border); color: var(--ink); }
+.menu-item .icon svg{ width: var(--icon-size); height: var(--icon-size); stroke-width: var(--icon-stroke); }
+.promo-banner { display: flex; position: relative;
+  flex-direction: column;
+  align-items: flex-start; background: var(--surface-pink); color: var(--ink); padding: 20px; border-radius: calc(var(--radius) + 2px); margin-bottom: 24px; border: 1px solid var(--border-color); box-shadow: var(--elev-1); }
+.promo-banner h3 { font-size: 16px; font-weight: 900; margin-bottom: 10px; }
+.promo-banner p  { font-size: 14px; color: var(--muted); margin-bottom: 20px; }
+.btn-promo { background: rgba(17,24,39,0.05); align-self: flex-end; margin-top: 4px; color: var(--ink); padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(17,24,39,0.10); font-size: 13px; font-weight: 800; transition: background .2s ease, border-color .2s ease; }
+.btn-promo:hover { background: rgba(17,24,39,0.08); border-color: rgba(17,24,39,0.16); }
+.guide-section h3 { font-size: 15px; margin-bottom: 12px; padding-left: 4px; color: var(--ink); }
+.guide-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.guide-card { position: relative; display: block; padding: 18px; border-radius: var(--radius); border: 1px solid transparent; min-height: 120px; transition: all .2s ease; }
+.guide-card:hover { transform: translateY(-2px); box-shadow: var(--elev-1); border-color: rgba(0,0,0,0.05); }
+.guide-card .category { font-size: 13px; color: var(--muted); font-weight: 600; }
+.guide-card .title { font-size: 18px; font-weight: 800; color: var(--ink); margin-top: 4px; }
+.guide-card .icon-wrapper { position: absolute; bottom: 16px; right: 16px; color: var(--ink); opacity: 0.7; }
+.guide-card .icon-wrapper svg{ width: 28px; height: 28px; stroke-width: 1.5; }
+.guide-card.is-green-bg { background-color: var(--surface-yellow); }
+.guide-card.is-lilac-bg { background-color: var(--surface-lilac); }
+.bottom-nav { display: flex; justify-content: space-around; position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 420px; height: 66px; background: var(--white); border-top: 1px solid var(--border-color); box-shadow: 0 -6px 18px rgba(0,0,0,0.04); }
+.nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; flex-grow: 1; gap: 4px; position: relative; color: var(--muted); font-size: 12px; font-weight: 700; }
+.nav-item .icon svg{ width: var(--icon-size); height: var(--icon-size); stroke-width: var(--icon-stroke); }
+.nav-item.active { color: var(--ink); }
+
+@media (max-width: 375px){
+  .content{ padding: 18px 16px 96px; }
+  .asset-amount{ font-size: 28px; }
+  .menu-item{ padding: 12px 6px; }
+}
+
+/* --------------------------------
+   11) 사이드 내비 & 오버레이 (변경 없음)
+--------------------------------- */
+.overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); opacity: 0; visibility: hidden; transition: opacity 0.3s ease-in-out, visibility 0.3s; z-index: 199; }
+.overlay.show { opacity: 1; visibility: visible; }
+.side-nav { display: flex; flex-direction: column; position: fixed; top: 0; right: 0; width: 280px; height: 100%; background: var(--bg-color); box-shadow: var(--elev-2); transform: translateX(100%); transition: transform 0.3s ease-in-out; z-index: 200; }
+.side-nav.open { transform: translateX(0); }
+.side-nav-header { text-align: right; padding: 12px; }
+.close-btn { font-size: 32px; color: var(--muted); padding: 0 10px; }
+.side-nav ul { list-style: none; }
+.side-nav ul li a { display: block; padding: 16px 24px; font-size: 16px; font-weight: 700; border-bottom: 1px solid var(--border-color); transition: background .2s ease; }
+.side-nav ul li a:hover { background: #f9fafb; }
+  </style>
 </head>
 <body>
   <div class="mobile-container">
-    <!-- 오버레이 / 사이드내비 -->
     <div class="overlay"></div>
     <nav class="side-nav" aria-label="사이드 메뉴">
       <div class="side-nav-header">
@@ -16,15 +218,14 @@
       </div>
       <ul>
         <li><a href="#">마이페이지</a></li>
-        <li><a href="link-view/main">부부 IRP</a></li>
+        <li><a href="/link-view/main">부부 연동 IRP</a></li>
         <li><a href="#">이벤트</a></li>
         <li><a href="#">공지사항</a></li>
         <li><a href="#">고객센터</a></li>
-        <li><a href="#">로그아웃</a></li>
+        <li><a href="/login-view/logout-view">로그아웃</a></li>
       </ul>
     </nav>
 
-    <!-- 헤더 -->
     <header class="main-header">
       <img src="images/logo.png" alt="BNK 퇴직연금 로고" class="logo" />
       <button class="hamburger-menu" aria-label="메뉴 열기">
@@ -32,90 +233,204 @@
       </button>
     </header>
 
-    <!-- 본문 -->
-    <main class="content">
-      <!-- 상단 자산 카드 -->
-      <section class="greeting-section">
-        <h2><span class="user-name">홍길동</span>님의 퇴직연금</h2>
-        <p class="asset-amount">12,345,678원</p>
-        <div class="asset-details">
-          <span>어제보다 <span class="positive">+12,000원</span></span>
-          <a href="#" class="btn-details">자세히 보기</a>
-        </div>
-      </section>
+	<main class="content">
+	      <section class="greeting-section">
+	        <div class="greeting-header">
+	            <div class="greeting-title">
+	                <h2><span class="user-name"></span>님의 퇴직연금</h2>
+	                <p class="account-info"></p>
+	            </div>
+	            <div class="account-type-selector">
+	                <select id="accountTypeSelect" aria-label="계좌 유형 선택"></select>
+	            </div>
+	        </div>
+	        <p class="asset-amount">0원</p>
+	        <div class="asset-details">
+	          <span class="return-rate">수익률: -</span>
+	          <a href="/retention/accounts" class="btn-details">></a>
+	        </div>
+	      </section>
 
-      <!-- 빠른 메뉴 (SVG 아이콘) -->
       <section class="quick-menu" aria-label="빠른 메뉴">
-        <a href="irp/join/irp-join" class="menu-item">
-          <div class="icon"><i data-lucide="piggy-bank" aria-hidden="true"></i></div>
-          <span>IRP 가입</span>
-        </a>
-        <a href="#" class="menu-item">
-          <div class="icon"><i data-lucide="line-chart" aria-hidden="true"></i></div>
-          <span>상품 찾기</span>
-        </a>
-        <a href="#" class="menu-item">
-          <div class="icon"><i data-lucide="refresh-cw" aria-hidden="true"></i></div>
-          <span>상품 변경</span>
-        </a>
-        <a href="#" class="menu-item">
-          <div class="icon"><i data-lucide="message-square" aria-hidden="true"></i></div>
-          <span>퇴직연금 상담</span>
-        </a>
+        <a href="irp/join/irp-join" class="menu-item"> <div class="icon"><i data-lucide="piggy-bank" aria-hidden="true"></i></div> <span>IRP 가입</span> </a>
+        <a href="/purchase/products" class="menu-item"> <div class="icon"><i data-lucide="line-chart" aria-hidden="true"></i></div> <span>상품 구매</span> </a>
+        <a href="/retention/accounts" class="menu-item"> <div class="icon"><i data-lucide="refresh-cw" aria-hidden="true"></i></div> <span>보유현황</span> </a>
+        <a href="#" class="menu-item"> <div class="icon"><i data-lucide="message-square" aria-hidden="true"></i></div> <span>챗봇</span> </a>
       </section>
 
-      <!-- 프로모션 -->
-      <section class="promo-banner">
-        <h3>함께해서 더 든든한<br>BNK 부부연동 IRP</h3>
-        <p>배우자와 함께 관리하고 혜택도 두 배로!</p>
-        <a href="link-view/main" class="btn-promo">자세히 알아보기</a>
-      </section>
+	<section class="promo-banner">
+	  <div style="display:flex; flex-direction: column; align-items: flex-start;">
+	    <h3>함께해서 더 든든한<br>BNK 부부연동 IRP</h3>
+	    <p>배우자와 함께 관리하고 혜택도 두 배로!</p>
+	  </div>
+	  <a href="link-view/main" class="btn-promo" aria-label="자세히 알아보기">
+	    >
+	  </a>
+	  <!-- <img src="images/wedding.png" alt="결혼" style="position: absolute; bottom: 10px; right: 10px; width: 120px; height: auto;">  -->
+	</section>
 
-      <!-- 추천 상품 -->
-      <section class="info-section">
-        <h3>이런 상품 어떠세요?</h3>
-
-        <div class="info-card">
-          <h4>BNK 안정성장 TDF 2045</h4>
-          <p>은퇴 시점에 맞춰 자산을 자동으로 운용해주는 스마트한 펀드</p>
-          <div class="tags">
-            <span class="tag is-blue">#TDF</span>
-            <span class="tag is-ivory">#자동운용</span>
-            <span class="tag is-lilac">#장기투자</span>
-          </div>
-        </div>
-
-        <div class="info-card">
-          <h4>BNK 단기채권 플러스 펀드</h4>
-          <p>안정적인 국공채에 투자하여 꾸준한 수익을 추구하는 상품</p>
-          <div class="tags">
-            <span class="tag is-green">#안정형</span>
-            <span class="tag is-pink">#채권형</span>
-            <span class="tag is-ivory">#저위험</span>
-          </div>
+      <section class="guide-section">
+        <h3>퇴직연금 가이드</h3>
+        <div class="guide-grid">
+          <a href="#" class="guide-card is-green-bg"> <div> <span class="category">개인뱅킹</span> <h4 class="title">IRP 가이드</h4> </div> <div class="icon-wrapper"> <i data-lucide="file-search-2"></i> </div> </a>
+          <a href="#" class="guide-card is-lilac-bg"> <div> <span class="category">기업뱅킹</span> <h4 class="title">DC 가이드</h4> </div> </a>
         </div>
       </section>
     </main>
 
-    <!-- 하단 내비 (SVG 아이콘) -->
-    <nav class="bottom-nav" aria-label="하단 내비게이션">
-      <a href="#" class="nav-item active" aria-current="page">
-        <div class="icon"><i data-lucide="home"></i></div><span>홈</span>
-      </a>
-      <a href="/retain/holdings" class="nav-item">
-        <div class="icon"><i data-lucide="pie-chart"></i></div><span>보유현황</span>
-      </a>
-      <a href="#" class="nav-item">
-        <div class="icon"><i data-lucide="shopping-bag"></i></div><span>상품관리</span>
-      </a>
-      <a href="#" class="nav-item">
-        <div class="icon"><i data-lucide="building-2"></i></div><span>영업점</span>
-      </a>
+<!-- 
+	<nav class="bottom-nav" aria-label="하단 내비게이션">
+      <a href="#" class="nav-item active" aria-current="page"> <div class="icon"><i data-lucide="home"></i></div><span>홈</span> </a>
+      <a href="/retain/holdings" class="nav-item"> <div class="icon"><i data-lucide="pie-chart"></i></div><span>보유현황</span> </a>
+      <a href="#" class="nav-item"> <div class="icon"><i data-lucide="shopping-bag"></i></div><span>상품관리</span> </a>
+      <a href="#" class="nav-item"> <div class="icon"><i data-lucide="building-2"></i></div><span>영업점</span> </a>
     </nav>
+ -->
+  </div>
   </div>
 
-  <!-- Lucide (SVG 아이콘) -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="js/script.js"></script>
+  <script>
+  // 사이드 내비 토글
+	const hamburger = document.querySelector('.hamburger-menu');
+	const overlay = document.querySelector('.overlay');
+	const sideNav = document.querySelector('.side-nav');
+	const closeBtn = document.querySelector('.close-btn');
+	function openNav() { sideNav.classList.add('open'); overlay.classList.add('show'); }
+	function closeNav() { sideNav.classList.remove('open'); overlay.classList.remove('show'); }
+	hamburger?.addEventListener('click', openNav);
+	overlay?.addEventListener('click', closeNav);
+	closeBtn?.addEventListener('click', closeNav)
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (window.lucide?.createIcons) window.lucide.createIcons();
+  });
+
+  // 메인 스크립트
+(function () {
+    const $ = (sel) => document.querySelector(sel);
+    const fmtWon = (n) => Math.round(Number(n || 0)).toLocaleString("ko-KR") + "원";
+    const pctText = (v) => {
+      if (v == null || isNaN(v)) return "-";
+      const n = Number(v);
+      const sign = n > 0 ? "+" : (n < 0 ? "" : "");
+      return sign + n.toFixed(2) + "%";
+    };
+
+    // accounts-summary 가져오기
+    async function fetchAccountSummary() {
+
+       const res = await fetch("/api/retention/accounts-summary", { method: "GET" });
+       if (res.status === 401) { location.href = "/login-view/login"; return null; }
+       const j = await res.json();
+       if (j && j.ok) return j.data;
+       if (j && (j.userName || j.accounts)) return j;
+       throw new Error(j?.error || "요약 조회 실패");
+    }
+
+    // 선택 계좌 holdings로 수익률 계산 (fallback)
+    function renderNoAccount(state) {
+  	  const greetSection = $(".greeting-section");
+  	  if (!greetSection) return;
+  	  greetSection.innerHTML = `
+  	    <div class="empty-state-card"> <div class="icon"><i data-lucide="user-plus"></i></div> <h3>${state?.userName || '고객'}님, 반갑습니다!</h3> <p>아직 보유한 퇴직연금 계좌가 없으시네요.<br>지금 바로 IRP 계좌를 개설하고 시작해보세요.</p> <a href="irp/join/irp-join" class="btn-details">IRP 계좌 개설하기</a> </div>
+  	  `;
+  	  if(window.lucide) window.lucide.createIcons();
+  }
+
+  function renderWithAccounts(summary) {
+      const { userName, accounts = [] } = summary;
+      
+      // 1. 필요한 DOM 요소 선택
+      const nameEl = $(".user-name");
+      const accountInfoEl = $(".account-info");
+      const amtEl = $(".asset-amount");
+      const rateEl = $(".return-rate");
+      const selector = $("#accountTypeSelect");
+
+      if (nameEl) nameEl.textContent = userName;
+
+      // 2. 계좌 유형별로 데이터 그룹화 및 계산
+      const groupedData = accounts.reduce((acc, account) => {
+          const type = account.accountType;
+          if (!acc[type]) {
+              acc[type] = {
+                  totalBalance: 0,
+                  weightedSum: 0,
+                  accounts: []
+              };
+          }
+          const balance = Number(account.balance || 0);
+          const rate = Number(account.returnRate) || 0;
+          acc[type].totalBalance += balance;
+          acc[type].weightedSum += balance * rate;
+          acc[type].accounts.push(account);
+          return acc;
+      }, {});
+
+      // 3. 화면 업데이트 함수 정의
+      const updateDisplay = (type) => {
+          const data = groupedData[type];
+          if (!data) return;
+
+          // 가중 평균 수익률 계산
+          const weightedRate = data.totalBalance > 0 
+              ? data.weightedSum / data.totalBalance 
+              : 0;
+
+          // 대표 계좌 정보 표시 (첫 번째 계좌)
+          const representativeAccount = data.accounts[0];
+          if (accountInfoEl && representativeAccount) {
+              accountInfoEl.textContent = `${representativeAccount.displayName} (${representativeAccount.accountNo})`;
+          }
+
+          // 금액 및 수익률 표시
+          if (amtEl) amtEl.textContent = fmtWon(data.totalBalance);
+          if (rateEl) {
+              const cls = weightedRate > 0 ? "positive" : (weightedRate < 0 ? "negative" : "");
+              rateEl.innerHTML = `수익률: <span class="${cls}">${pctText(weightedRate)}</span>`;
+          }
+      };
+
+      // 4. 드롭다운 옵션 생성 및 이벤트 핸들러 연결
+      selector.innerHTML = Object.keys(groupedData).map(type => 
+          `<option value="${type}">${type}</option>`
+      ).join("");
+
+      selector.addEventListener('change', (e) => {
+          updateDisplay(e.target.value);
+      });
+
+      // 5. 초기 화면 표시 (첫 번째 계좌 유형으로)
+      if (Object.keys(groupedData).length > 0) {
+          const initialType = Object.keys(groupedData)[0];
+          updateDisplay(initialType);
+      }
+  }
+
+  async function init() {
+    try {
+      const summary = await fetchAccountSummary();
+      const accounts = summary?.data?.accounts || summary?.accounts || [];
+      
+      if (!accounts.length) {
+        renderNoAccount(summary?.data || summary);
+      } else {
+        renderWithAccounts(summary?.data || summary);
+      }
+      
+      if (window.lucide) window.lucide.createIcons();
+    } catch (e) {
+      console.error(e);
+      const greetSection = $(".greeting-section");
+      if(greetSection) {
+          greetSection.innerHTML = `<div style="text-align:center; padding: 20px;"><h4>데이터 조회 실패</h4><p style="color:var(--muted); font-size:14px; margin-top:8px;">서비스에 일시적인 오류가 발생했습니다.<br>잠시 후 다시 시도해주세요.</p></div>`;
+      }
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", init);
+})();
+</script>
 </body>
 </html>
