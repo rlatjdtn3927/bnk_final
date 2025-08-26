@@ -39,7 +39,7 @@ header p{color:#6b7280;font-size:13px}
   gap:20px;                /* 🔹 좌우 간격 살짝 넓힘 */
 }
 .doc-card .mt-2 {
-  margin-top:18px;         /* 위쪽 간격 확보 */
+  margin-top:24px;         /* 위쪽 간격 확보 */
   margin-bottom:10px;      /* 버튼과 체크박스 사이 띄움 */
   display:flex;
   gap:12px;                /* 버튼 간격 넓힘 */
@@ -99,6 +99,10 @@ section.bg-white.rounded-2xl{
   border:1px solid #eee;
   border-radius:16px;
   box-shadow:0 4px 12px rgba(0,0,0,.03);
+}
+
+#consentForm .flex {
+  margin-top: 20px;   /* 🔹 버튼 박스 위쪽 여백 추가 */
 }
 
 /* 하단 버튼 */
@@ -224,7 +228,6 @@ a.px-4:active{transform:translateY(1px)}
           <div class="font-semibold">${escapeHtml(prodName)}
             ${docType? ' | <span class="muted">'+escapeHtml(docType)+'</span>':''}
           </div>
-          <div class="muted mt-1 break-all">${escapeHtml(fileUrl)}</div>
           <div class="mt-2 flex gap-2">
             ${fileUrl ? `
               <a href="${href}" target="_blank" rel="noopener">미리보기</a>
