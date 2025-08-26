@@ -25,6 +25,7 @@ import com.example.memo.purchase.trade_common.dto.ChangeValueDto;
 import com.example.memo.tcp_common.Command;
 import com.example.memo.tcp_common.TcpClientService;
 import com.example.memo.tcp_common.TcpMessage;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -83,15 +84,16 @@ public class ChangeRetainAPIController {
 	    return ResponseEntity.ok(Map.of("userInfo", userInfo));
 	}
 
-    /** 보유/이미 선택된 상품 목록(운용비율 포함) */
+    /** 보유/이미 선택된 상품 목록(운용비율 포함) 
+     * @throws JsonProcessingException */
 	@PostMapping("/retain")
-    public ResponseEntity<?> retainList(@RequestParam("accountType") String accountType, @RequestParam("accountId") String accountId) {
+    public ResponseEntity<?> retainList(@RequestParam("accountType") String accountType, @RequestParam("accountId") String accountId) throws JsonProcessingException {
     	
     	RetainHoldingsDto dto = new RetainHoldingsDto(accountType,accountId);
     	JsonNode msg = mapper.valueToTree(dto);
     	TcpMessage message = new TcpMessage(Command.CHANGE_GET_HOLDINGS, msg);
     	JsonNode response = tcpClientService.sendMessage(message);
-        System.out.println(response.toString()); //여기서 받아온 데이터 형식 확인하십쇼
+        System.out.println(mapper.writeValueAsString(response)); //여기서 받아온 데이터 형식 확인하십쇼
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }
