@@ -42,7 +42,7 @@ public class AccountService {
                 .memberName(member.getName())
                 .birthDate(birthDate)
                 .memberStatus(memberStatus.getStatus()) // 재직 상태
-                .startDate(memberStatus.getJoinDate().toString()) // 입사일
+                .startDate(member.getStartDate().toString()) // 입사일
                 .annualSalary(member.getAnnualSalary()) // 연봉
                 .build();
     }
@@ -52,7 +52,7 @@ public class AccountService {
         if (rrn == null || rrn.length() < 8) return "";
         
         String birthPart = rrn.substring(0, 6);
-        char genderDigit = rrn.charAt(7);
+        char genderDigit = rrn.charAt(6);
         String yearPrefix;
         
 
