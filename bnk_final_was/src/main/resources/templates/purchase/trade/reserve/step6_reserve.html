@@ -6,9 +6,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>STEP6. 완료</title>
 <style>
-/* ===== 레이아웃 기본 ===== */
+/* ===== 레이아웃 ===== */
 html, body { height:100%; }
-body{ font-family:'Pretendard',sans-serif; margin:0; color:#222;}
+body{ font-family:'Pretendard',sans-serif; margin:0; color:#222; background:#f9fafb;}
 .layout{ height:100vh; display:flex; flex-direction:column; }
 
 /* 헤더 고정 */
@@ -22,49 +22,59 @@ body{ font-family:'Pretendard',sans-serif; margin:0; color:#222;}
 
 /* 섹션/카드 */
 .section{ max-width:960px; margin:0 auto; padding:12px 16px 28px; }
-.section h1{ font-size:20px; font-weight:700; margin:8px 0 4px; }
-.muted{ color:#6b7280; }
+.section h1{ font-size:20px; font-weight:700; margin:8px 0 12px; }
+.muted{ color:#6b7280; font-size:14px; }
 
 .card{
   background:#fff; border:1px solid #f0f0f0; border-radius:18px;
-  padding:20px; box-shadow:0 8px 16px rgba(0,0,0,.03);
-  
+  padding:20px; box-shadow:0 4px 8px rgba(0,0,0,.03);
 }
-.banner{ display:none; margin:12px 0 16px; padding:10px 12px; border-radius:10px;
-  border:1px solid #fde68a; background:#fffbeb; color:#92400e; 
-  margin-bottom: 25px;  
-}
+.card > div:first-child { font-weight:700; margin-bottom:12px; font-size:16px; }
 
-/* 카드 내 “적용하기” — 작은 버튼 */
-.row-actions{ margin-top:12px; display:flex; justify-content:flex-end; }
+/* 항목 스타일 */
+.row{ margin-bottom:16px; }
+.row:last-child{ margin-bottom:0; }
+.name{ font-size:15px; font-weight:600; }
+.ratio{ font-weight:700; font-size:15px; margin-top:4px; text-align:right; }
+
+/* progress bar */
+.bar-wrap{width:100%; background:#f3f4f6; height:8px; border-radius:6px; overflow:hidden; margin-top:6px;}
+.bar{height:100%; background:#3b82f6; border-radius:6px;}
+
+/* 작은 버튼 (적용) */
+.row-actions{ margin-top:16px; display:flex; justify-content:flex-end; }
 .btn{ display:inline-flex; align-items:center; justify-content:center; cursor:pointer; user-select:none; }
 .btn-primary{
   height:38px; padding:0 16px; border-radius:10px; border:none;
   background:#fff3f3; color:#f85151; font-weight:700; font-size:14px;
-  border:1px solid #f85151; 
+  border:1px solid #f85151; transition:all .2s ease;
 }
 .btn-primary:hover{ filter:brightness(.98); }
 
-/* ===== 하단 고정 버튼바 (보유현황으로 1개) ===== */
+/* 하단 고정 버튼 (보유현황으로) */
 .actions{
   position:fixed; left:0; right:0; bottom:0; z-index:1100;
   background:#fff; border-top:1px solid #eee;
   padding:14px 16px 22px; margin:0 auto;
   max-width:960px; display:grid; grid-template-columns:1fr; gap:12px;
-  margin-bottom: 20px;
 }
-.actions .btn,
 .actions a{
   display:flex; align-items:center; justify-content:center;
   height:56px; border-radius:14px; font-size:18px; font-weight:700;
-  text-decoration:none; border:none; color:#fff; background:#f85151; /* 회색 버튼 */
+  text-decoration:none; color:#fff; background:#f85151;
 }
 
-/* 필요 시 iOS 안전영역 */
+/* 반응형 */
+@media (max-width:500px){
+  .page-title{ font-size:18px; }
+  .section h1{ font-size:18px; }
+  .card > div:first-child { font-size:15px; }
+  .name{ font-size:14px; }
+  .ratio{ font-size:14px; }
+}
 @supports(padding:max(0px)){
   .actions{ padding-bottom:max(22px, env(safe-area-inset-bottom)); }
 }
-
 </style>
 </head>
 <body>
@@ -82,7 +92,6 @@ body{ font-family:'Pretendard',sans-serif; margin:0; color:#222;}
 
 	<div class="section">
 	  <h1>완료</h1>
-	  <div class="muted" th:text="'FLOW: ' + (${session['ReserveValueDto']?.flow} ?: '-')">FLOW</div>
 	
 	  <!-- 세션 JSON 원문(escape 없이) -->
 	  <script id="json-source" type="application/json"
@@ -93,7 +102,7 @@ body{ font-family:'Pretendard',sans-serif; margin:0; color:#222;}
 	  <div id="sumBanner" class="banner" style="display:none"></div>
 	
 	  <section class="card">
-	    <div style="font-weight:700;margin-bottom:6px">적용 내역 (RESERVE)</div>
+	    <div style="font-weight:700;margin-bottom:6px">적용 내역</div>
 	    <div id="afterList">
 	      <div class="muted">표시할 항목이 없습니다.</div>
 	    </div>
@@ -150,11 +159,6 @@ body{ font-family:'Pretendard',sans-serif; margin:0; color:#222;}
       </div>
     `).join("");
   }
-
-  sumBanner.style.display = 'block';
-  sumBanner.textContent = (sum > 100)
-    ? `설정 비율 합계가 ${sum}% 입니다. 100%를 초과했습니다.`
-    : `설정 비율 합계는 ${sum}% 입니다. ${cash>0 ? '현금성자산으로 ' + cash + '% 자동 보정되었습니다.' : '합계 100%입니다.'}`;
 
   // 적용 버튼 → AP 호출
   $("applyBtn").addEventListener("click", async ()=>{

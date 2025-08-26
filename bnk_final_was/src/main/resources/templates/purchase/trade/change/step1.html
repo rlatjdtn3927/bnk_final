@@ -28,11 +28,6 @@
     <div class="section">
     	<h1>계좌 선택</h1>
     	<!-- ✅ 삼항 연산자만 사용 -->
-    	<div class="flow-badge"
-       		th:text="${session.ChangeValueDto?.flow} ?: 'FLOW 미지정'">FLOW 미지정</div>
-
-    	<p class="subtle mt-4">IRP는 필수이며, DC 계좌가 있으면 선택할 수 있습니다.</p>
-
     	<!-- IRP 없을 때 안내 -->
 	    <div class="banner warn" th:classappend="${session.hasIrp} ? '' : ' show'">
 	      IRP 계좌가 없습니다. 먼저 IRP를 개설해주세요.
@@ -117,7 +112,6 @@
         <button id="nextBtn" type="submit" class="btn btn-primary row-right" disabled>다음</button>
       </form>
 
-      <div class="subtle mt-4">* IRP가 없으면 먼저 IRP를 개설해야 다음 단계로 진행할 수 있습니다.</div>
     </div>
   </main> <!-- content -->
 </div> <!-- layout -->

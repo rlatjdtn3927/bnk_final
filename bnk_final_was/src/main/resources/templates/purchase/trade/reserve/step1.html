@@ -5,47 +5,154 @@
   <title>계좌 선택 - Step 1</title>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <style>
-    :root{
-      --bg:#f5f5f7;--fg:#111827;--muted:#6b7280;--brand:#b30000;
-      --primary:#ffd6d6;--primary-600:#ffb3b3;
-      --border:#e5e7eb;--ring:#ffd6d6;
-      --warn-bg:#fffbeb;--warn-fg:#92400e;--warn-bd:#fde68a;
-      --err-bg:#fef2f2;--err-fg:#991b1b;--err-bd:#fecaca
-    }
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
-    .container{max-width:1000px;margin:0 auto;padding:16px 16px 40px}
-    .header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;flex-wrap:wrap}
-    .brand{font-weight:700;color:var(--brand)}
-    .tabs{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
-    .tab{padding:8px 12px;border-radius:10px;border:1px solid transparent;text-decoration:none;color:#374151}
-    .tab:hover{background:#f3f4f6}
-    .tab.active{border-color:var(--border);background:#fff;font-weight:600}
-    h1{font-size:22px;margin:18px 0 8px}
-    .flow-badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;background:#e5f0ff;color:#1e40af;font-size:12px}
-    .subtle{font-size:12px;color:var(--muted)}
-    .mt-8{margin-top:24px}.mt-4{margin-top:12px}
-    .row{display:flex;gap:10px;align-items:center}
-    .row-right{margin-left:auto}
-    .grid{display:grid;grid-template-columns:1fr;gap:16px}
-    @media(min-width:769px){.grid{grid-template-columns:1fr 1fr}}
-    .card{background:#fff;border-radius:16px;border:1px solid var(--border);box-shadow:0 1px 2px rgba(0,0,0,.04);padding:16px}
-    .card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-    .badge{font-size:11px;background:#f3f4f6;padding:2px 8px;border-radius:999px;color:#374151}
-    .radio{display:flex;align-items:center;gap:12px}
-    .radio-card{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--border);border-radius:12px;padding:12px 14px;cursor:pointer;transition:background .15s,border-color .15s,box-shadow .15s;margin-bottom:8px}
-    .radio-card:hover{background:#f9fafb}
-    .radio-card.selected{border-color:var(--ring);box-shadow:0 0 0 3px rgba(255,214,214,.4)}
-    .radio-card.disabled{opacity:.6;cursor:not-allowed}
-    .title-sm{font-size:14px;font-weight:600}
-    .banner{display:none;margin:12px 0;padding:10px 12px;border-radius:10px;border:1px solid}
-    .banner.show{display:block}
-    .banner.warn{background:var(--warn-bg);color:var(--warn-fg);border-color:var(--warn-bd)}
-    .btn{appearance:none;border:0;border-radius:12px;padding:10px 16px;cursor:pointer;font-weight:600}
-    .btn-link{background:transparent;color:#374151;text-decoration:underline}
-    .btn-primary{background:var(--primary);color:#111827}
-    .btn-primary:hover{background:var(--primary-600)}
-    .btn[disabled]{opacity:.4;cursor:not-allowed}
+  body{
+    font-family: 'Pretendard', sans-serif;
+    margin:0; padding:0;
+    color:#222; background:#f5f5f7;
+  }
+  html, body { height:100%; }
+
+  .layout { 
+    height:100vh; display:flex; flex-direction:column; background:#fff;
+  }
+
+  .container{
+    max-width:960px;
+    margin:0 auto;
+    padding:16px;              /* ⬅️ 화면 전체 여백은 여기서만 */
+  }
+  /* 상단/하단 고정 */
+  .header-wrap, .footer { flex:0 0 auto; background:#fff; }
+  .footer { border-top:1px solid #eee; padding:12px 16px; }
+
+  /* 본문 스크롤 */
+  .content {
+    flex:1 1 auto;
+    overflow:auto;
+    min-height:0;
+    -webkit-overflow-scrolling: touch;
+  }
+  .header {
+    padding:14px 16px;
+    display:flex; flex-direction:column;
+  }
+  .brand{
+    font-size:22px; font-weight:700; color:#D93C3C;
+  }
+  .tabs{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
+  .tab{ padding:8px 12px; border-radius:10px; border:1px solid transparent; text-decoration:none; color:#374151; font-size:14px;}
+  .tab:hover{ background:#f3f4f6; }
+  .tab.active{ border-color:#e5e7eb; background:#fff; font-weight:600; }
+
+  /* 페이지 제목 */
+  .page-title{ font-size:20px; font-weight:600; margin:20px 0 8px; }
+
+  /* 제목 아래 구분선 */
+  .divider{ height:4px; background:#eee; border-radius:1px; }
+
+  /* ===== 섹션/카드 ===== */
+  .section { max-width:420px; margin:0 auto; padding:12px 16px; margin-bottom:30px; }
+  .section h1{ font-size:18px; font-weight:700; margin:20px 0 6px; }
+  .subtle{ color:#6b7280; font-size:13.5px; }
+  .mt-4{ margin-top:10px; } .mt-8{ margin-top:32px; }
+
+  /* 배너 */
+  .banner{
+    display:none; margin-top:12px; background:#fff7ed; border:1px solid #ffedd5;
+    color:#9a3412; padding:12px 14px; border-radius:12px;
+    box-shadow:0 4px 8px rgba(0,0,0,.04);
+  }
+  .banner.show{ display:block; }
+
+  /* 그리드 */
+  .grid{ display:grid; gap:28px; grid-template-columns:1fr; }
+  @media(min-width:760px){ .grid{ grid-template-columns:1fr 1fr; } }
+
+  .card{
+    background:#fff; border:1px solid #f0f0f0; border-radius:18px;
+    padding:28px 20px;
+    box-shadow:0 10px 20px rgba(0,0,0,.04);
+  }
+  .card-head{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .title-sm{ font-size:14px; font-weight:600; }
+
+  /* 라디오 카드 */
+  .radio-card{
+    display:flex; align-items:center; justify-content:space-between; gap:14px;
+    border:1px solid #e5e7eb; background:#fff;
+    padding:14px 16px; border-radius:14px; margin-top:20px;
+    transition:.2s;
+  }
+  .radio-card:hover{ border-color:#cbd5e1; }
+  .radio-card.disabled{ opacity:.6; pointer-events:none; }
+  .radio-card.selected{ border-color:#222; box-shadow:0 0 0 2px rgba(0,0,0,.1); }
+
+  .radio{ display:flex; align-items:center; gap:12px; }
+  .radio input[type="radio"]{
+    appearance:none; -webkit-appearance:none;
+    width:18px; height:18px; border:2px solid #9ca3af;
+    border-radius:50%; background:#fff; position:relative; cursor:pointer;
+  }
+  .radio input[type="radio"]:checked{ border-color:#111; }
+  .radio input[type="radio"]:checked::after{
+    content:""; position:absolute; inset:3px; background:#111; border-radius:50%;
+  }
+
+  /* 뱃지 */
+  .badge{
+    display:inline-flex; align-items:center; justify-content:center;
+    height:28px; padding:0 12px; font-size:12px; font-weight:700;
+    color:#f85151; background:#fff3f3; border:1px solid #fff3f3; border-radius:15px;
+  }
+
+  /* 버튼 영역 */
+  form#acctForm{ max-width:960px; margin:0 auto; padding:0 20px; }
+  .row{ display:flex; gap:12px; align-items:center; }
+  .row-right{ margin-left:auto; }
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center;
+    height:40px; padding:0 16px; border-radius:12px;
+    font-weight:700; font-size:14px; border:1px solid transparent;
+    cursor:pointer; user-select:none; transition:.15s;
+  }
+  .btn:disabled{ opacity:.5; cursor:not-allowed; }
+  .btn-primary{ background:#f85151; color:#fff; }
+  .btn-primary:hover{ background:#e04444; }
+  .btn-link{ background:#8d94a6; color:#fff; text-decoration:none; }
+  .btn-link:hover{ background:#6e7488; }
+
+  /* 하단 고정 버튼바 */
+  .footer{
+    position:fixed; bottom:0; left:0; right:0;
+    background:#fff; border-top:1px solid #eee;
+    z-index:1000;
+    padding:20px 16px 40px !important;
+    display:flex; gap:12px; max-width:960px; margin:0 auto;
+  }
+  .footer .btn{
+    flex:1; height:auto; padding:14px 0;
+    font-size:18px; font-weight:700; box-shadow:0 6px 18px rgba(0,0,0,.08);
+    border:none; text-align:center;
+  }
+  .footer .btn[disabled]{ opacity:.6; box-shadow:none; cursor:not-allowed; }
+
+  /* 본문이 가려지지 않도록 */
+  .content{ padding-bottom:100px; }
+
+  /* 인풋 */
+  input[type="text"], input[type="date"], select{
+    width:100%; height:44px; border-radius:12px; border:1px solid #e5e7eb; padding:0 12px;
+    font-size:14px; outline:none; background:#fff; box-sizing:border-box;
+  }
+  input[type="text"]:focus, input[type="date"]:focus, select:focus{
+    border-color:#c7d2fe; box-shadow:0 0 0 3px rgba(99,102,241,.15);
+  }
+
+  /* 테이블 */
+  table{ width:100%; border-collapse:separate; border-spacing:0; margin-top:14px; }
+  th, td{ text-align:left; padding:12px 14px; }
+  th{ background:#f8fafc; color:#111; border-bottom:1px solid #e5e7eb; font-weight:800; }
+  td{ border-bottom:1px solid #f1f5f9; color:#374151; }
   </style>
 </head>
 <body>
@@ -59,13 +166,7 @@
 
 <div class="container">
   <h1>계좌 선택</h1>
-
-  <!-- ✅ 삼항 연산자만 사용 -->
-  <div class="flow-badge"
-       th:text="${session.ReserveValueDto?.flow} ?: 'FLOW 미지정'">FLOW 미지정</div>
-
-  <p class="subtle mt-4">IRP는 필수이며, DC 계좌가 있으면 선택할 수 있습니다.</p>
-
+  
   <!-- IRP 없을 때 안내 -->
   <div class="banner warn" th:classappend="${session.hasIrp} ? '' : ' show'">
     IRP 계좌가 없습니다. 먼저 IRP를 개설해주세요.
@@ -149,8 +250,6 @@
     <a th:href="@{/purchase/holdings}" class="btn btn-link">이전</a>
     <button id="nextBtn" type="submit" class="btn btn-primary row-right" disabled>다음</button>
   </form>
-
-  <div class="subtle mt-4">* IRP가 없으면 먼저 IRP를 개설해야 다음 단계로 진행할 수 있습니다.</div>
 </div>
 
 <script>

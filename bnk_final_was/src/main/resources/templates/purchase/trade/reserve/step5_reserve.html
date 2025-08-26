@@ -11,11 +11,11 @@ html, body { height:100%; }
 body{
   font-family:'Pretendard', sans-serif;
   margin:0; padding:0;
-  color:#222; 
+  color:#222; background:#f9fafb;
 }
 .layout{ height:100vh; display:flex; flex-direction:column; }
 
-/* ===== 헤더: 화면 상단 고정 ===== */
+/* ===== 헤더 ===== */
 .header-wrap{
   position:sticky; top:0; z-index:1000;
   background:#fff; border-bottom:1px solid #eee;
@@ -23,37 +23,43 @@ body{
 .header{ max-width:960px; margin:0 auto; padding:14px 16px; }
 .page-title{ font-size:20px; font-weight:700; margin:6px 0; }
 
-/* ===== 본문(.content)만 스크롤 ===== */
+/* ===== 본문 ===== */
 .content{
   flex:1 1 auto;
   overflow:auto;
   min-height:0;
   -webkit-overflow-scrolling:touch;
-  padding-bottom:120px;          /* 하단 고정 버튼과 겹치지 않도록 */
+  padding-bottom:120px;          
 }
 .divider{ height:4px; background:#eee; border-radius:1px; }
 
-/* ===== 섹션/카드 톤 ===== */
+/* ===== 카드 ===== */
 .section{ max-width:960px; margin:0 auto; padding:12px 16px }
-.grid{ 
-  display:grid; 
-  gap:28px; 
-  grid-template-columns:1fr; 
-}
+.grid{ display:grid; gap:28px; grid-template-columns:1fr; }
 @media (min-width:760px){ .grid{ grid-template-columns:1fr 1fr; } }
 
 .card{
   background:#fff; border:1px solid #f0f0f0; border-radius:18px;
   padding:24px 20px;
-  box-shadow:0 8px 10px rgba(0,0,0,.02);
+  box-shadow:0 4px 8px rgba(0,0,0,.03);
 }
-.card h3{ margin:0 0 8px; font-size:16px; font-weight:800; }
-.muted{ color:#6b7280; }
+.card h3{ margin:0 0 16px; font-size:17px; font-weight:800; }
+.muted{ color:#6b7280; font-size:14px; }
 
-.section h1 {
-  font-size: 20px;
-  font-weight: 700;
-}
+/* ===== 리스트 항목 ===== */
+.row{ margin-bottom:16px; }
+.row:last-child{ margin-bottom:0; }
+.name{ font-size:15px; font-weight:600; }
+.ratio{ font-weight:700; font-size:15px; margin-top:4px; text-align:right; }
+.ratio.up{ color:#dc2626; }    
+.ratio.down{ color:#2563eb; }
+
+/* ===== progress bar ===== */
+.bar-wrap{width:100%; background:#f3f4f6; height:8px; border-radius:6px; overflow:hidden; margin-top:6px;}
+.bar{height:100%; background:#3b82f6; border-radius:6px;}
+
+/* ===== 안내 배너 ===== */
+.section h1 { font-size: 20px; font-weight: 700; }
 .banner{
   padding:10px 12px;
   border-radius:10px;
@@ -61,49 +67,44 @@ body{
   background:#fffbeb;
   color:#92400e;
   margin-bottom: 25px;
+  font-size:14px;
 }
 
-/* 하단 버튼바: 2등분 그리드에서 form 래퍼 영향 제거 */
+/* ===== 버튼바 ===== */
 .actions{
   position:fixed; left:0; right:0; bottom:0; z-index:1100;
   background:#fff; border-top:1px solid #eee;
   padding:14px 16px 30px;
   display:grid; grid-template-columns:1fr 1fr; gap:12px;
   max-width:960px; margin:0 auto;
-  align-items:stretch;                 /* 각 셀 높이 동일 */
 }
-.actions > *{ margin:0; }
-
-/* form이 그리드 아이템처럼 동작하도록 */
-.actions form{ display:contents; }     /* ← 핵심: form 래퍼 제거 효과 */
-
-/* 버튼 공통 크기/모양 동일화 */
+.actions form{ display:contents; }
 .actions .btn{
   width:100%; height:56px;
   border-radius:14px; font-size:17px; font-weight:700;
   display:flex; align-items:center; justify-content:center;
-  border:none; box-shadow:none; padding:0;
-  margin-bottom: 20px;
+  border:none; padding:0;
 }
-/* 왼쪽: div.btn 안의 <a>를 버튼처럼 100% 채우기 */
-.actions .btn.btn-link{ padding:0; }
+.actions .btn.btn-link{ background:#8d94a6; color:#fff; }
 .actions .btn.btn-link > a{
   display:flex; align-items:center; justify-content:center;
   width:100%; height:100%;
   border-radius:inherit; text-decoration:none; color:#fff;
 }
-
-/* 색상 (회색/빨강) */
-.actions .btn-link{ background:#8d94a6; color:#fff; }
 .actions .btn-primary{ background:#f85151; color:#fff; }
-.actions .btn:disabled{ opacity:.6; cursor:not-allowed; }
 
-
-/* 모바일 안전영역(iOS) 대응 */
+/* ===== 모바일 대응 ===== */
+@media (max-width:500px){
+  .page-title{ font-size:18px; }
+  .card h3{ font-size:15px; }
+  .name{ font-size:14px; }
+  .ratio{ font-size:14px; }
+}
 @supports (padding: max(0px)){
   .actions{ padding-bottom:max(22px, env(safe-area-inset-bottom)); }
 }
 </style>
+
 </head>
 <body>
 
@@ -224,10 +225,6 @@ body{
     }
 
     // 배너 안내
-    banner.style.display = 'block';
-    banner.textContent = (sum > 100)
-      ? `설정 비율 합계가 ${sum}% 입니다. 100%를 초과했습니다.`
-      : `설정 비율 합계는 ${sum}% 입니다. ${cash>0 ? '현금성자산으로 ' + cash + '%가 자동 배정됩니다.' : '합계 100%로 설정되었습니다.'}`;
   }
 
   // ---------------- 변경 전 렌더링 ----------------
