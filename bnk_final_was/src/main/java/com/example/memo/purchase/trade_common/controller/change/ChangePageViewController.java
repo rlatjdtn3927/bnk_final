@@ -125,7 +125,10 @@ public class ChangePageViewController {
 	 }	
 	 /** Step4 - 서류 동의 */
 	    @GetMapping("/step4/docs")
-	    public String step4Docs() {
+	    public String step4Docs(HttpSession session) {
+	    	ChangeValueDto dto = (ChangeValueDto) session.getAttribute("ChangeValueDto");
+	    	if (dto == null) dto = new ChangeValueDto();
+	    	session.setAttribute("ChangeValueDto", dto);
 	        return "purchase/trade/change/step4_docs";
 	    }
 	    
