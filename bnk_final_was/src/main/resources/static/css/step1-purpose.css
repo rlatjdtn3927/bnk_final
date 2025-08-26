@@ -5,10 +5,18 @@ body{
   color: #222;
 }
 
+/* ===== 헤더 상단 고정 ===== */
+.header-wrap{
+  position:sticky; top:0; z-index:1000;
+  background:#fff; border-bottom:3px solid #eee;
+}
+.header{ max-width:960px; margin:0 auto; padding:14px 16px; }
+.page-title{ font-size:20px; font-weight:700; margin:6px 0; }
+
 .section {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: 20px 20px;
   margin-bottom: 60px;
 }
 
@@ -61,43 +69,40 @@ body{
   padding:20px 24px;
   border:0;
   cursor:pointer;
-  box-shadow:0 6px 16px rgba(0,0,0,.08);
+ 
   transition:transform .15s ease, box-shadow .15s ease;
 }
 
 
 .purpose-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 22px rgba(0,0,0,.12);
+  transform: translateY(-1px); 
 }
 
 .purpose-card:focus {
-  outline: 3px solid rgba(0,0,0,.15);
+  outline: 3px solid rgba(0,0,0,.2);
 }
 
 .purpose--tax {
-  background: linear-gradient(135deg,#cce2f7 0%,#bcd7f3 40%,#a9c9ee 100%);
+  background: #eaf3ff;
+  border: 1px solid #93c5fd;
+  color: #42516B;
 }
 
 .purpose--retire {
-  background: linear-gradient(135deg,#9ddaa8 0%,#86d199 35%,#71c989 100%);
+  background: #fff3f3;
+  border: 1px solid #ffd6d6;
+  color: #42516B;
 }
 
 .purpose-icon {
-  width: 84px;
-  height: 84px;
-  background: #fff;
+  width: 100px;
+  height: 100px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 10px rgba(0,0,0,.08);
-  flex: 0 0 84px;
-  margin-left: 22px;
-}
 
-.purpose-text {
-  margin-left: 28px;
+  margin-left: 22px;
 }
 
 .purpose-text .title {
@@ -138,8 +143,15 @@ body{
     height: 120px;
     padding:16px;
   }
-  .purpose-icon{ width:68px; height:68px; flex-basis:68px; }
+  
   .purpose-text .title{ font-size:17px; }
   .purpose-text .caption{ font-size:15px;}
+}
+
+.purpose-text .title,
+.purpose-text .caption {
+  white-space: nowrap;   /* 줄바꿈 방지 */
+  overflow: hidden;      /* 넘치면 잘라내기 */
+  text-overflow: ellipsis; /* 너무 길면 … 처리 */
 }
 

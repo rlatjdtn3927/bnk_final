@@ -13,6 +13,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TcpMessage {
+	
     private Command command;
     private JsonNode data;
     

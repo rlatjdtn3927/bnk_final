@@ -7,3 +7,5 @@ public interface TcpMessageHandler {
     boolean supports(Command command);
     Object handle(Command command, JsonNode data);
 }
+
+

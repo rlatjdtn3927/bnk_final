@@ -63,6 +63,7 @@ public class IrpJoinService {
 	//step1 : 가입목적 선택(userId, joinPurpose만 저장)
 	@Transactional
     public Long createDraft(Long userId, String joinPurpose) {
+		System.out.println(userId);
         UserEntity user = userRepository.findById(userId).orElseThrow();
         
         // 1) 이미 진행중인 DRAFT/PENDING이 있으면 그걸 바로 재사용 (joinId 변하지 않음)
