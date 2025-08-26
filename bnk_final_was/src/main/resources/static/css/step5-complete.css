@@ -18,7 +18,6 @@ h1{
   font-size:28px;
   font-weight:700;
   margin-bottom:30px;
-  color:#1b3a6b;
 }
 
 /* Step Bar (step3와 동일 톤) */
@@ -45,7 +44,7 @@ h1{
 }
 .step-bar li:last-child{ border-right:none; }
 .step-bar li.active{
-  background:#204f9b;
+  background:#f85151;
   color:#fff;
 }
 
@@ -64,7 +63,6 @@ h1{
   font-weight:700;
   border-bottom:1px solid #e6eef6;
   background:#f5f8fc;
-  color:#1b3a6b;
 }
 .card__body{ padding:24px 20px; }
 
@@ -82,7 +80,6 @@ h1{
   font-size:15px;
   font-weight:700;
   margin-bottom:6px;
-  color:#243a63;
 }
 .input{
   width:100%;
@@ -98,7 +95,6 @@ h1{
 .input:focus{
   outline:0;
   border-color:#9bb7e6;
-  box-shadow:0 0 0 3px rgba(51,102,204,.15);
 }
 
 /* Help text */
@@ -121,7 +117,6 @@ h1{
 }
 .kv th{
   width:160px;
-  color:#455a7a;
   background:#f7f9fd;
   font-weight:600;
 }
@@ -131,7 +126,7 @@ h1{
 #btnComplete{
   padding:10px 22px;
   border-radius:8px;
-  background:#1e4e9e;
+  background:#f85151;
   color:#fff;
   border:none;
   font-weight:700;
@@ -139,7 +134,7 @@ h1{
   box-shadow:0 4px 10px rgba(0,0,0,.08); /* step3 버튼 느낌 유지 */
 }
 #btnComplete:hover{ 
-  background:#1a458e; 
+  background:#e04444; 
 }
 
 /* Responsive */
@@ -214,7 +209,6 @@ h1{
   font-size: 18px;
   font-weight: 700;
   margin-bottom: 8px;
-  color: #1b3a6b;
   white-space: nowrap;   /* 줄바꿈 방지 */
 }
 
