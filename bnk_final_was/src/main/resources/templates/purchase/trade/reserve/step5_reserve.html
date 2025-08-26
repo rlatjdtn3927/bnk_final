@@ -2,75 +2,163 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
-  <meta charset="UTF-8"/>
-  <title>Step 5. 비교·확인</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <style>
-    :root{--bg:#f6f7fb;--fg:#111827;--muted:#6b7280;--brand:#b30000;--border:#e5e7eb;--chip:#f3f4f6}
-    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
-    .container{max-width:1000px;margin:0 auto;padding:16px 16px 36px}
-    .header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#fff;border-bottom:1px solid var(--border)}
-    .brand{font-weight:700;color:var(--brand)}
-    h1{font-size:22px;margin:20px 0 8px}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    @media(max-width:768px){.grid{grid-template-columns:1fr}}
-    .card{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden}
-    .card h3{margin:0;padding:12px 14px;border-bottom:1px solid var(--border);font-size:16px}
-    .list{padding:10px 14px}
-    .row{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border);border-radius:10px;margin:8px 0;padding:10px 12px;background:#fafafa}
-    .name{font-weight:600}
-    .ratio{font-size:12px;background:#fff2f2;border:1px solid #ffe1e1;border-radius:999px;padding:2px 8px}
-    .muted{color:var(--muted);font-size:13px}
-    .banner{margin:12px 0;padding:10px 12px;border-radius:10px;border:1px solid #fde68a;background:#fffbeb;color:#92400e}
-    .row .chip{margin-left:8px;background:var(--chip);border:1px solid var(--border);border-radius:999px;padding:2px 8px;font-size:11px;color:#374151}
-    .btn{appearance:none;border:0;border-radius:12px;padding:10px 14px;cursor:pointer;font-weight:700}
-    .btn-primary{background:#ffd6d6}
-    .btn-primary:hover{background:#ffbfbf}
-    .actions{display:flex;gap:10px;align-items:center;margin-top:20px}
-    .left a{color:#374151;text-decoration:none}
-  </style>
+<meta charset="UTF-8"/>
+<title>Step 5. 비교·확인</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<style>
+/* ===== 공통 레이아웃 ===== */
+html, body { height:100%; }
+body{
+  font-family:'Pretendard', sans-serif;
+  margin:0; padding:0;
+  color:#222; 
+}
+.layout{ height:100vh; display:flex; flex-direction:column; }
+
+/* ===== 헤더: 화면 상단 고정 ===== */
+.header-wrap{
+  position:sticky; top:0; z-index:1000;
+  background:#fff; border-bottom:1px solid #eee;
+}
+.header{ max-width:960px; margin:0 auto; padding:14px 16px; }
+.page-title{ font-size:20px; font-weight:700; margin:6px 0; }
+
+/* ===== 본문(.content)만 스크롤 ===== */
+.content{
+  flex:1 1 auto;
+  overflow:auto;
+  min-height:0;
+  -webkit-overflow-scrolling:touch;
+  padding-bottom:120px;          /* 하단 고정 버튼과 겹치지 않도록 */
+}
+.divider{ height:4px; background:#eee; border-radius:1px; }
+
+/* ===== 섹션/카드 톤 ===== */
+.section{ max-width:960px; margin:0 auto; padding:12px 16px }
+.grid{ 
+  display:grid; 
+  gap:28px; 
+  grid-template-columns:1fr; 
+}
+@media (min-width:760px){ .grid{ grid-template-columns:1fr 1fr; } }
+
+.card{
+  background:#fff; border:1px solid #f0f0f0; border-radius:18px;
+  padding:24px 20px;
+  box-shadow:0 8px 10px rgba(0,0,0,.02);
+}
+.card h3{ margin:0 0 8px; font-size:16px; font-weight:800; }
+.muted{ color:#6b7280; }
+
+.section h1 {
+  font-size: 20px;
+  font-weight: 700;
+}
+.banner{
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid #fde68a;
+  background:#fffbeb;
+  color:#92400e;
+  margin-bottom: 25px;
+}
+
+/* 하단 버튼바: 2등분 그리드에서 form 래퍼 영향 제거 */
+.actions{
+  position:fixed; left:0; right:0; bottom:0; z-index:1100;
+  background:#fff; border-top:1px solid #eee;
+  padding:14px 16px 30px;
+  display:grid; grid-template-columns:1fr 1fr; gap:12px;
+  max-width:960px; margin:0 auto;
+  align-items:stretch;                 /* 각 셀 높이 동일 */
+}
+.actions > *{ margin:0; }
+
+/* form이 그리드 아이템처럼 동작하도록 */
+.actions form{ display:contents; }     /* ← 핵심: form 래퍼 제거 효과 */
+
+/* 버튼 공통 크기/모양 동일화 */
+.actions .btn{
+  width:100%; height:56px;
+  border-radius:14px; font-size:17px; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+  border:none; box-shadow:none; padding:0;
+  margin-bottom: 20px;
+}
+/* 왼쪽: div.btn 안의 <a>를 버튼처럼 100% 채우기 */
+.actions .btn.btn-link{ padding:0; }
+.actions .btn.btn-link > a{
+  display:flex; align-items:center; justify-content:center;
+  width:100%; height:100%;
+  border-radius:inherit; text-decoration:none; color:#fff;
+}
+
+/* 색상 (회색/빨강) */
+.actions .btn-link{ background:#8d94a6; color:#fff; }
+.actions .btn-primary{ background:#f85151; color:#fff; }
+.actions .btn:disabled{ opacity:.6; cursor:not-allowed; }
+
+
+/* 모바일 안전영역(iOS) 대응 */
+@supports (padding: max(0px)){
+  .actions{ padding-bottom:max(22px, env(safe-area-inset-bottom)); }
+}
+</style>
 </head>
 <body>
-<header class="header">
-  <div class="brand">BNK 퇴직연금</div>
-  <nav class="muted">상품관리</nav>
-</header>
 
-<div class="container">
-  <h1>Step 5. 비교·확인</h1>
-  <div class="banner" id="infoBanner" style="display:none"></div>
+<!-- 전체 레이아웃 랩 -->
+<div class="layout">
 
-  <!-- 세션 JSON (escape 금지) -->
-  <script id="json-source" type="application/json"
-          th:utext="${session['ReserveValueDto'] != null ? session['ReserveValueDto'].sourceProdIdList : '[]'}"></script>
-  <script id="json-target" type="application/json"
-          th:utext="${session['ReserveValueDto'] != null ? session['ReserveValueDto'].targetProdIdList : '[]'}"></script>
-  <script id="json-files" type="application/json"
-          th:utext="${session['ReserveValueDto'] != null ? session['ReserveValueDto'].fileUrlList : '[]'}"></script>
-
-  <section class="grid">
-    <div class="card">
-      <h3>변경 전</h3>
-      <div id="beforeList" class="list">
-        <div class="muted">표시할 항목이 없습니다.</div>
-      </div>
+<!-- 헤더 부분 -->
+  <div class="header-wrap">
+    <div class="header">
+      <h2 class="page-title">매수상품관리</h2>
     </div>
-
-    <div class="card">
-      <h3>변경 후</h3>
-      <div id="afterList" class="list">
-        <div class="muted">표시할 항목이 없습니다.</div>
-      </div>
-    </div>
-  </section>
-
-  <div class="actions">
-    <div class="left"><a th:href="@{/purchase/trade/reserve/step4}">이전</a></div>
-    <form th:action="@{/purchase/trade/reserve/step5/next}" method="post">
-      <button class="btn btn-primary" type="submit">확정하기</button>
-    </form>
   </div>
-</div>
+  
+  <main class="content">
+  	<div class="divider"></div>
+
+	<div class="section">
+	  <h1>비교·확인</h1>
+	  <div class="banner" id="infoBanner" style="display:none"></div>
+	
+	  <!-- 세션 JSON (escape 금지) -->
+	  <script id="json-source" type="application/json"
+	          th:utext="${session['ReserveValueDto'] != null ? session['ReserveValueDto'].sourceProdIdList : '[]'}"></script>
+	  <script id="json-target" type="application/json"
+	          th:utext="${session['ReserveValueDto'] != null ? session['ReserveValueDto'].targetProdIdList : '[]'}"></script>
+	  <script id="json-files" type="application/json"
+	          th:utext="${session['ReserveValueDto'] != null ? session['ReserveValueDto'].fileUrlList : '[]'}"></script>
+	
+	  <section class="grid">
+	    <div class="card">
+	      <h3>변경 전</h3>
+	      <div id="beforeList" class="list">
+	        <div class="muted">표시할 항목이 없습니다.</div>
+	      </div>
+	    </div>
+	
+	    <div class="card">
+	      <h3>변경 후</h3>
+	      <div id="afterList" class="list">
+	        <div class="muted">표시할 항목이 없습니다.</div>
+	      </div>
+	    </div>
+	  </section>
+
+	  <div class="actions">
+	    <div class="btn btn-link"><a th:href="@{/purchase/trade/reserve/step4}">이전</a></div>
+	    <form th:action="@{/purchase/trade/reserve/step5/next}" method="post">
+	      <button class="btn btn-primary" type="submit">확정</button>
+	    </form>
+	  </div>
+  
+	</div> <!-- section -->
+  </main>
+</div> <!-- layout -->
+
 
 <script>
 (function(){
