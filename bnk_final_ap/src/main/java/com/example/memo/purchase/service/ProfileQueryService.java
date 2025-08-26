@@ -3,7 +3,9 @@ package com.example.memo.purchase.service;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional; // 🔸 추가
-import com.example.memo.rule.repository.ProfileHistoryRepository;
+
+import com.example.memo.jpa.repository.rule.ProfileHistoryRepository;
+
 import lombok.RequiredArgsConstructor;
 
 @Service

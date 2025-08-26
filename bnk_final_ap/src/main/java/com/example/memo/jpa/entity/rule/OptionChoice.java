@@ -1,4 +1,4 @@
-package com.example.memo.rule.entity;
+package com.example.memo.jpa.entity.rule;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

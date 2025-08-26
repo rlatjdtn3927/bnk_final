@@ -22,9 +22,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import jakarta.persistence.EntityManagerFactory;
 
 @Configuration
-@EnableTransactionManagement //Transactional 트랜잭션 관리 기능
 @EnableJpaRepositories(
-    basePackages = "com.example.memo",          // Oracle용 JPA repository 패키지
+    basePackages = "com.example.memo.jpa.repository",          // Oracle용 JPA repository 패키지
     entityManagerFactoryRef = "oracleEmf",
     transactionManagerRef = "txManagerOracle"
 )
@@ -55,7 +54,7 @@ public class OracleJpaConfig {
         LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
         emf.setDataSource(oracleDs);
         //어떤 Entity 인식할지 지정
-        emf.setPackagesToScan("com.example.memo"); 
+        emf.setPackagesToScan("com.example.memo.jpa.entity"); 
 
         //Hibernate 사용할 수 있도록
         JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();

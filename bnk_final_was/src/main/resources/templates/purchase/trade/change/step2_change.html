@@ -471,7 +471,7 @@ span.sr-only{ position:absolute; left:-9999px; } /* 접근성용 숨김 텍스�
     // 예금 매도
     document.querySelectorAll('.principalChk:checked').forEach(c => {
       const ledgerId = c.dataset.id ? Number(c.dataset.id) : null;
-	  console.log(ledgerId);
+	    console.log(ledgerId);
       soldCandidates.push({
         type: 'PRINCIPAL',
         ledgerId: ledgerId,                     // PrincipalLedger.id
