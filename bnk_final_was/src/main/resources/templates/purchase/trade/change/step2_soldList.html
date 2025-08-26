@@ -4,129 +4,179 @@
   <meta charset="UTF-8"/>
   <title>매도 비율 설정 (변경 Step2-1)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-neutral-50 text-neutral-900">
-<div class="max-w-5xl mx-auto p-4 space-y-6">
-  <section class="bg-white rounded-2xl shadow p-4">
-    <h2 class="text-xl font-semibold">매도 비율 설정</h2>
-    <p class="text-sm text-neutral-500">선택한 각 상품에 대해 매도 비율(%)을 입력하세요.</p>
-  </section>
+  <style>
+  /* ===== 공통 레이아웃 ===== */
+  html, body { height:100%; }
+  body{
+    font-family:'Pretendard', sans-serif;
+    margin:0; padding:0;
+    color:#222; background:#f9fafb;
+  }
+  .layout{ height:100vh; display:flex; flex-direction:column; }
 
-  <section class="bg-white rounded-2xl shadow p-4">
-    <div class="overflow-x-auto">
-      <table class="min-w-full text-sm">
-        <thead>
-        <tr class="text-left text-neutral-500 border-b">
-          <th class="py-2 pr-3">유형</th>
-          <th class="py-2 pr-3">상품</th>
-          <th class="py-2 pr-3">기준금액</th>
-          <th class="py-2 pr-3">매도비율(%)</th>
-          <th class="py-2 pr-3">매도금액</th>
-        </tr>
-        </thead>
-        <tbody id="soldBody"></tbody>
-      </table>
+  /* ===== 헤더 ===== */
+  .header-wrap{
+    position:sticky; top:0; z-index:1000;
+    background:#fff; border-bottom:1px solid #eee;
+  }
+  .header{ max-width:960px; margin:0 auto; padding:14px 16px; }
+  .page-title{ font-size:20px; font-weight:700; margin:6px 0; }
+  .page-sub{ color:#6b7280; font-size:14px; margin:4px 0 10px; }
+
+  /* ===== 본문 ===== */
+  .content{
+    flex:1 1 auto;
+    overflow:auto;
+    min-height:0;
+    -webkit-overflow-scrolling:touch;
+    padding:16px;
+    padding-bottom:120px;          
+    max-width:960px; margin:0 auto;
+  }
+
+  /* ===== 카드 ===== */
+  .card{
+    background:#fff; border:1px solid #f0f0f0; border-radius:14px;
+    padding:18px 16px; margin-bottom:16px;
+    box-shadow:0 2px 6px rgba(0,0,0,.03);
+  }
+  .card h3{ margin:0 0 8px; font-size:16px; font-weight:700; }
+  .row{ display:flex; justify-content:space-between; align-items:center; margin:6px 0; font-size:14px; }
+  .label{ color:#6b7280; }
+  .value{ font-weight:600; }
+  .ratioInput{ width:80px; padding:6px 8px; border:1px solid #ddd; border-radius:8px;
+               font-size:14px; text-align:right; }
+
+  /* ===== 버튼바 ===== */
+  .actions{
+    position:fixed; left:0; right:0; bottom:0; z-index:1100;
+    background:#fff; border-top:1px solid #eee;
+    padding:14px 16px 30px;
+    display:grid; grid-template-columns:1fr 1fr; gap:12px;
+    max-width:960px; margin:0 auto;
+  }
+  .actions .btn{
+    width:100%; height:52px;
+    border-radius:14px; font-size:16px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+    border:none; cursor:pointer;
+  }
+  .btn-link{ background:#8d94a6; color:#fff; }
+  .btn-primary{ background:#f85151; color:#fff; }
+  .btn-primary:disabled{ background:#ffd6d6; cursor:not-allowed; }
+
+  /* ===== 모바일 대응 ===== */
+  @media (max-width:500px){
+    .page-title{ font-size:18px; }
+    .card{ padding:14px; }
+    .card h3{ font-size:15px; }
+    .row{ font-size:13px; flex-wrap:wrap; }
+    .ratioInput{ width:70px; font-size:13px; }
+    .actions{ grid-template-columns:1fr; }
+  }
+  @supports (padding: max(0px)){
+    .actions{ padding-bottom:max(22px, env(safe-area-inset-bottom)); }
+  }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <!-- 헤더 -->
+  <div class="header-wrap">
+    <div class="header">
+      <div class="page-title">매도 비율 설정</div>
+      <div class="page-sub">선택한 각 상품에 대해 매도 비율(%)을 입력하세요.</div>
     </div>
-    <div class="mt-4 flex items-center justify-between">
-      <div class="text-lg">
-        합계 매도금액: <b id="totalSold">0원</b>
-      </div>
-      <div class="flex gap-2">
-        <a href="/purchase/trade/change/step1/after-risk" class="px-4 py-2 rounded-xl bg-neutral-200">이전</a>
-        <button id="nextBtn" class="px-4 py-2 rounded-xl bg-blue-600 text-white disabled:opacity-40" disabled>
-          다음(매도합계 확인 & 매수상품 추가)
-        </button>
+  </div>
+
+  <!-- 본문 -->
+  <main class="content">
+    <div id="soldList"></div>
+    <div class="card">
+      <div class="row">
+        <span class="label">합계 매도금액</span>
+        <span class="value" id="totalSold">0원</span>
       </div>
     </div>
-  </section>
+  </main>
+
+  <!-- 버튼바 -->
+  <div class="actions">
+    <button class="btn btn-link" onclick="history.back()">이전</button>
+    <button id="nextBtn" class="btn btn-primary" disabled>
+      다음 (매도합계 확인 & 매수상품 추가)
+    </button>
+  </div>
 </div>
 
 <script>
   const fmtKRW = n => (n ?? 0).toLocaleString('ko-KR') + '원';
+  const calcAmount = (base, ratio) => Math.floor((Number(base||0)*Number(ratio||0))/100);
 
-  function calcAmount(base, ratio) {
-    const b = Number(base || 0), r = Number(ratio || 0);
-    return Math.floor(b * r / 100);
-  }
-
-  function renderRows(items) {
-    const tbody = document.getElementById('soldBody');
-    tbody.innerHTML = items.map((it, idx) => `
-      <tr class="border-b">
-        <td class="py-2 pr-3">${it.type === 'FUND' ? '펀드' : '원리금'}</td>
-        <td class="py-2 pr-3">${it.name ?? '-'}</td>
-        <td class="py-2 pr-3">${fmtKRW(Number(it.baseAmount))}</td>
-        <td class="py-2 pr-3">
+  function renderCards(items){
+    const list = document.getElementById('soldList');
+    list.innerHTML = items.map((it,idx)=>`
+      <div class="card">
+        <h3>${it.name ?? '-'}</h3>
+        <div class="row"><span class="label">유형</span><span class="value">${it.type==='FUND'?'펀드':'원리금'}</span></div>
+        <div class="row"><span class="label">기준금액</span><span class="value">${fmtKRW(it.baseAmount)}</span></div>
+        <div class="row">
+          <span class="label">매도비율(%)</span>
           <input type="number" min="0" max="100" step="1"
-                 class="ratioInput w-24 px-2 py-1 border rounded"
-                 data-idx="${idx}" value="${it.ratio ?? 0}">
-        </td>
-        <td class="py-2 pr-3"><span id="amt_${idx}">${fmtKRW(0)}</span></td>
-      </tr>
+                 class="ratioInput" data-idx="${idx}" value="${it.ratio ?? 0}">
+        </div>
+        <div class="row"><span class="label">매도금액</span>
+          <span id="amt_${idx}" class="value">0원</span>
+        </div>
+      </div>
     `).join('');
 
-    document.querySelectorAll('.ratioInput').forEach(inp => {
+    document.querySelectorAll('.ratioInput').forEach(inp=>{
       const idx = Number(inp.dataset.idx);
-      const update = () => {
-        let val = Number(inp.value || 0);
-        if (val < 0) val = 0;
-        if (val > 100) val = 100;
-        inp.value = val;
-        const amt = calcAmount(items[idx].baseAmount, val);
-        document.getElementById(`amt_${idx}`).textContent = fmtKRW(amt);
-        items[idx].ratio = val;
-        items[idx].amount = amt;
+      const update=()=>{
+        let val=Number(inp.value||0);
+        if(val<0) val=0; if(val>100) val=100;
+        inp.value=val;
+        const amt=calcAmount(items[idx].baseAmount,val);
+        document.getElementById(`amt_${idx}`).textContent=fmtKRW(amt);
+        items[idx].ratio=val; items[idx].amount=amt;
         updateTotal(items);
       };
-      inp.addEventListener('input', update);
+      inp.addEventListener('input',update);
       update();
     });
   }
 
-  function updateTotal(items) {
-    const sum = items.reduce((a,c)=> a + Number(c.amount||0), 0);
-    document.getElementById('totalSold').textContent = fmtKRW(sum);
-    document.getElementById('nextBtn').disabled = sum <= 0;
+  function updateTotal(items){
+    const sum=items.reduce((a,c)=>a+Number(c.amount||0),0);
+    document.getElementById('totalSold').textContent=fmtKRW(sum);
+    document.getElementById('nextBtn').disabled=sum<=0;
   }
 
   async function goNext(items){
-        // 서버 세션 저장
-        const resp = await fetch('/retain-api/change/step2/sold/save', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify(items.map(it => ({
-            type: it.type,
-            holdingId: it.type === 'FUND' ? (it.id ? String(it.id) : null) : null, // ✅ 펀드 → holdingId
-            ledgerId:  it.type === 'PRINCIPAL' ? (it.id ? Number(it.id) : null) : null, // ✅ 원리금 → ledgerId
-            prodId: it.prodId,   // ✅ productId 대신 prodId
-            name: it.name,
-            ratio: it.ratio,
-            amount: it.amount
-          })))
-        });
-        if(!resp.ok){ alert('매도 목록 저장 실패'); return; }
+    const resp=await fetch('/retain-api/change/step2/sold/save',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(items.map(it=>({
+        type:it.type,
+        holdingId:it.type==='FUND'?(it.id?String(it.id):null):null,
+        ledgerId:it.type==='PRINCIPAL'?(it.id?Number(it.id):null):null,
+        prodId:it.prodId,
+        name:it.name,
+        ratio:it.ratio,
+        amount:it.amount
+      })))
+    });
+    if(!resp.ok){alert('매도 저장 실패');return;}
+    location.href='/purchase/trade/change/step2/change-add-ratio';
+  }
 
-        // 다음 화면
-        location.href = '/purchase/trade/change/step2/change-add-ratio';
-      }
-
-    (function init(){
-      const raw = sessionStorage.getItem('change.soldCandidates');
-      const items = raw ? JSON.parse(raw) : [];
-      if (!items.length) {
-        alert('선택된 매도 상품이 없습니다. 이전 화면으로 이동합니다.');
-        location.href = '/purchase/trade/change/step2_change';
-        return;
-      }
-
-      // 보정: productId → prodId 필드명 통일
-      items.forEach(it => {
-        if (it.productId && !it.prodId) it.prodId = it.productId;
-      });
-
-      renderRows(items);
-      document.getElementById('nextBtn').addEventListener('click', ()=>goNext(items));
-    })();
+  (function init(){
+    const raw=sessionStorage.getItem('change.soldCandidates');
+    const items=raw?JSON.parse(raw):[];
+    if(!items.length){alert('선택된 매도 상품이 없습니다.');location.href='/purchase/trade/change/step2_change';return;}
+    renderCards(items);
+    document.getElementById('nextBtn').addEventListener('click',()=>goNext(items));
+  })();
 </script>
 </body>
 </html>

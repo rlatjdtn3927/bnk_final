@@ -6,328 +6,149 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
+/* ===== 공통 레이아웃 ===== */
+html, body { height:100%; }
 body{
-  font-family: 'Pretendard', sans-serif;
-  margin:0;
-  padding: 0;
-  color: #222;
+  font-family:'Pretendard', sans-serif;
+  margin:0; padding:0;
+  color:#222; background:#f9fafb;
 }
+.layout{ height:100vh; display:flex; flex-direction:column; }
 
-.layout { 
-  height:100vh; 
-  display:flex; 
-  flex-direction:column; 
-  background:#fff;
+/* ===== 헤더 ===== */
+.header-wrap{
+  position:sticky; top:0; z-index:1000;
+  background:#fff; border-bottom:1px solid #eee;
 }
+.header{ max-width:960px; margin:0 auto; padding:14px 16px; }
+.page-title{ font-size:20px; font-weight:700; margin:6px 0; }
 
-/* 상단/하단 고정 */
-.header-wrap, .footer { flex:0 0 auto; background:#fff; }
-.footer { border-top:1px solid #eee; padding:12px 16px; }
-
-/* 본문만 스크롤 */
-.content {
+/* ===== 본문 ===== */
+.content{
   flex:1 1 auto;
-  overflow:auto;          /* 스크롤 허용 */
-  min-height:0;           /* flex 자식 스크롤 막힘 방지(중요) */
-  -webkit-overflow-scrolling: touch;
+  overflow:auto;
+  min-height:0;
+  -webkit-overflow-scrolling:touch;
+  padding-bottom:120px;          
 }
+.divider{ height:4px; background:#eee; border-radius:1px; }
 
-.header {
-  padding: 12px 16px;
+/* ===== 카드 ===== */
+.section{ max-width:960px; margin:0 auto 20px; padding:16px }
+.card{
+  background:#fff; border:1px solid #f0f0f0; border-radius:18px;
+  padding:20px;
+  box-shadow:0 4px 8px rgba(0,0,0,.03);
 }
+.card h3{ margin:0 0 16px; font-size:17px; font-weight:800; display:flex; justify-content:space-between; align-items:center; }
+.muted{ color:#6b7280; font-size:14px; }
 
-/* 헤더 */
-.logo{
-  background:#fff;
-}
-
-/* 로고 텍스트 */
-.brand{
-  font-size:22px;
-  font-weight:700;
-}
-.brand .red{
-  color:#D93C3C;                  /* BNK 빨강 */
-  font-weight:700;
-}
-
-/* 페이지 제목 */
-.page-title{
-  font-size:20px;
-  font-weight:600;
-  margin-top: 5px;
-  margin-bottom: 5px;
-}
-
-/* 제목 아래 연한 구분선 */
-.divider{
-  height:4px;
-  background:#eee;
-  border-radius:1px;
-  margin-bottom: 30px;
-}
-
-.footer a,
-.footer button{
-  flex: 1;
-  height: auto;
-  padding: 27px 0;
-  font-size: 18px;
-  font-weight: 700;
-  box-shadow: 0 6px 18px rgba(0,0,0,.08);
-  border: none;
-  text-align: center;
-}
-
-
-.footer{
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  background: #fff;
-  border-top: 1px solid #eee;
-  z-index: 1000;
-  padding: 20px 16px 40px !important;;   /* ⬅️ 위아래 여백 추가 */
-  display: flex;
-  gap: 12px;
-  max-width: 960px;
-  margin: 0px auto;
-}
-
-/* 본문이 가려지지 않도록 여백 추가 */
-.content{ padding-bottom: 100px; }
-
-/* 비활성화 상태 */
-.footer button[disabled]{
-  opacity: .6; 
-  box-shadow: none;
-  cursor: not-allowed;
-}
-
-/* 페이지 폭 & 수직 여백 (상단 카드~표~버튼 영역 공통 랩) */
-
-/* 카드 공통: <section> 을 카드처럼 */
-section{
-  margin: 0 auto; 
-  max-width: 960px; 
-  background:#fff;
-  border:1px solid #f0f0f0;
-  border-radius:18px;
-  padding:18px;
-  box-shadow:0 10px 20px rgba(0,0,0,.04);
-  margin-top:30px;
-  margin: 30px 16px;
-}
-
-/* 상단 카드: 제목/설명 & 우측 배지 라인 */
-section > div:first-child{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-}
-
-/* 제목/설명 타이포 */
-h2{ font-size:20px; font-weight:800; margin:0 0 4px; }
-h3{ font-size:18px; font-weight:800; margin:0; }
-p{ margin:0; color:#6b7280; font-size:13.5px; }
-
-/* 리스크 배지 */
-#riskBadge{
-  padding:6px 10px;
-  border-radius:999px;
-  background:#f3f4f6;
-  border:1px solid #e5e7eb;
-  font-size:13px; font-weight:700; color:#111;
-  white-space: nowrap;
-}
-
-/* 상단 카드의 두 번째 블록(사용자/계좌유형/계좌ID) → 3열 그리드 */
-section:first-of-type > div:nth-of-type(2){
-  display:grid;
-  grid-template-columns: 1fr;
-  gap:10px;
-  margin-top:12px;
-}
-@media (min-width: 760px){
-  section:first-of-type > div:nth-of-type(2){ grid-template-columns: repeat(3, 1fr); }
-}
-section:first-of-type > div:nth-of-type(2) > div{
-  background:#f6f7f9;
-  border-radius:12px;
-  padding:12px;
-}
-section:first-of-type > div:nth-of-type(2) > div > div:first-child{
-  color:#6b7280; font-size:13px; margin-bottom:4px;
-}
-#userName, #accountType, #accountId{ font-weight:700; }
-
-/* 표가 있는 섹션의 상단 행: 제목 + 전체선택 라벨 */
-section table{ width:100%; border-collapse:separate; border-spacing:0; }
-section > div:first-child + div{ margin-top:10px; }
-section > div:first-child{ margin-bottom:8px; }
-
-#chkAllFund{ width:16px; height:16px; }
-
-/* 테이블 헤더/바디 스타일 */
-thead th{
-  text-align:left; padding:10px 12px;
-  background:#f8fafc; color:#111; font-weight:700;
-  border-bottom:1px solid #e5e7eb;
-}
-tbody td{
-  padding:10px 12px; color:#374151; border-bottom:1px solid #f1f5f9;
-}
+/* ===== 테이블 ===== */
+table{ width:100%; border-collapse:separate; border-spacing:0; }
+thead th{ background:#f8fafc; font-weight:700; font-size:13px; padding:12px; text-align:left; border-bottom:1px solid #e5e7eb; }
+tbody td{ padding:12px; font-size:14px; border-bottom:1px solid #f1f5f9; color:#374151; }
 tbody tr:last-child td{ border-bottom:0; }
-tbody tr td[colspan]{ text-align:center; color:#6b7280; }
+tbody td[colspan]{ text-align:center; color:#9ca3af; }
+input[type="checkbox"]{ width:16px; height:16px; }
 
-/* 마지막 버튼 영역: <section>들 다음의 마지막 div */
-body > div > div:last-child{
-  display:flex; justify-content:flex-end; gap:12px;
-  margin-top:16px;
+/* ===== 버튼바 ===== */
+.actions{
+  position:fixed; left:0; right:0; bottom:0; z-index:1100;
+  background:#fff; border-top:1px solid #eee;
+  padding:14px 16px 30px;
+  display:grid; grid-template-columns:1fr 1fr; gap:12px;
+  max-width:960px; margin:0 auto;
 }
-
-/* 버튼들(이전 a / 다음 button) */
-body > div > div:last-child > a,
-#nextBtn{
-  display:inline-flex; align-items:center; justify-content:center;
-  height:44px; border-radius:12px;
-  font-weight:700;  border:0; cursor:pointer;
+.actions .btn{
+  width:100%; height:52px;
+  border-radius:14px; font-size:16px; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+  border:none; padding:0; cursor:pointer;
 }
+.actions .btn.btn-link{ background:#8d94a6; color:#fff; }
+.actions .btn-primary{ background:#f85151; color:#fff; }
+.actions .btn-primary:disabled{ background:#ffd6d6; cursor:not-allowed; }
 
-/* 이전 버튼 */
-body > div > div:last-child > a{
-  background:#8d94a6; color:#fff; text-decoration:none;
+/* ===== 모바일 대응 ===== */
+@media (max-width:500px){
+  .page-title{ font-size:18px; }
+  .card h3{ font-size:15px; }
+  thead th, tbody td{ font-size:13px; padding:8px }
 }
-body > div > div:last-child > a:hover{ background:#6e7488; }
-
-/* 다음 버튼 */
-#nextBtn{
-  background:#f85151; color:#fff;
+@supports (padding: max(0px)){
+  .actions{ padding-bottom:max(22px, env(safe-area-inset-bottom)); }
 }
-#nextBtn:hover{ filter:brightness(0.98); }
-#nextBtn:disabled{ opacity:.4; box-shadow:none; cursor:not-allowed; }
-
-/* 체크박스 크기 (표 내 선택 칸) */
-input[type="checkbox"].fundChk,
-input[type="checkbox"].principalChk{
-  width:16px; height:16px;
-}
-
-/* 작은 스크린에서 표 가로 스크롤 */
-section .overflow-x-auto, /* 혹시 감싸는 div가 있을 수도 대비 */
-section > div:nth-of-type(2){
-  overflow-x:auto;
-}
-table{ min-width: 560px; }
-
-/* 안전한 타이포 간격 */
-span.sr-only{ position:absolute; left:-9999px; } /* 접근성용 숨김 텍스트 대비 */
 </style>
 </head>
 <body>
-
 <div class="layout">
-  <!-- 헤더 부분 -->
+  <!-- 헤더 -->
   <div class="header-wrap">
     <div class="header">
-      
       <div class="page-title">보유상품관리</div>
     </div>
   </div>
   
- <main class="content">
-  <div class="divider"></div>
+  <main class="content">
+    <div class="divider"></div>
 
-  <!-- 상단 카드: 사용자/계좌/리스크 -->
-  <section class="bg-white rounded-2xl shadow p-4">
-    <div class="flex items-center justify-between">
-      <div>
-        <h2 class="text-xl font-semibold">보유상품 변경</h2>
-        <p class="text-sm text-neutral-500">보유상품 목록에서 매도할 상품을 선택하세요.</p>
+    <!-- 안내 카드 -->
+    <section class="section">
+      <div class="card">
+        <h3>보유상품 변경 <span id="riskBadge" class="px-3 py-1 rounded-full text-xs bg-neutral-100">리스크: -</span></h3>
+        <p class="muted">보유상품 목록에서 매도할 상품을 선택하세요.</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4 text-sm">
+          <div class="bg-neutral-50 rounded-lg p-3">
+            <div class="text-neutral-500">사용자</div>
+            <div id="userName" class="font-semibold">-</div>
+          </div>
+          <div class="bg-neutral-50 rounded-lg p-3">
+            <div class="text-neutral-500">계좌유형</div>
+            <div id="accountType" class="font-semibold">-</div>
+          </div>
+          <div class="bg-neutral-50 rounded-lg p-3">
+            <div class="text-neutral-500">계좌ID</div>
+            <div id="accountId" class="font-semibold truncate">-</div>
+          </div>
+        </div>
       </div>
-      <div id="riskBadge" class="px-3 py-1 rounded-full text-sm bg-neutral-100">리스크: -</div>
-    </div>
-    <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-      <div class="p-3 rounded-lg bg-neutral-100">
-        <div class="text-neutral-500">사용자</div>
-        <div id="userName" class="font-semibold">-</div>
-      </div>
-      <div class="p-3 rounded-lg bg-neutral-100">
-        <div class="text-neutral-500">계좌유형</div>
-        <div id="accountType" class="font-semibold">-</div>
-      </div>
-      <div class="p-3 rounded-lg bg-neutral-100">
-        <div class="text-neutral-500">계좌ID</div>
-        <div id="accountId" class="font-semibold truncate">-</div>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- 펀드 보유내역 -->
-  <section class="bg-white rounded-2xl shadow p-4">
-    <div class="flex items-center justify-between mb-3">
-      <h3 class="text-lg font-semibold">펀드 보유내역</h3>
-      <label class="text-sm text-neutral-500 flex items-center gap-2">
-        <input id="chkAllFund" type="checkbox" class="w-4 h-4"> 전체선택
-      </label>
-    </div>
-    <div class="overflow-x-auto">
-      <table class="min-w-full text-sm">
-        <thead>
-        <tr class="text-left text-neutral-500 border-b">
-          <th class="py-2 pr-3"><span class="sr-only">선택</span></th>
-          <th class="py-2 pr-3">상품명</th>
-          <th class="py-2 pr-3">보유좌수</th>
-          <th class="py-2 pr-3">평단가</th>
-          <th class="py-2 pr-3">평가액</th>
-          <th class="py-2 pr-3">수익률</th>
-        </tr>
-        </thead>
-        <tbody id="fundBody">
-          <tr id="fundLoading">
-            <td colspan="6" class="py-6 text-center text-neutral-500">불러오는 중…</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
+    <!-- 펀드 보유내역 -->
+    <section class="section">
+      <div class="card">
+        <h3>펀드 보유내역 <label class="text-sm text-neutral-500 flex items-center gap-2"><input id="chkAllFund" type="checkbox" class="w-4 h-4"> 전체선택</label></h3>
+        <div class="overflow-x-auto">
+          <table>
+            <thead id="fundHead"></thead>
+            <tbody id="fundBody"><tr><td colspan="6" class="py-6 text-center text-neutral-400">불러오는 중…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
-  <!-- 원리금 보장상품 (각 건 개별) -->
-  <section class="bg-white rounded-2xl shadow p-4">
-    <div class="flex items-center justify-between mb-3">
-      <h3 class="text-lg font-semibold">원리금 보장상품</h3>
-      <p class="text-sm text-neutral-500">※ 일괄선택 없이 <b>건별로</b> 선택합니다.</p>
-    </div>
-    <div class="overflow-x-auto">
-      <table class="min-w-full text-sm">
-        <thead>
-        <tr class="text-left text-neutral-500 border-b">
-          <th class="py-2 pr-3"><span class="sr-only">선택</span></th>
-          <th class="py-2 pr-3">상품ID</th>
-          <th class="py-2 pr-3">가입원금</th>
-          <th class="py-2 pr-3">누적이자</th>
-          <th class="py-2 pr-3">만기일</th>
-          <th class="py-2 pr-3">상태</th>
-        </tr>
-        </thead>
-        <tbody id="principalBody">
-          <tr id="principalLoading">
-            <td colspan="6" class="py-6 text-center text-neutral-500">불러오는 중…</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-  
+    <!-- 원리금 보장상품 -->
+    <section class="section">
+      <div class="card">
+        <h3>원리금 보장상품</h3>
+        <p class="muted mb-2">※ 건별 선택만 가능합니다.</p>
+        <div class="overflow-x-auto">
+          <table>
+            <thead id="principalHead"></thead>
+            <tbody id="principalBody"><tr><td colspan="6" class="py-6 text-center text-neutral-400">불러오는 중…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
   </main>
 
-  <div class="footer flex justify-end gap-3">
-    <a href="/purchase/trade/change/step1/after-risk" class="px-4 py-2 rounded-xl bg-neutral-200">이전</a>
-    <button id="nextBtn" class="px-4 py-2 rounded-xl bg-blue-600 text-white disabled:opacity-40" disabled>다음</button>
+  <!-- 버튼 -->
+  <div class="actions">
+    <button class="btn btn-link" onclick="location.href='/purchase/trade/change/step1/after-risk'">이전</button>
+    <button id="nextBtn" class="btn btn-primary" disabled>다음</button>
   </div>
 </div>
 
-<!-- 세션에서 계좌/타입 주입 -->
 <script th:inline="javascript">
   const SESSION_ACCOUNT_TYPE = /*[[${session.ChangeValueDto?.accountType}]]*/ null;
   const SESSION_ACCOUNT_ID   = /*[[${session.ChangeValueDto?.accountId}]]*/ null;
@@ -348,175 +169,118 @@ span.sr-only{ position:absolute; left:-9999px; } /* 접근성용 숨김 텍스�
     return await r.json();
   }
 
-  // ★ 다양한 응답 형태를 모두 흡수
   function normalizeHoldings(res) {
-    const root =
-      res?.resultList ??
-      res?.data ??
-      res?.result ??
-      res?.payload ??
-      res;
-
+    const root = res?.resultList ?? res?.data ?? res?.result ?? res?.payload ?? res;
     if (Array.isArray(root)) {
-      const funds = root.filter(x => x?.fundProductId || (x?.productName && x?.units != null));
-      const principals = root.filter(x => x?.principalId || x?.contractAmount != null);
-      return { funds, principals };
+      return { 
+        funds: root.filter(x => x?.fundProductId || (x?.productName && x?.units != null)), 
+        principals: root.filter(x => x?.principalId || x?.contractAmount != null) 
+      };
     }
-
-    const funds =
-         root?.fundHoldings
-      ?? root?.fundHoldingsDtoList
-      ?? root?.fundHoldingsList
-      ?? root?.funds
-      ?? [];
-
-    const principals =
-         root?.principalLedgers
-      ?? root?.principalLedgerDtoList
-      ?? root?.principalLedgersList
-      ?? root?.principals
-      ?? [];
-
-    if ((!funds || funds.length === 0) && (!principals || principals.length === 0)) {
-      console.warn('[holdings parsed empty] keys:', Object.keys(root || {}));
-    }
-
-    return { funds, principals };
+    return {
+      funds: root?.fundHoldings ?? root?.funds ?? [],
+      principals: root?.principalLedgers ?? root?.principals ?? []
+    };
   }
 
   function renderFunds(list) {
-    const tbody = document.getElementById('fundBody');
+    const head = document.getElementById('fundHead');
+    const body = document.getElementById('fundBody');
     if (!list || list.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-neutral-400">펀드 보유내역이 없습니다.</td></tr>`;
+      head.innerHTML = '';
+      body.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-neutral-400">펀드 보유내역이 없습니다.</td></tr>`;
       return;
     }
-
-    tbody.innerHTML = list.map(item => {
-      const rr = Number(item.returnRate ?? 0);
-      const rrStr = Number.isFinite(rr) ? rr + '%' : (item.returnRate ?? '-') + '%';
-      return `
-      <tr class="border-b">
-        <td class="py-2 pr-3">
-          <input type="checkbox" class="fundChk w-4 h-4"
-                 data-id="${item.id ?? ''}"
-                 data-product-id="${item.fundProductId ?? ''}"
-                 data-name="${(item.productName ?? '').replace(/"/g,'&quot;')}"
-                 data-base="${Number(item.valuationAmount ?? 0)}">
-        </td>
-        <td class="py-2 pr-3">${item.productName ?? '-'}</td>
-        <td class="py-2 pr-3">${item.units ?? '-'}</td>
-        <td class="py-2 pr-3">${fmtKRW(item.avgPrice)}</td>
-        <td class="py-2 pr-3">${fmtKRW(item.valuationAmount)}</td>
-        <td class="py-2 pr-3">${rrStr}</td>
+    head.innerHTML = `<tr><th></th><th>상품명</th><th>보유좌수</th><th>평가액</th><th>수익률</th></tr>`;
+    body.innerHTML = list.map(item=>{
+      const units   = item.units!=null ? Math.round(item.units) : '-';
+      const evalAmt = item.valuationAmount!=null ? fmtKRW(item.valuationAmount):'-';
+      const rr      = Number(item.returnRate??NaN);
+      const rrStr   = Number.isFinite(rr)? rr.toFixed(2)+'%' : '-';
+      return `<tr>
+        <td><input type="checkbox" class="fundChk"
+              data-id="${item.id??''}"
+              data-product-id="${item.fundProductId??''}"
+              data-name="${(item.productName??'').replace(/"/g,'&quot;')}"
+              data-base="${Number(item.valuationAmount??0)}"></td>
+        <td>${item.productName??'-'}</td>
+        <td>${units}</td>
+        <td>${evalAmt}</td>
+        <td>${rrStr}</td>
       </tr>`;
     }).join('');
-
-    document.getElementById('chkAllFund')?.addEventListener('change', (e)=>{
-      document.querySelectorAll('.fundChk').forEach(c=> c.checked = e.target.checked);
+    document.getElementById('chkAllFund')?.addEventListener('change', e=>{
+      document.querySelectorAll('.fundChk').forEach(c=> c.checked=e.target.checked);
       toggleNext();
     });
-    document.querySelectorAll('.fundChk').forEach(c => c.addEventListener('change', toggleNext));
+    document.querySelectorAll('.fundChk').forEach(c=> c.addEventListener('change', toggleNext));
   }
 
-  function renderPrincipals(list) {
-    const tbody = document.getElementById('principalBody');
-    if (!list || list.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-neutral-400">원리금 보장상품 보유내역이 없습니다.</td></tr>`;
+  function renderPrincipals(list){
+    const head = document.getElementById('principalHead');
+    const body = document.getElementById('principalBody');
+    if(!list||list.length===0){
+      head.innerHTML='';
+      body.innerHTML=`<tr><td colspan="4" class="py-6 text-center text-neutral-400">원리금 보장상품 보유내역이 없습니다.</td></tr>`;
       return;
     }
-
-    tbody.innerHTML = list.map(item => {
-      const base = Number(item.contractAmount ?? 0) + Number(item.interestAccrued ?? 0);
-      return `
-      <tr class="border-b">
-        <td class="py-2 pr-3">
-          <input type="checkbox" class="principalChk w-4 h-4"
-                 data-id="${item.id ?? ''}"
-                 data-product-id="${item.principalId ?? ''}"
-                 data-name="원리금보장(${item.principalId ?? '-'})"
-                 data-base="${base}">
-        </td>
-        <td class="py-2 pr-3">${item.principalId ?? '-'}</td>
-        <td class="py-2 pr-3">${fmtKRW(item.contractAmount)}</td>
-        <td class="py-2 pr-3">${fmtKRW(item.interestAccrued)}</td>
-        <td class="py-2 pr-3">${item.maturityDate ?? '-'}</td>
-        <td class="py-2 pr-3">${item.status ?? '-'}</td>
+    head.innerHTML=`<tr><th></th><th>상품ID</th><th>가입원금</th><th>만기일</th></tr>`;
+    body.innerHTML=list.map(item=>{
+      const contractAmt=item.contractAmount!=null?fmtKRW(item.contractAmount):'-';
+      const maturity=item.maturityDate??'-';
+      return `<tr>
+        <td><input type="checkbox" class="principalChk"
+              data-id="${item.id??''}"
+              data-product-id="${item.principalId??''}"
+              data-name="원리금보장(${item.principalId??'-'})"
+              data-base="${Number(item.contractAmount??0)}"></td>
+        <td>${item.principalId??'-'}</td>
+        <td>${contractAmt}</td>
+        <td>${maturity}</td>
       </tr>`;
     }).join('');
-
-    document.querySelectorAll('.principalChk').forEach(c => c.addEventListener('change', toggleNext));
+    document.querySelectorAll('.principalChk').forEach(c=>c.addEventListener('change',toggleNext));
   }
 
-  function toggleNext() {
-    const anyChecked = document.querySelectorAll('.fundChk:checked, .principalChk:checked').length > 0;
-    document.getElementById('nextBtn').disabled = !anyChecked;
+  function toggleNext(){
+    const anyChecked=document.querySelectorAll('.fundChk:checked,.principalChk:checked').length>0;
+    document.getElementById('nextBtn').disabled=!anyChecked;
   }
 
-  function goNext() {
-    const soldCandidates = [];
-
-    // 펀드 매도
-    document.querySelectorAll('.fundChk:checked').forEach(c => {
-      soldCandidates.push({
-        type: 'FUND',
-        holdingId: c.dataset.id || null,       // FundHolding.id
-        prodId: c.dataset.productId || null,   // FundMaster.productId
-        name: c.dataset.name,
-        baseAmount: Number(c.dataset.base),
-        ratio: 0,
-        amount: 0
-      });
+  function goNext(){
+    const soldCandidates=[];
+    document.querySelectorAll('.fundChk:checked').forEach(c=>{
+      soldCandidates.push({type:'FUND',holdingId:c.dataset.id,prodId:c.dataset.productId,
+        name:c.dataset.name,baseAmount:Number(c.dataset.base),ratio:0,amount:0});
     });
-
-    // 예금 매도
-    document.querySelectorAll('.principalChk:checked').forEach(c => {
-      const ledgerId = c.dataset.id ? Number(c.dataset.id) : null;
-	    console.log(ledgerId);
-      soldCandidates.push({
-        type: 'PRINCIPAL',
-        ledgerId: ledgerId,                     // PrincipalLedger.id
-        id: ledgerId,                           // 동일하게 id도 같이
-        prodId: c.dataset.productId || null,    // principalId
-        name: c.dataset.name,
-        baseAmount: Number(c.dataset.base),
-        ratio: 0,
-        amount: 0
-      });
+    document.querySelectorAll('.principalChk:checked').forEach(c=>{
+      const ledgerId=c.dataset.id?Number(c.dataset.id):null;
+      soldCandidates.push({type:'PRINCIPAL',ledgerId,id:ledgerId,prodId:c.dataset.productId,
+        name:c.dataset.name,baseAmount:Number(c.dataset.base),ratio:0,amount:0});
     });
-
-    sessionStorage.setItem('change.soldCandidates', JSON.stringify(soldCandidates));
-    location.href = '/purchase/trade/change/step2/sold-list';
+    sessionStorage.setItem('change.soldCandidates',JSON.stringify(soldCandidates));
+    location.href='/purchase/trade/change/step2/sold-list';
   }
 
-
-  // init
   (async function init(){
-    try {
-      // 상단 카드
-      const u = await fetchUserInfo();
-      const info = byPath(u, 'userInfo') || {};
-      document.getElementById('userName').textContent    = info.userName ?? '-';
-      document.getElementById('accountType').textContent = info.accountType ?? (SESSION_ACCOUNT_TYPE ?? '-');
-      document.getElementById('accountId').textContent   = info.accountId ?? (SESSION_ACCOUNT_ID ?? '-');
-      document.getElementById('riskBadge').textContent   = `리스크: ${info.riskGrade ?? '-'}`;
-
-      const accountType = info.accountType ?? SESSION_ACCOUNT_TYPE;
-      const accountId   = info.accountId   ?? SESSION_ACCOUNT_ID;
-
-      // 보유목록
-      const res = await fetchHoldings(accountType, accountId);
-      // console.debug('[holdings raw]', res); // 필요 시 주석 해제
-      const {funds, principals} = normalizeHoldings(res);
-      renderFunds(funds || []);
-      renderPrincipals(principals || []);
-
-      document.getElementById('nextBtn').addEventListener('click', goNext);
-    } catch (e) {
+    try{
+      const u=await fetchUserInfo();
+      const info=byPath(u,'userInfo')||{};
+      document.getElementById('userName').textContent=info.userName??'-';
+      document.getElementById('accountType').textContent=info.accountType??(SESSION_ACCOUNT_TYPE??'-');
+      document.getElementById('accountId').textContent=info.accountId??(SESSION_ACCOUNT_ID??'-');
+      document.getElementById('riskBadge').textContent=`리스크: ${info.riskGrade??'-'}`;
+      const accountType=info.accountType??SESSION_ACCOUNT_TYPE;
+      const accountId=info.accountId??SESSION_ACCOUNT_ID;
+      const res=await fetchHoldings(accountType,accountId);
+      const {funds,principals}=normalizeHoldings(res);
+      renderFunds(funds||[]);
+      renderPrincipals(principals||[]);
+      document.getElementById('nextBtn').addEventListener('click',goNext);
+    }catch(e){
       console.error(e);
-      document.getElementById('fundBody').innerHTML =
-        `<tr><td colspan="6" class="py-6 text-center text-red-500">보유내역을 불러오지 못했습니다.</td></tr>`;
-      document.getElementById('principalBody').innerHTML =
-        `<tr><td colspan="6" class="py-6 text-center text-red-500">보유내역을 불러오지 못했습니다.</td></tr>`;
+      document.getElementById('fundBody').innerHTML=`<tr><td colspan="6" class="py-6 text-center text-red-500">보유내역을 불러오지 못했습니다.</td></tr>`;
+      document.getElementById('principalBody').innerHTML=`<tr><td colspan="6" class="py-6 text-center text-red-500">보유내역을 불러오지 못했습니다.</td></tr>`;
     }
   })();
 </script>
