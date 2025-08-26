@@ -5,11 +5,11 @@ import java.text.Normalizer;
 public final class OcrTextUtil {
     private OcrTextUtil() {}
 
-    /** 화면 표시용 이름: 괄호(한자 등) 통째 제거 + 잡스러운 기호 제거 + 공백 정리 */
+    /** 화면 표시용 이름: 괄호(한자 등) 통째 제거 + 기호 제거 + 공백 정리 */
     public static String tidyNameForDisplay(String s) {
         if (s == null) return null;
         String x = nfkc(s);
-        // (한자) 처럼 괄호 내용 통째 제거
+        // (한자) 괄호 내용 통째 제거
         x = x.replaceAll("\\s*[\\(\\[{<][^\\)\\]}>]*[\\)\\]}>]\\s*", " ");
         // 점/중점/불릿/하이픈/밑줄 등 노이즈 제거
         x = x.replaceAll("[·•ㆍ・‧∙•⸱·\\-—_~`'\"^]+", " ");
@@ -53,7 +53,7 @@ public final class OcrTextUtil {
         Integer century = switch (s) {
             case '1', '2' -> 1900;
             case '3', '4' -> 2000;
-            default -> null; // 그 외(5~8 등)는 필요시 규칙 추가
+            default -> null; 
         };
         if (century == null) return null;
 
