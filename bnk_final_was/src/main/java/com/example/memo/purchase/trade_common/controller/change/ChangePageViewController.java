@@ -31,8 +31,6 @@ public class ChangePageViewController {
 	@GetMapping("/step1")
 	public String step1(HttpSession session) {
 		Long userId = (Long) session.getAttribute("LOGIN_USER_ID");
-		if (userId == null)
-			return "redirect:/login-view/main";
 
 		// flow 방어: 엔트리를 안 거쳤다면 엔트리로
 		ChangeValueDto dto = (ChangeValueDto) session.getAttribute("ChangeValueDto");
@@ -71,9 +69,7 @@ public class ChangePageViewController {
 	public String step1Next(@RequestParam("accountType") String accountType,
 			@RequestParam("accountId") String accountId, HttpSession session) {
 		Long userId = (Long) session.getAttribute("LOGIN_USER_ID");
-		if (userId == null)
-			return "redirect:/login-view/main";
-
+		
 		ChangeValueDto dto = (ChangeValueDto) session.getAttribute("ChangeValueDto");
 
 		// 필수값 방어

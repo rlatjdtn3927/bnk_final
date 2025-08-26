@@ -7,121 +7,162 @@
 
 <style id="page-css" hx-swap-oob="true">
   /* 레이아웃 */
-  .reserve-step2{width:min(92vw,960px);margin:0 auto;padding:16px 16px 132px}
-  .page-title{font-weight:700;font-size:20px;margin-bottom:4px}
-  .page-sub{color:#666;font-size:13px;margin-bottom:12px}
-  
-  .card{border:1px solid #eee;border-radius:12px;padding:14px;background:#fff}
-  .user-card{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
-  .badge{display:inline-block;padding:2px 8px;border-radius:999px;background:#f3f4f6;font-size:10px;margin-right:0px}
-  .badge.risk{background:#ffe5e5;color:#cc2b2b}
-  .section-title{font-weight:700;font-size:16px;margin:18px 0 10px}
-  
-  /* 선택 상품 카드 */
-  .retain-list{display:flex;flex-direction:column;gap:10px}
-  .retain-card{border:1px solid #f0f0f0;border-radius:12px;padding:12px}
-  .retain-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
-  .retain-name{font-weight:600;margin-bottom:8px}
-  .remove{border:none;background:transparent;font-size:18px;line-height:1;cursor:pointer;color:#bbb}
-  
-  /* 하단 고정 버튼 */
-  .page-bottom{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid #eee}
-  .page-bottom .stack{width:min(92vw,960px);margin:0 auto;display:flex;flex-direction:column;gap:10px}
-  .btn-primary{width:100%;padding:14px;border:none;border-radius:10px;background:#ff5252;color:#fff;font-weight:700;font-size:16px;cursor:pointer}
-  .btn-primary:disabled{background:#ffd6d6;cursor:not-allowed}
-  .btn-outline-red{width:fit-content;padding:10px 14px;border-radius:999px;border:1px solid #f2b7b7;background:#fff;color:#e26666;font-weight:600;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
-  .btn-outline-red:disabled{opacity:.6;cursor:not-allowed}
-  .btn-outline-red .plus{font-weight:700}
-  
-  /* 모달 */
-  .modal{position:fixed;inset:0;display:none;align-items:stretch;justify-content:center;background:rgba(0,0,0,.4);z-index:999}
-  .modal.open{display:flex}
-  .modal-panel{width:100%;height:100%;background:#fff;border-radius:16px 16px 0 0;margin-top:4vh;display:flex;flex-direction:column;overflow:hidden}
-  .modal-head{padding:16px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;gap:10px}
-  .modal-title{font-weight:700; display: inline-block;}
-  .modal-info{display: flex; gap: 6px; margin-bottom: 5px;}
-  .tabs{display:flex;gap:8px;flex-wrap:nowrap;overflow:auto;-webkit-overflow-scrolling:touch}
-  .tabs::-webkit-scrollbar{display:none}
-  .tab{padding:6px 12px;border:1px solid #e5e7eb;border-radius:999px;background:#fff;cursor:pointer;font-size:13px;white-space:nowrap}
-  .tab.active{background:#111827;color:#fff;border-color:#111827}
-  .modal-controls{display:flex;align-items:center;gap:8px}
-  .select{border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;background:#fff}
-  
-  .modal-body{flex:1;overflow:auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px}
-  .prod-card{border:1px solid #eee;border-radius:12px;padding:12px;display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"left mid actions";gap:10px;align-items:center}
-  .prod-left{grid-area:left;display:flex;align-items:center;gap:10px}
-  .prod-mid{grid-area:mid;min-width:0}
-  .prod-actions{grid-area:actions;display:flex;gap:8px;justify-self:end}
-  .btn{border:1px solid #e5e7eb;border-radius:8px;background:#fff;padding:8px 10px;font-size:13px;cursor:pointer}
-  .btn.gray{background:#f9fafb}
-  .chip{display:inline-block;border-radius:999px;padding:2px 8px;background:#f3f4f6;font-size:10px;margin-right:0px}
-  .chip.guarantee{background:#e8f5e9;color:#2e7d32}
-  .chip.noguarantee{background:#fff4e5;color:#b45a00}
-  
-  .modal-foot{padding:12px 16px;border-top:1px solid #eee;display:flex;gap:10px}
-  .modal-foot .grow{flex:1}
-  .btn-secondary{padding:12px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;cursor:pointer}
-  .btn-cta{padding:12px;border-radius:10px;border:none;background:#ff5252;color:#fff;font-weight:700;cursor:pointer}
-  
-  /* 모달 하단 더보기 바 */
-  .modal-more{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 0}
-  .btn-loadmore{padding:10px 14px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-weight:600}
-  .btn-loadmore[disabled]{opacity:.6;cursor:not-allowed}
-  .more-meta{font-size:12px;color:#666}
-    
-  /* === NEW: 보장/비보장 배지 색 === */
-  .badge.guarantee{ background:#e8f5e9; color:#2e7d32; }
-  .badge.noguarantee{ background:#fff4e5; color:#b45a00; }
-  
-  /* === 투자성향(안정형~공격투자형) 배지/칩 팔레트 === */
-  .badge.risk, .chip.risk { background:#f3f4f6; color:#374151; }
-  .badge.risk.risk-2, .chip.risk-2 { background:#e6f4ea; color:#1b5e20; }  /* 안정형 */
-  .badge.risk.risk-3, .chip.risk-3 { background:#e8f1fb; color:#1e5bc6; }  /* 안전추구형 */
-  .badge.risk.risk-4, .chip.risk-4 { background:#fff7cc; color:#946200; }  /* 위험중립형 */
-  .badge.risk.risk-5, .chip.risk-5 { background:#ffe5cc; color:#c24a00; }  /* 적극투자형 */
-  .badge.risk.risk-6, .chip.risk-6 { background:#ffe5e5; color:#cc2b2b; }  /* 공격투자형 */
+	.reserve-step2{width:min(92vw,960px);margin:0 auto;padding:16px 16px 132px}
+	.page-title{font-weight:700;font-size:20px;margin-bottom:4px}
+	.page-sub{color:#666;font-size:13px;margin-bottom:12px}
+	
+	.card{border:1px solid #eee;border-radius:12px;padding:14px;background:#fff}
+	.user-card{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+	.badge{display:inline-block;padding:2px 8px;border-radius:999px;background:#f3f4f6;font-size:10px;margin-right:0px}
+	.badge.risk{background:#ffe5e5;color:#cc2b2b}
+	.section-title{font-weight:700;font-size:16px;margin:18px 0 10px}
+	
+	/* 보유/선택 상품 카드 */
+	.retain-list{display:flex;flex-direction:column;gap:10px}
+	.retain-card{border:1px solid #f0f0f0;border-radius:12px;padding:12px}
+	.retain-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+	.retain-name{font-weight:600;margin-bottom:8px}
+	.ratio-row{display:flex;align-items:center;gap:8px}
+	.ratio-row input[type="number"]{width:90px;padding:6px 8px;border:1px solid #ddd;border-radius:8px}
+	.remove{border:none;background:transparent;font-size:18px;line-height:1;cursor:pointer;color:#bbb}
+	.total{display:flex;align-items:center;justify-content:space-between;margin-top:10px;font-size:14px}
+	progress{width:100%;height:10px}
+	.help{font-size:12px;margin-top:6px}
+	.help.ok{color:#2e7d32}.help.warn{color:#e68a00}.help.error{color:#c62828}
+	
+	/* 하단 고정 버튼 */
+	.page-bottom{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid #eee}
+	.page-bottom .stack{width:min(92vw,960px);margin:0 auto;display:flex;flex-direction:column;gap:10px}
+	.btn-primary{width:100%;padding:14px;border:none;border-radius:10px;background:#ff5252;color:#fff;font-weight:700;font-size:16px;cursor:pointer}
+	.btn-primary:disabled{background:#ffd6d6;cursor:not-allowed}
+	.btn-outline-red{width:fit-content;padding:10px 14px;border-radius:999px;border:1px solid #f2b7b7;background:#fff;color:#e26666;font-weight:600;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+	.btn-outline-red:disabled{opacity:.6;cursor:not-allowed}
+	.btn-outline-red .plus{font-weight:700}
+	
+	/* 모달 */
+	.modal{position:fixed;inset:0;display:none;align-items:stretch;justify-content:center;background:#fff; z-index:999;}
+	.modal.open{display:flex}
+	.modal-panel{width:100%;height:100%;background:#fff;border-radius:16px 16px 0 0;margin-top:4vh;display:flex;flex-direction:column;overflow:hidden}
+	/*.modal-head{padding:20px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;gap:10px}*/
+	/* 헤더는 고정(옵션) */
+	.modal-head{
+	  position:sticky; top:0; background:#fff; z-index:2;
+	  border-bottom:1px solid #eee; 
+	  display:flex; align-items:stretch; justify-content:flex-start; gap:10px;
+	}
+	.modal-title{font-weight:700; display: inline-block; font-size: 20px; margin-left: 10px;}
+	.modal-info{display: flex; gap: 6px; margin-bottom: 5px;}
+	.tabs{display:flex;gap:8px;flex-wrap:nowrap;overflow:auto;-webkit-overflow-scrolling:touch}
+	.tabs::-webkit-scrollbar{display:none}
+	.tab{padding:8px 22px;border:1px solid #e5e7eb;border-radius:999px;background:#fff;cursor:pointer;font-size:20px;white-space:nowrap}
+	.tab.active{background:#111827;color:#fff;border-color:#111827}
+	.modal-controls{display:flex;align-items:center;gap:8px; align-self:flex-end; margin-right:18px;}
+	.select{border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;background:#fff}
+	
+	/* 바디만 스크롤 */
+	.modal-body{
+	  flex:1; overflow:auto; padding:12px 16px;
+	  display:flex; flex-direction:column; gap:10px;
+	}
+	/*.modal-body{flex:1;overflow:auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px}*/
+	/*.prod-card{border:1px solid #eee;border-radius:12px;padding:12px;display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"left mid actions";gap:10px;align-items:center}*/
+	.prod-left{grid-area:left;display:flex;align-items:center;gap:10px}
+	.prod-card{border:1px solid #eee; border-radius:12px; padding:12px;
+	  display:grid; grid-template-columns:auto 1fr auto; grid-template-areas:"left mid actions";
+	  gap:10px; align-items:center}
+	.prod-mid{grid-area:mid;min-width:0}
+	.prod-actions{grid-area:actions;display:flex;gap:8px;justify-self:end}
+	.btn{border:1px solid #e5e7eb;border-radius:8px;background:#fff;padding:8px 10px;font-size:13px;cursor:pointer}
+	.btn.gray{background:#f9fafb}
+	.chip{display:inline-block;border-radius:999px;padding:2px 8px;background:#f3f4f6;font-size:10px;margin-right:0px}
+	.chip.guarantee{background:#e8f5e9;color:#2e7d32}
+	.chip.noguarantee{background:#fff4e5;color:#b45a00}
+	
+	/* ===== 하단 버튼: 사진처럼 큼직한 고정 영역 ===== */
+	.modal-foot{
+	  position:sticky; bottom:0; z-index:2;
+	  background:#fff; border-top:1px solid #eee;
+	  padding:18px 8px 40px 8px;
+	  display:grid; grid-template-columns:1fr 1fr; gap:12px;
+	}
+	/* 공통 버튼 크기/모양 */
+	.modal-foot .btn-secondary,
+	.modal-foot .btn-cta{
+	  height:56px; border-radius:14px; font-size:16px; font-weight:700;
+	  display:inline-flex; align-items:center; justify-content:center; width:100%;
+	  transition:transform .05s ease, filter .15s ease;
+	}
+	/*.modal-foot{padding:12px 16px;border-top:1px solid #eee;display:flex;gap:10px}*/
+	/*
+	.modal-foot .grow{flex:1}
+	*/
+	.btn-secondary{padding:0px 20px;border-radius:10px;border:1px solid #e5e7eb;background:#8d94a6; color: #fff; cursor:pointer}
+	.btn-cta{padding:0px 20px;border-radius:10px;border:none;background:#ff5252;color:#fff;font-weight:700;cursor:pointer}
+	
+	/* 모달 하단 더보기 바 */
+	.modal-more{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 0}
+	.btn-loadmore{padding:10px 14px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-weight:600}
+	.btn-loadmore[disabled]{opacity:.6;cursor:not-allowed}
+	.more-meta{font-size:12px;color:#666}
+	  
+	 /* === NEW: 보장/비보장 배지 색 (chip과 톤 맞춤) === */
+	.badge.guarantee{ background:#e8f5e9; color:#2e7d32; }
+	.badge.noguarantee{ background:#fff4e5; color:#b45a00; }
+	
+	/* === 투자성향(안정형~공격투자형) 배지/칩 팔레트 === */
+	.badge.risk, .chip.risk { background:#f3f4f6; color:#374151; }
+	.badge.risk.risk-2, .chip.risk-2 { background:#e6f4ea; color:#1b5e20; }  /* 안정형 */
+	.badge.risk.risk-3, .chip.risk-3 { background:#e8f1fb; color:#1e5bc6; }  /* 안전추구형 */
+	.badge.risk.risk-4, .chip.risk-4 { background:#fff7cc; color:#946200; }  /* 위험중립형 */
+	.badge.risk.risk-5, .chip.risk-5 { background:#ffe5cc; color:#c24a00; }  /* 적극투자형 */
+	.badge.risk.risk-6, .chip.risk-6 { background:#ffe5e5; color:#cc2b2b; }  /* 공격투자형 */
 
-  /* === 펀드 위험도(초저~초고) 칩/배지 팔레트 === */
-  .badge.fund-risk, .chip.fund-risk { background:#f3f4f6; color:#374151; }
-  .badge.fund-risk.lowest, .chip.fund-risk.lowest { background:#e8f5e9; color:#1b5e20; }
-  .badge.fund-risk.low,    .chip.fund-risk.low    { background:#e0f2f1; color:#00695c; }
-  .badge.fund-risk.mid,    .chip.fund-risk.mid    { background:#fff7cc; color:#946200; }
-  .badge.fund-risk.high,   .chip.fund-risk.high   { background:#ffe5cc; color:#c24a00; }
-  .badge.fund-risk.highest,.chip.fund-risk.highest{ background:#ffe5e5; color:#cc2b2b; }
-
-  *, *::before, *::after { box-sizing: border-box; }
-  
-  @media (max-width:768px){
-    .reserve-step2{
-      width: 100%;
-      padding: 12px 12px 132px;
-      box-sizing: border-box;
-    }
-    .btn-outline-red{width:100%;justify-content:center}
-    .modal-panel{height:100vh;margin-top:0;border-radius:0}
-    .modal-body{padding:10px 12px}
-    .page-bottom .stack{
-      width: 100%;
-      max-width: 960px;
-      margin: 0 auto;
-    }
-    .prod-card{
-      grid-template-areas:
-        "mid"
-        "left"
-        "actions";
-      grid-template-columns:1fr;
-      align-items:stretch;
-    }
-    .prod-actions{justify-self:stretch}
-    .prod-actions .btn{flex:1}
-    .modal-head{padding:10px; flex-direction: column; align-items:start; justify-content:start; gap:4px}
-    .tabs{display:flex; gap:2px; flex-wrap:wrap; justify-content:space-between; width: 90%;}
-    .tab{padding:5px 10px; cursor:pointer; font-size:11px;}
-    .modal-controls{gap:3px}
-    .select{border:1px solid #e5e7eb;border-radius:8px;padding:5px 8px;background:#fff; font-size:11px;}
-    .btn{border:1px solid #e5e7eb;border-radius:8px;background:#fff;padding:5px 8px;font-size:11px;cursor:pointer}
-  }
+	/* === NEW: 펀드 위험도(초저~초고) 칩/배지 팔레트 === */
+	.badge.fund-risk, .chip.fund-risk { background:#f3f4f6; color:#374151; }
+	.badge.fund-risk.lowest, .chip.fund-risk.lowest { background:#e8f5e9; color:#1b5e20; }    /* 초저위험(매우 낮음) */
+	.badge.fund-risk.low,    .chip.fund-risk.low    { background:#e0f2f1; color:#00695c; }    /* 저위험(낮음) */
+	.badge.fund-risk.mid,    .chip.fund-risk.mid    { background:#fff7cc; color:#946200; }    /* 중위험(보통) */
+	.badge.fund-risk.high,   .chip.fund-risk.high   { background:#ffe5cc; color:#c24a00; }    /* 고위험(높음) */
+	.badge.fund-risk.highest,.chip.fund-risk.highest{ background:#ffe5e5; color:#cc2b2b; }    /* 초고위험(매우 높음) */
+	
+	/* 1) 전체 박스사이징 보정: 패딩 때문에 100%를 넘지 않도록 */
+	*, *::before, *::after { box-sizing: border-box; }
+	
+	 @media (max-width:768px){
+		.reserve-step2{
+		  width: 100%;
+		  padding: 12px 12px 132px;
+		  box-sizing: border-box; /* 꼭 추가 */
+		}
+	   .btn-outline-red{width:100%;justify-content:center}
+	   .modal-panel{height:100vh;margin-top:0;border-radius:0}
+	   .modal-body{padding:10px 12px}
+	     /* 하단 고정 바 안쪽 컨테이너는 부모 패딩을 고려해 100%로 */
+		.page-bottom .stack{
+		  width: 100%;           /* 기존: min(92vw, 960px) → 오버플로우 유발 */
+		  max-width: 960px;      /* 데스크톱과 같은 상한은 유지하고 싶다면 */
+		  margin: 0 auto;
+		}
+	
+	   /* 상품 카드 세로 스택 */
+	   .prod-card{
+	     grid-template-areas:
+	       "mid"
+	       "left"
+	       "actions";
+	     grid-template-columns:1fr;
+	     align-items:stretch;
+	   }
+	   .prod-actions{justify-self:stretch}
+	   .prod-actions .btn{flex:1}
+	   
+	   .modal-head{padding:10px; flex-direction: column; align-items:start; justify-content:start; gap:4px}
+	   .tabs{display:flex; gap:2px; flex-wrap:wrap; justify-content:space-between; width: 90%; margin-left: 13px;}
+	   .tab{padding:5px 10px; cursor:pointer; font-size:11px;}
+	   .modal-controls{gap:3px;}
+	   .select{border:1px solid #e5e7eb;border-radius:8px;padding:5px 7px;background:#fff; font-size:11px; margin-top: 10px;}
+	   .btn{border:1px solid #e5e7eb;border-radius:8px;background:#fff;padding:5px 10px;font-size:11px;cursor:pointer; margin-top: 10px;}
+	 }
 </style>
 </th:block>
 
@@ -212,7 +253,6 @@
   
         <div class="modal-foot">
           <button type="button" class="btn-secondary" id="closeModalBtn">닫기</button>
-          <div class="grow"></div>
           <button type="button" class="btn-cta" id="addSelectedBtn">추가</button>
         </div>
       </div>

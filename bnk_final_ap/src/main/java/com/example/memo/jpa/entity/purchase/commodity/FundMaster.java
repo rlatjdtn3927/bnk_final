@@ -70,4 +70,4 @@ public class FundMaster extends BaseEntity{
 
 //fundMasterRepository.deleteById("abc");
 //entityManager.flush();  // 쿼리 반영
-//entityManager.clear();  // 캐시 비우기 (DB 상태와 동기화)
+//entityManager.clear();  // 캐시 비우기 (DB 상태와 동기화)	

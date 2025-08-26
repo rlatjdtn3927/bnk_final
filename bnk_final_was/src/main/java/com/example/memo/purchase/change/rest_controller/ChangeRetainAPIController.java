@@ -80,7 +80,7 @@ public class ChangeRetainAPIController {
     	JsonNode msg = mapper.valueToTree(dto);
     	TcpMessage message = new TcpMessage(Command.CHANGE_GET_HOLDINGS, msg);
     	JsonNode response = tcpClientService.sendMessage(message);
-    	System.out.println(mapper.writeValueAsString(response)); //여기서 받아온 데이터 형식 확인하십쇼
+        System.out.println(mapper.writeValueAsString(response)); //여기서 받아온 데이터 형식 확인하십쇼
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }

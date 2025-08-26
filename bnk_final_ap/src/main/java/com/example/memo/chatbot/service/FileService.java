@@ -54,6 +54,7 @@ public class FileService {
             }
 
         } catch (Exception e) {
+        	e.printStackTrace();
             System.out.println("❌ 전체 PDF 읽기 실패: " + e.getMessage());
         }
         return results;
