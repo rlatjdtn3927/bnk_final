@@ -2,6 +2,144 @@
 <th:block xmlns:th="http://www.thymeleaf.org" th:fragment="css">
   <style id="page-css" hx-swap-oob="true">
     /* 이 페이지 전용 스타일을 여기에 작성하세요 */
+    :root{
+  --primary: #4B84CA;
+  --primary-700:#385f9c;
+  --muted: #98a2b3;
+  --surface:#fff;
+  --border:#e9edf3;
+  --shadow: 0 10px 30px rgba(16,24,40,.08);
+}
+
+/* 카드 & 헤더 */
+.card{
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.card__head{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:14px 18px;border-bottom:1px solid var(--border);
+  background: #fff;
+}
+.card__body{
+  position:relative;padding:12px 18px 18px; overflow-x:auto;
+  /* 은은한 가로 밴드 + 세로 아주 연한 그리드 */
+  background:
+    linear-gradient(#f6f8fb, #f6f8fb) 0 0/100% 42% no-repeat;
+  border-bottom-left-radius:16px;border-bottom-right-radius:16px;
+}
+
+/* 캔버스 최소 크기 보장(모바일은 가로 스크롤) */
+#monthlyChart{ display:block; width:100%; max-width:100%; height:auto; min-width:640px; min-height:320px; }
+
+/* ====== 외부툴팁 카드 ====== */
+.chartjs-tooltip{
+  position:absolute; z-index:20; pointer-events:none;
+  background:#fff; border:1px solid var(--border);
+  border-radius:12px; box-shadow: var(--shadow);
+  padding:10px 12px; transform: translate(-50%, -120%);
+  white-space:nowrap; font-weight:800; color:#111827; font-size:16px;
+}
+.chartjs-tooltip .label{ display:block; font-size:12px; color:var(--muted); font-weight:600; margin-top:2px; }
+
+/* 포인트 점 */
+.chartjs-dot{
+  position:absolute; width:8px; height:8px; border-radius:50%;
+  background:var(--primary); box-shadow:0 0 0 4px rgba(75,132,202,.18);
+  transform: translate(-50%,-50%); pointer-events:none; z-index:19;
+}
+
+/* 세로 점선 가이드 */
+.chartjs-vline{
+  position:absolute; top:8px; bottom:8px; width:0; border-left:2px dashed rgba(75,132,202,.45);
+  transform: translateX(-1px); pointer-events:none; z-index:18;
+}
+
+/* ===== Toolbar ===== */
+.tools{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  font-family: inherit;
+}
+.tools label{
+  font-size:13px; font-weight:700; color:#667085; letter-spacing:.02em;
+}
+
+/* month input */
+.tools input[type="month"]{
+  height:36px; min-width:160px;
+  padding:0 12px;
+  border:1px solid #d7dbe3; border-radius:10px;
+  background:#fff;
+  color:#1f2937; font-size:14px;
+  outline:none;
+  transition:border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.tools input[type="month"]:hover{ border-color:#4B84CA; }
+.tools input[type="month"]:focus{
+  border-color:#4B84CA;
+  box-shadow:0 0 0 3px rgba(75,132,202,.18);
+}
+
+/* 공통 버튼 */
+.tools button{
+  height:36px; padding:0 12px;
+  border:1px solid #d7dbe3; border-radius:10px;
+  background:#fff; color:#1f2937;
+  font-size:13px; font-weight:700;
+  cursor:pointer; outline:none;
+  transition:transform .06s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease, color .18s ease;
+}
+.tools button:hover{
+  border-color:#4B84CA; background:#f7f9fc;
+  box-shadow:0 2px 10px rgba(0,0,0,.06); transform:translateY(-1px);
+}
+.tools button:focus-visible{
+  border-color:#4B84CA; box-shadow:0 0 0 3px rgba(75,132,202,.22);
+}
+
+/* 조회 버튼은 살짝 강조 */
+#btnReload{
+  background:#f3f7fe; border-color:#d7e3fb;
+}
+#btnReload:hover{ background:#e9f1ff; }
+
+/* Line / Bar를 세그먼트 토글처럼 */
+#btnLine, #btnBar{ min-width:56px; font-weight:800; }
+#btnLine{ border-top-right-radius:0; border-bottom-right-radius:0; margin-right:-1px; }
+#btnBar { border-top-left-radius:0;  border-bottom-left-radius:0; }
+
+/* 활성 상태 */
+#btnLine.active, #btnBar.active,
+#btnLine[aria-pressed="true"], #btnBar[aria-pressed="true"]{
+  background:#4B84CA; border-color:#4B84CA; color:#fff;
+  box-shadow:0 0 0 3px rgba(75,132,202,.15) inset;
+}
+
+/* 구분 기호 ~ */
+.tools span{
+  color:#98a2b3; font-weight:600; margin:0 2px;
+}
+
+/* 반응형: 좁을 땐 줄바꿈 + 입력폭 자동 */
+@media (max-width: 860px){
+  .tools{ gap:8px; }
+  .tools input[type="month"]{ flex:1 1 140px; min-width:0; }
+  #btnReload{ order:3; }
+}
+
+/* (선택) 다크 모드 */
+@media (prefers-color-scheme: dark){
+  .tools input[type="month"], .tools button{ background:#0f172a; color:#e5e7eb; border-color:#2a3443; }
+  .tools input[type="month"]:hover{ border-color:#4B84CA; }
+  #btnReload{ background:#111a2d; border-color:#1e2a44; }
+  #btnReload:hover{ background:#0f1b33; }
+  .tools span{ color:#98a2b3; }
+}
+
+    
   </style>
 </th:block>
 
@@ -31,89 +169,225 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  (function() {
-	  // 기본 기간: 최근 8개월 (오늘 포함)
-	  const to = new Date();
-	  const from = new Date(to.getFullYear(), to.getMonth() - 7, 1);
+(function(){
+  // 기본 기간: 최근 8개월
+  const to = new Date();
+  const from = new Date(to.getFullYear(), to.getMonth() - 7, 1);
+  const fmtYm = (d) => d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,'0');
 
-	  const fmtYm = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0');
+  const fromYmEl = document.getElementById('fromYm');
+  const toYmEl   = document.getElementById('toYm');
+  fromYmEl.value = fmtYm(from);
+  toYmEl.value   = fmtYm(to);
 
-	  const fromYmEl = document.getElementById('fromYm');
-	  const toYmEl = document.getElementById('toYm');
-	  fromYmEl.value = fmtYm(from);
-	  toYmEl.value = fmtYm(to);
+  const canvas = document.getElementById('monthlyChart');
+  const ctx = canvas.getContext('2d');
 
-	  const ctx = document.getElementById('monthlyChart').getContext('2d');
-	  let currentType = 'line';
-	  let chart;
+  let currentType = 'line';
+  let chart;
 
-	  function datasetsFor(type, data) {
-	    return [
-	      {
-	        label: 'IRP',
-	        data: data.irp,
-	        borderWidth: 2,
-	        tension: type === 'line' ? 0.3 : 0,
-	        fill: false
-	      },
-	      {
-	        label: 'DC',
-	        data: data.dc,
-	        borderWidth: 2,
-	        tension: type === 'line' ? 0.3 : 0,
-	        fill: false
-	      }
-	    ];
-	  }
+  /* ---------------- 1) 외부 툴팁 + 가이드라인 ---------------- */
+  function getEl(cls){
+    let el = document.querySelector('.'+cls);
+    if(!el){
+      el = document.createElement('div');
+      el.className = cls;
+      document.querySelector('.card__body').appendChild(el);
+    }
+    return el;
+  }
+  const externalTooltip = (ctxArg)=>{
+    if (currentType !== 'line') return; // bar일 땐 외부툴팁 사용 X
+    const {chart, tooltip} = ctxArg;
+    const tip  = getEl('chartjs-tooltip');
+    const dot  = getEl('chartjs-dot');
+    const vln  = getEl('chartjs-vline');
 
-	  async function loadAndRender() {
-	    const fromYm = fromYmEl.value;
-	    const toYm = toYmEl.value;
-	    if (!fromYm || !toYm) return;
+    if (tooltip.opacity === 0) { tip.style.opacity=0; dot.style.opacity=0; vln.style.opacity=0; return; }
 
-	    const res = await fetch(`/admin/report/monthly?fromYm=${fromYm}&toYm=${toYm}`);
-	    const data = await res.json();
+    const dp = tooltip.dataPoints?.[0];
+    const value = dp ? dp.formattedValue : '';
+    const label = dp ? dp.label : '';
+    tip.innerHTML = `${value}<span class="label">${label}</span>`;
 
-	    // 차트 재생성
-	    if (chart) chart.destroy();
-	    chart = new Chart(ctx, {
-	      type: currentType,
-	      data: {
-	        labels: data.labels,
-	        datasets: datasetsFor(currentType, data)
-	      },
-	      options: {
-	        responsive: true,
-	        plugins: {
-	          legend: { position: 'top' },
-	          tooltip: { mode: 'index', intersect: false }
-	        },
-	        interaction: { mode: 'nearest', axis: 'x', intersect: false },
-	        scales: {
-	          y: { beginAtZero: true, ticks: { precision: 0 } }
-	        }
-	      }
-	    });
-	  }
+    const {offsetLeft: cl, offsetTop: ct} = chart.canvas;
+    const x = cl + tooltip.caretX, y = ct + tooltip.caretY;
+    tip.style.opacity = 1; tip.style.left = x+'px'; tip.style.top = y+'px';
+    dot.style.opacity = 1; dot.style.left = x+'px'; dot.style.top = y+'px';
+    vln.style.opacity = 1; vln.style.left = (cl + tooltip.caretX)+'px';
+  };
 
-	  document.getElementById('btnReload').addEventListener('click', loadAndRender);
-	  document.getElementById('btnLine').addEventListener('click', () => {
-	    if (currentType === 'line') return;
-	    currentType = 'line';
-	    document.getElementById('btnLine').classList.add('active');
-	    document.getElementById('btnBar').classList.remove('active');
-	    loadAndRender();
-	  });
-	  document.getElementById('btnBar').addEventListener('click', () => {
-	    if (currentType === 'bar') return;
-	    currentType = 'bar';
-	    document.getElementById('btnBar').classList.add('active');
-	    document.getElementById('btnLine').classList.remove('active');
-	    loadAndRender();
-	  });
+  /* ---------------- 2) 데이터셋 스타일 함수 ---------------- */
+  function makeGradient(){
+    // 캔버스 높이에 따라 그라데이션 다시 만들기 (재생성 시점: 매 렌더)
+    const h = Math.max(canvas.clientHeight || 300, 300);
+    const g = ctx.createLinearGradient(0,0,0,h);
+    g.addColorStop(0, 'rgba(75,132,202,.18)');
+    g.addColorStop(.6,'rgba(75,132,202,.08)');
+    g.addColorStop(1, 'rgba(75,132,202,0)');
+    return g;
+  }
+  
+  const C_IRP = '#4A90E2'; // 파랑
+  const C_DC  = '#F56C85'; // 핑크
 
-	  // 첫 렌더
-	  loadAndRender();
-	})();
+  function datasetsFor(type, data){
+    if (type === 'line') {
+      return [
+        { // IRP: 보라 라인 + 채움
+          label: 'IRP',
+          data: data.irp,
+          borderColor: C_IRP, 
+          borderWidth: 3,
+          tension: 0.35,
+          fill: true,
+          backgroundColor: 'rgba(74,144,226,0.18)',   // 채움(선택)
+          
+       	  // ✅ 점 스타일 (툴팁과 맞추기 위한 기준)
+          pointStyle: 'circle',
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          pointBorderWidth: 2,
+          pointBackgroundColor: C_IRP,
+          pointHoverBackgroundColor: C_IRP,
+          pointHoverBorderColor: '#fff'
+        },
+        { // DC: 옅은 비교선
+          label: 'DC',
+          data: data.dc,
+          borderColor: C_DC,
+          //borderColor: 'rgba(75,132,202,.25)',
+          backgroundColor: 'rgba(245,108,133,0.25)',
+          borderWidth: 3,
+          tension: 0.35,
+          fill: false,
+          
+       	  // ✅ 핑크 라인과 동일 색의 점
+          pointStyle: 'circle',
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          pointBorderWidth: 2,
+          pointBackgroundColor: C_DC,
+          pointHoverBackgroundColor: C_DC,
+          pointHoverBorderColor: '#fff'
+        }
+      ];
+    } else { // bar
+      return [
+        {
+          label: 'IRP',
+          data: data.irp,
+          backgroundColor: '#4A90E2',
+          borderColor: 'rgba(75,132,202,1)',
+          borderWidth: 0,
+          borderRadius: 8
+        },
+        {
+          label: 'DC',
+          data: data.dc,
+          backgroundColor: '#F56C85',
+          borderColor: 'rgba(75,132,202,.3)',
+          borderWidth: 0,
+          borderRadius: 8
+        }
+      ];
+    }
+  }
+
+  /* ---------------- 3) 차트 렌더 ---------------- */
+  async function loadAndRender(){
+    const fromYm = fromYmEl.value;
+    const toYm   = toYmEl.value;
+    if (!fromYm || !toYm) return;
+
+    const res  = await fetch(`/admin/report/monthly?fromYm=${fromYm}&toYm=${toYm}`);
+    const data = await res.json(); // { labels:[], irp:[], dc:[] }
+
+    if (chart) chart.destroy();
+
+    const isLine = currentType === 'line';
+
+    chart = new Chart(ctx, {
+      type: currentType,
+      data: {
+        labels: data.labels,
+        datasets: datasetsFor(currentType, data)
+      },
+      options: {
+        maintainAspectRatio: false,
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: isLine
+          ? {
+              enabled: true,
+              mode: 'nearest',     // ✅ 실제 가장 가까운 "점" 기준
+              intersect: true,     // ✅ 점 위에 있을 때만
+              position: 'nearest'  // ✅ 요소(점) 기준 위치
+            }
+          : {
+              enabled: true,
+              mode: 'index',
+              intersect: false
+            }
+      },
+      interaction: isLine
+        ? { mode: 'nearest', axis: 'x', intersect: true }   // ✅ 점과 정확히 일치
+        : { mode: 'index', axis: 'x', intersect: false },
+      elements: {
+        point: {
+          radius: 3,
+          hoverRadius: 6,
+          borderWidth: 2,
+          hitRadius: 10          // ✅ 클릭/호버 판정 영역 넓힘
+        }
+      },
+        interaction: { mode:'nearest', axis:'x', intersect:false },
+        scales: {
+          x: {
+            grid: { display:false, drawBorder: false },
+            ticks:{ color:'#9aa3b2', maxRotation:0 }
+          },
+          y: {
+            beginAtZero: true,
+            ticks: { precision:0, color:'#9aa3b2' },
+            grid: { display: false, drawBorder: false  }
+          }
+        },
+        // bar 모드에서 막대 너비/간격 & 둥글게 보기 좋게
+        categoryPercentage: currentType==='bar' ? 0.7 : undefined,
+        barPercentage:       currentType==='bar' ? 0.8 : undefined,
+        hover: { mode:'index', intersect:false }
+      }
+    });
+  }
+
+  /* ---------------- 4) 버튼 바인딩 ---------------- */
+  const btnReload = document.getElementById('btnReload');
+  const btnLine   = document.getElementById('btnLine');
+  const btnBar    = document.getElementById('btnBar');
+
+  btnReload.addEventListener('click', loadAndRender);
+
+  btnLine.addEventListener('click', ()=>{
+    if (currentType==='line') return;
+    currentType='line';
+    btnLine.classList.add('active');  btnLine.setAttribute('aria-pressed','true');
+    btnBar.classList.remove('active');btnBar.setAttribute('aria-pressed','false');
+    loadAndRender();
+  });
+
+  btnBar.addEventListener('click', ()=>{
+    if (currentType==='bar') return;
+    currentType='bar';
+    btnBar.classList.add('active');   btnBar.setAttribute('aria-pressed','true');
+    btnLine.classList.remove('active');btnLine.setAttribute('aria-pressed','false');
+    loadAndRender();
+  });
+
+  // 첫 렌더
+  loadAndRender();
+})();
+
 </script>
 </th:block>
