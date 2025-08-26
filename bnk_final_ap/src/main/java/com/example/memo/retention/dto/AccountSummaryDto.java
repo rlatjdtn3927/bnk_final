@@ -15,4 +15,7 @@ public class AccountSummaryDto {
     private String displayName;      // 화면용 표기 (개인IRP / 퇴직연금 DC 등)
     private BigDecimal balance;      // 잔액/평가액 요약
     private String userName;         // 사용자 이름
+    
+    private BigDecimal totalProfitLoss; // 총 손익
+    private BigDecimal returnRate;      // 총 수익률
 }

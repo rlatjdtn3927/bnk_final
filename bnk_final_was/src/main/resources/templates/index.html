@@ -338,75 +338,76 @@ button { border: none; background: none; cursor: pointer; }
   	  if(window.lucide) window.lucide.createIcons();
   }
 
-  function renderWithAccounts(summary) {
-      const { userName, accounts = [] } = summary;
-      
-      // 1. 필요한 DOM 요소 선택
-      const nameEl = $(".user-name");
-      const accountInfoEl = $(".account-info");
-      const amtEl = $(".asset-amount");
-      const rateEl = $(".return-rate");
-      const selector = $("#accountTypeSelect");
+    function renderWithAccounts(summary) {
+        const { userName, accounts = [] } = summary;
 
-      if (nameEl) nameEl.textContent = userName;
+        // 1. 필요한 DOM 요소 선택
+        const nameEl = $(".user-name");
+        const accountInfoEl = $(".account-info");
+        const amtEl = $(".asset-amount");
+        const rateEl = $(".return-rate");
+        const selector = $("#accountTypeSelect");
 
-      // 2. 계좌 유형별로 데이터 그룹화 및 계산
-      const groupedData = accounts.reduce((acc, account) => {
-          const type = account.accountType;
-          if (!acc[type]) {
-              acc[type] = {
-                  totalBalance: 0,
-                  weightedSum: 0,
-                  accounts: []
-              };
-          }
-          const balance = Number(account.balance || 0);
-          const rate = Number(account.returnRate) || 0;
-          acc[type].totalBalance += balance;
-          acc[type].weightedSum += balance * rate;
-          acc[type].accounts.push(account);
-          return acc;
-      }, {});
+        if (nameEl) nameEl.textContent = userName;
 
-      // 3. 화면 업데이트 함수 정의
-      const updateDisplay = (type) => {
-          const data = groupedData[type];
-          if (!data) return;
+        // 2. 계좌 유형별로 데이터 그룹화 및 계산
+        const groupedData = accounts.reduce((acc, account) => {
+            const type = account.accountType;
+            if (!acc[type]) {
+                acc[type] = {
+                    totalBalance: 0,
+                    totalProfitLoss: 0, // 총 손익을 합산할 필드 추가
+                    accounts: []
+                };
+            }
+            const balance = Number(account.balance || 0);
+            const profitLoss = Number(account.totalProfitLoss || 0); // API에 추가된 필드 사용
 
-          // 가중 평균 수익률 계산
-          const weightedRate = data.totalBalance > 0 
-              ? data.weightedSum / data.totalBalance 
-              : 0;
+            acc[type].totalBalance += balance;
+            acc[type].totalProfitLoss += profitLoss;
+            acc[type].accounts.push(account);
+            return acc;
+        }, {});
 
-          // 대표 계좌 정보 표시 (첫 번째 계좌)
-          const representativeAccount = data.accounts[0];
-          if (accountInfoEl && representativeAccount) {
-              accountInfoEl.textContent = `${representativeAccount.displayName} (${representativeAccount.accountNo})`;
-          }
+        // 3. 화면 업데이트 함수 정의
+        const updateDisplay = (type) => {
+            const data = groupedData[type];
+            if (!data) return;
 
-          // 금액 및 수익률 표시
-          if (amtEl) amtEl.textContent = fmtWon(data.totalBalance);
-          if (rateEl) {
-              const cls = weightedRate > 0 ? "positive" : (weightedRate < 0 ? "negative" : "");
-              rateEl.innerHTML = `수익률: <span class="${cls}">${pctText(weightedRate)}</span>`;
-          }
-      };
+            // 평가금액과 총 손익으로 수익률 직접 계산
+            const principal = data.totalBalance - data.totalProfitLoss; // 투자 원금 = 평가금액 - 총손익
+            const calculatedRate = principal > 0 ? (data.totalProfitLoss / principal) * 100 : 0;
 
-      // 4. 드롭다운 옵션 생성 및 이벤트 핸들러 연결
-      selector.innerHTML = Object.keys(groupedData).map(type => 
-          `<option value="${type}">${type}</option>`
-      ).join("");
+            // 대표 계좌 정보 표시 (첫 번째 계좌)
+            const representativeAccount = data.accounts[0];
+            if (accountInfoEl && representativeAccount) {
+                accountInfoEl.textContent = `${representativeAccount.displayName} (${representativeAccount.accountNo})`;
+            }
 
-      selector.addEventListener('change', (e) => {
-          updateDisplay(e.target.value);
-      });
+            // 금액 및 수익률 표시
+            if (amtEl) amtEl.textContent = fmtWon(data.totalBalance);
+            if (rateEl) {
+                const cls = calculatedRate > 0 ? "positive" : (calculatedRate < 0 ? "negative" : "");
+                // pctText 헬퍼 함수는 % 기호를 붙여주므로 그대로 사용
+                rateEl.innerHTML = `수익률: <span class="${cls}">${pctText(calculatedRate)}</span>`;
+            }
+        };
 
-      // 5. 초기 화면 표시 (첫 번째 계좌 유형으로)
-      if (Object.keys(groupedData).length > 0) {
-          const initialType = Object.keys(groupedData)[0];
-          updateDisplay(initialType);
-      }
-  }
+        // 4. 드롭다운 옵션 생성 및 이벤트 핸들러 연결
+        selector.innerHTML = Object.keys(groupedData).map(type => 
+            `<option value="${type}">${type}</option>`
+        ).join("");
+
+        selector.addEventListener('change', (e) => {
+            updateDisplay(e.target.value);
+        });
+
+        // 5. 초기 화면 표시 (첫 번째 계좌 유형으로)
+        if (Object.keys(groupedData).length > 0) {
+            const initialType = Object.keys(groupedData)[0];
+            updateDisplay(initialType);
+        }
+    }
 
   async function init() {
     try {
