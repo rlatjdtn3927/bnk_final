@@ -23,8 +23,6 @@ public class IrpSpouseLink {
     private Long applicantUserId;
     @Column(name="spouse_user_id") 
     private Long spouseUserId; // 배우자 수락 전 NULL
-    @Column(name="s3_object_key") private String s3ObjectKey;
-
     @Enumerated(EnumType.STRING)
     @Column(name="link_status", nullable=false, length=30)
     private LinkStatus linkStatus;

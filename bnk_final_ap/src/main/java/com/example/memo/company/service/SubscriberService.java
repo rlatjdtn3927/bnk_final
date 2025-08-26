@@ -115,7 +115,7 @@ public class SubscriberService {
 
                 DcMember member = DcMember.builder()
                         .rrn(rrnEnc)
-                        .user(user) // 여기서 매핑!
+                        .user(user)
                         .name(dto.getName())
                         .startDate(LocalDate.parse(dto.getEntryDate()))
                         .baseDate(LocalDate.parse(dto.getBaseDate()))

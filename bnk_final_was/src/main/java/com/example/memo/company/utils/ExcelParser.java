@@ -24,7 +24,7 @@ public class ExcelParser {
         Workbook workbook = WorkbookFactory.create(file.getInputStream());
         Sheet sheet = workbook.getSheetAt(0);
 
-        for (int i = 1; i <= sheet.getLastRowNum(); i++) { // skip header
+        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
             Row row = sheet.getRow(i);
             if (row == null) continue;
 
