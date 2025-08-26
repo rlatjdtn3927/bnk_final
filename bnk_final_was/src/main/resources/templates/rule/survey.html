@@ -232,74 +232,74 @@ button{
   <script>
     // --- 설문 정의 ---
     const QUESTIONS = [
-      { id:"q1", type:"radio", title:"수입원 전망 (5점)", options:[
-        {label:"향후 증가 예상 (5점)",value:"5"},
-        {label:"향후 감소 예상 (3점)",value:"3"},
-        {label:"일정수입 없음 (0점)",value:"0"}
+      { id:"q1", type:"radio", title:"수입원 전망", options:[
+        {label:"향후 증가 예상",value:"5"},
+        {label:"향후 감소 예상",value:"3"},
+        {label:"일정수입 없음",value:"0"}
       ]},
-      { id:"q2", type:"radio", title:"총 자산 대비 투자상품 금액 (5점)", options:[
-        {label:"1억 원 이상 (5점)",value:"5"},
-        {label:"5천만 원~1억 원 미만 (4점)",value:"4"},
-        {label:"3천만 원~5천만 원 미만 (3점)",value:"3"},
-        {label:"3천만 원 미만 (1점)",value:"1"}
+      { id:"q2", type:"radio", title:"총 자산 대비 투자상품 금액", options:[
+        {label:"1억 원 이상",value:"5"},
+        {label:"5천만 원~1억 원 미만",value:"4"},
+        {label:"3천만 원~5천만 원 미만",value:"3"},
+        {label:"3천만 원 미만",value:"1"}
       ]},
-      { id:"q3", type:"radio", title:"총 자산 중 투자상품 비중 (5점)", options:[
-        {label:"30% 이상 (5점)",value:"5"},
-        {label:"20% 이상 (4점)",value:"4"},
-        {label:"10% 이상 (3점)",value:"3"},
-        {label:"10% 미만 (1점)",value:"1"}
+      { id:"q3", type:"radio", title:"총 자산 중 투자상품 비중", options:[
+        {label:"30% 이상 ",value:"5"},
+        {label:"20% 이상 ",value:"4"},
+        {label:"10% 이상 ",value:"3"},
+        {label:"10% 미만 ",value:"1"}
       ]},
-      { id:"q4", type:"radio", title:"금융투자상품에 대한 지식 수준 (10점)", options:[
-        {label:"거의 알지 못함 (1점)",value:"1"},
-        {label:"일정 부분 이해 (3점)",value:"3"},
-        {label:"구조 및 위험 깊이 이해 (5점)",value:"5"},
-        {label:"파생상품까지 이해 (10점)",value:"10"}
+      { id:"q4", type:"radio", title:"금융투자상품에 대한 지식 수준", options:[
+        {label:"거의 알지 못함 ",value:"1"},
+        {label:"일정 부분 이해 ",value:"3"},
+        {label:"구조 및 위험 깊이 이해 ",value:"5"},
+        {label:"파생상품까지 이해 ",value:"10"}
       ]},
       { id:"q5", type:"radio", title:"투자원금에 손실이 발생할 경우 감수할 수 있는 수준", options:[
-        {label:"투자원금은 반드시 보전되어야 한다 (0점)",value:"0"},
-        {label:"원금 기준 10% 미만 손실 감수 (3점)",value:"3"},
-        {label:"원금 기준 20% 미만 손실 감수 (5점)",value:"5"},
-        {label:"기대이익 초과면 20% 이상 전액 손실 감수 (10점)",value:"10"}
+        {label:"투자원금은 반드시 보전되어야 한다 ",value:"0"},
+        {label:"원금 기준 10% 미만 손실 감수 ",value:"3"},
+        {label:"원금 기준 20% 미만 손실 감수 ",value:"5"},
+        {label:"기대이익 초과면 20% 이상 전액 손실 감수 ",value:"10"}
       ]},
-      { id:"q6", type:"radio", title:"손실 감수 수준 (10점)", options:[
-        {label:"원금보장 선호 (0점)",value:"0"},
-        {label:"10% 손실 감수 가능 (3점)",value:"3"},
-        {label:"20% 손실 감수 가능 (5점)",value:"5"},
-        {label:"20% 이상 손실 감수 가능 (10점)",value:"10"}
+      { id:"q6", type:"radio", title:"손실 감수 수준", options:[
+        {label:"원금보장 선호 ",value:"0"},
+        {label:"10% 손실 감수 가능 ",value:"3"},
+        {label:"20% 손실 감수 가능 ",value:"5"},
+        {label:"20% 이상 손실 감수 가능 ",value:"10"}
       ]},
       { id:"q7", type:"radio", title:"목표 투자 수익 기대 수준", options:[
-        {label:"연 3% 내외 (1점)",value:"1"},
-        {label:"연 6% 내외 (3점)",value:"3"},
-        {label:"연 10% 내외 (5점)",value:"5"},
-        {label:"연 10% 이상 (10점)",value:"10"}
+        {label:"연 3% 내외 ",value:"1"},
+        {label:"연 6% 내외 ",value:"3"},
+        {label:"연 10% 내외 ",value:"5"},
+        {label:"연 10% 이상 ",value:"10"}
       ]},
       { id:"q8", type:"radio", title:"투자예정 기간", options:[
-        {label:"6개월 미만 (1점)",value:"1"},
-        {label:"6개월~1년 미만 (2점)",value:"2"},
-        {label:"1년~2년 미만 (3점)",value:"3"},
-        {label:"2년~3년 미만 (4점)",value:"4"},
-        {label:"3년 이상 (5점)",value:"5"}
+        {label:"6개월 미만 ",value:"1"},
+        {label:"6개월~1년 미만 ",value:"2"},
+        {label:"1년~2년 미만 ",value:"3"},
+        {label:"2년~3년 미만 ",value:"4"},
+        {label:"3년 이상 ",value:"5"}
       ]},
-      { id:"q9", type:"checkbox", title:"투자 경험 있는 상품 (중복선택 가능)", options:[
-        {label:"예적금·국채·지방채·MMF·CMA (각 2점)",value:"2"},
-        {label:"금융채·우량채·채권형 펀드·원금보장형 ELF (각 2점)",value:"2"},
-        {label:"중위등급 회사채·혼합형 펀드 (각 2점)",value:"2"},
-        {label:"주식·원금비보장 ELF·주식형 펀드 (각 2점)",value:"2"},
-        {label:"선물옵션·파생상품형 펀드·신용거래 (각 2점)",value:"2"}
+      { id:"q9", type:"checkbox", title:"투자 경험 있는 상품 ", options:[
+        {label:"예적금·국채·지방채·MMF·CMA ",value:"2"},
+        {label:"금융채·우량채·채권형 펀드·원금보장형 ELF ",value:"2"},
+        {label:"중위등급 회사채·혼합형 펀드 ",value:"2"},
+        {label:"주식·원금비보장 ELF·주식형 펀드 ",value:"2"},
+        {label:"선물옵션·파생상품형 펀드·신용거래 ",value:"2"}
       ]},
       { id:"q10", type:"radio", title:"투자 경험 기간", options:[
-        {label:"3년 이상 (5점)",value:"5"},
-        {label:"1~3년 미만 (4점)",value:"4"},
-        {label:"1년 미만 (2점)",value:"2"},
-        {label:"없음 (0점)",value:"0"}
+        {label:"3년 이상 ",value:"5"},
+        {label:"1~3년 미만 ",value:"4"},
+        {label:"1년 미만 ",value:"2"},
+        {label:"없음 ",value:"0"}
       ]},
       { id:"q11", type:"radio", title:"파생상품·원금비보장펀드 경험", options:[
-        {label:"3년 이상 (10점)",value:"10"},
-        {label:"1~3년 미만 (7점)",value:"7"},
-        {label:"1년 미만 (4점)",value:"4"},
-        {label:"없음 (0점)",value:"0"}
+        {label:"3년 이상 ",value:"10"},
+        {label:"1~3년 미만 ",value:"7"},
+        {label:"1년 미만 ",value:"4"},
+        {label:"없음 ",value:"0"}
       ]},
-      { id:"q12", type:"radio", title:"디폴트옵션 설정 여부 (점수 미반영)", options:[
+      { id:"q12", type:"radio", title:"디폴트옵션 설정 여부", options:[
         {label:"예, 추천 포트폴리오 설정",value:"0"},
         {label:"아니요, 별도 지정",value:"0"}
       ]},
