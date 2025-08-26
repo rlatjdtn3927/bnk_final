@@ -3,21 +3,112 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="stylesheet" th:href="@{/css/irp-join.css}" />
 <title>IRP가입하기</title>
-<style>
-  .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:9999}
-  .modal.is-open{display:flex}
-  .modal__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45)}
-  .modal__panel{position:relative;min-width:280px;max-width:90vw;padding:20px 24px;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);text-align:center}
-  .modal__title{margin:0 0 8px;font-size:18px;font-weight:700}
-  .modal__msg{margin:0 0 16px;font-size:14px;color:#333}
-  .modal__btn{padding:8px 16px;border:0;border-radius:8px;background:#333;color:#fff;cursor:pointer}
-  .modal__btn:focus{outline:2px solid #4B84CA;outline-offset:2px}
-</style>
 </head>
 <body>
-<h1>IRP가입하기 시작 페이지</h1>
-<a th:href="@{/irp/join/start}">IRP가입하기</a>
+<!-- 전체 레이아웃 랩 -->
+<div class="layout">
+
+  <!-- 헤더 부분 -->
+  <div class="header-wrap">
+    <div class="header">
+      <header class="logo">
+        <div class="brand"><span class="red">BNK</span> 퇴직연금</div>
+      </header>
+
+      <h2 class="page-title">IRP 가입하기</h2>
+    </div>
+  </div>
+
+  <!-- 🔄 스크롤 되는 본문 -->
+  <main class="content">
+    <div class="divider"></div>
+    <!-- section -->
+    <div class="section irp-card">
+      <div class="irp-header">
+        <h2 class="irp-title">개인형 IRP</h2>
+        <div class="irp-round">IRP 안내</div>
+      </div>
+      <div class="irp-img">
+        <img src="/images/character.png" alt="IRP 캐릭터" />
+      </div>
+      <div class="irp-subtitle">개인형IRP로 누리는 혜택</div>
+      <p class="irp-desc">연말정산 환급받고 세금절약 하세요!</p>
+    </div>
+
+	<!-- irp3개항목 요약 소개 카드 -->
+	<div class="bg">
+	  <div class="benefit-card">
+	    <div class="benefit-item">
+	      <img src="/images/tax.png" alt="세액공제 아이콘" class="icon">
+	      <div class="text">
+	        <div class="title">세액공제</div>
+	        <div class="desc">연말정산 환급금을 확실하게 올리는 방법</div>
+	        <div class="highlight">세액공제 최대 1,485,000원 환급!</div>
+	      </div>
+	    </div>
+	
+	    <div class="benefit-item">
+	      <img src="/images/house.png" alt="절세혜택 아이콘" class="icon">
+	      <div class="text">
+	        <div class="title">절세혜택</div>
+	        <div class="desc">퇴직소득세 30 ~ 40% 감면</div>
+	        <div class="highlight">연금수령시 세금 절세!</div>
+	      </div>
+	    </div>
+	
+	    <div class="benefit-item">
+	      <img src="/images/retire.png" alt="노후준비 아이콘" class="icon">
+	      <div class="text">
+	        <div class="title">노후준비</div>
+	        <div class="desc">운용수익 과세가 연금수령 시점으로 이연,</div>
+	        <div class="highlight">절약한 세금만큼 복리효과 극대화!</div>
+	      </div>
+	    </div>
+	  </div>
+    <!-- 추가 안내문구 -->
+    <div class="benefit-info">
+      <h3>납입한도</h3>
+      <ul>
+        <li>개인부담금: 연간 1,800만원 (전 금융기관 연금저축계좌 합산)</li>
+        <li>퇴직금: 퇴직급여전액 (한도 없음)</li>
+      </ul>
+
+      <h3>적립기간</h3>
+      <p>연금수령개시 전까지 (계약해지에 따른 일시금 수령 가능)</p>
+    </div>
+  </div>
+
+  <!-- 투자성향분석 하러가기 -->
+  <div class="section">
+    <div class="invest-card">
+      <div class="invest-text">
+        <h3>투자성향분석 설문으로<br>나의 투자성향을 알아보세요</h3>
+        <a th:href="@{/survey-view}" class="invest-link">바로 보러가기 ></a>
+      </div>
+      <div class="invest-img">
+        <img src="/images/invest.png" alt="투자관련 아이콘">
+      </div>
+    </div>
+  </div>
+</main>
+
+  <!-- ⬇️ 하단 고정 버튼 -->
+  <footer class="footer">
+    <div class="footer-btn">
+      <a th:href="@{/irp/join/start}" class="btn-join">IRP가입하기</a>
+    </div>
+  </footer>
+
+</div> <!-- layout -->
+
+
+
+
+
+
+<!--  -->
 
 <!-- FLASH 모달: toast가 있을 때만 생성 -->
 <div th:if="${toast}" id="flash-modal" class="modal is-open" role="dialog" aria-modal="true" aria-labelledby="flash-title">

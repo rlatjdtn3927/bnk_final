@@ -1,61 +1,133 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <title>회원가입</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root{
-      /* Brand */
-      --brand:#D71921; --brand-700:#b11217;
-      --bg:#fff2f2; --card:#ffffff; --text:#111827; --muted:#6b7280; --line:#e5e7eb;
-      --shadow:0 12px 28px rgba(0,0,0,.10);
-      --radius:24px; --input-radius:12px;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0; font-family: "Noto Sans KR", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      background: radial-gradient(1200px 600px at 10% -10%, #ffe1e1 0%, transparent 60%), var(--bg);
-      color:var(--text);
-    }
-    .wrap{max-width:900px; margin:56px auto; padding:0 16px; display:flex; justify-content:center;}
-    .card{ width:540px; background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:28px; border:1px solid #f1f5f9; }
-    .title{ text-align:center; font-size:28px; font-weight:800; margin:4px 0 6px;}
-    .subtitle{ text-align:center; color:var(--muted); margin-bottom:18px; }
+<meta charset="UTF-8" />
+<title>회원가입</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+*{box-sizing:border-box}
 
-    label{ display:block; font-size:14px; color:#374151; margin:10px 0 6px; }
-    .row{ display:flex; gap:10px; }
-    .input, select{
-      width:100%; padding:12px 14px; border:1px solid var(--line); border-radius:var(--input-radius);
-      font-size:15px; outline:none; background:#fff; transition: border-color .15s, box-shadow .15s;
-    }
-    .input:focus, select:focus{ border-color:#fecaca; box-shadow:0 0 0 4px rgba(215,25,33,.15); }
+body {
+  font-family: 'Pretendard', sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  color: #222;
+}
 
-    /* PW 토글 아이콘 위치 고정 */
-    .pw-wrap{ position:relative; }
-    .pw-wrap .input{ padding-right:44px; }
-    .pw-toggle{ position:absolute; right:10px; top:50%; transform:translateY(-50%); height:28px; min-width:34px; border:none; border-radius:8px; background:#fff0f0; color:#b11217; cursor:pointer; font-weight:700; }
-    .pw-toggle:hover{ background:#ffe2e2; }
+/* 카드/타이틀 기본(로그인과 동일 톤) */
+.wrap { display:flex; justify-content:center; align-items:center; min-height:90vh; }
+.card { background:#fff; padding:18px 20px; width:100%; max-width:480px; }
+.title { font-size:22px; font-weight:700; margin:0 0 6px; }
+.subtitle { font-size:14px; color:#666; margin:0 0 18px; }
 
-    .agree{ display:flex; align-items:center; gap:8px; margin-top:10px; color:#374151; }
-    .btn{ width:100%; padding:14px 16px; border:none; border-radius:14px; background:var(--brand); color:#fff; font-weight:800; font-size:16px; cursor:pointer; margin-top:14px; }
-    .btn:hover{ background:var(--brand-700); }
+#register-form {
+  margin-top: 25px; 
+}
 
-    .links{ text-align:center; margin-top:12px; }
-    .links a{ color:#334155; text-decoration:none; font-weight:700; }
-    .links a:hover{ text-decoration:underline; }
+/* 라벨/필드 */
+#register-form label { 
+  display:block; 
+  margin:10px 0 6px 5px; 
+  font-size:11px; 
+  font-weight:700; 
+  color:#555; 
+}
+#register-form .input, #register-form select {
+  width:100%; height:44px; padding:0 12px;
+  border:1px solid #ddd; border-radius:8px; font-size:12px; outline:none; box-sizing:border-box;
+}
+#register-form .input:focus, #register-form select:focus {
+  border-color:#2e2f36; box-shadow:0 0 0 3px rgba(46,47,54,.08);
+}
 
-    .err{ color:#dc2626; text-align:center; margin-top:10px; min-height:18px; }
-    .ok{ color:#16a34a; text-align:center; margin-top:10px; min-height:18px; font-weight:700; }
-    .muted{ color:#6b7280; font-size:12px; text-align:center; margin-top:8px; }
-  </style>
+/* 2칸 행 */
+#register-form .row { display:flex; gap:12px; }
+
+/* select 기본 화살표 커스텀(선택) */
+#register-form select {
+  appearance:none; background:#fff
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>")
+    no-repeat right 10px center;
+  padding-right:34px;
+}
+
+/* 체크박스 라벨 약간 정돈 */
+#register-form .agree { 
+  display:flex; 
+  align-items:center; 
+  gap:8px; 
+  margin-top: 22px;
+  margin-bottom: 10px; 
+  font-size:14px; 
+}
+
+/* 가입 버튼(로그인과 동일 스타일) */
+#register-form .btn{
+  width:100%; height:44px; border:0; border-radius:8px;
+  background:#f85151; color:#fff; font-weight:700; font-size:15px; cursor:pointer;
+  transition:background .2s;
+}
+#register-form .btn:hover{ background:#e04444; }
+
+/* 메시지 */
+#register-form .err{ margin-top:8px; color:#e74c3c; font-size:13px; }
+#register-form .ok{ margin-top:8px; color:#1b8f49; font-size:13px; }
+
+/* 비밀번호 토글 버튼 위치(두 칸 칸마다) */
+#register-form .pw-wrap { position:relative; }
+#register-form .pw-toggle{
+  position:absolute; right:10px; top:55%; transform:translateY(-50%);
+  width:24px; height:24px; border:0; background:transparent; cursor:pointer;
+  text-indent:-9999px; overflow:hidden; /* 텍스트 '표시' 숨김 — JS 영향 없음 */
+  padding:0;
+}
+
+/* 👁 눈 아이콘 (password 상태) */
+#register-form .pw-toggle.eye{
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z'/><circle cx='12' cy='12' r='3'/></svg>")
+    no-repeat center/20px;
+}
+/* 👁‍🗨 눈-오프 아이콘 (text 상태) */
+#register-form .pw-toggle.eye-off{
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.77 21.77 0 0 1 5.06-6.94'/><path d='M6.1 6.1C8.28 4.9 10.08 4 12 4c7 0 11 8 11 8a22 22 0 0 1-5.1 6.9'/><path d='M9.88 9.88A3 3 0 0 0 12 15a3 3 0 0 0 2.12-.88'/><path d='M1 1l22 22'/></svg>")
+    no-repeat center/20px;
+}
+
+.links {
+  color: #555555;
+  text-align: center;
+  margin-top: 20px;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.links a {
+  text-decoration: none;
+}
+
+.bold {
+  font-weight: 700; 
+  color: #222;
+}
+
+.links a:hover{ text-decoration:underline; }
+
+.muted {
+  color: #555555;
+  text-align: center;
+  font-size: 14px;
+}
+</style>
 </head>
 <!-- ... head/style 동일 ... -->
 <body>
   <div class="wrap">
     <div class="card">
       <div class="title">회원가입</div>
-      <div class="subtitle">필수 정보를 입력하고 계정을 만들어 주세요.</div>
+      <div class="subtitle"></div>
 
       <form id="register-form" novalidate>
         <label>아이디</label>
@@ -63,8 +135,8 @@
 
         <div class="row">
           <div style="flex:1">
-            <label>닉네임</label>
-            <input type="text" id="nickname" class="input" />
+            <label>성명</label>
+            <input type="text" id="nickname" class="input" placeholder="이름"/>
           </div>
           <div style="width:140px">
             <label>성별</label>
@@ -120,7 +192,7 @@
           <div style="flex:1" class="pw-wrap">
             <label>비밀번호 확인</label>
             <input type="password" id="confirmPassword" class="input" autocomplete="new-password" />
-            <button type="button" class="pw-toggle" data-target="confirmPassword">표시</button>
+            <button type="button" class="pw-toggle" data-target="confirmPassword"></button>
           </div>
         </div>
 
@@ -133,7 +205,7 @@
         <div id="errorMsg" class="err"></div>
         <div id="okMsg" class="ok"></div>
         <div class="links">
-          이미 계정이 있나요? <a href="/login-view">로그인</a>
+          이미 계정이 있나요? <a href="/login-view"><span class="bold">로그인</span></a>
         </div>
         <div class="muted">회원가입 완료 후 로그인 화면으로 이동합니다.</div>
       </form>
@@ -141,6 +213,7 @@
   </div>
 
   <script>
+    /*
     document.querySelectorAll('.pw-toggle').forEach(btn => {
       btn.addEventListener('click', () => {
         const targetId = btn.getAttribute('data-target');
@@ -149,7 +222,27 @@
         else { input.type = 'password'; btn.textContent = '표시'; }
       });
     });
+	*/
+	
+	document.querySelectorAll('#register-form .pw-toggle').forEach(btn => {
+		  const target = document.getElementById(btn.dataset.target);
+		  // 초기 상태: password → '눈' 아이콘
+		  btn.classList.add('eye');
 
+		  btn.addEventListener('click', () => {
+		    if (!target) return;
+		    if (target.type === 'password') {
+		      target.type = 'text';
+		      btn.classList.remove('eye');
+		      btn.classList.add('eye-off');   // 눈-오프 아이콘
+		    } else {
+		      target.type = 'password';
+		      btn.classList.remove('eye-off');
+		      btn.classList.add('eye');       // 눈 아이콘
+		    }
+		  });
+		});
+	
     document.getElementById("register-form").addEventListener("submit", async function(e) {
       e.preventDefault();
 
