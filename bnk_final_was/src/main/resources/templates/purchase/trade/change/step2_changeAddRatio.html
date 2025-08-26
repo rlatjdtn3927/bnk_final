@@ -1,21 +1,87 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8"/>
-  <title>매도합계 & 매수추가 (변경 Step2-2)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8"/>
+<title>매도합계 & 매수추가 (변경 Step2-2)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+body{
+  font-family: 'Pretendard', sans-serif;
+  margin:0;
+  padding: 0;
+  color: #222;
+}
+/* ===== 페이지 기본 ===== */
+html, body { height:100%; }
+.muted { color:#6b7280; }
+
+/* 상단 영역 타이포 */
+.max-w-3xl > section h2{
+  font-size:20px; font-weight:700; margin:0 0 6px;
+}
+#sum{ font-size:28px; font-weight:800; }
+.text-neutral-500{ color:#6b7280; }
+
+/* 본문이 하단 바와 겹치지 않도록 여백 */
+.max-w-3xl{ max-width:768px; margin:0 auto; padding:16px; }
+.max-w-3xl{ padding-bottom:110px; }
+
+/* ===== 하단 고정 버튼 바(전체폭 배경, 라운드/그림자 없음) ===== */
+.mt-6.flex{
+  position:fixed; left:0; right:0; bottom:0;
+  transform:none; width:100%; max-width:none;
+
+  background:#ffffff;          /* 화면 가득 배경 */
+  border-top:1px solid #eeeeee;/* 위쪽 경계선만 */
+  border-radius:0; box-shadow:none; backdrop-filter:none;
+
+  padding:14px 16px; 
+  display:grid; grid-template-columns:1fr 1fr; gap:12px;
+  margin:0 !important;         /* 기존 margin 제거 */
+  z-index:50;
+}
+
+/* 버튼 공통 */
+.mt-6.flex a{
+  display:inline-flex; align-items:center; justify-content:center;
+  height:56px; width:100%;
+  border-radius:14px; font-size:17px; font-weight:700;
+  text-decoration:none; border:none;
+  transition:transform .05s ease, filter .15s ease, opacity .2s ease;
+  margin-bottom: 24px;
+}
+
+/* 왼쪽: 이전(회색) */
+.mt-6.flex a:first-child{
+  background:#8e94a6; color:#fff;
+}
+.mt-6.flex a:first-child:hover{ filter:brightness(.98); }
+.mt-6.flex a:first-child:active{ transform:translateY(1px); }
+
+/* 오른쪽: 다음/매수 추가(빨강) */
+.mt-6.flex a:last-child{
+  background:#ff5252; color:#fff;
+}
+.mt-6.flex a:last-child:hover{ filter:brightness(.98); }
+.mt-6.flex a:last-child:active{ transform:translateY(1px); }
+
+/* 안전영역(iOS) 대응: 있으면 그 값만큼 여백 */
+@supports (padding: max(0px)){
+  body{ padding-bottom: max(0px, env(safe-area-inset-bottom)); }
+}
+</style>
 </head>
-<body class="bg-neutral-50 text-neutral-900">
+<body>
 <div class="max-w-3xl mx-auto p-4 space-y-6">
-  <section class="bg-white rounded-2xl shadow p-6 text-center">
-    <h2 class="text-xl font-semibold mb-2">매도 합계액</h2>
-    <div id="sum" class="text-3xl font-extrabold">0원</div>
+  <section>
+    <h2 class="">매도 합계액</h2>
+    <div id="sum" class="text-3xl">0원</div>
     <p class="text-sm text-neutral-500 mt-1">이 금액 한도 내에서 매수 상품을 배분합니다.</p>
 
     <div class="mt-6 flex justify-center gap-3">
-      <a href="/purchase/trade/change/step2/sold-list" class="px-4 py-2 rounded-xl bg-neutral-200">이전</a>
-      <a href="/purchase/trade/change/step2/changeProdList" class="px-5 py-2 rounded-xl bg-blue-600 text-white">매수상품 추가</a>
+      <a href="/purchase/trade/change/step2/sold-list" class="">이전</a>
+      <a href="/purchase/trade/change/step2/changeProdList" class="">매수상품 추가</a>
     </div>
   </section>
 </div>
