@@ -1,173 +1,137 @@
+@ -0,0 +1,155 @@
 <!-- templates/purchase/trade/change/step4_docs.html -->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
-<meta charset="UTF-8"/>
-<title>서류 동의 - 변경 Step 4</title>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-  /* ===== Theme & utilities ===== */
-:root{
-  --bg:#fff;                 /* 페이지 배경 */
-  --text:#111827;               /* 본문 텍스트 */
-  --muted:#6B7280;              /* 보조 텍스트 */
-  --card:#FFFFFF;               /* 카드 배경 */
-  --card-border:#EEE;
-  --shadow:0 10px 30px rgba(0,0,0,.10);
-
-  --btn-gray:#8e94a6;           /* 이전(회색) 버튼 */
-  --btn-red:#f85151;            /* 다음(빨강) 버튼 */
-}
-
-body{
-  font-family: 'Pretendard', sans-serif;
-  margin:0;
-  padding: 0;
-  color: #222;
-}
-
-/* Tailwind 비의존 유틸 덮어쓰기 */
-.bg-neutral-100{background:var(--bg)!important;}
-.text-neutral-900{color:var(--text)!important;}
-.max-w-3xl{max-width:768px;margin-left:auto;margin-right:auto;}
-.mx-auto{margin-left:auto;margin-right:auto;}
-.div{
-  margin: 0 auto;
-  padding:16px 16px;
-}
-.mb-4{margin-bottom:16px;}
-.mb-5{margin-bottom:20px;}
-.mb-6{margin-bottom:24px;}
-.space-y-3>*+*{margin-top:12px;}
-.rounded-2xl{border-radius:20px;}
-.rounded-xl{border-radius:14px;}
-.shadow-sm{box-shadow:var(--shadow); border:1px solid var(--card-border);}
-.bg-white{background:var(--card);}
-
-.muted{color:var(--muted);}
-
-/* 제목 영역 톤 */
-header h1{font-size:20px;font-weight:800;margin:0 0 6px;}
-header .muted{font-size:13px}
-
-/* 세션 pill (계좌유형/ID/투자성향) */
-.pill{
-  display:inline-flex;align-items:center;gap:6px;
-  height:28px;padding:0 10px;border-radius:999px;
-  background:#F1F5F9;color:#475569;font-size:12px;font-weight:600;
-  border:1px solid #E5E7EB;
-}
-
-/* 문서 리스트(동적 주입 대비 기본 카드 톤) */
-#docList .doc, #docList .card, #docList > *{
-  background:var(--card); border:1px solid var(--card-border);
-  border-radius:16px; padding:14px;
-}
-
-/* 전체 동의 카드 */
-#checkAll{width:18px;height:18px}
-#progress{color:var(--muted);font-weight:600}
-
-/* ===== 하단 고정 CTA 바 (원본 버튼을 그대로 사용) ===== */
-#consentForm{position:relative; padding-bottom:110px;} /* 버튼바와 겹침 방지 */
-
-#consentForm > .flex{
-  position:fixed; left:50%; transform:translateX(-50%);
-  bottom:calc(12px + env(safe-area-inset-bottom));
-  width:min(768px, calc(100% - 24px));
-  background:rgba(255,255,255,.92);
-  backdrop-filter:saturate(1.2) blur(6px);
-  border:1px solid var(--card-border);
-  border-radius:20px; padding:12px;
-  box-shadow:0 18px 40px rgba(0,0,0,.12);
-  display:grid!important; grid-template-columns:1fr 1fr; gap:12px;
-  z-index:50;
-}
-
-/* 왼쪽: '이전으로' 링크를 큼직한 회색 버튼처럼 */
-#consentForm > .flex a{
-  display:inline-flex; align-items:center; justify-content:center;
-  height:56px; width:100%;
-  border-radius:14px; font-size:16px; font-weight:800;
-  background:var(--btn-gray); color:#fff; border:none;
-  box-shadow:0 6px 16px rgba(0,0,0,.08);
-  text-decoration:none;
-  transition:transform .05s ease, filter .15s ease;
-}
-
-/* 하단 고정 CTA 바: 꽉차게 + 라운드/그림자 제거 */
-#consentForm > .flex{
-  position:fixed;
-  left:0; right:0; bottom:calc(0px + env(safe-area-inset-bottom));
-  transform:none;
-  width:100%; max-width:none;
-
-  background:#fff;               /* 전체 폭 배경 */
-  border-top:1px solid #eee;     /* 위쪽 경계선만 */
-  border-radius:0;               /* 라운드 제거 */
-  box-shadow:none;               /* 그림자 제거 */
-  backdrop-filter:none;
-
-  padding:14px 16px 30px 16px;             /* 좌우 여백 */
-  display:grid !important;
-  grid-template-columns:1fr 1fr; /* 이전 / 다음 */
-  gap:12px;
-  z-index:50;
-}
-#consentForm > .flex a:hover{filter:brightness(.98)}
-#consentForm > .flex a:active{transform:translateY(1px)}
-/* 내용이 바와 겹치지 않도록 여백 유지 */
-#consentForm{ padding-bottom:110px; }
-
-/* 오른쪽: '다음' 버튼을 빨간 CTA로 */
-#nextBtn{
-  height:56px; width:100%;
-  border-radius:14px; font-size:16px; font-weight:800;
-  background:var(--btn-red); color:#fff; border:none;
-  box-shadow:0 6px 16px rgba(0,0,0,.10);
-  transition:transform .05s ease, filter .15s ease, opacity .2s ease;
-}
-#nextBtn:hover{filter:brightness(.98)}
-#nextBtn:active{transform:translateY(1px)}
-#nextBtn.disabled, #nextBtn:disabled{opacity:.55; cursor:not-allowed; filter:grayscale(6%)}
-
-/* 카드들 톤 맞추기 */
-section.bg-white.rounded-2xl{border:1px solid var(--card-border)}
-
-/* 모바일 안전영역 대응 */
-@supports (bottom: env(safe-area-inset-bottom)){
-  body{padding-bottom:env(safe-area-inset-bottom);}
-}
-@supports (padding: max(0px)) {
-  body {
-    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  <meta charset="UTF-8"/>
+  <title>서류 동의 - 변경 Step 4</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+  body{
+    font-family:'Pretendard',sans-serif;
+    margin:0; padding:0;
+    color:#222; background:#F7F8FB;
   }
-}
-</style>
+  html,body{height:100%}
+  *,*::before,*::after{box-sizing:border-box}
+
+  /* 컨테이너 */
+  .max-w-3xl{max-width:768px!important}
+
+  /* 헤더 */
+  header h1{font-weight:800;font-size:20px;margin-bottom:4px}
+  header p{color:#6b7280;font-size:13px}
+
+  /* pill */
+  .pill{
+    display:inline-flex;align-items:center;gap:4px;
+    background:#F3F4F6; border-radius:999px;
+    padding:2px 10px; font-size:12px; font-weight:600;
+    color:#374151; border:1px solid #e5e7eb;
+  }
+
+  /* 문서 카드 */
+  .doc-card{
+    border:1px solid #eee;
+    border-radius:16px;
+    padding:16px;
+    background:#fff;
+    box-shadow:0 8px 24px rgba(0,0,0,.03);
+    transition:background .2s,border-color .2s;
+  }
+  .doc-card:hover{background:#F9FAFB;border-color:#e5e7eb}
+
+  /* muted */
+  .muted{color:#6b7280;font-size:.85rem}
+
+  /* 버튼 톤 */
+  a.px-3, button.px-3{
+    font-size:14px; font-weight:600;
+    background:#fff;
+    border:1px solid #e5e7eb;
+    border-radius:10px;
+    padding:6px 12px;
+    transition:background .15s,transform .05s;
+  }
+  a.px-3:hover, button.px-3:hover{background:#f9fafb}
+  a.px-3:active, button.px-3:active{transform:translateY(1px)}
+
+  /* 전체 동의 영역 */
+  section.bg-white.rounded-2xl{
+    border:1px solid #eee;
+    border-radius:16px;
+    box-shadow:0 8px 24px rgba(0,0,0,.03);
+  }
+
+  /* 하단 제출 버튼 */
+  #nextBtn{
+    height:48px; min-width:120px;
+    border-radius:14px;
+    font-weight:700; font-size:16px;
+    background:#ff5252; color:#fff;
+    transition:background .15s,transform .05s;
+  }
+  #nextBtn:hover{background:#ff3f3f}
+  #nextBtn:active{transform:translateY(1px)}
+  #nextBtn.disabled{background:#ffd6d6!important;cursor:not-allowed}
+
+  /* 이전 버튼 */
+  a.px-4{
+    height:48px; min-width:100px;
+    border-radius:14px;
+    font-weight:700; font-size:15px;
+    color:#374151; background:#fff;
+    border:1px solid #ddd!important;
+    transition:background .15s,transform .05s;
+  }
+  a.px-4:hover{background:#f9fafb}
+  a.px-4:active{transform:translateY(1px)}
+
+  /* 체크박스 크기 */
+  input[type=checkbox]{width:20px;height:20px;accent-color:#111827}
+
+  /* iOS 안전영역 대응 */
+  @supports (padding: max(0px)){
+    body{padding-bottom:max(0px,env(safe-area-inset-bottom))}
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width:768px){
+    .max-w-3xl{width:100%;padding-left:12px!important;padding-right:12px!important}
+    header h1{font-size:18px}
+    .doc-card{padding:12px}
+    .doc-card{flex-wrap:wrap}
+    .doc-card > label{order:2;align-self:flex-start}
+    .doc-card > .flex-1{order:1}
+    a.px-3, button.px-3{padding:5px 10px;font-size:12px}
+    #nextBtn,a.px-4{height:48px;font-size:14px}
+  }
+  </style>
+
 </head>
-<body class="">
-<div class="div">
+<body class="bg-neutral-100 text-neutral-900">
+<div class="max-w-3xl mx-auto p-5">
 
   <header class="mb-5">
-    <h1 class="font-bold">서류 확인 및 동의</h1>
-    <p class="muted mt-1">아래 문서를 확인하고 동의해 주세요. 모든 문서에 동의해야 다음 단계로 이동할 수 있습니다.</p>
+    <h1 class="text-2xl font-bold">서류 확인 및 동의</h1>
+    <p class="muted mt-1">선택한 매수 상품의 문서를 확인하고 동의해 주세요.</p>
   </header>
 
-  <!-- 진행 요약 (세션 표시) -->
-  <section class="mb-4">
-    <div class="flex gap-2 items-center text-sm">
-      <span class="pill" th:text="'계좌유형: ' + ${session.ReserveValueDto.accountType}">계좌유형</span>
-      <span class="pill" th:text="'계좌ID: ' + ${session.ReserveValueDto.accountId}">계좌ID</span>
-      <span class="pill" th:if="${session.ReserveValueDto.riskGrade != null}"
-            th:text="'투자성향: ' + ${session.ReserveValueDto.riskGrade}">투자성향</span>
-    </div>
+  <!-- 세션 표시 -->
+  <section class="mb-4 text-sm flex gap-2 items-center">
+    <span class="pill">계좌유형: <b th:text="${session.ChangeValueDto?.accountType}">-</b></span>
+    <span class="pill">계좌ID: <b th:text="${session.ChangeValueDto?.accountId}">-</b></span>
+    <span class="pill" th:if="${session.ChangeValueDto?.riskGrade != null}">
+      투자성향: <b th:text="${session.ChangeValueDto?.riskGrade}">-</b>
+    </span>
   </section>
 
   <!-- 문서 리스트 -->
-  <section id="docList" class="space-y-3 mb-6"></section>
+  <section id="docList" class="space-y-3 mb-6">
+    <div class="doc-card bg-white">문서를 불러오는 중…</div>
+  </section>
 
-  <!-- 하단 컨트롤 -->
+  <!-- 전체 동의 -->
   <section class="bg-white rounded-2xl p-4 shadow-sm mb-4">
     <label class="inline-flex items-center gap-2 cursor-pointer">
       <input type="checkbox" id="checkAll" class="w-5 h-5">
@@ -176,26 +140,20 @@ section.bg-white.rounded-2xl{border:1px solid var(--card-border)}
     </label>
   </section>
 
-  <!-- 제출 폼: 컨트롤러 이미 존재 -->
-  <form id="consentForm" method="post" action="/purchase/trade/reserve/step4/next"
+  <!-- 제출 -->
+  <form id="consentForm" method="post" action="/purchase/trade/change/step4/next"
         class="bg-white rounded-2xl p-4 shadow-sm">
-    <!-- 세션 값 그대로 실어 보냄 -->
-    <input type="hidden" name="targetProdIdList" th:value="${session.ReserveValueDto.targetProdIdList}">
-    <input type="hidden" name="sourceProdIdList" th:value="${session.ReserveValueDto.sourceProdIdList}">
-    <!-- 동의 결과 포함 fileUrlList(JSON) -->
-    <input type="hidden" id="fileUrlListField" name="fileUrlList" th:value="${session.ReserveValueDto.fileUrlList}">
-
+    <input type="hidden" id="fileUrlListField" name="fileUrlList" value="[]">
     <div class="flex items-center justify-between">
-      <a href="/purchase/trade/reserve/step1/after-risk" class="px-4 py-2 rounded-xl border border-neutral-300">이전</a>
+      <a href="/purchase/trade/change/step2/buy-list" class="px-4 py-2 rounded-xl border border-neutral-300">이전</a>
       <button id="nextBtn" type="submit" class="px-5 py-2 rounded-xl bg-blue-600 text-white disabled">
-        다음
+        다음(요약)
       </button>
     </div>
   </form>
 
   <p class="muted text-xs mt-3">* 모든 문서에 동의해야 다음 단계로 이동할 수 있습니다.</p>
 </div>
-
 
 <script>
 (async function(){
