@@ -5,7 +5,7 @@
 <style>
 body{
   font-family:'Pretendard',sans-serif;
-  margin:0; padding:0;
+  margin:40; padding:40;
   color:#222; background:#F7F8FB;
 }
 html,body{height:100%}
@@ -31,17 +31,24 @@ header p{color:#6b7280;font-size:13px}
   display:flex; justify-content:space-between; align-items:flex-start;
   border:1px solid #EEE;
   border-radius:16px;
-  padding:16px;
+  padding:20px;            /* 🔹 패딩 살짝 늘림 */
+  margin-bottom:18px;      /* 🔹 카드들 사이 간격 추가 */
   background:#fff;
   box-shadow:0 6px 16px rgba(0,0,0,.04);
   transition:background .2s,border-color .2s;
-  gap:16px;
+  gap:20px;                /* 🔹 좌우 간격 살짝 넓힘 */
 }
 .doc-card .mt-2 {
-  margin-top:14px;   /* ✅ 버튼 그룹 위쪽 여백 추가 */
+  margin-top:18px;         /* 위쪽 간격 확보 */
+  margin-bottom:10px;      /* 버튼과 체크박스 사이 띄움 */
   display:flex;
-  gap:8px;
+  gap:12px;                /* 버튼 간격 넓힘 */
   flex-wrap:wrap;
+}
+
+/* 전체 리스트 여백 */
+#docList {
+  margin-bottom:28px;      /* 🔹 전체 문서 리스트와 아래 요소 사이 띄움 */
 }
 
 .doc-card:hover{background:#F9FAFB;border-color:#E5E7EB}
