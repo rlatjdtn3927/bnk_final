@@ -7,8 +7,14 @@
 <link rel="stylesheet" th:href="@{/css/step1-purpose.css}" />
 </head>
 <body>
+  <!-- 헤더 부분 -->
+  <div class="header-wrap">
+    <div class="header">
+      <h1 class="page-title">IRP 신규가입</h1>
+    </div>
+  </div>
+
   <div class="section">
-    <h1 class="title">IRP 신규가입</h1>
 
     <div class="guide-card">
       <p class="guide-title">IRP 가입용도 확인</p>
@@ -18,7 +24,7 @@
         <!-- 세액공제 -->
         <button type="button" class="purpose-card purpose--tax" data-purpose="세액공제">
           <div class="purpose-icon">
-            <img th:src="@{/images/icon-tax.jpg}" alt="세액공제" width="38" height="38">
+            <img th:src="@{/images/tax.png}" alt="세액공제" width="90" height="90">
           </div>
           <div class="purpose-text">
             <p class="title">연말정산 세액공제</p>
@@ -29,7 +35,7 @@
         <!-- 퇴직금 수령 -->
         <button type="button" class="purpose-card purpose--retire" data-purpose="퇴직금 수령">
           <div class="purpose-icon">
-            <img th:src="@{/images/icon-retire.jpg}" alt="퇴직금 수령" width="38" height="38">
+            <img th:src="@{/images/house.png}" alt="퇴직금 수령" width="90" height="90">
           </div>
           <div class="purpose-text">
             <p class="title">퇴직금 수령</p>

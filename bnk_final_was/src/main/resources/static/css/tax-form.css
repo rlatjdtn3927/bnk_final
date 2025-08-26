@@ -18,7 +18,6 @@ h1 {
   font-size: 28px;
   font-weight: 700;
   margin-bottom: 30px;
-  color: #1b3a6b;
 }
 
 .step-bar {
@@ -39,7 +38,6 @@ h1 {
   padding: 12px 8px;
   font-size: 14px;
   font-weight: 600;
-  color: #333;
   border-right: 1px solid #dfe6f2;
   background: #fff;
 }
@@ -49,7 +47,7 @@ h1 {
 }
 
 .step-bar li.active {
-  background: #204f9b;
+  background: #f85151;
   color: #fff;
 }
 
@@ -103,8 +101,7 @@ h1 {
 .form-card__body select:focus,
 .form-card__body input:focus {
   outline: 0;
-  border-color: #9bb7e6;
-  box-shadow: 0 0 0 3px rgba(51,102,204,.15);
+  border-color: #424242;
 }
 
 /* 하단 버튼 */
@@ -118,7 +115,7 @@ h1 {
 button#saveBtn {
   padding: 10px 22px;
   border-radius: 8px;
-  background: #1e4e9e;
+  background: #f85151;
   color: #fff;
   border: none;
   font-weight: 700;
@@ -127,7 +124,7 @@ button#saveBtn {
 }
 
 button#saveBtn:hover {
-  background: #1a458e;
+  background: #e04444;
 }
 
 /*모바일 반응형*/
