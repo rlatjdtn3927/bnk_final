@@ -26,13 +26,47 @@
   .search{border:1px solid var(--border);border-radius:.5rem;padding:.5rem .65rem;width:260px}
   .spinner{width:1rem;height:1rem;border:.18rem solid var(--border);border-top-color:var(--brand);border-radius:50%;animation:spin 1s linear infinite;display:inline-block}
   @keyframes spin{to{transform:rotate(360deg)}}
+  .table-wrap{
+  /* 기존 overflow:hidden 을 덮어씀 */
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* 고정 레이아웃 + 최소 너비 확보 */
+table{
+  table-layout: fixed;
+  min-width: 1100px; /* 필요시 960~1280 사이로 조절 */
+}
+
+/* 헤더를 절대 줄바꿈하지 않음 (한글 단어 분리 방지) */
+thead th{
+  white-space: nowrap;
+  word-break: keep-all;
+}
+
+/* 길어질 수 있는 열은 말줄임 처리 */
+td:nth-child(3), /* 상품명 */
+td:nth-child(4)  /* 파일명 */{
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 0; /* table-layout:fixed에서 말줄임 강제 */
+}
+
+/* 열 너비 가이드(필요시 숫자 조정) */
+th.small, td.small { width: 48px; text-align: center; }
+th:nth-child(2), td:nth-child(2) { width: 110px; } /* prodId */
+th:nth-child(3), td:nth-child(3) { width: 160px; } /* 상품명 */
+th:nth-child(5), td:nth-child(5) { width: 100px; } /* 카테고리 */
+th:nth-child(6), td:nth-child(6) { width: 100px; } /* 문서유형 */
+th:nth-child(7), td:nth-child(7) { width: 110px; } /* 파일크기 */
+th:nth-child(8), td:nth-child(8) { width: 120px; } /* 상태 */
 </style>
 </th:block>
 
 <th:block xmlns:th="http://www.thymeleaf.org" th:fragment="content">
 <section class="file-task">
   <h2>파일 관리</h2>
-  <p class="muted">파일 태스크를 확인하고, 선택한 <code>prodId</code>의 파일을 다운로드하세요. 모든 통신은 <code>fetch</code>로 처리됩니다.</p>
 
   <div class="toolbar">
     <div class="grow">
