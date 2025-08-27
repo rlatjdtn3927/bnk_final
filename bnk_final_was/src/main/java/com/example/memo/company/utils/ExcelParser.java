@@ -83,7 +83,6 @@ public class ExcelParser {
         }
         return cell.getStringCellValue().trim();
     }
-
     private static String normalizeNum(String raw) {
         if (raw == null) return "";
         return raw.replaceAll("[,\\s]", "");

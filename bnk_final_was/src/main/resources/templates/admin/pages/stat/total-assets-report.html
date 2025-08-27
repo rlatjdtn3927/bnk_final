@@ -9,11 +9,13 @@
     .btn{ display:inline-flex; align-items:center; gap:6px; border:1px solid var(--bd); background:var(--card); padding:8px 12px; border-radius:10px; font-size:14px; cursor:pointer; }
     .btn.primary{ border-color:var(--accent); color:#fff; background:var(--accent); }
     .asof{ font-size:13px; color:var(--muted); margin-left:8px; }
-    .grid-2{ display:grid; grid-template-columns: 1.2fr 1fr; gap:16px; }
+    .grid-2{ display:grid; grid-template-columns: 1.2fr 1fr; gap:16px; align-items:start; }
     .col{ display:grid; gap:16px; align-content:start; }
     .card{ background:var(--card); border:1px solid var(--bd); border-radius:14px; padding:16px; box-shadow:0 1px 0 rgba(17,24,39,0.02); }
     .card h3{ margin:0 0 10px 0; font-size:16px; }
-    .kpis{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    
+    /* ✅ KPI 그리드를 4컬럼으로 변경 */
+    .kpis{ display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; } 
     .kpi{ padding:12px; border:1px dashed var(--bd); border-radius:12px; }
     .kpi .label{ font-size:13px; color:var(--muted); }
     .kpi .value{ font-size:20px; font-weight:700; margin-top:2px; }
@@ -23,12 +25,9 @@
     th, td{ padding:10px 8px; border-bottom:1px solid var(--bd); font-size:14px; text-align:right; }
     th:first-child, td:first-child{ text-align:left; }
     th{ background:#fafafa; font-weight:600; }
-    .charts canvas{ width:100%; height:280px; } /* ✅ 기본 차트 높이 조정 */
+    .charts canvas{ width:100%; height:280px; }
     
-    /* ✅ 작은 차트 2개를 가로로 묶기 위한 스타일 추가 */
     .grid-2-sm { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    
-    /* ✅ 작은 차트 높이 조정 */
     .chart-sm canvas{ height: 240px; }
     
     .chart-title{ font-size:15px; font-weight:600; margin-bottom:6px; color:var(--muted); }
@@ -36,38 +35,25 @@
   </style>
 </th:block>
 
+
 <th:block xmlns:th="http://www.thymeleaf.org" th:fragment="content">
   <div class="page-wrap">
-    <div class="page-header">
-      <div class="page-title">관리자 통계</div>
-      <div class="page-actions">
-        <button class="btn" type="button" onclick="location.reload()">🔄 새로고침</button>
-        <button class="btn" type="button" id="btn-download">⬇️ 다운로드</button>
-        <div class="asof">기준시각: <span th:text="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd HH:mm:ss')}"></span></div>
-      </div>
-    </div>
 
     <div class="grid-2">
       <div class="col">
         <div class="card">
-          <h3>IRP 총자산</h3>
-          <div class="total" id="irpTotal" th:text="${#numbers.formatDecimal(totals.irpTotal, 0, 'COMMA', 0, 'POINT')}">0</div>
+          <h3>IRP & DC 총자산</h3>
           <div class="kpis">
-            <div class="kpi"><div class="label">현금</div><div class="value" id="irpCash" th:text="${#numbers.formatDecimal(totals.irpCash, 0, 'COMMA', 0, 'POINT')}">0</div></div>
-            <div class="kpi"><div class="label">원리금</div><div class="value" id="irpPrincipal" th:text="${#numbers.formatDecimal(totals.irpPrincipal, 0, 'COMMA', 0, 'POINT')}">0</div></div>
-            <div class="kpi"><div class="label">펀드</div><div class="value" id="irpFund" th:text="${#numbers.formatDecimal(totals.irpFund, 0, 'COMMA', 0, 'POINT')}">0</div></div>
+            <div class="kpi"><div class="label">IRP 총자산</div><div class="value" th:text="${#numbers.formatDecimal(totals.irpTotal, 0, 'COMMA', 0, 'POINT')}">0</div></div>
+            <div class="kpi"><div class="label">IRP 원리금</div><div class="value" th:text="${#numbers.formatDecimal(totals.irpPrincipal, 0, 'COMMA', 0, 'POINT')}">0</div></div>
+            <div class="kpi"><div class="label">IRP 펀드</div><div class="value" th:text="${#numbers.formatDecimal(totals.irpFund, 0, 'COMMA', 0, 'POINT')}">0</div></div>
+            <div class="kpi"><div class="label">IRP 현금</div><div class="value" th:text="${#numbers.formatDecimal(totals.irpCash, 0, 'COMMA', 0, 'POINT')}">0</div></div>
+            <div class="kpi"><div class="label">DC 총자산</div><div class="value" th:text="${#numbers.formatDecimal(totals.dcTotal, 0, 'COMMA', 0, 'POINT')}">0</div></div>
+            <div class="kpi"><div class="label">DC 원리금</div><div class="value" th:text="${#numbers.formatDecimal(totals.dcPrincipal, 0, 'COMMA', 0, 'POINT')}">0</div></div>
+            <div class="kpi"><div class="label">DC 펀드</div><div class="value" th:text="${#numbers.formatDecimal(totals.dcFund, 0, 'COMMA', 0, 'POINT')}">0</div></div>
+            <div class="kpi"><div class="label">DC 현금</div><div class="value" th:text="${#numbers.formatDecimal(totals.dcCash, 0, 'COMMA', 0, 'POINT')}">0</div></div>
           </div>
           <div class="note">총자산 = 현금 + 원리금 + 펀드(평가)</div>
-        </div>
-
-        <div class="card">
-          <h3>DC 총자산</h3>
-          <div class="total" id="dcTotal" th:text="${#numbers.formatDecimal(totals.dcTotal, 0, 'COMMA', 0, 'POINT')}">0</div>
-          <div class="kpis">
-            <div class="kpi"><div class="label">현금</div><div class="value" id="dcCash" th:text="${#numbers.formatDecimal(totals.dcCash, 0, 'COMMA', 0, 'POINT')}">0</div></div>
-            <div class="kpi"><div class="label">원리금</div><div class="value" id="dcPrincipal" th:text="${#numbers.formatDecimal(totals.dcPrincipal, 0, 'COMMA', 0, 'POINT')}">0</div></div>
-            <div class="kpi"><div class="label">펀드</div><div class="value" id="dcFund" th:text="${#numbers.formatDecimal(totals.dcFund, 0, 'COMMA', 0, 'POINT')}">0</div></div>
-          </div>
         </div>
 
         <div class="card">
@@ -108,6 +94,7 @@
       </div>
     </div>
   </div>
+
 
   <script th:inline="javascript">
     const totalsJson     = /*[[${totalsJson}]]*/ '{}';
