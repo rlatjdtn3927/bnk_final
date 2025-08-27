@@ -157,10 +157,10 @@ section.bg-white.rounded-2xl{border:1px solid var(--card-border)}
   <!-- 진행 요약 (세션 표시) -->
   <section class="mb-4">
     <div class="flex gap-2 items-center text-sm">
-      <span class="pill" th:text="'계좌유형: ' + ${session.ReserveValueDto.accountType}">계좌유형</span>
-      <span class="pill" th:text="'계좌ID: ' + ${session.ReserveValueDto.accountId}">계좌ID</span>
+      <span class="pill" th:text="${session.ReserveValueDto.accountType}">계좌유형</span>
+      <span class="pill" th:text="${session.ReserveValueDto.accountId}">계좌ID</span>
       <span class="pill" th:if="${session.ReserveValueDto.riskGrade != null}"
-            th:text="'투자성향: ' + ${session.ReserveValueDto.riskGrade}">투자성향</span>
+            th:text="${session.ReserveValueDto.riskGrade}">투자성향</span>
     </div>
   </section>
 

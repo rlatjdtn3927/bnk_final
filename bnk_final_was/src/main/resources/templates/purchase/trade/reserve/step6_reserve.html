@@ -64,6 +64,25 @@ body{ font-family:'Pretendard',sans-serif; margin:0; color:#222; background:#f9f
   text-decoration:none; color:#fff; background:#f85151;
 }
 
+/* 모달 */
+.modal{
+  display:none; position:fixed; z-index:2000;
+  left:0; top:0; right:0; bottom:0;
+  background:rgba(0,0,0,0.4);
+  align-items:center; justify-content:center;
+}
+.modal-content{
+  background:#fff; padding:24px 20px; border-radius:14px;
+  max-width:300px; width:80%; text-align:center; box-shadow:0 6px 20px rgba(0,0,0,0.15);
+}
+.modal-content p{ margin:0 0 16px; font-size:16px; font-weight:600; }
+.modal-content button{
+  background:#f85151; border:none; color:#fff;
+  padding:10px 20px; border-radius:10px;
+  font-weight:700; font-size:15px; cursor:pointer;
+}
+.modal-content button:hover{ filter:brightness(.95); }
+
 /* 반응형 */
 @media (max-width:500px){
   .page-title{ font-size:18px; }
@@ -119,6 +138,14 @@ body{ font-family:'Pretendard',sans-serif; margin:0; color:#222; background:#f9f
   </main>
 </div><!-- layout -->
 
+<!-- ✅ 모달 -->
+<div id="applyModal" class="modal">
+  <div class="modal-content">
+    <p>적용되었습니다.</p>
+    <button id="modalOkBtn">확인</button>
+  </div>
+</div>
+
 <script>
 (function(){
   const $ = (id)=>document.getElementById(id);
@@ -169,10 +196,19 @@ body{ font-family:'Pretendard',sans-serif; margin:0; color:#222; background:#f9f
         body: '{}'   // 세션 기반 처리라 바디 불필요
       });
       const json = await res.json();
-      $("resultBox").textContent = JSON.stringify(json, null, 2);
+      if(json.success){
+        $("applyModal").style.display = "flex"; // 모달 열기
+      }else{
+        alert("적용 실패: " + (json.message || "알 수 없는 오류"));
+      }
     }catch(e){
-      $("resultBox").textContent = JSON.stringify({success:false, message:String(e)}, null, 2);
+      alert("적용 중 오류: " + e);
     }
+  });
+
+  // 모달 확인 버튼 → 페이지 이동
+  $("modalOkBtn").addEventListener("click", ()=>{
+    window.location.href = "/purchase/products";
   });
 })();
 </script>
