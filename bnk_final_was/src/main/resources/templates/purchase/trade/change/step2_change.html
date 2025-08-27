@@ -2,9 +2,8 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
 <meta charset="UTF-8"/>
-<title>보유상품 목록 (변경 Step2)</title>
+<title>보유상품 목록</title>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<script src="https://cdn.tailwindcss.com"></script>
 <style>
 /* ===== 공통 레이아웃 ===== */
 html, body { height:100%; }
@@ -22,6 +21,7 @@ body{
 }
 .header{ max-width:960px; margin:0 auto; padding:14px 16px; }
 .page-title{ font-size:20px; font-weight:700; margin:6px 0; }
+.page-sub{ color:#6b7280; font-size:14px; margin:4px 0 10px; }
 
 /* ===== 본문 ===== */
 .content{
@@ -29,27 +29,69 @@ body{
   overflow:auto;
   min-height:0;
   -webkit-overflow-scrolling:touch;
+  padding:16px;
   padding-bottom:120px;          
+  max-width:960px; margin:0 auto;
 }
 .divider{ height:4px; background:#eee; border-radius:1px; }
 
 /* ===== 카드 ===== */
-.section{ max-width:960px; margin:0 auto 20px; padding:16px }
+.section{ margin-bottom:20px; }
 .card{
-  background:#fff; border:1px solid #f0f0f0; border-radius:18px;
-  padding:20px;
-  box-shadow:0 4px 8px rgba(0,0,0,.03);
+  background:#fff; border:1px solid #f0f0f0; border-radius:14px;
+  padding:18px 16px; 
+  box-shadow:0 2px 6px rgba(0,0,0,.03);
 }
-.card h3{ margin:0 0 16px; font-size:17px; font-weight:800; display:flex; justify-content:space-between; align-items:center; }
-.muted{ color:#6b7280; font-size:14px; }
+.card h3{ margin:0 0 12px; font-size:16px; font-weight:700; display:flex; justify-content:space-between; align-items:center; }
+.muted{ color:#6b7280; font-size:13px; }
 
 /* ===== 테이블 ===== */
 table{ width:100%; border-collapse:separate; border-spacing:0; }
-thead th{ background:#f8fafc; font-weight:700; font-size:13px; padding:12px; text-align:left; border-bottom:1px solid #e5e7eb; }
-tbody td{ padding:12px; font-size:14px; border-bottom:1px solid #f1f5f9; color:#374151; }
+thead th{ background:#f8fafc; font-weight:700; font-size:13px; padding:10px; text-align:left; border-bottom:1px solid #e5e7eb; }
+tbody td{ padding:10px; font-size:14px; border-bottom:1px solid #f1f5f9; color:#374151; }
 tbody tr:last-child td{ border-bottom:0; }
 tbody td[colspan]{ text-align:center; color:#9ca3af; }
 input[type="checkbox"]{ width:16px; height:16px; }
+
+.amount-cell{
+  white-space:nowrap;    /* 숫자+원 줄바꿈 방지 */
+  text-align:right;
+  font-weight:600;
+}
+/* ===== 안내 카드 내부 계정 정보 블록 ===== */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+@media (min-width: 640px) {
+  .info-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+.info-item {
+  background: #f9fafb;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.info-item-label {
+  font-size: 12px;
+  color: #6b7280; /* 회색 */
+  margin-bottom: 4px;
+}
+.info-item-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827; /* 진한 검정 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* ===== 버튼바 ===== */
 .actions{
@@ -63,19 +105,21 @@ input[type="checkbox"]{ width:16px; height:16px; }
   width:100%; height:52px;
   border-radius:14px; font-size:16px; font-weight:700;
   display:flex; align-items:center; justify-content:center;
-  border:none; padding:0; cursor:pointer;
+  border:none; cursor:pointer;
 }
-.actions .btn.btn-link{ background:#8d94a6; color:#fff; }
-.actions .btn-primary{ background:#f85151; color:#fff; }
-.actions .btn-primary:disabled{ background:#ffd6d6; cursor:not-allowed; }
+.btn-link{ background:#8d94a6; color:#fff; }
+.btn-primary{ background:#f85151; color:#fff; }
+.btn-primary:disabled{ background:#ffd6d6; cursor:not-allowed; }
 
 /* ===== 모바일 대응 ===== */
 @media (max-width:500px){
   .page-title{ font-size:18px; }
+  .card{ padding:14px; }
   .card h3{ font-size:15px; }
   thead th, tbody td{ font-size:13px; padding:8px }
+  .actions{ grid-template-columns:1fr; }
 }
-@supports (padding: max(0px)){
+@supports (padding:max(0px)){
   .actions{ padding-bottom:max(22px, env(safe-area-inset-bottom)); }
 }
 </style>
@@ -86,6 +130,7 @@ input[type="checkbox"]{ width:16px; height:16px; }
   <div class="header-wrap">
     <div class="header">
       <div class="page-title">보유상품관리</div>
+      <div class="page-sub">보유상품 목록에서 매도할 상품을 선택하세요.</div>
     </div>
   </div>
   
@@ -93,35 +138,52 @@ input[type="checkbox"]{ width:16px; height:16px; }
     <div class="divider"></div>
 
     <!-- 안내 카드 -->
-    <section class="section">
-      <div class="card">
-        <h3>보유상품 변경 <span id="riskBadge" class="px-3 py-1 rounded-full text-xs bg-neutral-100">리스크: -</span></h3>
-        <p class="muted">보유상품 목록에서 매도할 상품을 선택하세요.</p>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4 text-sm">
-          <div class="bg-neutral-50 rounded-lg p-3">
-            <div class="text-neutral-500">사용자</div>
-            <div id="userName" class="font-semibold">-</div>
-          </div>
-          <div class="bg-neutral-50 rounded-lg p-3">
-            <div class="text-neutral-500">계좌유형</div>
-            <div id="accountType" class="font-semibold">-</div>
-          </div>
-          <div class="bg-neutral-50 rounded-lg p-3">
-            <div class="text-neutral-500">계좌ID</div>
-            <div id="accountId" class="font-semibold truncate">-</div>
-          </div>
-        </div>
-      </div>
-    </section>
+	<!-- 안내 카드 -->
+	<section class="section">
+	  <div class="card">
+	    <!-- 헤더 -->
+	    <div class="mb-4">
+	      <h3 class="text-base font-bold m-0">보유상품 변경</h3>
+	    </div>
+	    <!-- 설명 -->
+	    <p class="muted mb-5">보유상품 목록에서 매도할 상품을 선택하세요.</p>
+	    
+	    <!-- 계정 정보 카드 -->
+	    <div class="info-grid">
+	      <div class="info-item">
+	        <div class="info-item-label">사용자</div>
+	        <div id="userName" class="info-item-value">-</div>
+	      </div>
+	      <div class="info-item">
+	        <div class="info-item-label">계좌유형</div>
+	        <div id="accountType" class="info-item-value">-</div>
+	      </div>
+	      <div class="info-item">
+	        <div class="info-item-label">계좌ID</div>
+	        <div id="accountId" class="info-item-value">-</div>
+	      </div>
+	      <div class="info-item">
+	        <div class="info-item-label">리스크</div>
+	        <div id="riskBadge" class="info-item-value">-</div>
+	      </div>
+	    </div>
+	  </div>
+	</section>
 
     <!-- 펀드 보유내역 -->
     <section class="section">
       <div class="card">
-        <h3>펀드 보유내역 <label class="text-sm text-neutral-500 flex items-center gap-2"><input id="chkAllFund" type="checkbox" class="w-4 h-4"> 전체선택</label></h3>
+        <h3>펀드 보유내역 
+          <label class="text-sm text-neutral-500 flex items-center gap-2">
+            <input id="chkAllFund" type="checkbox" class="w-4 h-4"> 전체선택
+          </label>
+        </h3>
         <div class="overflow-x-auto">
           <table>
             <thead id="fundHead"></thead>
-            <tbody id="fundBody"><tr><td colspan="6" class="py-6 text-center text-neutral-400">불러오는 중…</td></tr></tbody>
+            <tbody id="fundBody">
+              <tr><td colspan="6" class="py-6 text-center text-neutral-400">불러오는 중…</td></tr>
+            </tbody>
           </table>
         </div>
       </div>
@@ -134,7 +196,9 @@ input[type="checkbox"]{ width:16px; height:16px; }
         <div class="overflow-x-auto">
           <table>
             <thead id="principalHead"></thead>
-            <tbody id="principalBody"><tr><td colspan="6" class="py-6 text-center text-neutral-400">불러오는 중…</td></tr></tbody>
+            <tbody id="principalBody">
+              <tr><td colspan="6" class="py-6 text-center text-neutral-400">불러오는 중…</td></tr>
+            </tbody>
           </table>
         </div>
       </div>
@@ -204,7 +268,7 @@ input[type="checkbox"]{ width:16px; height:16px; }
               data-base="${Number(item.valuationAmount??0)}"></td>
         <td>${item.productName??'-'}</td>
         <td>${units}</td>
-        <td>${evalAmt}</td>
+        <td class="amount-cell">${evalAmt}</td>
         <td>${rrStr}</td>
       </tr>`;
     }).join('');
@@ -234,7 +298,7 @@ input[type="checkbox"]{ width:16px; height:16px; }
               data-name="원리금보장(${item.principalId??'-'})"
               data-base="${Number(item.contractAmount??0)}"></td>
         <td>${item.principalId??'-'}</td>
-        <td>${contractAmt}</td>
+        <td class="amount-cell">${contractAmt}</td>
         <td>${maturity}</td>
       </tr>`;
     }).join('');
@@ -268,7 +332,7 @@ input[type="checkbox"]{ width:16px; height:16px; }
       document.getElementById('userName').textContent=info.userName??'-';
       document.getElementById('accountType').textContent=info.accountType??(SESSION_ACCOUNT_TYPE??'-');
       document.getElementById('accountId').textContent=info.accountId??(SESSION_ACCOUNT_ID??'-');
-      document.getElementById('riskBadge').textContent=`리스크: ${info.riskGrade??'-'}`;
+	  document.getElementById('riskBadge').textContent = info.riskGrade ?? '-';
       const accountType=info.accountType??SESSION_ACCOUNT_TYPE;
       const accountId=info.accountId??SESSION_ACCOUNT_ID;
       const res=await fetchHoldings(accountType,accountId);
