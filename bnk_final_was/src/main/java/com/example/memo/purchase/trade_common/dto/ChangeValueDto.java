@@ -10,6 +10,7 @@ import lombok.*;
 @Builder
 public class ChangeValueDto {
     /* 공통 */
+	private String username;
     private String flow;
     private String accountId;     // IRP: irp_acct_no / DC: account_no
     private String accountType;   // "IRP" | "DC"

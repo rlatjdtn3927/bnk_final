@@ -37,7 +37,7 @@ public class ReserveRetainAPIController {
 	@PostMapping("/user-info")
 	public ResponseEntity<?> userInfo(HttpSession session) {
 	    ReserveValueDto dto = (ReserveValueDto) session.getAttribute("ReserveValueDto");
-	    String userName = (String) session.getAttribute("username");
+	    String userName = (String) session.getAttribute("displayName");
 
 	    // 세션에 값이 없을 때도 NPE 없이 안전하게
 	    if (dto == null) {

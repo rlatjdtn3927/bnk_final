@@ -184,10 +184,10 @@
 	        <div style="font-size:12px;color:#666">계좌번호</div>
 	        <div id="accountId">-</div>
 	      </div>
-	      <div>
-	        <div style="font-size:12px;color:#666">성명</div>
-	        <div id="userName">-</div>
-	      </div>
+		  <div>
+		    <div style="font-size:12px;color:#666">성명</div>
+		    <div id="userName" th:text="${session.displayName}">-</div>
+		  </div>
 	      <div>
 	        <div style="font-size:12px;color:#666">투자성향</div>
 	        <div><span class="badge risk" id="riskGrade">-</span></div>

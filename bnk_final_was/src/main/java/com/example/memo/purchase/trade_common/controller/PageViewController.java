@@ -28,12 +28,13 @@ public class PageViewController {
     public String tradeReserveEntry(@RequestParam(name = "flow", required = false) String flow,
                              HttpSession session) {
         Long userId = (Long) session.getAttribute("LOGIN_USER_ID");
-
+        String displayName = (String) session.getAttribute("displayName");
         session.removeAttribute("ChangeValueDto");
         // 세션 DTO 준비
         ReserveValueDto dto = (ReserveValueDto) session.getAttribute("ReserveValueDto");
         if (dto == null) dto = new ReserveValueDto();
         dto.setFlow(flow);
+        dto.setUsername(displayName);
         session.setAttribute("ReserveValueDto", dto);
 
         // ✅ 반드시 step1 로 리다이렉트 (step1 컨트롤러가 AP 호출/세션 세팅)
@@ -45,7 +46,7 @@ public class PageViewController {
     public String tradeChangeEntry(@RequestParam(name = "flow", required = false) String flow,
                              HttpSession session) {
         Long userId = (Long) session.getAttribute("LOGIN_USER_ID");
-        
+        String displayName = (String) session.getAttribute("displayName");
         if(session.getAttribute("ReserveValueDto") != null) {
             session.removeAttribute("ReserveValueDto");
         }
@@ -54,6 +55,7 @@ public class PageViewController {
         ChangeValueDto dto = (ChangeValueDto) session.getAttribute("ChangeValueDto");
         if (dto == null) dto = new ChangeValueDto();
         dto.setFlow(flow);
+        dto.setUsername(displayName);
         session.setAttribute("ChangeValueDto", dto);
 
         // ✅ 반드시 step1 로 리다이렉트 (step1 컨트롤러가 AP 호출/세션 세팅)

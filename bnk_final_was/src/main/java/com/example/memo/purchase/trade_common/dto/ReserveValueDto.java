@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class ReserveValueDto {
    /*전 스텝 공통*/
+	private String username;
    private String flow;
    private String accountId; // 계좌식별 id (irp인 경우에는 irp_acct_no, DC인 경우에는 account_no) --> 테이블 접근용 데이터
    private String accountType; // IRP, DC

@@ -78,7 +78,8 @@ public class LoginRestController {
             JsonNode d = root.path("data");
             long userId = d.path("userId").asLong(-1);
             String username = d.path("username").asText(null);
-
+            String displayName = d.path("displayName").asText(null); // ✅ 추가
+            
             if (userId <= 0) {
                 body.put("success", false);
                 body.put("code", "BAD_AP_RESPONSE");
@@ -93,13 +94,14 @@ public class LoginRestController {
             // ✅ 세션 저장 (설문 컨트롤러와 통일)
             session.setAttribute("LOGIN_USER_ID", userId); // 사장님 이거 뭐에요
             session.setAttribute("username", username); // 얘도 ???
-            
+            session.setAttribute("displayName", displayName); // 실제 이름(별칭)
             session.setAttribute("user", userId);
 
 
             Map<String, Object> payload = new HashMap<>();
             payload.put("userId", userId);
             payload.put("username", username);
+            payload.put("displayName", displayName); // ✅ 함께 내려주기
 
             body.put("success", true);
             body.put("code", "OK");
