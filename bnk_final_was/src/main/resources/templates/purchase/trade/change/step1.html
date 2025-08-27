@@ -38,7 +38,7 @@
 	    <!-- IRP -->
 	    <section class="card">
 	      <div class="card-head">
-	        <div class="title-sm">IRP (필수)</div><span class="badge">Required</span>
+	        <div class="title-sm">IRP (필수)</div>
 	      </div>
 	
 	      <!-- IRP 있음 -->
@@ -50,7 +50,7 @@
 	                   checked="checked">
 	            <div>
 	              <div class="title-sm">IRP 계좌</div>
-	              <div class="subtle">IRP · 번호: <span th:text="${session.irpAcctNo}">-</span></div>
+	              <div class="subtle"><span th:text="${session.irpAcctNo}">-</span></div>
 	            </div>
 	          </div>
 	          <div class="badge">선택</div>
@@ -72,7 +72,7 @@
 	    <!-- DC -->
 	    <section class="card">
 	      <div class="card-head">
-	        <div class="title-sm">DC (선택)</div><span class="badge">Optional</span>
+	        <div class="title-sm">DC (선택)</div>
 	      </div>
 	
 	      <!-- DC 목록 -->
@@ -83,7 +83,7 @@
 	              <input type="radio" name="accountChoice" th:value="${'DC|' + no}">
 	              <div>
 	                <div class="title-sm">DC 계좌</div>
-	                <div class="subtle">DC · 번호: <span th:text="${no}">-</span></div>
+	                <div class="subtle"><span th:text="${no}">-</span></div>
 	              </div>
 	            </div>
 	            <div class="badge">선택</div>

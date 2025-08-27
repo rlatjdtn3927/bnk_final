@@ -147,10 +147,10 @@ a.px-4:active{transform:translateY(1px)}
 
   <!-- 세션 표시 -->
   <section class="mb-4 text-sm flex gap-2 items-center">
-    <span class="pill">계좌유형: <b th:text="${session.ChangeValueDto?.accountType}">-</b></span>
-    <span class="pill">계좌ID: <b th:text="${session.ChangeValueDto?.accountId}">-</b></span>
+    <span class="pill"><b th:text="${session.ChangeValueDto?.accountType}">-</b></span>
+    <span class="pill"><b th:text="${session.ChangeValueDto?.accountId}">-</b></span>
     <span class="pill" th:if="${session.ChangeValueDto?.riskGrade != null}">
-      투자성향: <b th:text="${session.ChangeValueDto?.riskGrade}">-</b>
+      <b th:text="${session.ChangeValueDto?.riskGrade}">-</b>
     </span>
   </section>
 

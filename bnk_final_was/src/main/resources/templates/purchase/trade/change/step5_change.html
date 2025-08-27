@@ -29,7 +29,7 @@ body{
 .content{
   flex:1 1 auto;
   overflow:auto; min-height:0; -webkit-overflow-scrolling:touch;
-  padding-bottom:120px;               /* 하단 고정 버튼과 겹치지 않게 */
+  padding-bottom:120px;
 }
 
 /* ===== 섹션/타이포 ===== */
@@ -47,79 +47,69 @@ body{
   white-space: nowrap;
 }
 
-/* ===== 카드 느낌(표 컨테이너) ===== */
+/* 카드 느낌 */
 .card{
   background:#fff; border:1px solid #f0f0f0; border-radius:18px;
   padding:20px; box-shadow:0 8px 16px rgba(0,0,0,.03);
 }
 
-/* 표 스타일 */
-.min-w-full{
-  width:100%; border-collapse:separate; border-spacing:0;
+/* 표 */
+.min-w-full{ width:100%; border-collapse:separate; border-spacing:0;
   background:#fff; border:1px solid #eee; border-radius:16px;
-  box-shadow:0 6px 18px rgba(0,0,0,.02); overflow:hidden;
-}
+  box-shadow:0 6px 18px rgba(0,0,0,.02); overflow:hidden; }
 .min-w-full thead tr{ background:#F7F8FB; }
-.min-w-full th{
-  padding:8px 12px; font-size:13px; font-weight:800; color:#374151;
-  border-bottom:1px solid #eee; text-align:left;
-}
-.min-w-full td{
-  padding:10px 12px; font-size:14px; border-bottom:1px solid #f2f2f2;
-}
+.min-w-full th{ padding:8px 12px; font-size:13px; font-weight:800; color:#374151;
+  border-bottom:1px solid #eee; text-align:left; }
+.min-w-full td{ padding:10px 12px; font-size:14px; border-bottom:1px solid #f2f2f2; }
 .min-w-full tbody tr:last-child td{ border-bottom:none; }
 
-/* ===== 하단 고정 버튼 바 ===== */
+/* 하단 고정 버튼 바 */
 .actions{
   position:fixed; left:0; right:0; bottom:0; z-index:1100;
   background:#fff; border-top:1px solid #eee;
-  padding:14px 16px 22px;           /* 안전여백 포함 */
+  padding:14px 16px 22px;
   display:grid; grid-template-columns:1fr 1fr; gap:12px;
-  max-width:960px; margin:0 auto;    /* 가운데 정렬 */
+  max-width:960px; margin:0 auto;
   align-items:stretch;
 }
-.actions > *{ margin:0; }
-
-/* 왼쪽 링크 버튼도 버튼처럼 꽉 차게 */
-.actions .btn{ 
-  display:flex; align-items:center; justify-content:center;
-  height:56px; border-radius:14px; font-size:18px; font-weight:700;
-  border:none; padding:0;
-}
+.actions .btn{ display:flex; align-items:center; justify-content:center;
+  height:56px; border-radius:14px; font-size:18px; font-weight:700; border:none; padding:0; }
 .actions .btn-link{ background:#8d94a6; color:#fff; text-decoration:none; }
-.actions .btn-link > a{
-  display:flex; align-items:center; justify-content:center;
-  width:100%; height:100%; color:#fff; text-decoration:none; border-radius:inherit;
-}
+.actions .btn-link > a{ display:flex; align-items:center; justify-content:center;
+  width:100%; height:100%; color:#fff; text-decoration:none; border-radius:inherit; }
 .actions .btn-primary{ background:#f85151; color:#fff; }
 .actions .btn:disabled{ opacity:.6; cursor:not-allowed; }
 
-/* iOS 하단 안전영역 대응 */
 @supports (padding:max(0px)){
   .actions{ padding-bottom:max(22px, env(safe-area-inset-bottom)); }
 }
+.font-semibold { margin: 5px 5px; }
+.amount-cell { white-space: nowrap; text-align: right; font-weight: 600; }
 
-.font-semibold {
-  margin: 5px 5px; 
+/* ===== 모달 ===== */
+.modal{
+  position:fixed; inset:0; background:rgba(0,0,0,.45);
+  display:none; align-items:center; justify-content:center; z-index:2000;
 }
-
-.amount-cell {
-  white-space: nowrap;   /* 줄바꿈 금지 */
-  text-align: right;     /* 금액은 오른쪽 정렬 */
-  font-weight: 600;      /* 강조 */
+.modal.show{ display:flex; }
+.modal-box{
+  background:#fff; border-radius:18px; padding:28px 22px;
+  max-width:400px; width:90%; text-align:center;
+  box-shadow:0 8px 20px rgba(0,0,0,.2);
 }
-
-/*
-    .pill{background:#f3f4f6;border-radius:9999px;padding:2px 10px;font-size:12px}
-    .warn{color:#dc2626;font-weight:600}
-    .disabled{opacity:.5;pointer-events:none}
-*/
+.modal-box h2{ font-size:20px; font-weight:700; margin-bottom:12px; }
+.modal-box p{ font-size:15px; color:#374151; margin-bottom:24px; }
+.modal-box button{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:100%; height:48px; border:none; border-radius:12px;
+  background:#f85151; color:#fff; font-weight:700; font-size:16px;
+  cursor:pointer;
+}
 </style>
 </head>
 <body>
-<!-- 전체 레이아웃 랩 -->
 <div class="layout">
-  <!-- 헤더 부분 -->
+  <!-- 헤더 -->
   <div class="header-wrap">
     <div class="header">
       <h2 class="page-title">보유상품관리</h2>
@@ -129,67 +119,66 @@ body{
   <main class="content">
     <div class="divider"></div>
   
-	<div class="section">
-	  <h1>최종 확인</h1>
-	  <p class="text-sm text-neutral-500 ">
-	    선택한 매수 상품을 확인해 주세요.
-	  </p>
-	
-	  <!-- 세션 값 표시 -->
-	  <section class="mb-4 text-sm flex gap-2 items-center">
-	    <span class="pill">계좌유형: <b th:text="${session.ChangeValueDto?.accountType}">-</b></span>
-	    <span class="pill">계좌ID: <b th:text="${session.ChangeValueDto?.accountId}">-</b></span>
-	    <span class="pill" th:if="${session.ChangeValueDto?.riskGrade != null}">
-	      투자성향: <b th:text="${session.ChangeValueDto?.riskGrade}">-</b>
-	    </span>
-	  </section>
-	
-	  <!-- 매수 상품 목록 -->
-	  <section class="">
-	    <h2 class="font-semibold">매수 상품 목록</h2>
-	    <table class="min-w-full text-sm">
-	      <thead class="text-left border-b">
-	        <tr>
-	          <th class="py-2 pr-3">상품명</th>
-	          <th class="py-2 pr-3">비율(%)</th>
-	          <th class="py-2 pr-3">매수금액</th>
-	        </tr>
-	      </thead>
-	      <tbody>
-	        <tr th:each="b : ${session.ChangeValueDto?.buyItems}" class="border-b">
-	          <td class="py-2 pr-3" th:text="${b.name}">-</td>
-	          <td class="py-2 pr-3" th:text="${b.ratio != null ? b.ratio : 0}">0</td>
-			  <td class="py-2 pr-3 amount-cell"
-			      th:text="${#numbers.formatInteger(b.amount != null ? b.amount : 0, 3, 'COMMA')} + '원'">
-			  </td>
-	        </tr>
-	        <tr th:if="${#lists.isEmpty(session.ChangeValueDto?.buyItems)}">
-	          <td colspan="4" class="py-4 text-center text-neutral-400">선택한 매수 상품이 없습니다.</td>
-	        </tr>
-	      </tbody>
-	    </table>
-	  </section>
-	
-	  <!-- 버튼 -->
-	  <div class="actions">
-	    <div class="btn btn-link"><a href="/purchase/trade/change/step4/docs">이전</a></div>
-	    <button id="confirmBtn" class="btn btn-primary">
-	      변경 완료
-	    </button>
-	  </div>
-	  
-	</div><!-- section -->
+    <div class="section">
+      <h1>최종 확인</h1>
+      <p class="text-sm text-neutral-500">선택한 매수 상품을 확인해 주세요.</p>
+  
+      <!-- 세션 값 -->
+      <section class="mb-4 text-sm flex gap-2 items-center">
+        <span class="pill">계좌유형: <b th:text="${session.ChangeValueDto?.accountType}">-</b></span>
+        <span class="pill">계좌ID: <b th:text="${session.ChangeValueDto?.accountId}">-</b></span>
+        <span class="pill" th:if="${session.ChangeValueDto?.riskGrade != null}">
+          투자성향: <b th:text="${session.ChangeValueDto?.riskGrade}">-</b>
+        </span>
+      </section>
+  
+      <!-- 매수 상품 목록 -->
+      <section>
+        <h2 class="font-semibold">매수 상품 목록</h2>
+        <table class="min-w-full text-sm">
+          <thead>
+            <tr>
+              <th>상품명</th><th>비율(%)</th><th>매수금액</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="b : ${session.ChangeValueDto?.buyItems}">
+              <td th:text="${b.name}">-</td>
+              <td th:text="${b.ratio != null ? b.ratio : 0}">0</td>
+              <td class="amount-cell"
+                  th:text="${#numbers.formatInteger(b.amount != null ? b.amount : 0, 3, 'COMMA')} + '원'"></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(session.ChangeValueDto?.buyItems)}">
+              <td colspan="3" class="py-4 text-center text-neutral-400">선택한 매수 상품이 없습니다.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+  
+      <!-- 버튼 -->
+      <div class="actions">
+        <div class="btn btn-link"><a href="/purchase/trade/change/step4/docs">이전</a></div>
+        <button id="confirmBtn" class="btn btn-primary">변경 완료</button>
+      </div>
+    </div>
   </main>
-</div><!-- layout -->
+</div>
+
+<!-- ✅ 모달 -->
+<div id="resultModal" class="modal">
+  <div class="modal-box">
+    <h2>변경 완료</h2>
+    <p>변경이 완료되었습니다.</p>
+    <button id="modalOkBtn">확인</button>
+  </div>
+</div>
 
 <script>
 async function submitChange(){
-  // ✅ 세션 snapshot 불러오기
   const res = await fetch("/retain-api/change/step2/snapshot");
   const snap = await res.json();
   const dto = snap.dto || {};
 
-  // ✅ RequestChangeDto 매핑 (AP와 100% 일치)
   const payload = {
     accountType: dto.accountType,
     accountId: dto.accountId,
@@ -217,17 +206,23 @@ async function submitChange(){
     });
     const data = await resp.json();
     console.log("== 응답:", data);
-    alert("변경이 완료되었습니다 ✅");
+
+    // ✅ 성공 시 모달 열기
+    document.getElementById("resultModal").classList.add("show");
   } catch(e){
     console.error("제출 실패", e);
     alert("제출 실패");
   }
 }
 
-// 🚀 페이지 진입 시 버튼 클릭 연결
 document.addEventListener("DOMContentLoaded", ()=>{
-  const btn = document.getElementById('confirmBtn');
-  btn.addEventListener('click', submitChange);
+  document.getElementById('confirmBtn')
+    .addEventListener('click', submitChange);
+
+  document.getElementById('modalOkBtn')
+    .addEventListener('click', ()=>{
+      window.location.href="/purchase/products";
+    });
 });
 </script>
 </body>

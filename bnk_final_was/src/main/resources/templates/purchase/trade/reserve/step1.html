@@ -12,45 +12,24 @@
   }
   html, body { height:100%; }
 
-  .layout { 
-    height:100vh; display:flex; flex-direction:column; background:#fff;
-  }
+  .layout { height:100vh; display:flex; flex-direction:column; background:#fff; }
 
-  .container{
-    max-width:960px;
-    margin:0 auto;
-    padding:30px;              /* ⬅️ 화면 전체 여백은 여기서만 */
-  }
-  /* 상단/하단 고정 */
+  /* 헤더 */
   .header-wrap, .footer { flex:0 0 auto; background:#fff; }
-  .footer { border-top:1px solid #eee; padding:12px 16px; }
-
-  /* 본문 스크롤 */
-  .content {
-    flex:1 1 auto;
-    overflow:auto;
-    min-height:0;
-    -webkit-overflow-scrolling: touch;
-  }
-  .header {
-    padding:14px 16px;
-    display:flex; flex-direction:column;
-  }
-  .brand{
-    font-size:22px; font-weight:700; color:#D93C3C;
-  }
+  .header { padding:14px 16px; }
+  .brand{ font-size:22px; font-weight:700; color:#D93C3C; }
   .tabs{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
   .tab{ padding:8px 12px; border-radius:10px; border:1px solid transparent; text-decoration:none; color:#374151; font-size:14px;}
   .tab:hover{ background:#f3f4f6; }
   .tab.active{ border-color:#e5e7eb; background:#fff; font-weight:600; }
 
-  /* 페이지 제목 */
   .page-title{ font-size:20px; font-weight:600; margin:20px 0 8px; }
-
-  /* 제목 아래 구분선 */
   .divider{ height:4px; background:#eee; border-radius:1px; }
 
-  /* ===== 섹션/카드 ===== */
+  /* 본문 스크롤 */
+  .content{ flex:1 1 auto; overflow:auto; min-height:0; -webkit-overflow-scrolling:touch; padding-bottom:120px; }
+
+  /* 섹션 */
   .section { max-width:420px; margin:0 auto; padding:12px 16px; margin-bottom:30px; }
   .section h1{ font-size:18px; font-weight:700; margin:20px 0 6px; }
   .subtle{ color:#6b7280; font-size:13.5px; }
@@ -64,95 +43,38 @@
   }
   .banner.show{ display:block; }
 
-  /* 그리드 */
+  /* 카드 */
   .grid{ display:grid; gap:28px; grid-template-columns:1fr; }
   @media(min-width:760px){ .grid{ grid-template-columns:1fr 1fr; } }
-
-  .card{
-    background:#fff; border:1px solid #f0f0f0; border-radius:18px;
-    padding:28px 20px;
-    box-shadow:0 10px 20px rgba(0,0,0,.04);
-  }
+  .card{ background:#fff; border:1px solid #f0f0f0; border-radius:18px; padding:28px 20px; box-shadow:0 10px 20px rgba(0,0,0,.04);}
   .card-head{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
   .title-sm{ font-size:14px; font-weight:600; }
 
   /* 라디오 카드 */
-  .radio-card{
-    display:flex; align-items:center; justify-content:space-between; gap:14px;
-    border:1px solid #e5e7eb; background:#fff;
-    padding:14px 16px; border-radius:14px; margin-top:20px;
-    transition:.2s;
-  }
+  .radio-card{ display:flex; align-items:center; justify-content:space-between; gap:14px;
+    border:1px solid #e5e7eb; background:#fff; padding:14px 16px; border-radius:14px; margin-top:20px; transition:.2s;}
   .radio-card:hover{ border-color:#cbd5e1; }
   .radio-card.disabled{ opacity:.6; pointer-events:none; }
   .radio-card.selected{ border-color:#222; box-shadow:0 0 0 2px rgba(0,0,0,.1); }
-
   .radio{ display:flex; align-items:center; gap:12px; }
-  .radio input[type="radio"]{
-    appearance:none; -webkit-appearance:none;
-    width:18px; height:18px; border:2px solid #9ca3af;
-    border-radius:50%; background:#fff; position:relative; cursor:pointer;
-  }
+  .radio input[type="radio"]{ appearance:none; -webkit-appearance:none; width:18px; height:18px; border:2px solid #9ca3af; border-radius:50%; background:#fff; position:relative; cursor:pointer;}
   .radio input[type="radio"]:checked{ border-color:#111; }
-  .radio input[type="radio"]:checked::after{
-    content:""; position:absolute; inset:3px; background:#111; border-radius:50%;
-  }
+  .radio input[type="radio"]:checked::after{ content:""; position:absolute; inset:3px; background:#111; border-radius:50%; }
 
   /* 뱃지 */
-  .badge{
-    display:inline-flex; align-items:center; justify-content:center;
-    height:28px; padding:0 12px; font-size:12px; font-weight:700;
-    color:#f85151; background:#fff3f3; border:1px solid #fff3f3; border-radius:15px;
-  }
+  .badge{ display:inline-flex; align-items:center; justify-content:center; height:28px; padding:0 12px; font-size:12px; font-weight:700; color:#f85151; background:#fff3f3; border:1px solid #fff3f3; border-radius:15px; }
 
-  /* 버튼 영역 */
-  form#acctForm{ max-width:960px; margin:0 auto; padding:0 20px; }
-  .row{ display:flex; gap:12px; align-items:center; }
-  .row-right{ margin-left:auto; }
-  .btn{
-    display:inline-flex; align-items:center; justify-content:center;
-    height:40px; padding:0 16px; border-radius:12px;
-    font-weight:700; font-size:14px; border:1px solid transparent;
-    cursor:pointer; user-select:none; transition:.15s;
-  }
+  /* 버튼 */
+  .footer{ position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid #eee; z-index:1000;
+    padding:20px 16px 40px; display:flex; gap:12px; max-width:960px; margin:0 auto;}
+  .footer .btn{ flex:1; height:auto; padding:14px 0; font-size:18px; font-weight:700; box-shadow:0 6px 18px rgba(0,0,0,.08); border:none; text-align:center; }
+  .btn{ display:inline-flex; align-items:center; justify-content:center; border-radius:12px; font-weight:700; cursor:pointer; transition:.15s;}
   .btn:disabled{ opacity:.5; cursor:not-allowed; }
   .btn-primary{ background:#f85151; color:#fff; }
   .btn-primary:hover{ background:#e04444; }
   .btn-link{ background:#8d94a6; color:#fff; text-decoration:none; }
   .btn-link:hover{ background:#6e7488; }
-
-  /* 하단 고정 버튼바 */
-  .footer{
-    position:fixed; bottom:0; left:0; right:0;
-    background:#fff; border-top:1px solid #eee;
-    z-index:1000;
-    padding:20px 16px 40px !important;
-    display:flex; gap:12px; max-width:960px; margin:0 auto;
-  }
-  .footer .btn{
-    flex:1; height:auto; padding:14px 0;
-    font-size:18px; font-weight:700; box-shadow:0 6px 18px rgba(0,0,0,.08);
-    border:none; text-align:center;
-  }
   .footer .btn[disabled]{ opacity:.6; box-shadow:none; cursor:not-allowed; }
-
-  /* 본문이 가려지지 않도록 */
-  .content{ padding-bottom:100px; }
-
-  /* 인풋 */
-  input[type="text"], input[type="date"], select{
-    width:100%; height:44px; border-radius:12px; border:1px solid #e5e7eb; padding:0 12px;
-    font-size:14px; outline:none; background:#fff; box-sizing:border-box;
-  }
-  input[type="text"]:focus, input[type="date"]:focus, select:focus{
-    border-color:#c7d2fe; box-shadow:0 0 0 3px rgba(99,102,241,.15);
-  }
-
-  /* 테이블 */
-  table{ width:100%; border-collapse:separate; border-spacing:0; margin-top:14px; }
-  th, td{ text-align:left; padding:12px 14px; }
-  th{ background:#f8fafc; color:#111; border-bottom:1px solid #e5e7eb; font-weight:800; }
-  td{ border-bottom:1px solid #f1f5f9; color:#374151; }
   </style>
 </head>
 <body>
@@ -177,26 +99,20 @@
     <!-- IRP -->
     <section class="card">
       <div class="card-head">
-        <div class="title-sm">IRP (필수)</div><span class="badge">Required</span>
+        <div class="title-sm">IRP (필수)</div>
       </div>
-
-      <!-- IRP 있음 -->
       <div th:if="${session.hasIrp}">
         <label class="radio-card selected">
           <div class="radio">
-            <input type="radio" name="accountChoice"
-                   th:value="${'IRP|' + session.irpAcctNo}"
-                   checked="checked">
+            <input type="radio" name="accountChoice" th:value="${'IRP|' + session.irpAcctNo}" checked="checked">
             <div>
               <div class="title-sm">IRP 계좌</div>
-              <div class="subtle">IRP · 번호: <span th:text="${session.irpAcctNo}">-</span></div>
+              <div class="subtle"><span th:text="${session.irpAcctNo}">-</span></div>
             </div>
           </div>
           <div class="badge">선택</div>
         </label>
       </div>
-
-      <!-- IRP 없음 -->
       <div th:if="${!session.hasIrp}">
         <div class="radio-card disabled">
           <div>
@@ -211,10 +127,8 @@
     <!-- DC -->
     <section class="card">
       <div class="card-head">
-        <div class="title-sm">DC (선택)</div><span class="badge">Optional</span>
+        <div class="title-sm">DC (선택)</div>
       </div>
-
-      <!-- DC 목록 -->
       <div th:if="${session.hasDc}">
         <div th:each="no : ${session.dcAccounts}">
           <label class="radio-card">
@@ -222,15 +136,13 @@
               <input type="radio" name="accountChoice" th:value="${'DC|' + no}">
               <div>
                 <div class="title-sm">DC 계좌</div>
-                <div class="subtle">DC · 번호: <span th:text="${no}">-</span></div>
+                <div class="subtle"><span th:text="${no}">-</span></div>
               </div>
             </div>
             <div class="badge">선택</div>
           </label>
         </div>
       </div>
-
-      <!-- DC 없음 -->
       <div th:if="${!session.hasDc}">
         <div class="radio-card disabled">
           <div class="title-sm">DC 계좌 없음</div>
@@ -239,47 +151,44 @@
       </div>
     </section>
   </div>
-
-  <!-- 제출 -->
-  <form th:action="@{/purchase/trade/reserve/step1/next}" method="post" class="mt-8 row" id="acctForm">
-    <!-- ✅ CSRF 토큰은 있을 때만 렌더 (없으면 이 줄 자체가 사라짐) -->
-    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-
-    <input type="hidden" id="accountType" name="accountType" value="">
-    <input type="hidden" id="accountId"   name="accountId"   value="">
-    <a th:href="@{/purchase/holdings}" class="btn btn-link">이전</a>
-    <button id="nextBtn" type="submit" class="btn btn-primary row-right" disabled>다음</button>
-  </form>
 </div>
 
+<!-- ✅ 하단 고정 버튼 form -->
+<form th:action="@{/purchase/trade/reserve/step1/next}" method="post" class="footer" id="acctForm">
+  <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+  <input type="hidden" id="accountType" name="accountType" value="">
+  <input type="hidden" id="accountId"   name="accountId"   value="">
+
+  <a th:href="@{/purchase/holdings}" class="btn btn-link">이전</a>
+  <button id="nextBtn" type="submit" class="btn btn-primary row-right" disabled>다음</button>
+</form>
+
 <script>
-  (function(){
-    const nextBtn   = document.getElementById('nextBtn');
-    const accountTypeInput = document.getElementById('accountType');
-    const accountIdInput   = document.getElementById('accountId');
+(function(){
+  const nextBtn   = document.getElementById('nextBtn');
+  const accountTypeInput = document.getElementById('accountType');
+  const accountIdInput   = document.getElementById('accountId');
 
-    function setSelected(value){
-      if(!value) return;
-      const parts = value.split('|');
-      const type = parts.length > 0 ? parts[0] : '';
-      const id   = parts.length > 1 ? parts[1] : '';
-      accountTypeInput.value = type;
-      accountIdInput.value   = id;
-      document.querySelectorAll('.radio-card').forEach(el => el.classList.remove('selected'));
-      const sel = document.querySelector(`input[name="accountChoice"][value="${value.replace(/([.*+?^${}()|[\]\\])/g,'\\$1')}"]`);
-      if(sel){ sel.closest('.radio-card').classList.add('selected'); }
-      nextBtn.disabled = !(type && id);
-    }
+  function setSelected(value){
+    if(!value) return;
+    const parts = value.split('|');
+    const type = parts.length > 0 ? parts[0] : '';
+    const id   = parts.length > 1 ? parts[1] : '';
+    accountTypeInput.value = type;
+    accountIdInput.value   = id;
+    document.querySelectorAll('.radio-card').forEach(el => el.classList.remove('selected'));
+    const sel = document.querySelector(`input[name="accountChoice"][value="${value.replace(/([.*+?^${}()|[\]\\])/g,'\\$1')}"]`);
+    if(sel){ sel.closest('.radio-card').classList.add('selected'); }
+    nextBtn.disabled = !(type && id);
+  }
 
-    // 초기 선택(보통 IRP) 반영
-    const checked = document.querySelector('input[name="accountChoice"]:checked');
-    if(checked){ setSelected(checked.value); }
+  const checked = document.querySelector('input[name="accountChoice"]:checked');
+  if(checked){ setSelected(checked.value); }
 
-    // 선택 변경 시 반영
-    document.querySelectorAll('input[name="accountChoice"]').forEach(r=>{
-      r.addEventListener('change', e => setSelected(e.target.value));
-    });
-  })();
+  document.querySelectorAll('input[name="accountChoice"]').forEach(r=>{
+    r.addEventListener('change', e => setSelected(e.target.value));
+  });
+})();
 </script>
 </body>
 </html>
