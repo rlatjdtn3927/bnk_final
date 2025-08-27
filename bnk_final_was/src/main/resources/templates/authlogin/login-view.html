@@ -237,6 +237,25 @@ body {
   </div> 
 
 <script>
+  function toggleInputIcon(input, className){
+	  if(input.value.trim() !== ""){
+	    input.classList.remove(className);  // 값 있으면 아이콘 제거
+	  } else {
+	    input.classList.add(className);     // 값 없으면 아이콘 복원
+	  }
+  }
+  
+  const usernameInput = document.getElementById("username");
+  const passwordInput = document.getElementById("password");
+
+  // 초기 체크
+  toggleInputIcon(usernameInput, "user-input");
+  toggleInputIcon(passwordInput, "pw-input");
+
+  // 입력할 때마다 체크
+  usernameInput.addEventListener("input", () => toggleInputIcon(usernameInput, "user-input"));
+  passwordInput.addEventListener("input", () => toggleInputIcon(passwordInput, "pw-input"));
+
   // 비밀번호 표시/숨기기
   const pw = document.getElementById('password');
   const btn = document.getElementById('togglePw');
